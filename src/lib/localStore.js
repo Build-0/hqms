@@ -1,7 +1,7 @@
 // 示範模式資料層：全部存 localStorage，介面與 Supabase 版一致
-import { seedTopics, seedComplaints } from '../data/seedData'
+import { seedTopics, seedComplaints, TRAINING } from '../data/seedData'
 
-const K = { user: 'hqms_user', complaints: 'hqms_complaints', topics: 'hqms_topics', focus: 'hqms_focus' }
+const K = { user: 'hqms_user', complaints: 'hqms_complaints', topics: 'hqms_topics', focus: 'hqms_focus', training: 'hqms_training' }
 const get = (k, fb) => {
   try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : fb } catch { return fb }
 }
@@ -12,6 +12,8 @@ function ensureSeed() {
   if (!localStorage.getItem(K.topics))
     set(K.topics, seedTopics.map((t, i) => ({ id: uid(), sort_order: i, created_at: new Date().toISOString(), ...t })))
   if (!localStorage.getItem(K.complaints)) set(K.complaints, seedComplaints())
+  if (!localStorage.getItem(K.training))
+    set(K.training, TRAINING.map((t, i) => ({ id: uid(), sort_order: i, created_at: new Date().toISOString(), ...t })))
 }
 
 // ── auth ──
@@ -65,6 +67,27 @@ export function deleteTopic(id) {
   set(K.focus, f)
 }
 export function importSeedTopics(rows) { for (const r of rows) addTopic(r) }
+
+// ── training ──
+export function listTraining() {
+  ensureSeed()
+  return get(K.training, []).slice().sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+}
+export function addTraining(t) {
+  const rows = get(K.training, [])
+  const row = { id: uid(), sort_order: rows.length, created_at: new Date().toISOString(), ...t }
+  rows.push(row); set(K.training, rows)
+  return row
+}
+export function updateTraining(id, patch) {
+  const rows = get(K.training, []).map(r => (r.id === id ? { ...r, ...patch } : r))
+  set(K.training, rows)
+  return rows.find(r => r.id === id)
+}
+export function deleteTraining(id) {
+  set(K.training, get(K.training, []).filter(r => r.id !== id))
+}
+export function importSeedTraining(rows) { for (const r of rows) addTraining(r) }
 
 // ── daily focus ──
 export function getFocus(date) { ensureSeed(); return get(K.focus, {})[date] ?? null }

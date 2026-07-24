@@ -107,6 +107,36 @@ export async function importSeedTopics(rows) {
   throwIf(error)
 }
 
+// ── training ──
+export async function listTraining() {
+  if (isLocal) return local.listTraining()
+  const { data, error } = await sb.from('training_sections').select('*').order('sort_order').order('created_at')
+  throwIf(error)
+  return data
+}
+export async function addTraining(t) {
+  if (isLocal) return local.addTraining(t)
+  const { data, error } = await sb.from('training_sections').insert(t).select().single()
+  throwIf(error)
+  return data
+}
+export async function updateTraining(id, patch) {
+  if (isLocal) return local.updateTraining(id, patch)
+  const { data, error } = await sb.from('training_sections').update(patch).eq('id', id).select().single()
+  throwIf(error)
+  return data
+}
+export async function deleteTraining(id) {
+  if (isLocal) return local.deleteTraining(id)
+  const { error } = await sb.from('training_sections').delete().eq('id', id)
+  throwIf(error)
+}
+export async function importSeedTraining(rows) {
+  if (isLocal) return local.importSeedTraining(rows)
+  const { error } = await sb.from('training_sections').insert(rows)
+  throwIf(error)
+}
+
 // ── daily focus ──
 export async function getFocus(date) {
   if (isLocal) return local.getFocus(date)

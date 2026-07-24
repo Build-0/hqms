@@ -35,6 +35,17 @@ create table if not exists topics (
   created_at timestamptz not null default now()
 );
 
+-- 新人教材章節（可在 app 內編輯）
+create table if not exists training_sections (
+  id uuid primary key default gen_random_uuid(),
+  emoji text not null default '📄',
+  title text not null,
+  intro text not null default '',
+  steps jsonb not null default '[]',
+  sort_order int not null default 0,
+  created_at timestamptz not null default now()
+);
+
 -- 每日品質重點（自動選題結果與早會分享狀態）
 create table if not exists daily_focus (
   focus_date date primary key,
@@ -48,10 +59,12 @@ create table if not exists daily_focus (
 alter table complaints enable row level security;
 alter table topics enable row level security;
 alter table daily_focus enable row level security;
+alter table training_sections enable row level security;
 
 create policy "auth all complaints" on complaints for all to authenticated using (true) with check (true);
 create policy "auth all topics" on topics for all to authenticated using (true) with check (true);
 create policy "auth all focus" on daily_focus for all to authenticated using (true) with check (true);
+create policy "auth all training" on training_sections for all to authenticated using (true) with check (true);
 
 -- 相片儲存：公開讀取的 photos bucket（客訴現場照、主題示範照）
 insert into storage.buckets (id, name, public) values ('photos', 'photos', true)
