@@ -35,12 +35,14 @@ npm run dev
 **上線給同事用之前**：SQL Editor 執行 `supabase/lock-mode.sql` 收回權限、
 把 `.env` 的 `VITE_OPEN_MODE` 移除，再建立同事帳號（見上面第 4 步）。
 
-## 部署到 Vercel（讓同事手機直接開網址）
+## 部署（GitHub Pages，push 即自動更新）
 
-1. 專案推上 GitHub。
-2. https://vercel.com → Add New Project → 選這個 repo（Vite 會自動偵測）。
-3. Environment Variables 加上 `VITE_SUPABASE_URL` 和 `VITE_SUPABASE_ANON_KEY`。
-4. Deploy 完成後把網址發給同事，加到手機主畫面即可當 app 用。
+已配好 `.github/workflows/deploy.yml`：push 到 master 就自動 build + 部署。
+首次設定：GitHub 建公開 repo → `git remote add origin ...` → `git push -u origin master`，
+一分鐘後網站在 `https://<帳號>.github.io/<repo名>/`。手機開網址「加入主畫面」即可當 app 用。
+
+⚠️ 目前 workflow 帶 `VITE_OPEN_MODE=1`（免登入上線）。給同事用之前務必上鎖：
+刪掉 deploy.yml 裡那一行、Supabase 執行 `lock-mode.sql`、建立帳號（見上面第 4 步）。
 
 ## 結構
 
