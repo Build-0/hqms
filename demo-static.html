@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>房務品質管理系統 Demo</title>
+<style>
+  :root{
+    --bg:#f4f6f8; --card:#ffffff; --ink:#22303a; --sub:#7a8894;
+    --accent:#1f7a6d; --accent-soft:#e2f0ee;
+    --red:#c0564f; --red-soft:#f7e8e6;
+    --amber:#b07d2e; --amber-soft:#f6efe2;
+    --blue:#4a6fa5; --blue-soft:#e8eef6;
+    --line:#e6eaee; --radius:14px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{font-family:-apple-system,"PingFang TC","Microsoft JhengHei",sans-serif;background:#dde2e7;color:var(--ink);display:flex;justify-content:center;min-height:100vh}
+  .phone{width:100%;max-width:420px;background:var(--bg);min-height:100vh;display:flex;flex-direction:column;position:relative;box-shadow:0 0 30px rgba(0,0,0,.15)}
+  header{background:var(--accent);color:#fff;padding:14px 18px 12px;position:sticky;top:0;z-index:20}
+  header h1{font-size:17px;font-weight:700;letter-spacing:.5px}
+  header .date{font-size:12px;opacity:.85;margin-top:2px}
+  main{flex:1;overflow-y:auto;padding:14px 14px 90px}
+  nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:420px;background:var(--card);border-top:1px solid var(--line);display:flex;z-index:30}
+  nav button{flex:1;background:none;border:none;padding:9px 0 12px;font-size:11px;color:var(--sub);cursor:pointer;font-family:inherit}
+  nav button .ico{font-size:20px;display:block;margin-bottom:2px}
+  nav button.on{color:var(--accent);font-weight:700}
+  .page{display:none}.page.on{display:block}
+  .card{background:var(--card);border-radius:var(--radius);padding:16px;margin-bottom:12px;border:1px solid var(--line)}
+  .badge{display:inline-block;font-size:11px;padding:3px 10px;border-radius:999px;font-weight:700}
+  .b-red{background:var(--red-soft);color:var(--red)}
+  .b-teal{background:var(--accent-soft);color:var(--accent)}
+  .b-amber{background:var(--amber-soft);color:var(--amber)}
+  .b-blue{background:var(--blue-soft);color:var(--blue)}
+  .b-gray{background:#eef1f4;color:var(--sub)}
+  h2{font-size:15px;margin-bottom:10px}
+  h3{font-size:13px;color:var(--sub);font-weight:700;margin:14px 0 6px}
+  .sec p,.sec li{font-size:13.5px;line-height:1.65}
+  .sec ul{padding-left:18px}
+  .quote{background:var(--accent-soft);border-left:4px solid var(--accent);padding:10px 12px;border-radius:0 10px 10px 0;font-size:14px;font-weight:700;color:var(--accent);margin-top:14px}
+  /* 提問 */
+  .qa{background:var(--amber-soft);border:1px solid #e8dcc2;border-radius:12px;padding:13px 14px;margin-top:14px}
+  .qa .q-label{font-size:11px;font-weight:800;color:var(--amber);margin-bottom:6px;letter-spacing:1px}
+  .qa .q-text{font-size:14px;font-weight:700;line-height:1.6}
+  .qa .a-text{display:none;font-size:13.5px;line-height:1.6;margin-top:9px;padding-top:9px;border-top:1px dashed #dccfa8}
+  .qa.show .a-text{display:block}
+  .qa .a-btn{margin-top:10px;background:none;border:1.5px solid var(--amber);color:var(--amber);border-radius:999px;padding:5px 14px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit}
+  .qa.show .a-btn{display:none}
+  .qa .q-hint{font-size:11.5px;color:var(--sub);margin-top:8px}
+  .stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:12px 8px;text-align:center}
+  .stat .n{font-size:24px;font-weight:800}
+  .stat .l{font-size:11px;color:var(--sub);margin-top:2px}
+  .stat .n.warn{color:var(--red)}
+  .bar-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:12px}
+  .bar-row .name{width:78px;color:var(--sub);text-align:right;flex-shrink:0}
+  .bar-track{flex:1;background:#eef1f4;border-radius:5px;height:16px;overflow:hidden}
+  .bar-fill{height:100%;border-radius:5px;background:var(--accent);min-width:4px}
+  .bar-row .num{width:20px;font-weight:700}
+  .c-item{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:10px;overflow:hidden}
+  .c-head{padding:12px 14px;display:flex;align-items:center;gap:10px;cursor:pointer}
+  .c-head .room{font-weight:800;font-size:15px}
+  .c-head .desc{flex:1;font-size:12.5px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .c-body{display:none;padding:0 14px 14px;border-top:1px dashed var(--line)}
+  .c-item.open .c-body{display:block}
+  .kv{display:flex;font-size:13px;margin-top:9px;line-height:1.5}
+  .kv .k{width:74px;color:var(--sub);flex-shrink:0}
+  .kv .v{flex:1}
+  .flags{margin-top:10px;display:flex;gap:6px;flex-wrap:wrap}
+  .fab{position:fixed;bottom:72px;right:calc(50% - 210px + 16px);width:52px;height:52px;border-radius:50%;background:var(--accent);color:#fff;font-size:26px;border:none;box-shadow:0 4px 12px rgba(31,122,109,.4);cursor:pointer;z-index:25;display:none}
+  @media (max-width:420px){.fab{right:16px}}
+  .chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:10px;scrollbar-width:none}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{flex-shrink:0;padding:6px 13px;border-radius:999px;border:1px solid var(--line);background:var(--card);font-size:12.5px;color:var(--sub);cursor:pointer;font-family:inherit}
+  .chip.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
+  .t-item{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:13px 14px;margin-bottom:8px;cursor:pointer;display:flex;align-items:center;gap:10px}
+  .t-item .tt{flex:1;font-size:14px;font-weight:600}
+  .t-item .arrow{color:var(--sub)}
+  .add-topic{width:100%;padding:13px;border:1.5px dashed var(--accent);border-radius:var(--radius);background:none;color:var(--accent);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:2px}
+  .acc{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:8px;overflow:hidden}
+  .acc-h{padding:13px 14px;font-size:14px;font-weight:600;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+  .acc-b{display:none;padding:0 14px 13px;font-size:13px;line-height:1.7;border-top:1px dashed var(--line)}
+  .acc.open .acc-b{display:block}
+  .acc-b ol{padding-left:20px;margin-top:8px}
+  .acc-b li{margin-bottom:4px}
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:50;display:none;align-items:flex-end;justify-content:center}
+  .modal.on{display:flex}
+  .sheet{background:var(--card);width:100%;max-width:420px;border-radius:18px 18px 0 0;padding:18px;max-height:88vh;overflow-y:auto}
+  .sheet h2{margin-bottom:14px}
+  .f-row{margin-bottom:12px}
+  .f-row label{display:block;font-size:12px;color:var(--sub);font-weight:700;margin-bottom:5px}
+  .f-row input,.f-row select,.f-row textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit;background:var(--bg);color:var(--ink)}
+  .f-row textarea{resize:none;height:64px}
+  .btn{width:100%;padding:13px;border:none;border-radius:12px;background:var(--accent);color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:4px}
+  .btn.ghost{background:none;color:var(--sub);font-weight:400;padding:10px;margin-top:2px}
+  .btn.danger{background:none;border:1.5px solid var(--red);color:var(--red);padding:11px}
+  .note{font-size:11.5px;color:var(--sub);text-align:center;margin:16px 0 4px}
+  .src-note{font-size:12px;color:var(--sub);margin-bottom:10px;line-height:1.6}
+  .check-item{display:flex;gap:9px;align-items:flex-start;font-size:13.5px;line-height:1.6;margin-bottom:7px}
+  .check-item .dot{color:var(--accent);font-weight:800}
+  .done-btn{width:100%;padding:12px;border-radius:12px;border:1.5px solid var(--accent);background:none;color:var(--accent);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:4px}
+  .done-btn.done{background:var(--accent);color:#fff}
+  .toast{position:fixed;bottom:78px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 20px;border-radius:999px;font-size:13px;z-index:60;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap}
+  .toast.on{opacity:.95}
+</style>
+</head>
+<body>
+<div class="phone">
+  <header>
+    <h1>房務品質管理系統</h1>
+    <div class="date" id="hdrDate"></div>
+  </header>
+  <main>
+
+    <!-- ═══ 今日重點 ═══ -->
+    <div class="page on" id="pg-daily">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <span class="badge b-red">來源：昨日客訴</span>
+          <span style="font-size:11px;color:var(--sub)">早會 2–5 分鐘</span>
+        </div>
+        <div style="font-size:12px;color:var(--sub);margin-bottom:4px">今日品質重點 · 浴室 Bathroom</div>
+        <h2 style="font-size:18px">浴室排水口毛髮檢查</h2>
+        <div class="sec">
+          <h3>為什麼重要</h3>
+          <p>昨日 1208 房客人投訴淋浴排水口有毛髮，直接影響客人對整體衛生的信任——客人看到一根毛髮，會懷疑整間房都沒洗乾淨。</p>
+          <h3>正確做法</h3>
+          <ul>
+            <li>沖洗浴室後，最後一步用紙巾檢查排水口蓋及四周</li>
+            <li>撥開排水蓋，檢查蓋底及入口內側</li>
+            <li>鏡面、玻璃、地面乾身後再作最後目視檢查</li>
+          </ul>
+          <h3>常見錯誤</h3>
+          <ul>
+            <li>只沖水不檢查，毛髮沖不走反而卡在蓋邊</li>
+            <li>趕房時跳過最後目視檢查</li>
+          </ul>
+          <h3>今日主管重點檢查</h3>
+          <div class="check-item"><span class="dot">✓</span>每層抽查 3 間，重點看排水口及地漏</div>
+          <div class="check-item"><span class="dot">✓</span>1208 房今日必查並跟進</div>
+          <h3>今日服務員注意事項</h3>
+          <div class="check-item"><span class="dot">✓</span>浴室清潔最後加一步「排水口目視檢查」</div>
+          <div class="quote">「客人是用一根頭髮，來評價整間房。」</div>
+          <div class="qa" id="dailyQa">
+            <div class="q-label">早會提問 · 加強記憶</div>
+            <div class="q-text">問：浴室清潔完成前，最後一步必須檢查邊個位置？</div>
+            <div class="a-text"><b>答：</b>排水口——撥開排水蓋，檢查蓋底及四周有無毛髮，乾身後再做最後目視檢查。</div>
+            <button class="a-btn" onclick="document.getElementById('dailyQa').classList.add('show')">顯示答案</button>
+            <div class="q-hint">早會時隨機抽問 1–2 位同事，答唔出唔緊要，即場講一次正確答案。</div>
+          </div>
+        </div>
+        <div style="margin-top:16px">
+          <button class="done-btn" id="shareBtn" onclick="markShared(this)">✓ 標記已於早會分享</button>
+        </div>
+      </div>
+      <div class="card" style="padding:13px 16px">
+        <div style="font-size:12px;color:var(--sub);margin-bottom:6px">選題邏輯（自動）</div>
+        <div style="font-size:13px;line-height:1.7">
+          昨日有客訴 → 以客訴為今日重點 ✅<br>
+          <span style="color:var(--sub)">若昨日無客訴 → 按預設主題輪替（明日輪到：工作車整理標準）</span>
+        </div>
+      </div>
+      <div class="note">— demo 假資料 · 每日 06:00 自動產生 —</div>
+    </div>
+
+    <!-- ═══ 客訴管理 ═══ -->
+    <div class="page" id="pg-complaint">
+      <div class="stats">
+        <div class="stat"><div class="n warn">1</div><div class="l">昨日客訴</div></div>
+        <div class="stat"><div class="n" id="statMonth">7</div><div class="l">本月客訴</div></div>
+        <div class="stat"><div class="n warn">2</div><div class="l">重複發生</div></div>
+      </div>
+      <div class="card">
+        <h2>本月問題分類排行</h2>
+        <div class="bar-row"><span class="name">浴室</span><div class="bar-track"><div class="bar-fill" style="width:100%"></div></div><span class="num">3</span></div>
+        <div class="bar-row"><span class="name">客房清潔</span><div class="bar-track"><div class="bar-fill" style="width:66%"></div></div><span class="num">2</span></div>
+        <div class="bar-row"><span class="name">服務</span><div class="bar-track"><div class="bar-fill" style="width:33%"></div></div><span class="num">1</span></div>
+        <div class="bar-row"><span class="name">遺留物</span><div class="bar-track"><div class="bar-fill" style="width:33%"></div></div><span class="num">1</span></div>
+      </div>
+      <h2 style="margin:14px 4px 10px">客訴記錄</h2>
+      <div id="cList"></div>
+      <div class="note">點擊記錄展開詳情 · 右下 ＋ 新增</div>
+    </div>
+
+    <!-- ═══ 主題庫 ═══ -->
+    <div class="page" id="pg-topics">
+      <div class="chips" id="chips"></div>
+      <div id="tList"></div>
+      <div class="note">主題持續累積，形成酒店專屬品質知識庫<br>（demo 的編輯會儲存在本機瀏覽器）</div>
+    </div>
+
+    <!-- ═══ 新人教材 ═══ -->
+    <div class="page" id="pg-training">
+      <div class="src-note" style="margin:2px 4px 12px">新人基礎培訓教材，固定內容按需更新。在職同事可隨時重溫。</div>
+      <div id="accList"></div>
+    </div>
+
+  </main>
+
+  <button class="fab" id="fab" onclick="openModal()">＋</button>
+
+  <nav>
+    <button class="on" onclick="go('daily',this)"><span class="ico">📌</span>今日重點</button>
+    <button onclick="go('complaint',this)"><span class="ico">📋</span>客訴管理</button>
+    <button onclick="go('topics',this)"><span class="ico">📚</span>主題庫</button>
+    <button onclick="go('training',this)"><span class="ico">🎓</span>新人教材</button>
+  </nav>
+</div>
+
+<!-- 新增客訴 modal -->
+<div class="modal" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="sheet">
+    <h2>新增客訴記錄</h2>
+    <div class="f-row"><label>日期</label><input type="date" id="fDate"></div>
+    <div class="f-row"><label>房號</label><input type="text" id="fRoom" placeholder="例：1208"></div>
+    <div class="f-row"><label>問題分類</label>
+      <select id="fCat">
+        <option>客房清潔</option><option>浴室</option><option>服務</option>
+        <option>安全</option><option>遺留物</option><option>工具</option><option>工作間</option>
+      </select>
+    </div>
+    <div class="f-row"><label>客人反映內容</label><textarea id="fDesc" placeholder="客人說了什麼…"></textarea></div>
+    <div class="f-row"><label>實際原因</label><textarea id="fCause" placeholder="查證後的真正原因…"></textarea></div>
+    <div class="f-row"><label>正確標準</label><textarea id="fStd" placeholder="應該怎樣做…"></textarea></div>
+    <div class="f-row"><label>改善措施</label><textarea id="fFix" placeholder="採取了什麼行動…"></textarea></div>
+    <button class="btn" onclick="saveComplaint()">儲存</button>
+    <button class="btn ghost" onclick="closeModal()">取消</button>
+  </div>
+</div>
+
+<!-- 儲存後：是否設為明日重點 -->
+<div class="modal" id="askModal">
+  <div class="sheet" style="border-radius:18px;margin:0 16px 40px;max-width:388px">
+    <h2 style="margin-bottom:6px">已儲存 ✓</h2>
+    <p style="font-size:13.5px;color:var(--sub);line-height:1.6;margin-bottom:14px">要把這宗客訴設為<b style="color:var(--ink)">明日早會的品質重點</b>嗎？系統會自動產生重點卡及早會提問。</p>
+    <button class="btn" onclick="askDone(true)">設為明日重點</button>
+    <button class="btn ghost" onclick="askDone(false)">先不用</button>
+  </div>
+</div>
+
+<!-- 主題詳情 modal -->
+<div class="modal" id="topicModal" onclick="if(event.target===this)closeTopic()">
+  <div class="sheet" id="topicSheet"></div>
+</div>
+
+<!-- 主題編輯 modal -->
+<div class="modal" id="editModal">
+  <div class="sheet">
+    <h2 id="editTitle">編輯主題</h2>
+    <div class="f-row"><label>分類</label>
+      <select id="eCat">
+        <option>客房清潔</option><option>浴室</option><option>服務</option>
+        <option>安全</option><option>遺留物</option><option>工具</option><option>工作間</option>
+      </select>
+    </div>
+    <div class="f-row"><label>主題名稱</label><input type="text" id="eT"></div>
+    <div class="f-row"><label>為什麼重要</label><textarea id="eWhy"></textarea></div>
+    <div class="f-row"><label>正確做法（每行一項）</label><textarea id="eOk" style="height:80px"></textarea></div>
+    <div class="f-row"><label>常見錯誤（每行一項）</label><textarea id="eBad"></textarea></div>
+    <div class="f-row"><label>主管重點檢查</label><input type="text" id="eCheck"></div>
+    <div class="f-row"><label>一句提醒</label><input type="text" id="eTip"></div>
+    <div class="f-row"><label>早會提問</label><input type="text" id="eQ" placeholder="用嚟抽問同事、加強記憶"></div>
+    <div class="f-row"><label>提問答案</label><input type="text" id="eA"></div>
+    <button class="btn" onclick="saveTopic()">儲存主題</button>
+    <button class="btn ghost" onclick="closeEdit()">取消</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const today = new Date('2026-07-24');
+const wd = ['日','一','二','三','四','五','六'];
+document.getElementById('hdrDate').textContent =
+  `${today.getFullYear()}年${today.getMonth()+1}月${today.getDate()}日（星期${wd[today.getDay()]}）`;
+
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('on');
+  clearTimeout(t._h); t._h = setTimeout(()=>t.classList.remove('on'), 2200);
+}
+
+// ── 客訴假資料 ──
+let complaints = [
+  {date:'07-23', room:'1208', cat:'浴室', desc:'淋浴排水口有毛髮', cause:'趕房時跳過最後目視檢查', std:'浴室完成後必須檢查排水口蓋及四周', fix:'列為今日早會重點，主管每層抽查3間', shared:true, check:true, repeat:false},
+  {date:'07-19', room:'0915', cat:'浴室', desc:'浴巾有污漬仍掛回架上', cause:'補品時未逐條檢查布草', std:'布草上架前逐件檢查，有疑即換', fix:'已於早會分享，工作車補品流程加檢查步驟', shared:true, check:true, repeat:true},
+  {date:'07-15', room:'1502', cat:'客房清潔', desc:'床底有前住客的襪子', cause:'checkout房未做床底檢查', std:'C/O房必須用電筒照床底及梳化底', fix:'已於早會分享', shared:true, check:false, repeat:false},
+  {date:'07-11', room:'0722', cat:'服務', desc:'DND牌未掛好期間被敲門', cause:'服務員未先核對DND名單', std:'開工先核對DND名單，DND房下午再確認', fix:'已重溫DND處理流程', shared:true, check:false, repeat:false},
+  {date:'07-08', room:'1101', cat:'遺留物', desc:'客人退房後充電器三日後才找到', cause:'L&F未即日登記入系統', std:'遺留物須即日登記、拍照、上架', fix:'L&F流程張貼於工作間', shared:false, check:false, repeat:true},
+];
+
+function renderComplaints(){
+  document.getElementById('cList').innerHTML = complaints.map((c,i)=>`
+    <div class="c-item" id="ci${i}">
+      <div class="c-head" onclick="document.getElementById('ci${i}').classList.toggle('open')">
+        <span class="badge ${c.cat==='浴室'?'b-blue':c.cat==='客房清潔'?'b-teal':c.cat==='服務'?'b-amber':'b-gray'}">${c.cat}</span>
+        <span class="room">${c.room}</span>
+        <span class="desc">${c.desc}</span>
+        <span style="font-size:11px;color:var(--sub)">${c.date}</span>
+      </div>
+      <div class="c-body">
+        <div class="kv"><span class="k">客人反映</span><span class="v">${c.desc}</span></div>
+        <div class="kv"><span class="k">實際原因</span><span class="v">${c.cause}</span></div>
+        <div class="kv"><span class="k">正確標準</span><span class="v">${c.std}</span></div>
+        <div class="kv"><span class="k">改善措施</span><span class="v">${c.fix}</span></div>
+        <div class="flags">
+          <span class="badge ${c.shared?'b-teal':'b-gray'}">${c.shared?'✓ 已早會分享':'未分享'}</span>
+          <span class="badge ${c.check?'b-teal':'b-gray'}">${c.check?'✓ 已排重點檢查':'未排檢查'}</span>
+          <span class="badge ${c.repeat?'b-red':'b-teal'}">${c.repeat?'⚠ 曾再次發生':'未再發生'}</span>
+        </div>
+      </div>
+    </div>`).join('');
+}
+renderComplaints();
+
+// ── 主題庫（可編輯，demo 存 localStorage）──
+const cats = ['客房清潔','浴室','服務','安全','遺留物','工具','工作間'];
+const defaultTopics = {
+'客房清潔':[
+ {t:'床單四角拉緊標準', why:'床是客人進房第一眼看的地方，床單皺摺會令整間房顯得馬虎。', ok:['床單四角包實床褥，中線對齊','被套四角抖到位，被芯不打結','枕頭袋開口朝外側統一方向'], bad:['四角只塞不包，客人一坐就鬆','被芯縮在一角'], check:'抽查時掀開床尾角看包法', tip:'「床鋪得好，房就好了一半。」', q:'鋪床時床單四角嘅標準係點？', a:'四角包實床褥、中線對齊，被芯抖到位不打結。'},
+ {t:'床底及梳化底檢查', why:'床底遺留物是最尷尬的投訴——客人會覺得房間根本沒洗過。', ok:['C/O房用電筒照床底、梳化底、床頭櫃背','發現雜物即清走並檢查是否遺留物'], bad:['只吸看得見的地面','以為上一更查過就跳過'], check:'C/O房抽查必照床底', tip:'「看不見的地方，才是標準所在。」', q:'C/O房邊三個位必須用電筒照？', a:'床底、梳化底、床頭櫃背。'},
+ {t:'杯具消毒與擺位', why:'杯具直接入口，衛生問題會直接變成投訴甚至衛生部門事件。', ok:['杯具收回工作間統一消毒','消毒後戴手套拿杯身，不掂杯口','杯墊、杯蓋按標準擺位'], bad:['在房內用毛巾抹杯了事','徒手掂杯口留下指紋'], check:'抽查杯口有無水漬指紋', tip:'「杯是客人放到嘴邊的東西。」', q:'房間杯具應該喺邊度清潔？', a:'收回工作間統一消毒，不可在房內用毛巾抹。'},
+ {t:'遙控器與電話消毒', why:'遙控器是全房細菌最多的物件，客人愈來愈關注。', ok:['每日用消毒濕巾抹遙控器、電話聽筒、燈掣','電話聽筒檢查有無異味'], bad:['只抹表面不抹按鍵縫','電話從不檢查'], check:'抽查遙控器按鍵縫', tip:'「客人手最常掂的，就要最乾淨。」', q:'全房細菌最多嘅物件係咩？點處理？', a:'遙控器——每日用消毒濕巾連按鍵縫一齊抹。'},
+ {t:'鏡面與窗台指紋', why:'鏡面有印客人一照就見，觀感分即刻扣光。', ok:['鏡面用乾布打圈收尾','窗台、玻璃檯面側光檢查'], bad:['布太濕留水痕','只正面看不側光看'], check:'側光看鏡面及玻璃檯面', tip:'「側身看一眼，勝過正面看三眼。」', q:'檢查鏡面同玻璃檯面嘅正確方法？', a:'側光檢查，先容易見到指紋同水痕。'},
+],
+'浴室':[
+ {t:'排水口毛髮檢查', why:'一根毛髮足以令客人懷疑整間房的衛生。', ok:['沖洗後用紙巾檢查排水口蓋及四周','撥開排水蓋檢查蓋底','乾身後最後目視檢查'], bad:['只沖水不檢查','趕房跳過最後檢查'], check:'每層抽查3間看排水口及地漏', tip:'「客人是用一根頭髮，來評價整間房。」', q:'浴室清潔完成前，最後一步必須檢查邊個位置？', a:'排水口——撥開蓋檢查蓋底同四周有無毛髮。'},
+ {t:'馬桶內緣與底座', why:'馬桶是衛生投訴的重災區，內緣與底座最易漏。', ok:['刷內緣出水孔位置','抹底座與地面接縫','蓋板正反兩面都抹'], bad:['只刷看得見的內壁','底座接縫積垢無人理'], check:'抽查用鏡看馬桶內緣', tip:'「馬桶乾淨，是衛生的底線。」', q:'刷馬桶最容易漏嘅兩個位係邊？', a:'內緣出水孔同埋底座與地面接縫。'},
+ {t:'浴巾布草污漬檢查', why:'有污漬的毛巾掛回架上，等於告訴客人「我們沒檢查」。', ok:['布草上架前逐件打開檢查','有污漬、破損、異味即換','摺法統一，商標朝同一方向'], bad:['整疊上架不逐件看','污漬面朝內就當看不見'], check:'抽查打開浴巾看兩面', tip:'「每一條毛巾，都代表酒店。」', q:'布草上架前要做咩？', a:'逐件打開檢查兩面，有污漬破損異味即換。'},
+ {t:'沐浴用品補充標準', why:'用品缺漏是最容易避免卻最常發生的投訴。', ok:['按房型清單逐格補齊','樽裝低於1/3即換','標籤統一朝外'], bad:['憑記憶補不對清單','樽裝剩少少就算'], check:'抽查對照備品清單', tip:'「客人半夜發現無沐浴露，就是投訴。」', q:'樽裝用品剩幾多就要換？', a:'低於三分一即換，補品必須對清單。'},
+ {t:'地面乾身與防滑', why:'濕滑地面是安全事故源頭，跌倒是最嚴重的投訴類別。', ok:['清潔後地面抹乾至無水膜','浴缸/企缸底檢查防滑貼','地巾擺放到位'], bad:['等地面自然乾','防滑貼發黑無人換'], check:'完房後踩測地面乾爽度', tip:'「乾的地面，是最基本的安全。」', q:'完房時浴室地面嘅標準係點？', a:'抹乾至無水膜、踩落去乾爽，地巾擺放到位。'},
+],
+'服務':[
+ {t:'DND房處理流程', why:'錯敲DND房是最直接的私隱投訴，客人會非常反感。', ok:['開工先核對DND名單','DND房下午再確認一次','過夜DND按程序上報主管'], bad:['見門就敲不看名單','DND過夜無人跟進'], check:'核對每層DND名單執行', tip:'「掛DND的門，比VIP房更不能碰。」', q:'開工見到DND房第一步做咩？', a:'先核對DND名單，下午再確認，過夜要上報主管。'},
+ {t:'敲門與報名標準', why:'敲門方式是客人對服務專業度的第一印象。', ok:['敲三下、報「Housekeeping」、等5秒，重複三輪','開門後再出聲確認無人','客人應門即後退一步微笑'], bad:['敲一下就開門','用門卡撞門聲代替敲門'], check:'現場觀察敲門程序', tip:'「門的另一邊永遠當有人。」', q:'標準敲門程序係點？', a:'敲三下、報Housekeeping、等5秒，重複三輪先開門。'},
+ {t:'客人在房時的清潔禮儀', why:'客人在房時的一舉一動都被看在眼裡。', ok:['先詢問是否方便清潔','動作放輕、不接聽私人電話','客人物品原位不動'], bad:['當客人不存在大聲操作','擅自移動客人物品「執靚佢」'], check:'留意住客房清潔的禮儀表現', tip:'「客人在場，你就是酒店的臉。」', q:'客人喺房時清潔要注意咩？', a:'先問方唔方便、動作放輕、客人物品原位不動。'},
+ {t:'加床加枕回應時限', why:'客人提出要求後的等待時間，決定服務評分。', ok:['接到要求10分鐘內送到','送到時報項目確認','未能即時送到要回覆預計時間'], bad:['「等陣」之後無下文','送錯項目無確認'], check:'抽查客需求回應時間', tip:'「客人計時，是由開口那刻開始。」', q:'客人要加枕頭，幾耐內要送到？', a:'10分鐘內；送唔切要回覆預計時間。'},
+],
+'安全':[
+ {t:'化學品分色使用', why:'用錯化學品會損壞設備，混用有毒氣風險。', ok:['按顏色標籤對應用途','稀釋按比例，不自行加濃','噴頭標籤模糊即換'], bad:['潔廁劑攞去抹其他位置','兩種清潔劑溝埋用'], check:'抽查工作車化學品擺放及標籤', tip:'「顏色不對，就不要用。」', q:'兩種清潔劑可唔可以溝埋用？', a:'絕對不可以——有毒氣風險，按顏色標籤用途使用。'},
+ {t:'濕地牌擺放', why:'公共區域跌倒事故，酒店責任極大。', ok:['拖地前先擺濕地牌','乾透才收牌','走廊拖一半留通道'], bad:['拖完先擺牌','牌擺了但當眼位不對'], check:'巡樓看濕地牌使用', tip:'「牌先落地，水才可以落地。」', q:'濕地牌幾時擺、幾時收？', a:'拖地前先擺，地面乾透先至收。'},
+ {t:'工作車不擋走火通道', why:'消防通道受阻是驗查即罰項目，緊急時致命。', ok:['工作車靠牆停放','不停在防火門、走火通道口','人離車不過三間房距離'], bad:['車停通道中間','防火門被車頂住長開'], check:'巡樓看工作車停放位置', tip:'「通道是逃生的路，不是泊車的位。」', q:'工作車唔可以停喺邊？', a:'防火門同走火通道口，一律靠牆停。'},
+],
+'遺留物':[
+ {t:'L&F即日登記流程', why:'遲登記會令客人取回無門，直接變成投訴。', ok:['發現後即通知主管','即日登記：日期、房號、物品、發現人','拍照存檔後上架'], bad:['袋住先，遲啲先入系統','口頭講咗當登記咗'], check:'核對昨日C/O房與L&F記錄', tip:'「客人的東西，一分鐘都不能不明不白。」', q:'發現遺留物要幾時登記？', a:'即日——通知主管、登記、拍照、上架，一步都唔可以少。'},
+ {t:'貴重物品上報標準', why:'現金、首飾、證件處理不當會演變成誠信事件。', ok:['貴重物品即時上報主管見證','雙人點算、密封、簽名','存入指定保管位置'], bad:['自行保管等收工先交','無見證人自己封袋'], check:'貴重L&F必須有雙簽記錄', tip:'「貴重物品，永遠兩個人處理。」', q:'執到現金首飾點處理？', a:'即時上報，雙人點算、密封、簽名。'},
+],
+'工具':[
+ {t:'工作車每日整理標準', why:'工作車是流動的形象，亂車等於話俾客人聽「我哋好亂」。', ok:['開工前按分層標準執車','布草袋不過三分二滿','車面只放當日所需'], bad:['亂塞亂放搵嘢慢','垃圾袋滿瀉先換'], check:'早上抽查工作車', tip:'「車企理，人企理。」', q:'布草袋幾滿就要處理？', a:'不過三分二滿就要換袋。'},
+ {t:'吸塵機濾網清潔', why:'濾網塞會令吸力下降兼有異味，房間吸極唔乾淨。', ok:['每週清濾網','塵袋三分二滿即換','收工繞好電線檢查插頭'], bad:['吸力弱先諗起濾網','電線拖地踩到破皮'], check:'抽查吸塵機濾網狀態', tip:'「工具狀態，就是工作狀態。」', q:'吸塵機濾網幾耐清一次？', a:'每週一次，塵袋三分二滿即換。'},
+],
+'工作間':[
+ {t:'布草分類擺放', why:'乾淨與污穢布草混放是衛生大忌，亦影響點算。', ok:['乾淨布草上架分類擺','污穢布草即入指定袋','地面不落布草'], bad:['乾淨污穢疊埋一齊','布草放地下'], check:'巡工作間看布草分區', tip:'「布草落地，就當污穢。」', q:'布草跌咗落地下點算？', a:'一律當污穢處理，不可以上架。'},
+ {t:'工作間每日收工檢查', why:'工作間是後場的臉，亂的工作間養成亂的習慣。', ok:['收工前消耗品點數','化學品歸位上鎖','地面清潔、垃圾清走'], bad:['用完亂放聽日先算','化學品唔上鎖'], check:'收工前巡一次工作間', tip:'「今日執好，明日開工快十分鐘。」', q:'收工前工作間要做邊三件事？', a:'消耗品點數、化學品歸位上鎖、地面清潔。'},
+],
+};
+
+let topics;
+try{
+  const saved = localStorage.getItem('hqms-topics');
+  topics = saved ? JSON.parse(saved) : JSON.parse(JSON.stringify(defaultTopics));
+}catch(e){ topics = JSON.parse(JSON.stringify(defaultTopics)); }
+function persist(){
+  try{ localStorage.setItem('hqms-topics', JSON.stringify(topics)); }catch(e){}
+}
+
+let curCat = '浴室';
+function renderChips(){
+  document.getElementById('chips').innerHTML = cats.map(c=>
+    `<button class="chip ${c===curCat?'on':''}" onclick="curCat='${c}';renderChips();renderTopics()">${c}<span style="opacity:.6"> ${topics[c].length}</span></button>`).join('');
+}
+function renderTopics(){
+  document.getElementById('tList').innerHTML = topics[curCat].map((tp,i)=>
+    `<div class="t-item" onclick="openTopic(${i})">
+      <span class="tt"></span><span class="arrow">›</span></div>`).join('')
+    + `<button class="add-topic" onclick="openEdit(-1)">＋ 新增主題</button>`;
+  document.querySelectorAll('#tList .t-item .tt').forEach((el,i)=>{ el.textContent = topics[curCat][i].t; });
+}
+renderChips(); renderTopics();
+
+let curTopicIdx = null;
+function openTopic(i){
+  curTopicIdx = i;
+  const tp = topics[curCat][i];
+  const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  document.getElementById('topicSheet').innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <span class="badge b-teal">${curCat}</span>
+      <span style="font-size:12px;color:var(--sub);cursor:pointer;padding:4px 8px" onclick="closeTopic()">✕ 關閉</span>
+    </div>
+    <h2 style="font-size:17px">${esc(tp.t)}</h2>
+    <div class="sec">
+      <h3>為什麼重要</h3><p>${esc(tp.why)}</p>
+      <h3>正確做法</h3><ul>${tp.ok.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>
+      <h3>常見錯誤</h3><ul>${tp.bad.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>
+      <h3>主管重點檢查</h3>
+      <div class="check-item"><span class="dot">✓</span>${esc(tp.check)}</div>
+      <div class="quote">${esc(tp.tip)}</div>
+      <div class="qa" id="tpQa">
+        <div class="q-label">早會提問</div>
+        <div class="q-text">問：${esc(tp.q||'（未設定）')}</div>
+        <div class="a-text"><b>答：</b>${esc(tp.a||'（未設定）')}</div>
+        <button class="a-btn" onclick="document.getElementById('tpQa').classList.add('show')">顯示答案</button>
+      </div>
+    </div>
+    <button class="btn" style="margin-top:16px" onclick="setTomorrow()">📌 設為明日早會重點</button>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button class="done-btn" style="margin:0" onclick="closeTopic();openEdit(${i})">✏️ 編輯</button>
+      <button class="btn danger" style="margin:0;width:auto;flex:1" id="delBtn" onclick="delTopic(this)">🗑 刪除</button>
+    </div>`;
+  document.getElementById('topicModal').classList.add('on');
+}
+function closeTopic(){ document.getElementById('topicModal').classList.remove('on'); }
+function setTomorrow(){
+  const tp = topics[curCat][curTopicIdx];
+  closeTopic();
+  toast(`已設為明日早會重點：${tp.t}`);
+}
+function delTopic(btn){
+  if(btn.dataset.armed !== '1'){
+    btn.dataset.armed = '1';
+    btn.textContent = '再按一次確定刪除';
+    return;
+  }
+  topics[curCat].splice(curTopicIdx,1);
+  persist(); renderChips(); renderTopics(); closeTopic();
+  toast('已刪除主題');
+}
+
+// ── 主題編輯 ──
+let editIdx = -1;
+function openEdit(i){
+  editIdx = i;
+  const isNew = i < 0;
+  document.getElementById('editTitle').textContent = isNew ? '新增主題' : '編輯主題';
+  document.getElementById('eCat').value = curCat;
+  document.getElementById('eCat').disabled = !isNew;
+  const tp = isNew ? {t:'',why:'',ok:[],bad:[],check:'',tip:'',q:'',a:''} : topics[curCat][i];
+  document.getElementById('eT').value = tp.t;
+  document.getElementById('eWhy').value = tp.why;
+  document.getElementById('eOk').value = tp.ok.join('\n');
+  document.getElementById('eBad').value = tp.bad.join('\n');
+  document.getElementById('eCheck').value = tp.check;
+  document.getElementById('eTip').value = tp.tip;
+  document.getElementById('eQ').value = tp.q||'';
+  document.getElementById('eA').value = tp.a||'';
+  document.getElementById('editModal').classList.add('on');
+}
+function closeEdit(){ document.getElementById('editModal').classList.remove('on'); }
+function saveTopic(){
+  const lines = id => document.getElementById(id).value.split('\n').map(s=>s.trim()).filter(Boolean);
+  const tp = {
+    t: document.getElementById('eT').value.trim() || '（未命名主題）',
+    why: document.getElementById('eWhy').value.trim(),
+    ok: lines('eOk'), bad: lines('eBad'),
+    check: document.getElementById('eCheck').value.trim(),
+    tip: document.getElementById('eTip').value.trim(),
+    q: document.getElementById('eQ').value.trim(),
+    a: document.getElementById('eA').value.trim(),
+  };
+  if(editIdx < 0){
+    const cat = document.getElementById('eCat').value;
+    topics[cat].push(tp);
+    curCat = cat;
+  }else{
+    topics[curCat][editIdx] = tp;
+  }
+  persist(); renderChips(); renderTopics(); closeEdit();
+  toast(editIdx < 0 ? '已新增主題' : '已儲存修改');
+}
+
+// ── 新人教材 ──
+const training = [
+ ['房間清潔流程', '入房到報房的標準次序：', ['敲門報名 → 進房開窗通風','收布草、倒垃圾','鋪床（四角包實）','由高到低、由裡到外抹塵','浴室清潔（最後檢查排水口）','補品對清單','吸塵由裡向門口退出','最後360°目視檢查','報房更新房態']],
+ ['衛生標準', '衛生是房務的底線：', ['布草逐件檢查，污漬破損即換','杯具統一回工作間消毒','抹布分色使用不交叉','化學品按標籤用途及比例']],
+ ['DND 處理', '掛牌房的處理原則：', ['開工先核對DND名單','DND房不敲門不打擾','下午再確認一次','過夜DND上報主管跟進']],
+ ['Stayover 程序', '住客房清潔的分寸：', ['客人物品原位不動','私人文件、財物不觸碰','床鋪整理、毛巾按使用情況更換','發現異常（損壞/違禁品）即報主管']],
+ ['Checkout 程序', 'C/O房是深度檢查房：', ['電筒照床底、梳化底、抽屜','夾萬確認已開已空','迷你吧點算入賬','遺留物即報即登記','全面更換布草及消耗品']],
+ ['Lost & Found', '遺留物處理五步：', ['發現 → 即通知主管','即日登記（日期/房號/物品/發現人）','拍照存檔','按類別上架保存','貴重物品雙人處理、密封簽名']],
+ ['VIP 房要求', 'VIP房的加碼標準：', ['按VIP等級對照擺設清單','歡迎品、鮮花、卡片檢查','主管必須複查後才報房','留意客史偏好（枕頭/樓層/忌諱）']],
+ ['客人服務禮儀', '每一次接觸都是服務：', ['主動微笑、稱呼客人','走廊靠邊讓路、電梯讓客人先','聽不懂的要求找主管，不亂應承','不議論客人、不透露房號住客資料']],
+ ['安全事項', '保護自己也保護客人：', ['化學品不混用、不徒手接觸','彎腰搬重物用腳力不用腰力','發現可疑人物/物品即報','熟悉走火通道及滅火器位置']],
+ ['工作車整理', '車的標準：', ['上層：清潔劑及工具','中層：備品消耗品','下層：乾淨布草','側掛：布草袋、垃圾袋（不過2/3滿）','車靠牆停、不擋通道']],
+ ['工作間整理', '後場標準：', ['乾淨/污穢布草嚴格分區','化學品上鎖存放','消耗品每日點數','收工前清潔地面']],
+ ['常見問題', '新人最常中招位：', ['趕房漏最後檢查 → 寧慢一分鐘','憑記憶補品 → 必須對清單','見DND照敲 → 先看名單','遺留物袋住先 → 即報即登記','杯具房內求其抹 → 統一消毒']],
+];
+document.getElementById('accList').innerHTML = training.map((t,i)=>
+  `<div class="acc" id="ac${i}">
+    <div class="acc-h" onclick="document.getElementById('ac${i}').classList.toggle('open')">${i+1}. ${t[0]}<span style="color:var(--sub)">＋</span></div>
+    <div class="acc-b">${t[1]}<ol>${t[2].map(x=>`<li>${x}</li>`).join('')}</ol></div>
+  </div>`).join('');
+
+// ── 導航 ──
+function go(id, btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.getElementById('pg-'+id).classList.add('on');
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById('fab').style.display = id==='complaint' ? 'block' : 'none';
+}
+
+// ── 新增客訴 ──
+function openModal(){
+  document.getElementById('fDate').value = '2026-07-24';
+  document.getElementById('modal').classList.add('on');
+}
+function closeModal(){ document.getElementById('modal').classList.remove('on'); }
+function saveComplaint(){
+  const room = document.getElementById('fRoom').value || '----';
+  const desc = document.getElementById('fDesc').value || '（未填）';
+  complaints.unshift({
+    date:'07-24', room, cat:document.getElementById('fCat').value, desc,
+    cause:document.getElementById('fCause').value||'（未填）',
+    std:document.getElementById('fStd').value||'（未填）',
+    fix:document.getElementById('fFix').value||'（未填）',
+    shared:false, check:false, repeat:false,
+  });
+  document.getElementById('statMonth').textContent = 7 + complaints.filter(c=>c.date==='07-24').length;
+  renderComplaints(); closeModal();
+  document.getElementById('askModal').classList.add('on');
+}
+function askDone(yes){
+  document.getElementById('askModal').classList.remove('on');
+  toast(yes ? '已設為明日早會重點' : '已儲存至客訴記錄');
+}
+function markShared(btn){
+  btn.classList.add('done');
+  btn.textContent = '✓ 已於早會分享（07:05）';
+}
+</script>
+</body>
+</html>
