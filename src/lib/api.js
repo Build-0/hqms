@@ -1,6 +1,7 @@
 // 資料層：.env 有 Supabase 設定就走雲端，否則走 localStorage 示範模式
 import { createClient } from '@supabase/supabase-js'
 import * as local from './localStore'
+import { compressImage } from './image'
 
 const url = import.meta.env.VITE_SUPABASE_URL
 const key = import.meta.env.VITE_SUPABASE_ANON_KEY
@@ -33,6 +34,17 @@ export async function signIn(username, password) {
 export async function signOut() {
   if (isLocal) return local.signOut()
   await sb.auth.signOut()
+}
+
+// ── photos ──
+// 壓縮後上傳；示範模式直接回傳 dataURL 存進記錄，正式模式上傳 Storage 回傳公開網址
+export async function uploadPhoto(file) {
+  const { blob, dataUrl } = await compressImage(file)
+  if (isLocal) return dataUrl
+  const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`
+  const { error } = await sb.storage.from('photos').upload(path, blob, { contentType: 'image/jpeg' })
+  throwIf(error)
+  return sb.storage.from('photos').getPublicUrl(path).data.publicUrl
 }
 
 // ── complaints ──

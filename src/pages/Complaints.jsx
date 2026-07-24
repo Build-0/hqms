@@ -4,8 +4,9 @@ import { CATS } from '../data/seedData'
 import { catMeta } from '../lib/cats'
 import { todayStr, addDaysStr } from '../lib/dates'
 import { toast } from '../lib/toast'
+import { PhotoGrid, PhotoField } from '../components/Photos'
 
-const EMPTY = { date: '', room: '', category: '客房清潔', guest_comment: '', actual_cause: '', correct_standard: '', improvement: '' }
+const EMPTY = { date: '', room: '', category: '客房清潔', guest_comment: '', actual_cause: '', correct_standard: '', improvement: '', photos: [] }
 
 export default function Complaints() {
   const [list, setList] = useState([])
@@ -34,6 +35,7 @@ export default function Complaints() {
       date: f.date, room: f.room || '—', category: f.category,
       guest_comment: f.guest_comment, actual_cause: f.actual_cause,
       correct_standard: f.correct_standard, improvement: f.improvement,
+      photos: f.photos || [],
     }
     if (f.id) {
       await api.updateComplaint(f.id, payload)
@@ -116,6 +118,7 @@ export default function Complaints() {
                   <span className="badge" style={{ background: m.s, color: m.c }}>{m.e} {c.category}</span>
                   <span className="room">{c.room}</span>
                   <span className="desc">{c.guest_comment}</span>
+                  {c.photos?.length > 0 && <span className="ph-count">📷{c.photos.length}</span>}
                   <span style={{ fontSize: 11, color: 'var(--sub)' }}>{c.date.slice(5)}</span>
                 </div>
                 {open === c.id && (
@@ -124,6 +127,7 @@ export default function Complaints() {
                     <div className="kv"><span className="k">實際原因</span><span className="v">{c.actual_cause || '—'}</span></div>
                     <div className="kv"><span className="k">正確標準</span><span className="v">{c.correct_standard || '—'}</span></div>
                     <div className="kv"><span className="k">改善措施</span><span className="v">{c.improvement || '—'}</span></div>
+                    <PhotoGrid photos={c.photos} />
                     <div className="flags">
                       <button className={`badge ${c.shared ? 'b-teal' : 'b-gray'}`} onClick={() => toggle(c, 'shared')}>{c.shared ? '✓ 已早會分享' : '未分享'}</button>
                       <button className={`badge ${c.check_scheduled ? 'b-teal' : 'b-gray'}`} onClick={() => toggle(c, 'check_scheduled')}>{c.check_scheduled ? '✓ 已排重點檢查' : '未排檢查'}</button>
@@ -166,6 +170,7 @@ export default function Complaints() {
             {F('實際原因', 'actual_cause', 'textarea', { placeholder: '查證後的真正原因…' })}
             {F('正確標準', 'correct_standard', 'textarea', { placeholder: '應該怎樣做…' })}
             {F('改善措施', 'improvement', 'textarea', { placeholder: '採取了什麼行動…' })}
+            <PhotoField label="現場相片（早會展示用）" photos={form.photos} onChange={p => setForm({ ...form, photos: p })} />
             <button className="btn" onClick={save}>儲存</button>
             <button className="btn ghost" onClick={() => setForm(null)}>取消</button>
           </div>

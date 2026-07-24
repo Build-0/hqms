@@ -4,8 +4,9 @@ import { CATS, seedTopics } from '../data/seedData'
 import { catMeta } from '../lib/cats'
 import { addDaysStr } from '../lib/dates'
 import { toast } from '../lib/toast'
+import { PhotoGrid, PhotoField } from '../components/Photos'
 
-const EMPTY = { category: '', title: '', why: '', correct_steps: [], mistakes: [], supervisor_check: '', reminder: '', question: '', answer: '' }
+const EMPTY = { category: '', title: '', why: '', correct_steps: [], mistakes: [], supervisor_check: '', reminder: '', question: '', answer: '', photos: [] }
 
 export default function Topics() {
   const [topics, setTopics] = useState(null)
@@ -39,6 +40,7 @@ export default function Topics() {
       reminder: f.reminder.trim(),
       question: f.question.trim(),
       answer: f.answer.trim(),
+      photos: f.photos || [],
     }
     if (f.id) {
       await api.updateTopic(f.id, payload)
@@ -125,6 +127,7 @@ export default function Topics() {
             <h2 style={{ fontSize: 17 }}>{view.title}</h2>
             <div className="sec">
               {view.why && <p className="lead" style={{ marginTop: 4 }}>{view.why}</p>}
+              <PhotoGrid photos={view.photos} />
               <div className="okbad">
                 {view.correct_steps?.length > 0 && (
                   <div className="panel good">
@@ -188,6 +191,7 @@ export default function Topics() {
             {F('一句提醒', 'reminder')}
             {F('早會提問', 'question', 'input', { placeholder: '用嚟抽問同事、加強記憶' })}
             {F('提問答案', 'answer')}
+            <PhotoField label="示範相片（正確做法）" photos={form.photos} onChange={p => setForm({ ...form, photos: p })} />
             <button className="btn" onClick={save}>儲存主題</button>
             <button className="btn ghost" onClick={() => setForm(null)}>取消</button>
           </div>

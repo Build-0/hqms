@@ -3,6 +3,7 @@ import * as api from '../lib/api'
 import { catMeta } from '../lib/cats'
 import { todayStr, addDaysStr } from '../lib/dates'
 import { toast } from '../lib/toast'
+import { PhotoGrid } from '../components/Photos'
 
 const CAT_EN = { 客房清潔: 'Room Cleaning', 浴室: 'Bathroom', 服務: 'Guest Service', 安全: 'Safety', 遺留物: 'Lost & Found', 工具: 'Equipment', 工作間: 'Work Area' }
 
@@ -91,6 +92,7 @@ export default function Daily() {
               <p className="lead" style={{ marginTop: 8 }}>
                 {complaint.date} · <b>{complaint.room} 房</b>，客人反映：「{complaint.guest_comment}」
               </p>
+              {complaint.photos?.length > 0 && <><h3>現場相片</h3><PhotoGrid photos={complaint.photos} /></>}
               <div className="okbad">
                 {complaint.actual_cause && (
                   <div className="panel badp">
@@ -117,6 +119,7 @@ export default function Daily() {
           ) : (
             <>
               <p className="lead" style={{ marginTop: 8 }}>{topic.why}</p>
+              {topic.photos?.length > 0 && <><h3>示範相片</h3><PhotoGrid photos={topic.photos} /></>}
               <div className="okbad">
                 {topic.correct_steps?.length > 0 && (
                   <div className="panel good">

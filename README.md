@@ -37,4 +37,5 @@ npm run dev
 - `src/pages/Topics.jsx` — 七大分類主題庫 CRUD（含早會提問）
 - `src/pages/Training.jsx` — 新人教材（固定內容，改 `src/data/seedData.js`）
 - `src/lib/api.js` — 資料層：有 .env 走 Supabase，沒有走 localStorage 示範模式
+- `src/components/Photos.jsx` — 相片元件：客訴現場照/主題示範照，上傳前自動壓縮（最長邊1000px），正式模式存 Supabase Storage（schema.sql 已含 photos bucket 設定）
 - `demo-static.html` — 最初的單檔靜態 demo（留作參考）

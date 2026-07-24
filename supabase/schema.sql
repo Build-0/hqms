@@ -14,6 +14,7 @@ create table if not exists complaints (
   shared boolean not null default false,
   check_scheduled boolean not null default false,
   recurred boolean not null default false,
+  photos jsonb not null default '[]',
   created_at timestamptz not null default now()
 );
 
@@ -30,6 +31,7 @@ create table if not exists topics (
   question text not null default '',
   answer text not null default '',
   sort_order int not null default 0,
+  photos jsonb not null default '[]',
   created_at timestamptz not null default now()
 );
 
@@ -50,5 +52,13 @@ alter table daily_focus enable row level security;
 create policy "auth all complaints" on complaints for all to authenticated using (true) with check (true);
 create policy "auth all topics" on topics for all to authenticated using (true) with check (true);
 create policy "auth all focus" on daily_focus for all to authenticated using (true) with check (true);
+
+-- 相片儲存：公開讀取的 photos bucket（客訴現場照、主題示範照）
+insert into storage.buckets (id, name, public) values ('photos', 'photos', true)
+on conflict (id) do nothing;
+
+create policy "auth upload photos" on storage.objects for insert to authenticated with check (bucket_id = 'photos');
+create policy "auth delete photos" on storage.objects for delete to authenticated using (bucket_id = 'photos');
+create policy "public read photos" on storage.objects for select using (bucket_id = 'photos');
 
 -- 25 個預設主題不用 SQL 匯入：登入後到「主題庫」按「匯入預設主題」即可
