@@ -6,6 +6,8 @@ import { compressImage } from './image'
 const url = import.meta.env.VITE_SUPABASE_URL
 const key = import.meta.env.VITE_SUPABASE_ANON_KEY
 export const isLocal = !url || !key
+// 開放模式：連 Supabase 但跳過登入（設計期用；資料庫端須先執行 supabase/open-mode.sql）
+export const isOpen = !isLocal && import.meta.env.VITE_OPEN_MODE === '1'
 const sb = isLocal ? null : createClient(url, key)
 
 function throwIf(error) { if (error) throw new Error(error.message) }
@@ -13,11 +15,12 @@ function throwIf(error) { if (error) throw new Error(error.message) }
 // ── auth ──
 export async function getUser() {
   if (isLocal) return local.getUser()
+  if (isOpen) return { email: 'open-mode' }
   const { data } = await sb.auth.getSession()
   return data.session?.user ?? null
 }
 export function onAuthChange(cb) {
-  if (isLocal) return () => {}
+  if (isLocal || isOpen) return () => {}
   const { data } = sb.auth.onAuthStateChange((_e, s) => cb(s?.user ?? null))
   return () => data.subscription.unsubscribe()
 }
@@ -33,6 +36,7 @@ export async function signIn(username, password) {
 }
 export async function signOut() {
   if (isLocal) return local.signOut()
+  if (isOpen) return
   await sb.auth.signOut()
 }
 

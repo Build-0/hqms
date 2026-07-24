@@ -26,6 +26,15 @@ npm run dev
    在專案根目錄複製 `.env.example` 為 `.env` 填入。
 6. 重啟 `npm run dev` 即可登入使用。
 
+## 開放模式（設計期免登入）
+
+設計階段不想管帳號密碼：
+1. SQL Editor 執行 `supabase/open-mode.sql`（允許未登入讀寫）。
+2. `.env` 加一行 `VITE_OPEN_MODE=1`，重啟 dev → 打開即用，無登入頁。
+
+**上線給同事用之前**：SQL Editor 執行 `supabase/lock-mode.sql` 收回權限、
+把 `.env` 的 `VITE_OPEN_MODE` 移除，再建立同事帳號（見上面第 4 步）。
+
 ## 部署到 Vercel（讓同事手機直接開網址）
 
 1. 專案推上 GitHub。

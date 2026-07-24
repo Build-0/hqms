@@ -45,11 +45,11 @@ export default function App() {
       <header>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h1>房務品質管理系統</h1>
-          <button className="logout" onClick={async () => { await api.signOut(); setUser(null) }}>登出</button>
+          {!api.isOpen && <button className="logout" onClick={async () => { await api.signOut(); setUser(null) }}>登出</button>}
         </div>
         <div className="date">
           {now.getFullYear()}年{now.getMonth() + 1}月{now.getDate()}日（星期{WD[now.getDay()]}）
-          {api.isLocal && ' · 示範模式'}
+          {api.isLocal && ' · 示範模式'}{api.isOpen && ' · 開放模式'}
         </div>
       </header>
       <main>
