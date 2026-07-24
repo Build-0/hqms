@@ -24,7 +24,7 @@ export default function Topics() {
 
   async function importSeed() {
     await api.importSeedTopics(seedTopics.map((t, i) => ({ ...t, sort_order: i })))
-    toast('已匯入 25 個預設主題')
+    toast(`已匯入 ${seedTopics.length} 個預設主題`)
     load()
   }
 
@@ -97,7 +97,7 @@ export default function Topics() {
       </div>
 
       {topics.length === 0 && (
-        <button className="add-topic" style={{ marginBottom: 8 }} onClick={importSeed}>⬇ 匯入 25 個預設主題</button>
+        <button className="add-topic" style={{ marginBottom: 8 }} onClick={importSeed}>⬇ 匯入 {seedTopics.length} 個預設主題</button>
       )}
       <div className="t-grid">
         {inCat.map(t => {

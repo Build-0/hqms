@@ -14,14 +14,17 @@ npm run dev
 ## 接上 Supabase（正式多人使用）
 
 1. 到 https://supabase.com 建立新專案（免費）。
-2. Dashboard → **SQL Editor** → 貼上 `supabase/schema.sql` 全部內容 → Run。
+2. Dashboard → **SQL Editor** → 貼上 `supabase/schema.sql` 全部內容 → Run，
+   再貼上 `supabase/seed-topics.sql` → Run（23 個預設主題入庫，重跑不會重複）。
 3. Dashboard → **Authentication → Sign In / Up → Email**：關閉「Confirm email」。
-4. Dashboard → **Authentication → Users → Add user**：逐個建立同事帳號，
-   email 用 `名字@hqms.local` 格式（不需要真實信箱），設定密碼，勾選 Auto Confirm。
+4. 建立同事帳號（兩選一）：
+   - Dashboard → **Authentication → Users → Add user**：email 用 `名字@hqms.local`
+     格式（不需要真實信箱），設定密碼，勾選 Auto Confirm；或
+   - 用腳本批量建立：見 `scripts/create-users.mjs` 開頭的說明。
    同事登入時只需輸入 `名字` 和密碼（系統自動補 @hqms.local）。
 5. Dashboard → **Settings → API**：複製 Project URL 和 anon public key，
    在專案根目錄複製 `.env.example` 為 `.env` 填入。
-6. 重啟 `npm run dev`，登入後到「主題庫」按「匯入預設主題」。
+6. 重啟 `npm run dev` 即可登入使用。
 
 ## 部署到 Vercel（讓同事手機直接開網址）
 
