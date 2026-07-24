@@ -56,6 +56,7 @@ export default function App() {
         <Page key={tab} />
       </main>
       <nav>
+        <div className="brand">🏨 房務品質系統</div>
         {TABS.map(t => (
           <button key={t.id} className={tab === t.id ? 'on' : ''} onClick={() => setTab(t.id)}>
             <span className="ico">{t.ico}</span>{t.label}

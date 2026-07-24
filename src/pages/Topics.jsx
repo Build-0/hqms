@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import * as api from '../lib/api'
 import { CATS, seedTopics } from '../data/seedData'
+import { catMeta } from '../lib/cats'
 import { addDaysStr } from '../lib/dates'
 import { toast } from '../lib/toast'
 
@@ -81,12 +82,14 @@ export default function Topics() {
     </div>
   )
 
+  const vm = view ? catMeta(view.category) : null
+
   return (
     <>
       <div className="chips">
         {CATS.map(c => (
           <button key={c} className={`chip ${c === cat ? 'on' : ''}`} onClick={() => setCat(c)}>
-            {c}<span style={{ opacity: .6 }}> {topics.filter(t => t.category === c).length}</span>
+            {catMeta(c).e} {c}<span style={{ opacity: .6 }}> {topics.filter(t => t.category === c).length}</span>
           </button>
         ))}
       </div>
@@ -94,11 +97,21 @@ export default function Topics() {
       {topics.length === 0 && (
         <button className="add-topic" style={{ marginBottom: 8 }} onClick={importSeed}>⬇ 匯入 25 個預設主題</button>
       )}
-      {inCat.map(t => (
-        <div className="t-item" key={t.id} onClick={() => { setView(t); setShowA(false); setArmed(false) }}>
-          <span className="tt">{t.title}</span><span className="arrow">›</span>
-        </div>
-      ))}
+      <div className="t-grid">
+        {inCat.map(t => {
+          const m = catMeta(t.category)
+          return (
+            <div className="t-item" key={t.id} onClick={() => { setView(t); setShowA(false); setArmed(false) }}>
+              <div className="t-ico" style={{ background: m.s }}>{m.e}</div>
+              <div className="t-mid">
+                <div className="tt">{t.title}</div>
+                {t.question && <div className="q-prev">🎤 {t.question}</div>}
+              </div>
+              <span className="arrow">›</span>
+            </div>
+          )
+        })}
+      </div>
       <button className="add-topic" onClick={() => openEdit(null)}>＋ 新增主題</button>
       <div className="note">主題持續累積，形成酒店專屬品質知識庫</div>
 
@@ -106,23 +119,43 @@ export default function Topics() {
         <div className="modal" onClick={e => { if (e.target === e.currentTarget) setView(null) }}>
           <div className="sheet">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-              <span className="badge b-teal">{view.category}</span>
+              <span className="badge" style={{ background: vm.s, color: vm.c }}>{vm.e} {view.category}</span>
               <span style={{ fontSize: 12, color: 'var(--sub)', cursor: 'pointer', padding: '4px 8px' }} onClick={() => setView(null)}>✕ 關閉</span>
             </div>
             <h2 style={{ fontSize: 17 }}>{view.title}</h2>
             <div className="sec">
-              {view.why && <><h3>為什麼重要</h3><p>{view.why}</p></>}
-              {view.correct_steps?.length > 0 && <><h3>正確做法</h3><ul>{view.correct_steps.map((x, i) => <li key={i}>{x}</li>)}</ul></>}
-              {view.mistakes?.length > 0 && <><h3>常見錯誤</h3><ul>{view.mistakes.map((x, i) => <li key={i}>{x}</li>)}</ul></>}
-              {view.supervisor_check && <><h3>主管重點檢查</h3><div className="check-item"><span className="dot">✓</span>{view.supervisor_check}</div></>}
+              {view.why && <p className="lead" style={{ marginTop: 4 }}>{view.why}</p>}
+              <div className="okbad">
+                {view.correct_steps?.length > 0 && (
+                  <div className="panel good">
+                    <div className="p-title">✓ 正確做法</div>
+                    {view.correct_steps.map((x, i) => <div className="step" key={i}><span className="n">{i + 1}</span>{x}</div>)}
+                  </div>
+                )}
+                {view.mistakes?.length > 0 && (
+                  <div className="panel badp">
+                    <div className="p-title">✗ 常見錯誤</div>
+                    {view.mistakes.map((x, i) => <div className="bad-item" key={i}><span className="x">✗</span>{x}</div>)}
+                  </div>
+                )}
+              </div>
+              {view.supervisor_check && (
+                <div className="panel checkp">
+                  <div className="p-title">👁 主管重點檢查</div>
+                  <div className="check-item"><span className="dot">✓</span>{view.supervisor_check}</div>
+                </div>
+              )}
               {view.reminder && <div className="quote">{view.reminder}</div>}
               {view.question && (
                 <div className="qa">
-                  <div className="q-label">早會提問</div>
-                  <div className="q-text">問：{view.question}</div>
-                  {showA
-                    ? <div className="a-text"><b>答：</b>{view.answer || '（未設定）'}</div>
-                    : <button className="a-btn" onClick={() => setShowA(true)}>顯示答案</button>}
+                  <div className="q-emoji">🎤</div>
+                  <div style={{ flex: 1 }}>
+                    <div className="q-label">早會提問</div>
+                    <div className="q-text">問：{view.question}</div>
+                    {showA
+                      ? <div className="a-text"><b>答：</b>{view.answer || '（未設定）'}</div>
+                      : <button className="a-btn" onClick={() => setShowA(true)}>顯示答案</button>}
+                  </div>
                 </div>
               )}
             </div>

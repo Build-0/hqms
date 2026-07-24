@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import * as api from '../lib/api'
 import { CATS } from '../data/seedData'
+import { catMeta } from '../lib/cats'
 import { todayStr, addDaysStr } from '../lib/dates'
 import { toast } from '../lib/toast'
 
-const catBadge = c => (c === '浴室' ? 'b-blue' : c === '客房清潔' ? 'b-teal' : c === '服務' ? 'b-amber' : 'b-gray')
 const EMPTY = { date: '', room: '', category: '客房清潔', guest_comment: '', actual_cause: '', correct_standard: '', improvement: '' }
 
 export default function Complaints() {
@@ -80,61 +80,73 @@ export default function Complaints() {
 
   return (
     <>
-      <div className="stats">
-        <div className="stat"><div className={`n ${yCount ? 'warn' : ''}`}>{yCount}</div><div className="l">昨日客訴</div></div>
-        <div className="stat"><div className="n">{mList.length}</div><div className="l">本月客訴</div></div>
-        <div className="stat"><div className={`n ${rCount ? 'warn' : ''}`}>{rCount}</div><div className="l">重複發生</div></div>
-      </div>
-
-      {rank.length > 0 && (
-        <div className="card">
-          <h2>本月問題分類排行</h2>
-          {rank.map(r => (
-            <div className="bar-row" key={r.cat}>
-              <span className="name">{r.cat}</span>
-              <div className="bar-track"><div className="bar-fill" style={{ width: `${(r.n / maxN) * 100}%` }} /></div>
-              <span className="num">{r.n}</span>
-            </div>
-          ))}
-        </div>
-      )}
-
-      <h2 style={{ margin: '14px 4px 10px' }}>客訴記錄</h2>
-      {list.length === 0 && <div className="note">暫無記錄，按右下 ＋ 新增第一宗</div>}
-      {list.map(c => (
-        <div className="c-item" key={c.id}>
-          <div className="c-head" onClick={() => { setOpen(open === c.id ? null : c.id); setArmed(null) }}>
-            <span className={`badge ${catBadge(c.category)}`}>{c.category}</span>
-            <span className="room">{c.room}</span>
-            <span className="desc">{c.guest_comment}</span>
-            <span style={{ fontSize: 11, color: 'var(--sub)' }}>{c.date.slice(5)}</span>
+      <div className="cx-grid">
+        <div>
+          <div className="stats">
+            <div className="stat"><div className="stat-e">🔔</div><div className={`n ${yCount ? 'warn' : ''}`}>{yCount}</div><div className="l">昨日客訴</div></div>
+            <div className="stat"><div className="stat-e">🗓️</div><div className="n">{mList.length}</div><div className="l">本月客訴</div></div>
+            <div className="stat"><div className="stat-e">🔁</div><div className={`n ${rCount ? 'warn' : ''}`}>{rCount}</div><div className="l">重複發生</div></div>
           </div>
-          {open === c.id && (
-            <div className="c-body">
-              <div className="kv"><span className="k">客人反映</span><span className="v">{c.guest_comment}</span></div>
-              <div className="kv"><span className="k">實際原因</span><span className="v">{c.actual_cause || '—'}</span></div>
-              <div className="kv"><span className="k">正確標準</span><span className="v">{c.correct_standard || '—'}</span></div>
-              <div className="kv"><span className="k">改善措施</span><span className="v">{c.improvement || '—'}</span></div>
-              <div className="flags">
-                <button className={`badge ${c.shared ? 'b-teal' : 'b-gray'}`} onClick={() => toggle(c, 'shared')}>{c.shared ? '✓ 已早會分享' : '未分享'}</button>
-                <button className={`badge ${c.check_scheduled ? 'b-teal' : 'b-gray'}`} onClick={() => toggle(c, 'check_scheduled')}>{c.check_scheduled ? '✓ 已排重點檢查' : '未排檢查'}</button>
-                <button className={`badge ${c.recurred ? 'b-red' : 'b-teal'}`} onClick={() => toggle(c, 'recurred')}>{c.recurred ? '⚠ 曾再次發生' : '未再發生'}</button>
-              </div>
-              <div className="row-actions">
-                <button className="done-btn" style={{ margin: 0 }} onClick={() => setForm({ ...EMPTY, ...c })}>✏️ 編輯</button>
-                <button className="btn danger" style={{ margin: 0, width: 'auto', flex: 1 }} onClick={() => del(c.id)}>
-                  {armed === c.id ? '再按一次確定刪除' : '🗑 刪除'}
-                </button>
-              </div>
-              <button className="btn ghost" style={{ marginTop: 4 }} onClick={async () => {
-                await api.setFocus({ focus_date: addDaysStr(1), source: 'complaint', complaint_id: c.id, topic_id: null })
-                toast('已設為明日早會重點')
-              }}>📌 設為明日早會重點</button>
+
+          {rank.length > 0 && (
+            <div className="card">
+              <h2>本月問題分類排行</h2>
+              {rank.map(r => {
+                const m = catMeta(r.cat)
+                return (
+                  <div className="bar-row" key={r.cat}>
+                    <span className="name">{m.e} {r.cat}</span>
+                    <div className="bar-track"><div className="bar-fill" style={{ width: `${(r.n / maxN) * 100}%`, background: m.c }} /></div>
+                    <span className="num">{r.n}</span>
+                  </div>
+                )
+              })}
             </div>
           )}
         </div>
-      ))}
-      <div className="note">點狀態標籤可直接切換 · 統計即時更新</div>
+
+        <div>
+          <h2 style={{ margin: '2px 4px 10px' }}>客訴記錄</h2>
+          {list.length === 0 && <div className="note">暫無記錄，按右下 ＋ 新增第一宗</div>}
+          {list.map(c => {
+            const m = catMeta(c.category)
+            return (
+              <div className="c-item" key={c.id}>
+                <div className="c-head" onClick={() => { setOpen(open === c.id ? null : c.id); setArmed(null) }}>
+                  <span className="badge" style={{ background: m.s, color: m.c }}>{m.e} {c.category}</span>
+                  <span className="room">{c.room}</span>
+                  <span className="desc">{c.guest_comment}</span>
+                  <span style={{ fontSize: 11, color: 'var(--sub)' }}>{c.date.slice(5)}</span>
+                </div>
+                {open === c.id && (
+                  <div className="c-body">
+                    <div className="kv"><span className="k">客人反映</span><span className="v">{c.guest_comment}</span></div>
+                    <div className="kv"><span className="k">實際原因</span><span className="v">{c.actual_cause || '—'}</span></div>
+                    <div className="kv"><span className="k">正確標準</span><span className="v">{c.correct_standard || '—'}</span></div>
+                    <div className="kv"><span className="k">改善措施</span><span className="v">{c.improvement || '—'}</span></div>
+                    <div className="flags">
+                      <button className={`badge ${c.shared ? 'b-teal' : 'b-gray'}`} onClick={() => toggle(c, 'shared')}>{c.shared ? '✓ 已早會分享' : '未分享'}</button>
+                      <button className={`badge ${c.check_scheduled ? 'b-teal' : 'b-gray'}`} onClick={() => toggle(c, 'check_scheduled')}>{c.check_scheduled ? '✓ 已排重點檢查' : '未排檢查'}</button>
+                      <button className={`badge ${c.recurred ? 'b-red' : 'b-teal'}`} onClick={() => toggle(c, 'recurred')}>{c.recurred ? '⚠ 曾再次發生' : '未再發生'}</button>
+                    </div>
+                    <div className="row-actions">
+                      <button className="done-btn" style={{ margin: 0 }} onClick={() => setForm({ ...EMPTY, ...c })}>✏️ 編輯</button>
+                      <button className="btn danger" style={{ margin: 0, width: 'auto', flex: 1 }} onClick={() => del(c.id)}>
+                        {armed === c.id ? '再按一次確定刪除' : '🗑 刪除'}
+                      </button>
+                    </div>
+                    <button className="btn ghost" style={{ marginTop: 4 }} onClick={async () => {
+                      await api.setFocus({ focus_date: addDaysStr(1), source: 'complaint', complaint_id: c.id, topic_id: null })
+                      toast('已設為明日早會重點')
+                    }}>📌 設為明日早會重點</button>
+                  </div>
+                )}
+              </div>
+            )
+          })}
+          <div className="note">點狀態標籤可直接切換 · 統計即時更新</div>
+        </div>
+      </div>
 
       <button className="fab" onClick={() => setForm({ ...EMPTY, date: today })}>＋</button>
 
