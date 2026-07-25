@@ -6,7 +6,20 @@ import { todayStr, addDaysStr } from '../lib/dates'
 import { toast } from '../lib/toast'
 import { PhotoGrid } from '../components/Photos'
 
-const CAT_EN = { 客房清潔: 'Room Cleaning', 浴室: 'Bathroom', 服務: 'Guest Service', 安全: 'Safety', 遺留物: 'Lost & Found', 工具: 'Equipment', 工作間: 'Work Area' }
+// 摺疊區塊：預設收起，早會講到哪段點開哪段
+function Sec({ icon, color, title, count, defaultOpen = false, children }) {
+  const [open, setOpen] = useState(defaultOpen)
+  return (
+    <div className="dsec">
+      <div className="dsec-h" onClick={() => setOpen(!open)}>
+        <span className="ic" style={{ color }}>{icon}</span>
+        <span style={{ flex: 1 }}>{title}{count != null && <span className="cnt">（{count} 項）</span>}</span>
+        <span style={{ color: 'var(--sub)', fontWeight: 400 }}>{open ? '－' : '＋'}</span>
+      </div>
+      {open && <div className="dsec-b">{children}</div>}
+    </div>
+  )
+}
 
 export default function Daily() {
   const [st, setSt] = useState(null)
@@ -76,98 +89,80 @@ export default function Daily() {
   const title = isC ? `客訴改善：${complaint.guest_comment}` : topic.title
   const q = isC ? `昨日 ${complaint.room} 房嘅投訴係咩？我哋嘅正確標準係點？` : topic.question
   const a = isC ? `${complaint.guest_comment}。正確標準：${complaint.correct_standard}` : topic.answer
+  const photos = isC ? complaint.photos : topic.photos
   const shared = !!focus.shared_at
 
   return (
-    <div className="daily-grid">
+    <>
       <div className="card">
         <div className="hero" style={{ background: m.s }}>
-          <div className="hero-e">{m.e}</div>
+          <div className="hero-e" style={{ fontSize: 36 }}>{m.e}</div>
           <div>
             <div className="badges">
-              <span className={`badge ${isC ? 'b-red' : 'b-teal'}`}>{isC ? '來源：昨日客訴' : '來源：主題輪替'}</span>
+              <span className={`badge ${isC ? 'b-red' : 'b-teal'}`}>{isC ? '昨日客訴' : '主題輪替'}</span>
               <span className="badge" style={{ background: '#fff', color: m.c }}>{cat}</span>
             </div>
-            <h2>{title}</h2>
-            <div className="cat-line">今日品質重點 · {CAT_EN[cat] || ''} · 早會 2–5 分鐘</div>
+            <h2 style={{ fontSize: 17, margin: '4px 0 0' }}>{title}</h2>
           </div>
         </div>
-        <div className="sec">
-          {isC ? (
-            <>
-              <p className="lead" style={{ marginTop: 8 }}>
-                {complaint.date} · <b>{complaint.room} 房</b>，客人反映：「{complaint.guest_comment}」
-              </p>
-              {complaint.photos?.length > 0 && <><h3>現場相片</h3><PhotoGrid photos={complaint.photos} /></>}
-              <div className="okbad">
-                {complaint.actual_cause && (
-                  <div className="panel badp">
-                    <div className="p-title">✗ 實際原因</div>
-                    <div className="bad-item"><span className="x">✗</span>{complaint.actual_cause}</div>
-                  </div>
-                )}
-                {complaint.correct_standard && (
-                  <div className="panel good">
-                    <div className="p-title">✓ 正確標準</div>
-                    <div className="step"><span className="n">1</span>{complaint.correct_standard}</div>
-                  </div>
-                )}
-              </div>
-              {complaint.improvement && (
-                <div className="panel checkp">
-                  <div className="p-title">👁 今日主管重點檢查</div>
-                  <div className="check-item"><span className="dot">✓</span>{complaint.improvement}</div>
-                  <div className="check-item"><span className="dot">✓</span>{complaint.room} 房今日必查並跟進</div>
-                </div>
-              )}
-              <div className="quote">「每一宗客訴，都係聽日唔再發生嘅開始。」</div>
-            </>
-          ) : (
-            <>
-              <p className="lead" style={{ marginTop: 8 }}>{topic.why}</p>
-              {topic.photos?.length > 0 && <><h3>示範相片</h3><PhotoGrid photos={topic.photos} /></>}
-              <div className="okbad">
-                {topic.correct_steps?.length > 0 && (
-                  <div className="panel good">
-                    <div className="p-title">✓ 正確做法</div>
-                    {topic.correct_steps.map((x, i) => (
-                      <div className="step" key={i}><span className="n">{i + 1}</span>{x}</div>
-                    ))}
-                  </div>
-                )}
-                {topic.mistakes?.length > 0 && (
-                  <div className="panel badp">
-                    <div className="p-title">✗ 常見錯誤</div>
-                    {topic.mistakes.map((x, i) => (
-                      <div className="bad-item" key={i}><span className="x">✗</span>{x}</div>
-                    ))}
-                  </div>
-                )}
-              </div>
-              {topic.supervisor_check && (
-                <div className="panel checkp">
-                  <div className="p-title">👁 今日主管重點檢查</div>
-                  <div className="check-item"><span className="dot">✓</span>{topic.supervisor_check}</div>
-                </div>
-              )}
-              {topic.reminder && <div className="quote">{topic.reminder}</div>}
-            </>
-          )}
-          {q && (
-            <div className="qa">
-              <div className="q-emoji">🎤</div>
-              <div style={{ flex: 1 }}>
-                <div className="q-label">早會提問 · 加強記憶</div>
-                <div className="q-text">問：{q}</div>
-                {showA
-                  ? <div className="a-text"><b>答：</b>{a}</div>
-                  : <button className="a-btn" onClick={() => setShowA(true)}>顯示答案</button>}
-                <div className="q-hint">早會時隨機抽問 1–2 位同事，答唔出唔緊要，即場講一次正確答案。</div>
-              </div>
-            </div>
-          )}
-        </div>
-        <div style={{ marginTop: 16 }}>
+
+        <p className="lead" style={{ margin: '12px 2px 2px' }}>
+          {isC
+            ? <>{complaint.date} · <b>{complaint.room} 房</b>，客人反映：「{complaint.guest_comment}」</>
+            : topic.why}
+        </p>
+        <PhotoGrid photos={photos} />
+
+        {isC ? (
+          <>
+            <Sec icon="✓" color="var(--accent)" title="正確標準與原因" defaultOpen>
+              {complaint.actual_cause && <div className="bad-item"><span className="x">✗</span>{complaint.actual_cause}</div>}
+              {complaint.correct_standard && <div className="step"><span className="n">✓</span>{complaint.correct_standard}</div>}
+            </Sec>
+            {complaint.improvement && (
+              <Sec icon="👁" color="var(--blue)" title="今日主管重點檢查">
+                <div className="check-item"><span className="dot">✓</span>{complaint.improvement}</div>
+                <div className="check-item"><span className="dot">✓</span>{complaint.room} 房今日必查並跟進</div>
+              </Sec>
+            )}
+          </>
+        ) : (
+          <>
+            {topic.correct_steps?.length > 0 && (
+              <Sec icon="✓" color="var(--accent)" title="正確做法" count={topic.correct_steps.length} defaultOpen>
+                {topic.correct_steps.map((x, i) => <div className="step" key={i}><span className="n">{i + 1}</span>{x}</div>)}
+              </Sec>
+            )}
+            {topic.mistakes?.length > 0 && (
+              <Sec icon="✗" color="var(--red)" title="常見錯誤" count={topic.mistakes.length}>
+                {topic.mistakes.map((x, i) => <div className="bad-item" key={i}><span className="x">✗</span>{x}</div>)}
+              </Sec>
+            )}
+            {topic.supervisor_check && (
+              <Sec icon="👁" color="var(--blue)" title="今日主管重點檢查">
+                <div className="check-item"><span className="dot">✓</span>{topic.supervisor_check}</div>
+              </Sec>
+            )}
+          </>
+        )}
+
+        {q && (
+          <Sec icon="🎤" color="var(--amber)" title="早會提問">
+            <div className="q-text" style={{ fontSize: 13.5 }}>問：{q}</div>
+            {showA
+              ? <div className="a-text" style={{ borderColor: 'var(--line)' }}><b>答：</b>{a}</div>
+              : <button className="a-btn" onClick={() => setShowA(true)}>顯示答案</button>}
+            <div className="q-hint">隨機抽問 1–2 位同事，答唔出即場講一次正確答案。</div>
+          </Sec>
+        )}
+
+        {(isC ? true : !!topic.reminder) && (
+          <div className="quote" style={{ marginTop: 12 }}>
+            {isC ? '「每一宗客訴，都係聽日唔再發生嘅開始。」' : topic.reminder}
+          </div>
+        )}
+
+        <div style={{ marginTop: 14 }}>
           <button className={`done-btn ${shared ? 'done' : ''}`} onClick={shared ? undefined : share}>
             {shared
               ? `✓ 已於早會分享（${new Date(focus.shared_at).toTimeString().slice(0, 5)}）`
@@ -176,16 +171,11 @@ export default function Daily() {
         </div>
       </div>
 
-      <div className="card" style={{ padding: '13px 16px' }}>
-        <div style={{ fontSize: 12, color: 'var(--sub)', marginBottom: 6 }}>選題邏輯（自動）</div>
-        <div style={{ fontSize: 13, lineHeight: 1.7 }}>
-          {st.hadYesterday ? <>昨日有客訴 → 以客訴為今日重點 ✅<br /></> : <>昨日無客訴 → 按主題庫輪替 ✅<br /></>}
-          <span style={{ color: 'var(--sub)' }}>
-            {tomorrowName ? `明日重點已指定：${tomorrowName}` : '明日：有客訴用客訴，否則主題輪替（可在客訴/主題頁手動指定）'}
-          </span>
-        </div>
-        <button className="btn ghost" style={{ marginTop: 6 }} onClick={regen}>🔄 今日重新選題</button>
-      </div>
-    </div>
+      <p className="logic-line">
+        📅 {st.hadYesterday ? '昨日有投訴 → 以客訴為重點' : '昨日無投訴 → 主題輪替'}
+        {tomorrowName ? ` · 明日已指定：${tomorrowName}` : ''}
+        <button className="linky" onClick={regen}>🔄 重新選題</button>
+      </p>
+    </>
   )
 }
