@@ -40,6 +40,94 @@ export async function signOut() {
   await sb.auth.signOut()
 }
 
+// ── categories ──
+export async function listCategories() {
+  if (isLocal) return local.listCategories()
+  const { data, error } = await sb.from('categories').select('*').order('sort_order').order('created_at')
+  if (error) return null // 資料表未建立（尚未執行 add-modules.sql）→ 呼叫端退回預設分類
+  return data
+}
+export async function addCategory(c) {
+  if (isLocal) return local.addCategory(c)
+  const { data, error } = await sb.from('categories').insert(c).select().single()
+  throwIf(error)
+  return data
+}
+// 改名時同步更新既有主題與客訴的分類文字
+export async function updateCategory(id, patch, oldName) {
+  if (isLocal) return local.updateCategory(id, patch, oldName)
+  const { data, error } = await sb.from('categories').update(patch).eq('id', id).select().single()
+  throwIf(error)
+  if (patch.name && oldName && patch.name !== oldName) {
+    await sb.from('topics').update({ category: patch.name }).eq('category', oldName)
+    await sb.from('complaints').update({ category: patch.name }).eq('category', oldName)
+  }
+  return data
+}
+export async function deleteCategory(id, name) {
+  if (isLocal) return local.deleteCategory(id, name)
+  const [t, c] = await Promise.all([
+    sb.from('topics').select('id').eq('category', name).limit(1),
+    sb.from('complaints').select('id').eq('category', name).limit(1),
+  ])
+  if (t.data?.length || c.data?.length) throw new Error('仍有主題或客訴使用此分類，請先改走它們')
+  const { error } = await sb.from('categories').delete().eq('id', id)
+  throwIf(error)
+}
+
+// ── attendants（房務員名單）──
+export async function listAttendants() {
+  if (isLocal) return local.listAttendants()
+  const { data, error } = await sb.from('attendants').select('*').order('sort_order').order('created_at')
+  throwIf(error)
+  return data
+}
+export async function addAttendant(a) {
+  if (isLocal) return local.addAttendant(a)
+  const { data, error } = await sb.from('attendants').insert(a).select().single()
+  throwIf(error)
+  return data
+}
+export async function updateAttendant(id, patch) {
+  if (isLocal) return local.updateAttendant(id, patch)
+  const { data, error } = await sb.from('attendants').update(patch).eq('id', id).select().single()
+  throwIf(error)
+  return data
+}
+export async function deleteAttendant(id) {
+  if (isLocal) return local.deleteAttendant(id)
+  const { data: s } = await sb.from('scores').select('id').eq('attendant_id', id).limit(1)
+  if (s?.length) throw new Error('此房務員已有評分記錄，請改用「停用」')
+  const { error } = await sb.from('attendants').delete().eq('id', id)
+  throwIf(error)
+}
+
+// ── scores（清潔評分）──
+export async function listScores() {
+  if (isLocal) return local.listScores()
+  const { data, error } = await sb.from('scores').select('*')
+    .order('date', { ascending: false }).order('created_at', { ascending: false }).limit(300)
+  throwIf(error)
+  return data
+}
+export async function addScore(s) {
+  if (isLocal) return local.addScore(s)
+  const { data, error } = await sb.from('scores').insert(s).select().single()
+  throwIf(error)
+  return data
+}
+export async function updateScore(id, patch) {
+  if (isLocal) return local.updateScore(id, patch)
+  const { data, error } = await sb.from('scores').update(patch).eq('id', id).select().single()
+  throwIf(error)
+  return data
+}
+export async function deleteScore(id) {
+  if (isLocal) return local.deleteScore(id)
+  const { error } = await sb.from('scores').delete().eq('id', id)
+  throwIf(error)
+}
+
 // ── photos ──
 // 壓縮後上傳；示範模式直接回傳 dataURL 存進記錄，正式模式上傳 Storage 回傳公開網址
 export async function uploadPhoto(file) {

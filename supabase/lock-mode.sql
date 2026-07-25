@@ -4,5 +4,8 @@ drop policy if exists "open complaints" on complaints;
 drop policy if exists "open topics" on topics;
 drop policy if exists "open focus" on daily_focus;
 drop policy if exists "open training" on training_sections;
+drop policy if exists "open categories" on categories;
+drop policy if exists "open attendants" on attendants;
+drop policy if exists "open scores" on scores;
 drop policy if exists "open upload photos" on storage.objects;
 drop policy if exists "open delete photos" on storage.objects;

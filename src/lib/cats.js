@@ -9,3 +9,12 @@ export const CAT_META = {
   '工作間':   { e: '🧺', c: '#5f9e63', s: '#e7f2e8' },
 }
 export const catMeta = c => CAT_META[c] || { e: '📋', c: '#7a8894', s: '#eef1f4' }
+
+// 由資料庫的 categories 列表建立查詢函數（找不到時退回預設）
+export const metaOf = (cats, name) => {
+  const f = cats?.find(x => x.name === name)
+  return f ? { e: f.emoji, c: f.color, s: f.color + '22' } : catMeta(name)
+}
+
+// 分類編輯器可選的顏色
+export const COLOR_CHOICES = ['#1f7a6d', '#4a6fa5', '#b07d2e', '#c0564f', '#8f7ac9', '#54808c', '#5f9e63', '#a3599b', '#7a8894', '#2e86ab']

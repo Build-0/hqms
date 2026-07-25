@@ -1,5 +1,14 @@
-// 七大分類
-export const CATS = ['客房清潔', '浴室', '服務', '安全', '遺留物', '工具', '工作間']
+// 預設分類（匯入資料庫後以資料庫為準，可在主題庫頁管理）
+export const DEFAULT_CATEGORIES = [
+  { name: '客房清潔', emoji: '🛏️', color: '#1f7a6d' },
+  { name: '浴室', emoji: '🚿', color: '#4a6fa5' },
+  { name: '服務', emoji: '🛎️', color: '#b07d2e' },
+  { name: '安全', emoji: '⛑️', color: '#c0564f' },
+  { name: '遺留物', emoji: '🎒', color: '#8f7ac9' },
+  { name: '工具', emoji: '🧰', color: '#54808c' },
+  { name: '工作間', emoji: '🧺', color: '#5f9e63' },
+]
+export const CATS = DEFAULT_CATEGORIES.map(c => c.name)
 
 // 25 個預設品質主題（可在主題庫頁編輯/刪除/新增）
 export const seedTopics = [

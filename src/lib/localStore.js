@@ -1,7 +1,7 @@
 // 示範模式資料層：全部存 localStorage，介面與 Supabase 版一致
-import { seedTopics, seedComplaints, TRAINING } from '../data/seedData'
+import { seedTopics, seedComplaints, TRAINING, DEFAULT_CATEGORIES } from '../data/seedData'
 
-const K = { user: 'hqms_user', complaints: 'hqms_complaints', topics: 'hqms_topics', focus: 'hqms_focus', training: 'hqms_training' }
+const K = { user: 'hqms_user', complaints: 'hqms_complaints', topics: 'hqms_topics', focus: 'hqms_focus', training: 'hqms_training', categories: 'hqms_categories', attendants: 'hqms_attendants', scores: 'hqms_scores' }
 const get = (k, fb) => {
   try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : fb } catch { return fb }
 }
@@ -14,6 +14,8 @@ function ensureSeed() {
   if (!localStorage.getItem(K.complaints)) set(K.complaints, seedComplaints())
   if (!localStorage.getItem(K.training))
     set(K.training, TRAINING.map((t, i) => ({ id: uid(), sort_order: i, created_at: new Date().toISOString(), ...t })))
+  if (!localStorage.getItem(K.categories))
+    set(K.categories, DEFAULT_CATEGORIES.map((c, i) => ({ id: uid(), sort_order: i, created_at: new Date().toISOString(), ...c })))
 }
 
 // ── auth ──
@@ -67,6 +69,73 @@ export function deleteTopic(id) {
   set(K.focus, f)
 }
 export function importSeedTopics(rows) { for (const r of rows) addTopic(r) }
+
+// ── categories ──
+export function listCategories() {
+  ensureSeed()
+  return get(K.categories, []).slice().sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+}
+export function addCategory(c) {
+  const rows = get(K.categories, [])
+  const row = { id: uid(), sort_order: rows.length, created_at: new Date().toISOString(), ...c }
+  rows.push(row); set(K.categories, rows)
+  return row
+}
+export function updateCategory(id, patch, oldName) {
+  const rows = get(K.categories, []).map(r => (r.id === id ? { ...r, ...patch } : r))
+  set(K.categories, rows)
+  if (patch.name && oldName && patch.name !== oldName) {
+    set(K.topics, get(K.topics, []).map(t => (t.category === oldName ? { ...t, category: patch.name } : t)))
+    set(K.complaints, get(K.complaints, []).map(c => (c.category === oldName ? { ...c, category: patch.name } : c)))
+  }
+  return rows.find(r => r.id === id)
+}
+export function deleteCategory(id, name) {
+  const used = get(K.topics, []).some(t => t.category === name) || get(K.complaints, []).some(c => c.category === name)
+  if (used) throw new Error('仍有主題或客訴使用此分類，請先改走它們')
+  set(K.categories, get(K.categories, []).filter(r => r.id !== id))
+}
+
+// ── attendants ──
+export function listAttendants() {
+  ensureSeed()
+  return get(K.attendants, []).slice().sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+}
+export function addAttendant(a) {
+  const rows = get(K.attendants, [])
+  const row = { id: uid(), active: true, sort_order: rows.length, created_at: new Date().toISOString(), ...a }
+  rows.push(row); set(K.attendants, rows)
+  return row
+}
+export function updateAttendant(id, patch) {
+  const rows = get(K.attendants, []).map(r => (r.id === id ? { ...r, ...patch } : r))
+  set(K.attendants, rows)
+  return rows.find(r => r.id === id)
+}
+export function deleteAttendant(id) {
+  if (get(K.scores, []).some(s => s.attendant_id === id)) throw new Error('此房務員已有評分記錄，請改用「停用」')
+  set(K.attendants, get(K.attendants, []).filter(r => r.id !== id))
+}
+
+// ── scores ──
+export function listScores() {
+  ensureSeed()
+  return get(K.scores, []).slice().sort((a, b) => b.date.localeCompare(a.date) || (b.created_at || '').localeCompare(a.created_at || ''))
+}
+export function addScore(s) {
+  const rows = get(K.scores, [])
+  const row = { id: uid(), created_at: new Date().toISOString(), ...s }
+  rows.unshift(row); set(K.scores, rows)
+  return row
+}
+export function updateScore(id, patch) {
+  const rows = get(K.scores, []).map(r => (r.id === id ? { ...r, ...patch } : r))
+  set(K.scores, rows)
+  return rows.find(r => r.id === id)
+}
+export function deleteScore(id) {
+  set(K.scores, get(K.scores, []).filter(r => r.id !== id))
+}
 
 // ── training ──
 export function listTraining() {

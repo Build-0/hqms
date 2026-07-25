@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import * as api from '../lib/api'
-import { catMeta } from '../lib/cats'
+import { metaOf } from '../lib/cats'
+import { DEFAULT_CATEGORIES } from '../data/seedData'
 import { todayStr, addDaysStr } from '../lib/dates'
 import { toast } from '../lib/toast'
 import { PhotoGrid } from '../components/Photos'
@@ -16,10 +17,11 @@ export default function Daily() {
   async function load() {
     const today = todayStr()
     const yesterday = addDaysStr(-1)
-    const [complaints, topics] = await Promise.all([api.listComplaints(), api.listTopics()])
+    const [complaints, topics, kk] = await Promise.all([api.listComplaints(), api.listTopics(), api.listCategories()])
     let focus = await api.getFocus(today)
     if (!focus) {
-      const yc = complaints.find(c => c.date === yesterday)
+      // 只用「投訴」做重點，濫訴不進早會
+      const yc = complaints.find(c => c.date === yesterday && c.nature !== '濫訴')
       if (yc) {
         focus = await api.setFocus({ focus_date: today, source: 'complaint', complaint_id: yc.id, topic_id: null })
       } else if (topics.length) {
@@ -36,7 +38,11 @@ export default function Daily() {
         ? `客訴案例（${complaints.find(c => c.id === tf.complaint_id)?.room ?? '?'} 房）`
         : topics.find(t => t.id === tf.topic_id)?.title
     }
-    setSt({ focus, complaint, topic, tomorrowName, hadYesterday: complaints.some(c => c.date === yesterday) })
+    setSt({
+      focus, complaint, topic, tomorrowName,
+      cats: kk?.length ? kk : DEFAULT_CATEGORIES,
+      hadYesterday: complaints.some(c => c.date === yesterday && c.nature !== '濫訴'),
+    })
   }
 
   async function share() {
@@ -66,7 +72,7 @@ export default function Daily() {
 
   const isC = !!complaint
   const cat = isC ? complaint.category : topic.category
-  const m = catMeta(cat)
+  const m = metaOf(st.cats, cat)
   const title = isC ? `客訴改善：${complaint.guest_comment}` : topic.title
   const q = isC ? `昨日 ${complaint.room} 房嘅投訴係咩？我哋嘅正確標準係點？` : topic.question
   const a = isC ? `${complaint.guest_comment}。正確標準：${complaint.correct_standard}` : topic.answer

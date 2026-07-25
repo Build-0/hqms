@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import * as api from '../lib/api'
-import { CATS, seedTopics } from '../data/seedData'
-import { catMeta } from '../lib/cats'
+import { DEFAULT_CATEGORIES, seedTopics } from '../data/seedData'
+import { metaOf, COLOR_CHOICES } from '../lib/cats'
 import { addDaysStr } from '../lib/dates'
 import { toast } from '../lib/toast'
 import { PhotoGrid, PhotoField } from '../components/Photos'
@@ -10,17 +10,28 @@ const EMPTY = { category: '', title: '', why: '', correct_steps: [], mistakes: [
 
 export default function Topics() {
   const [topics, setTopics] = useState(null)
-  const [cat, setCat] = useState('客房清潔')
-  const [view, setView] = useState(null)   // 檢視中的主題
+  const [cats, setCats] = useState(null)
+  const [cat, setCat] = useState('')
+  const [view, setView] = useState(null)     // 檢視中的主題
   const [showA, setShowA] = useState(false)
-  const [form, setForm] = useState(null)   // 編輯/新增表單
+  const [form, setForm] = useState(null)     // 主題編輯表單
   const [armed, setArmed] = useState(false)
+  const [mgr, setMgr] = useState(false)      // 分類管理面板
+  const [catForm, setCatForm] = useState(null) // 分類編輯表單 {id?, name, emoji, color, _old}
 
   useEffect(() => { load() }, [])
-  async function load() { setTopics(await api.listTopics()) }
+  async function load() {
+    const [t, k] = await Promise.all([api.listTopics(), api.listCategories()])
+    setTopics(t)
+    const kk = k?.length ? k : DEFAULT_CATEGORIES
+    setCats(kk)
+    setCat(prev => (prev && kk.some(x => x.name === prev) ? prev : kk[0]?.name || ''))
+  }
 
-  if (!topics) return <div className="note">載入中…</div>
+  if (!topics || !cats) return <div className="note">載入中…</div>
+  const canEditCats = !!cats[0]?.id
   const inCat = topics.filter(t => t.category === cat)
+  const m = name => metaOf(cats, name)
 
   async function importSeed() {
     await api.importSeedTopics(seedTopics.map((t, i) => ({ ...t, sort_order: i })))
@@ -75,6 +86,32 @@ export default function Topics() {
     setView(null)
   }
 
+  async function saveCat() {
+    const f = catForm
+    const payload = { name: f.name.trim(), emoji: f.emoji.trim() || '📋', color: f.color }
+    if (!payload.name) { toast('請填分類名稱'); return }
+    try {
+      if (f.id) {
+        await api.updateCategory(f.id, payload, f._old)
+        toast('已儲存（既有主題與客訴已同步改名）')
+      } else {
+        await api.addCategory({ ...payload, sort_order: cats.length })
+        toast('已新增分類')
+      }
+      setCatForm(null)
+      load()
+    } catch (ex) { toast(ex.message) }
+  }
+
+  async function delCat(k) {
+    try {
+      await api.deleteCategory(k.id, k.name)
+      toast('已刪除分類')
+      setCatForm(null)
+      load()
+    } catch (ex) { toast(ex.message) }
+  }
+
   const F = (label, key, Type = 'input', props = {}) => (
     <div className="f-row">
       <label>{label}</label>
@@ -84,16 +121,17 @@ export default function Topics() {
     </div>
   )
 
-  const vm = view ? catMeta(view.category) : null
+  const vm = view ? m(view.category) : null
 
   return (
     <>
       <div className="chips">
-        {CATS.map(c => (
-          <button key={c} className={`chip ${c === cat ? 'on' : ''}`} onClick={() => setCat(c)}>
-            {catMeta(c).e} {c}<span style={{ opacity: .6 }}> {topics.filter(t => t.category === c).length}</span>
+        {cats.map(k => (
+          <button key={k.name} className={`chip ${k.name === cat ? 'on' : ''}`} onClick={() => setCat(k.name)}>
+            {k.emoji} {k.name}<span style={{ opacity: .6 }}> {topics.filter(t => t.category === k.name).length}</span>
           </button>
         ))}
+        <button className="chip" onClick={() => setMgr(true)}>⚙️ 管理分類</button>
       </div>
 
       {topics.length === 0 && (
@@ -101,10 +139,10 @@ export default function Topics() {
       )}
       <div className="t-grid">
         {inCat.map(t => {
-          const m = catMeta(t.category)
+          const mm = m(t.category)
           return (
             <div className="t-item" key={t.id} onClick={() => { setView(t); setShowA(false); setArmed(false) }}>
-              <div className="t-ico" style={{ background: m.s }}>{m.e}</div>
+              <div className="t-ico" style={{ background: mm.s }}>{mm.e}</div>
               <div className="t-mid">
                 <div className="tt">{t.title}</div>
                 {t.question && <div className="q-prev">🎤 {t.question}</div>}
@@ -180,7 +218,7 @@ export default function Topics() {
             <div className="f-row">
               <label>分類</label>
               <select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}>
-                {CATS.map(c => <option key={c}>{c}</option>)}
+                {cats.map(k => <option key={k.name} value={k.name}>{k.emoji} {k.name}</option>)}
               </select>
             </div>
             {F('主題名稱', 'title')}
@@ -194,6 +232,57 @@ export default function Topics() {
             <PhotoField label="示範相片（正確做法）" photos={form.photos} onChange={p => setForm({ ...form, photos: p })} />
             <button className="btn" onClick={save}>儲存主題</button>
             <button className="btn ghost" onClick={() => setForm(null)}>取消</button>
+          </div>
+        </div>
+      )}
+
+      {mgr && (
+        <div className="modal" onClick={e => { if (e.target === e.currentTarget) setMgr(false) }}>
+          <div className="sheet">
+            <h2>管理分類</h2>
+            {!canEditCats && (
+              <p className="src-note">目前顯示的是內建預設分類。要啟用增改功能，請先在 Supabase SQL Editor 執行 <b>supabase/add-modules.sql</b>。</p>
+            )}
+            {cats.map(k => (
+              <div key={k.name} style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 8 }}>
+                <div className="t-ico" style={{ background: k.color + '22' }}>{k.emoji}</div>
+                <span style={{ flex: 1, fontSize: 14, fontWeight: 600 }}>{k.name}</span>
+                <span style={{ fontSize: 11.5, color: 'var(--sub)' }}>{topics.filter(t => t.category === k.name).length} 主題</span>
+                {canEditCats && (
+                  <button className="logout" style={{ color: 'var(--sub)', background: '#eef1f4' }}
+                    onClick={() => setCatForm({ ...k, _old: k.name })}>✏️</button>
+                )}
+              </div>
+            ))}
+            {canEditCats && (
+              <button className="add-topic" onClick={() => setCatForm({ name: '', emoji: '📋', color: COLOR_CHOICES[7] })}>＋ 新增分類</button>
+            )}
+            <button className="btn ghost" onClick={() => setMgr(false)}>完成</button>
+          </div>
+        </div>
+      )}
+
+      {catForm && (
+        <div className="modal">
+          <div className="sheet">
+            <h2>{catForm.id ? '編輯分類' : '新增分類'}</h2>
+            <div className="f-row"><label>名稱</label>
+              <input value={catForm.name} onChange={e => setCatForm({ ...catForm, name: e.target.value })} placeholder="例：設施維修" /></div>
+            <div className="f-row"><label>圖示（一個 emoji）</label>
+              <input value={catForm.emoji} onChange={e => setCatForm({ ...catForm, emoji: e.target.value })} /></div>
+            <div className="f-row"><label>顏色</label>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {COLOR_CHOICES.map(c => (
+                  <button key={c} onClick={() => setCatForm({ ...catForm, color: c })}
+                    style={{ width: 34, height: 34, borderRadius: 10, background: c, cursor: 'pointer', border: catForm.color === c ? '3px solid var(--ink)' : '3px solid transparent' }} />
+                ))}
+              </div>
+            </div>
+            <button className="btn" onClick={saveCat}>儲存分類</button>
+            {catForm.id && (
+              <button className="btn danger" onClick={() => delCat(catForm)}>🗑 刪除（僅限沒有主題/客訴使用時）</button>
+            )}
+            <button className="btn ghost" onClick={() => setCatForm(null)}>取消</button>
           </div>
         </div>
       )}
