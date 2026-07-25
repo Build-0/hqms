@@ -11,9 +11,9 @@ import Training from './pages/Training'
 const TABS = [
   { id: 'daily', ico: '📌', label: '今日重點', Page: Daily },
   { id: 'complaint', ico: '📋', label: '客訴管理', Page: Complaints },
-  { id: 'scores', ico: '⭐', label: '清潔評分', Page: Scores },
-  { id: 'topics', ico: '📚', label: '主題庫', Page: Topics, secondary: true },
+  { id: 'topics', ico: '📚', label: '主題庫', Page: Topics },
   { id: 'training', ico: '🎓', label: '新人教材', Page: Training, secondary: true },
+  { id: 'scores', ico: '⭐', label: '清潔評分', Page: Scores, secondary: true },
 ]
 const WD = ['日', '一', '二', '三', '四', '五', '六']
 
