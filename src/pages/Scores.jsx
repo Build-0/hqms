@@ -3,6 +3,7 @@ import * as api from '../lib/api'
 import { todayStr } from '../lib/dates'
 import { toast } from '../lib/toast'
 import { PhotoGrid, PhotoField } from '../components/Photos'
+import Confirm from '../components/Confirm'
 
 const scoreColor = n => (n >= 90 ? 'var(--accent)' : n >= 80 ? 'var(--amber)' : 'var(--red)')
 
@@ -14,7 +15,7 @@ export default function Scores() {
   const [form, setForm] = useState(null)     // 評分表單
   const [roster, setRoster] = useState(false)// 名單管理面板
   const [newName, setNewName] = useState('')
-  const [armed, setArmed] = useState(null)
+  const [confirmDel, setConfirmDel] = useState(null)
 
   useEffect(() => { load() }, [])
   async function load() {
@@ -49,9 +50,8 @@ export default function Scores() {
   }
 
   async function delScore(id) {
-    if (armed !== id) { setArmed(id); return }
     await api.deleteScore(id)
-    setArmed(null); setOpen(null); toast('已刪除')
+    setConfirmDel(null); setOpen(null); toast('已刪除')
     load()
   }
 
@@ -94,7 +94,7 @@ export default function Scores() {
       {scores.length === 0 && !err && <div className="note">按右下 ＋ 記第一筆評分</div>}
       {scores.map(s => (
         <div className="c-item" key={s.id}>
-          <div className="c-head" onClick={() => { setOpen(open === s.id ? null : s.id); setArmed(null) }}>
+          <div className="c-head" onClick={() => setOpen(open === s.id ? null : s.id)}>
             <span className="badge" style={{ background: scoreColor(s.score) + '22', color: scoreColor(s.score), fontSize: 13 }}>{s.score}</span>
             <span className="room">{nameOf(s.attendant_id)}</span>
             <span className="desc">{s.room && `${s.room} 房 · `}{s.note}</span>
@@ -107,11 +107,8 @@ export default function Scores() {
               <div className="kv"><span className="k">備註</span><span className="v">{s.note || '—'}</span></div>
               <PhotoGrid photos={s.photos} />
               <div className="row-actions">
-                <button className="done-btn" style={{ margin: 0 }}
-                  onClick={() => setForm({ ...s, score: String(s.score) })}>✏️ 編輯</button>
-                <button className="btn danger" style={{ margin: 0, width: 'auto', flex: 1 }} onClick={() => delScore(s.id)}>
-                  {armed === s.id ? '再按一次確定刪除' : '🗑 刪除'}
-                </button>
+                <button className="mini-btn edit" onClick={() => setForm({ ...s, score: String(s.score) })}>✏️ 編輯</button>
+                <button className="mini-btn del" onClick={() => setConfirmDel(s)}>🗑 刪除</button>
               </div>
             </div>
           )}
@@ -171,6 +168,13 @@ export default function Scores() {
             <button className="btn ghost" onClick={() => setRoster(false)}>完成</button>
           </div>
         </div>
+      )}
+      {confirmDel && (
+        <Confirm
+          text={`${confirmDel.date} · ${nameOf(confirmDel.attendant_id)} 的 ${confirmDel.score} 分評分記錄會被永久刪除。`}
+          onConfirm={() => delScore(confirmDel.id)}
+          onCancel={() => setConfirmDel(null)}
+        />
       )}
     </>
   )

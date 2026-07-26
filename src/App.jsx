@@ -6,6 +6,7 @@ import Complaints from './pages/Complaints'
 import Scores from './pages/Scores'
 import Topics from './pages/Topics'
 import Training from './pages/Training'
+import CyclicClean from './pages/CyclicClean'
 
 // 首頁圓形入口：之後加新模組（清潔劑、機器…）直接在這裡加一行
 const MODULES = [
@@ -13,6 +14,7 @@ const MODULES = [
   { id: 'complaint', ico: '📋', label: '客訴管理', color: '#c0564f', Page: Complaints },
   { id: 'topics', ico: '📚', label: '主題庫', color: '#4a6fa5', Page: Topics },
   { id: 'training', ico: '🎓', label: '新人教材', color: '#b07d2e', Page: Training },
+  { id: 'cyclic', ico: '🔁', label: '循環清潔', color: '#54808c', Page: CyclicClean },
   { id: 'scores', ico: '⭐', label: '清潔評分', color: '#8f7ac9', Page: Scores },
 ]
 const WD = ['日', '一', '二', '三', '四', '五', '六']

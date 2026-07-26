@@ -33,8 +33,8 @@ export default function Daily() {
     const [complaints, topics, kk] = await Promise.all([api.listComplaints(), api.listTopics(), api.listCategories()])
     let focus = await api.getFocus(today)
     if (!focus) {
-      // 只用「投訴」做重點，濫訴不進早會
-      const yc = complaints.find(c => c.date === yesterday && c.nature !== '濫訴')
+      // 只用「投訴」做重點，濫訴與工程投訴不進早會
+      const yc = complaints.find(c => c.date === yesterday && (c.nature || '投訴') === '投訴')
       if (yc) {
         focus = await api.setFocus({ focus_date: today, source: 'complaint', complaint_id: yc.id, topic_id: null })
       } else if (topics.length) {
@@ -54,7 +54,7 @@ export default function Daily() {
     setSt({
       focus, complaint, topic, tomorrowName,
       cats: kk?.length ? kk : DEFAULT_CATEGORIES,
-      hadYesterday: complaints.some(c => c.date === yesterday && c.nature !== '濫訴'),
+      hadYesterday: complaints.some(c => c.date === yesterday && (c.nature || '投訴') === '投訴'),
     })
   }
 
@@ -87,7 +87,7 @@ export default function Daily() {
   const cat = isC ? complaint.category : topic.category
   const m = metaOf(st.cats, cat)
   const title = isC ? `客訴改善：${complaint.guest_comment}` : topic.title
-  const q = isC ? `昨日 ${complaint.room} 房嘅投訴係咩？我哋嘅正確標準係點？` : topic.question
+  const q = isC ? `昨日 ${complaint.room} 房的投訴是什麼？我們的正確標準是？` : topic.question
   const a = isC ? `${complaint.guest_comment}。正確標準：${complaint.correct_standard}` : topic.answer
   const photos = isC ? complaint.photos : topic.photos
   const shared = !!focus.shared_at
@@ -152,13 +152,13 @@ export default function Daily() {
             {showA
               ? <div className="a-text" style={{ borderColor: 'var(--line)' }}><b>答：</b>{a}</div>
               : <button className="a-btn" onClick={() => setShowA(true)}>顯示答案</button>}
-            <div className="q-hint">隨機抽問 1–2 位同事，答唔出即場講一次正確答案。</div>
+            <div className="q-hint">隨機抽問 1–2 位同事，答不出就當場講一次正確答案。</div>
           </Sec>
         )}
 
         {(isC ? true : !!topic.reminder) && (
           <div className="quote" style={{ marginTop: 12 }}>
-            {isC ? '「每一宗客訴，都係聽日唔再發生嘅開始。」' : topic.reminder}
+            {isC ? '「每一宗客訴，都是明天不再發生的開始。」' : topic.reminder}
           </div>
         )}
 

@@ -2,13 +2,14 @@ import { useEffect, useState } from 'react'
 import * as api from '../lib/api'
 import { TRAINING } from '../data/seedData'
 import { toast } from '../lib/toast'
+import Confirm from '../components/Confirm'
 
 export default function Training() {
   const [list, setList] = useState(null)
   const [err, setErr] = useState('')
   const [open, setOpen] = useState(null)
   const [form, setForm] = useState(null)   // null=關閉；{...欄位, id?}=編輯/新增
-  const [armed, setArmed] = useState(false)
+  const [confirmDel, setConfirmDel] = useState(null)
 
   useEffect(() => { load() }, [])
   async function load() {
@@ -28,7 +29,6 @@ export default function Training() {
   }
 
   function openEdit(t) {
-    setArmed(false)
     setForm(t
       ? { ...t, _steps: (t.steps || []).join('\n') }
       : { emoji: '📄', title: '', intro: '', _steps: '' })
@@ -52,10 +52,9 @@ export default function Training() {
     load()
   }
 
-  async function del() {
-    if (!armed) { setArmed(true); return }
-    await api.deleteTraining(form.id)
-    setArmed(false); setForm(null)
+  async function del(t) {
+    await api.deleteTraining(t.id)
+    setConfirmDel(null); setForm(null)
     toast('已刪除章節')
     load()
   }
@@ -108,7 +107,7 @@ export default function Training() {
           </div>
         ))}
       </div>
-      {!err && <button className="add-topic" onClick={() => openEdit(null)}>＋ 新增章節</button>}
+      {!err && <button className="fab" onClick={() => openEdit(null)}>＋</button>}
 
       {form && (
         <div className="modal">
@@ -120,13 +119,18 @@ export default function Training() {
             {F('要點（每行一項）', '_steps', 'textarea', { style: { height: 140 } })}
             <button className="btn" onClick={save}>儲存章節</button>
             {form.id && (
-              <button className="btn danger" onClick={del}>
-                {armed ? '再按一次確定刪除' : '🗑 刪除此章節'}
-              </button>
+              <button className="btn danger" onClick={() => setConfirmDel(form)}>🗑 刪除此章節</button>
             )}
             <button className="btn ghost" onClick={() => setForm(null)}>取消</button>
           </div>
         </div>
+      )}
+      {confirmDel && (
+        <Confirm
+          text={`章節「${confirmDel.title}」會被永久刪除。`}
+          onConfirm={() => del(confirmDel)}
+          onCancel={() => setConfirmDel(null)}
+        />
       )}
     </>
   )

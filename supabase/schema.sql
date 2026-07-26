@@ -106,7 +106,8 @@ create policy "auth all scores" on scores for all to authenticated using (true) 
 insert into categories (name, emoji, color, sort_order)
 select * from (values
   ('客房清潔','🛏️','#1f7a6d',0),('浴室','🚿','#4a6fa5',1),('服務','🛎️','#b07d2e',2),
-  ('安全','⛑️','#c0564f',3),('遺留物','🎒','#8f7ac9',4),('工具','🧰','#54808c',5),('工作間','🧺','#5f9e63',6)
+  ('安全','⛑️','#c0564f',3),('蟲害','🐛','#7d9440',4),('遺留物','🎒','#8f7ac9',5),
+  ('工具','🧰','#54808c',6),('工作間','🧺','#5f9e63',7)
 ) as v(name, emoji, color, sort_order)
 where not exists (select 1 from categories);
 

@@ -5,6 +5,7 @@ import { metaOf, COLOR_CHOICES } from '../lib/cats'
 import { addDaysStr } from '../lib/dates'
 import { toast } from '../lib/toast'
 import { PhotoGrid, PhotoField } from '../components/Photos'
+import Confirm from '../components/Confirm'
 
 const EMPTY = { category: '', title: '', why: '', correct_steps: [], mistakes: [], supervisor_check: '', reminder: '', question: '', answer: '', photos: [] }
 
@@ -15,7 +16,8 @@ export default function Topics() {
   const [view, setView] = useState(null)     // 檢視中的主題
   const [showA, setShowA] = useState(false)
   const [form, setForm] = useState(null)     // 主題編輯表單
-  const [armed, setArmed] = useState(false)
+  const [confirmDel, setConfirmDel] = useState(null)     // 待確認刪除的主題
+  const [confirmDelCat, setConfirmDelCat] = useState(null) // 待確認刪除的分類
   const [mgr, setMgr] = useState(false)      // 分類管理面板
   const [catForm, setCatForm] = useState(null) // 分類編輯表單 {id?, name, emoji, color, _old}
 
@@ -65,10 +67,9 @@ export default function Topics() {
     load()
   }
 
-  async function del() {
-    if (!armed) { setArmed(true); return }
-    await api.deleteTopic(view.id)
-    setArmed(false); setView(null)
+  async function delTopic(t) {
+    await api.deleteTopic(t.id)
+    setConfirmDel(null); setView(null)
     toast('已刪除主題')
     load()
   }
@@ -107,9 +108,9 @@ export default function Topics() {
     try {
       await api.deleteCategory(k.id, k.name)
       toast('已刪除分類')
-      setCatForm(null)
+      setConfirmDelCat(null); setCatForm(null)
       load()
-    } catch (ex) { toast(ex.message) }
+    } catch (ex) { setConfirmDelCat(null); toast(ex.message) }
   }
 
   const F = (label, key, Type = 'input', props = {}) => (
@@ -125,13 +126,16 @@ export default function Topics() {
 
   return (
     <>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0 4px 6px' }}>
+        <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--sub)' }}>分類</span>
+        <button className="linky" style={{ fontSize: 13 }} onClick={() => setMgr(true)}>⚙️ 編輯分類</button>
+      </div>
       <div className="chips">
         {cats.map(k => (
           <button key={k.name} className={`chip ${k.name === cat ? 'on' : ''}`} onClick={() => setCat(k.name)}>
             {k.emoji} {k.name}<span style={{ opacity: .6 }}> {topics.filter(t => t.category === k.name).length}</span>
           </button>
         ))}
-        <button className="chip" onClick={() => setMgr(true)}>⚙️ 管理分類</button>
       </div>
 
       {topics.length === 0 && (
@@ -152,8 +156,8 @@ export default function Topics() {
           )
         })}
       </div>
-      <button className="add-topic" onClick={() => openEdit(null)}>＋ 新增主題</button>
-      <div className="note">主題持續累積，形成酒店專屬品質知識庫</div>
+      <div className="note">主題持續累積，形成酒店專屬品質知識庫 · 按右下 ＋ 新增</div>
+      <button className="fab" onClick={() => openEdit(null)}>＋</button>
 
       {view && (
         <div className="modal" onClick={e => { if (e.target === e.currentTarget) setView(null) }}>
@@ -202,10 +206,8 @@ export default function Topics() {
             </div>
             <button className="btn" style={{ marginTop: 16 }} onClick={() => setTomorrow(view)}>📌 設為明日早會重點</button>
             <div className="row-actions">
-              <button className="done-btn" style={{ margin: 0 }} onClick={() => openEdit(view)}>✏️ 編輯</button>
-              <button className="btn danger" style={{ margin: 0, width: 'auto', flex: 1 }} onClick={del}>
-                {armed ? '再按一次確定刪除' : '🗑 刪除'}
-              </button>
+              <button className="mini-btn edit" onClick={() => openEdit(view)}>✏️ 編輯</button>
+              <button className="mini-btn del" onClick={() => setConfirmDel(view)}>🗑 刪除</button>
             </div>
           </div>
         </div>
@@ -227,7 +229,7 @@ export default function Topics() {
             {F('常見錯誤（每行一項）', '_bad', 'textarea')}
             {F('主管重點檢查', 'supervisor_check')}
             {F('一句提醒', 'reminder')}
-            {F('早會提問', 'question', 'input', { placeholder: '用嚟抽問同事、加強記憶' })}
+            {F('早會提問', 'question', 'input', { placeholder: '用來抽問同事、加強記憶' })}
             {F('提問答案', 'answer')}
             <PhotoField label="示範相片（正確做法）" photos={form.photos} onChange={p => setForm({ ...form, photos: p })} />
             <button className="btn" onClick={save}>儲存主題</button>
@@ -280,11 +282,26 @@ export default function Topics() {
             </div>
             <button className="btn" onClick={saveCat}>儲存分類</button>
             {catForm.id && (
-              <button className="btn danger" onClick={() => delCat(catForm)}>🗑 刪除（僅限沒有主題/客訴使用時）</button>
+              <button className="btn danger" onClick={() => setConfirmDelCat(catForm)}>🗑 刪除（僅限沒有主題/客訴使用時）</button>
             )}
             <button className="btn ghost" onClick={() => setCatForm(null)}>取消</button>
           </div>
         </div>
+      )}
+
+      {confirmDel && (
+        <Confirm
+          text={`主題「${confirmDel.title}」會被永久刪除。`}
+          onConfirm={() => delTopic(confirmDel)}
+          onCancel={() => setConfirmDel(null)}
+        />
+      )}
+      {confirmDelCat && (
+        <Confirm
+          text={`分類「${confirmDelCat.name}」會被刪除（仍有主題或客訴使用時將無法刪除）。`}
+          onConfirm={() => delCat(confirmDelCat)}
+          onCancel={() => setConfirmDelCat(null)}
+        />
       )}
     </>
   )

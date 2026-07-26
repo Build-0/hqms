@@ -1,20 +1,22 @@
 import { useEffect, useState } from 'react'
 import * as api from '../lib/api'
-import { DEFAULT_CATEGORIES } from '../data/seedData'
+import { DEFAULT_CATEGORIES, NATURES } from '../data/seedData'
 import { metaOf } from '../lib/cats'
 import { todayStr, addDaysStr } from '../lib/dates'
 import { toast } from '../lib/toast'
 import { PhotoGrid, PhotoField } from '../components/Photos'
+import Confirm from '../components/Confirm'
 
 const EMPTY = { date: '', room: '', category: '', nature: '投訴', guest_comment: '', actual_cause: '', correct_standard: '', improvement: '', photos: [] }
+const natureBadge = n => (n === '濫訴' ? { t: '🚫 濫訴', cls: 'b-gray' } : n === '工程投訴' ? { t: '🔧 工程', cls: 'b-blue' } : null)
 
 export default function Complaints() {
   const [list, setList] = useState([])
   const [cats, setCats] = useState(null)
   const [open, setOpen] = useState(null)
-  const [form, setForm] = useState(null)   // null=關閉；{...欄位, id?}=新增/編輯
-  const [ask, setAsk] = useState(null)     // 剛儲存的客訴 → 問是否設為明日重點
-  const [armed, setArmed] = useState(null) // 待確認刪除的 id
+  const [form, setForm] = useState(null)    // null=關閉；{...欄位, id?}=新增/編輯
+  const [ask, setAsk] = useState(null)      // 剛儲存的投訴 → 問是否設為明日重點
+  const [confirmDel, setConfirmDel] = useState(null) // 待確認刪除的記錄
   const [natureF, setNatureF] = useState('全部')
   const [catF, setCatF] = useState('全部')
 
@@ -26,13 +28,14 @@ export default function Complaints() {
   }
   const catList = cats || DEFAULT_CATEGORIES
   const m = name => metaOf(catList, name)
+  const natureOf = c => c.nature || '投訴'
 
   const today = todayStr()
   const yesterday = addDaysStr(-1)
   const ym = today.slice(0, 7)
-  const genuine = list.filter(c => c.nature !== '濫訴')
+  const mAll = list.filter(c => c.date.startsWith(ym))
+  const genuine = list.filter(c => natureOf(c) === '投訴')
   const mGenuine = genuine.filter(c => c.date.startsWith(ym))
-  const mAbuse = list.filter(c => c.nature === '濫訴' && c.date.startsWith(ym))
   const yCount = genuine.filter(c => c.date === yesterday).length
   const rCount = mGenuine.filter(c => c.recurred).length
   const rank = catList.map(k => ({ cat: k.name, n: mGenuine.filter(c => c.category === k.name).length }))
@@ -40,7 +43,7 @@ export default function Complaints() {
   const maxN = rank[0]?.n || 1
 
   const shown = list
-    .filter(c => natureF === '全部' || (c.nature || '投訴') === natureF)
+    .filter(c => natureF === '全部' || natureOf(c) === natureF)
     .filter(c => catF === '全部' || c.category === catF)
 
   async function save() {
@@ -58,23 +61,15 @@ export default function Complaints() {
       toast('已儲存修改')
     } else {
       const row = await api.addComplaint({ ...payload, shared: false, check_scheduled: false, recurred: false })
-      if (payload.nature === '濫訴') toast('已記錄（濫訴不會成為早會重點）')
-      else setAsk(row)
+      if (payload.nature === '投訴') setAsk(row)
+      else toast(`已記錄（${payload.nature}不會成為早會重點）`)
     }
     setForm(null)
     load()
   }
 
-  async function toggle(c, key) {
-    await api.updateComplaint(c.id, { [key]: !c[key] })
-    load()
-  }
-
-  async function del(id) {
-    if (armed !== id) { setArmed(id); return }
-    await api.deleteComplaint(id)
-    setArmed(null); setOpen(null)
-    toast('已刪除記錄')
+  async function patch(c, p) {
+    await api.updateComplaint(c.id, p)
     load()
   }
 
@@ -104,7 +99,8 @@ export default function Complaints() {
           <div className="stats">
             <div className="stat"><div className="stat-e">🔔</div><div className={`n ${yCount ? 'warn' : ''}`}>{yCount}</div><div className="l">昨日投訴</div></div>
             <div className="stat"><div className="stat-e">🗓️</div><div className="n">{mGenuine.length}</div><div className="l">本月投訴</div></div>
-            <div className="stat"><div className="stat-e">🚫</div><div className="n" style={{ color: 'var(--sub)' }}>{mAbuse.length}</div><div className="l">本月濫訴</div></div>
+            <div className="stat"><div className="stat-e">🚫</div><div className="n" style={{ color: 'var(--sub)' }}>{mAll.filter(c => natureOf(c) === '濫訴').length}</div><div className="l">濫訴</div></div>
+            <div className="stat"><div className="stat-e">🔧</div><div className="n" style={{ color: 'var(--blue)' }}>{mAll.filter(c => natureOf(c) === '工程投訴').length}</div><div className="l">工程投訴</div></div>
             <div className="stat"><div className="stat-e">🔁</div><div className={`n ${rCount ? 'warn' : ''}`}>{rCount}</div><div className="l">重複發生</div></div>
           </div>
 
@@ -127,8 +123,8 @@ export default function Complaints() {
 
         <div>
           <h2 style={{ margin: '2px 4px 8px' }}>客訴記錄</h2>
-          <div className="chips" style={{ marginBottom: 6 }}>
-            {['全部', '投訴', '濫訴'].map(n => (
+          <div className="chips">
+            {['全部', ...NATURES].map(n => (
               <button key={n} className={`chip ${natureF === n ? 'on' : ''}`} onClick={() => setNatureF(n)}>{n}</button>
             ))}
           </div>
@@ -141,12 +137,12 @@ export default function Complaints() {
           {shown.length === 0 && <div className="note">沒有符合篩選的記錄</div>}
           {shown.map(c => {
             const mm = m(c.category)
-            const abuse = c.nature === '濫訴'
+            const nb = natureBadge(natureOf(c))
             return (
-              <div className="c-item" key={c.id} style={abuse ? { opacity: .75 } : undefined}>
-                <div className="c-head" onClick={() => { setOpen(open === c.id ? null : c.id); setArmed(null) }}>
+              <div className="c-item" key={c.id} style={nb ? { opacity: .8 } : undefined}>
+                <div className="c-head" onClick={() => setOpen(open === c.id ? null : c.id)}>
                   <span className="badge" style={{ background: mm.s, color: mm.c }}>{mm.e} {c.category}</span>
-                  {abuse && <span className="badge b-gray">🚫 濫訴</span>}
+                  {nb && <span className={`badge ${nb.cls}`}>{nb.t}</span>}
                   <span className="room">{c.room}</span>
                   <span className="desc">{c.guest_comment}</span>
                   {c.photos?.length > 0 && <span className="ph-count">📷{c.photos.length}</span>}
@@ -159,33 +155,37 @@ export default function Complaints() {
                     <div className="kv"><span className="k">正確標準</span><span className="v">{c.correct_standard || '—'}</span></div>
                     <div className="kv"><span className="k">改善措施</span><span className="v">{c.improvement || '—'}</span></div>
                     <PhotoGrid photos={c.photos} />
-                    <div className="flags">
-                      <button className={`badge ${abuse ? 'b-red' : 'b-teal'}`}
-                        onClick={() => api.updateComplaint(c.id, { nature: abuse ? '投訴' : '濫訴' }).then(load)}>
-                        {abuse ? '🚫 濫訴（點改回投訴）' : '✓ 投訴（點標為濫訴）'}
-                      </button>
-                      <button className={`badge ${c.shared ? 'b-teal' : 'b-gray'}`} onClick={() => toggle(c, 'shared')}>{c.shared ? '✓ 已早會分享' : '未分享'}</button>
-                      <button className={`badge ${c.check_scheduled ? 'b-teal' : 'b-gray'}`} onClick={() => toggle(c, 'check_scheduled')}>{c.check_scheduled ? '✓ 已排重點檢查' : '未排檢查'}</button>
-                      <button className={`badge ${c.recurred ? 'b-red' : 'b-teal'}`} onClick={() => toggle(c, 'recurred')}>{c.recurred ? '⚠ 曾再次發生' : '未再發生'}</button>
+                    <div className="seg">
+                      {NATURES.map(n => (
+                        <button key={n} className={`chip ${natureOf(c) === n ? 'on' : ''}`}
+                          onClick={() => natureOf(c) !== n && patch(c, { nature: n })}>{n}</button>
+                      ))}
                     </div>
-                    <div className="row-actions">
-                      <button className="done-btn" style={{ margin: 0 }} onClick={() => setForm({ ...EMPTY, ...c })}>✏️ 編輯</button>
-                      <button className="btn danger" style={{ margin: 0, width: 'auto', flex: 1 }} onClick={() => del(c.id)}>
-                        {armed === c.id ? '再按一次確定刪除' : '🗑 刪除'}
-                      </button>
-                    </div>
-                    {!abuse && (
-                      <button className="btn ghost" style={{ marginTop: 4 }} onClick={async () => {
+                    <button className={`toggle-row ${c.shared ? 'on' : ''}`} onClick={() => patch(c, { shared: !c.shared })}>
+                      📣 已於早會分享<span className="tg-state">{c.shared ? '✓ 是' : '未'}</span>
+                    </button>
+                    <button className={`toggle-row ${c.check_scheduled ? 'on' : ''}`} onClick={() => patch(c, { check_scheduled: !c.check_scheduled })}>
+                      👁 已排主管重點檢查<span className="tg-state">{c.check_scheduled ? '✓ 是' : '未'}</span>
+                    </button>
+                    <button className={`toggle-row ${c.recurred ? 'warn' : ''}`} onClick={() => patch(c, { recurred: !c.recurred })}>
+                      🔁 曾再次發生<span className="tg-state">{c.recurred ? '⚠ 是' : '否'}</span>
+                    </button>
+                    {natureOf(c) === '投訴' && (
+                      <button className="toggle-row" onClick={async () => {
                         await api.setFocus({ focus_date: addDaysStr(1), source: 'complaint', complaint_id: c.id, topic_id: null })
                         toast('已設為明日早會重點')
-                      }}>📌 設為明日早會重點</button>
+                      }}>📌 設為明日早會重點<span className="tg-state">›</span></button>
                     )}
+                    <div className="row-actions">
+                      <button className="mini-btn edit" onClick={() => setForm({ ...EMPTY, ...c })}>✏️ 編輯</button>
+                      <button className="mini-btn del" onClick={() => setConfirmDel(c)}>🗑 刪除</button>
+                    </div>
                   </div>
                 )}
               </div>
             )
           })}
-          <div className="note">點狀態標籤可直接切換 · 排行與重點選題只計「投訴」，濫訴留作人群與數量統計</div>
+          <div className="note">排行與早會選題只計「投訴」；濫訴、工程投訴另計數量作參考</div>
         </div>
       </div>
 
@@ -197,10 +197,10 @@ export default function Complaints() {
             <h2>{form.id ? '編輯客訴記錄' : '新增客訴記錄'}</h2>
             <div className="f-row">
               <label>性質</label>
-              <div style={{ display: 'flex', gap: 8 }}>
-                {['投訴', '濫訴'].map(n => (
-                  <button key={n} className={`chip ${form.nature === n ? 'on' : ''}`} style={{ flex: 1, padding: '9px 0' }}
-                    onClick={() => setForm({ ...form, nature: n })}>{n === '投訴' ? '✓ 投訴（真實問題）' : '🚫 濫訴（不合理）'}</button>
+              <div className="seg" style={{ marginTop: 0 }}>
+                {NATURES.map(n => (
+                  <button key={n} className={`chip ${form.nature === n ? 'on' : ''}`}
+                    onClick={() => setForm({ ...form, nature: n })}>{n}</button>
                 ))}
               </div>
             </div>
@@ -214,7 +214,7 @@ export default function Complaints() {
             </div>
             {F('客人反映內容', 'guest_comment', 'textarea', { placeholder: '客人說了什麼…' })}
             {F('實際原因', 'actual_cause', 'textarea', { placeholder: '查證後的真正原因…' })}
-            {F('正確標準', 'correct_standard', 'textarea', { placeholder: '應該怎樣做…' })}
+            {F('正確標準', 'correct_standard', 'textarea', { placeholder: '應該怎麼做…' })}
             {F('改善措施', 'improvement', 'textarea', { placeholder: '採取了什麼行動…' })}
             <PhotoField label="現場相片（早會展示用）" photos={form.photos} onChange={p => setForm({ ...form, photos: p })} />
             <button className="btn" onClick={save}>儲存</button>
@@ -234,6 +234,14 @@ export default function Complaints() {
             <button className="btn ghost" onClick={() => askDone(false)}>先不用</button>
           </div>
         </div>
+      )}
+
+      {confirmDel && (
+        <Confirm
+          text={`${confirmDel.date} · ${confirmDel.room} 房「${confirmDel.guest_comment}」的記錄會被永久刪除。`}
+          onConfirm={async () => { await api.deleteComplaint(confirmDel.id); setConfirmDel(null); setOpen(null); toast('已刪除記錄'); load() }}
+          onCancel={() => setConfirmDel(null)}
+        />
       )}
     </>
   )

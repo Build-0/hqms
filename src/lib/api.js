@@ -128,6 +128,36 @@ export async function deleteScore(id) {
   throwIf(error)
 }
 
+// ── periodic（循環清潔項目）──
+export async function listPeriodic() {
+  if (isLocal) return local.listPeriodic()
+  const { data, error } = await sb.from('periodic_items').select('*').order('sort_order').order('created_at')
+  throwIf(error)
+  return data
+}
+export async function addPeriodic(p) {
+  if (isLocal) return local.addPeriodic(p)
+  const { data, error } = await sb.from('periodic_items').insert(p).select().single()
+  throwIf(error)
+  return data
+}
+export async function updatePeriodic(id, patch) {
+  if (isLocal) return local.updatePeriodic(id, patch)
+  const { data, error } = await sb.from('periodic_items').update(patch).eq('id', id).select().single()
+  throwIf(error)
+  return data
+}
+export async function deletePeriodic(id) {
+  if (isLocal) return local.deletePeriodic(id)
+  const { error } = await sb.from('periodic_items').delete().eq('id', id)
+  throwIf(error)
+}
+export async function importSeedPeriodic(rows) {
+  if (isLocal) return local.importSeedPeriodic(rows)
+  const { error } = await sb.from('periodic_items').insert(rows)
+  throwIf(error)
+}
+
 // ── photos ──
 // 壓縮後上傳；示範模式直接回傳 dataURL 存進記錄，正式模式上傳 Storage 回傳公開網址
 export async function uploadPhoto(file) {
