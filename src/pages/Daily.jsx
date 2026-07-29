@@ -33,8 +33,10 @@ export default function Daily() {
     const [complaints, topics, kk] = await Promise.all([api.listComplaints(), api.listTopics(), api.listCategories()])
     let focus = await api.getFocus(today)
     if (!focus) {
-      // 只用「投訴」做重點，濫訴與工程投訴不進早會
-      const yc = complaints.find(c => c.date === yesterday && (c.nature || '投訴') === '投訴')
+      // 只用「客房×投訴」做重點，濫訴與工程不進早會
+      const isCore = c => (c.dept || (c.nature === '工程投訴' ? '工程其他' : '客房')) === '客房'
+        && (c.nature === '工程投訴' ? '投訴' : (c.nature || '投訴')) === '投訴'
+      const yc = complaints.find(c => c.date === yesterday && isCore(c))
       if (yc) {
         focus = await api.setFocus({ focus_date: today, source: 'complaint', complaint_id: yc.id, topic_id: null })
       } else if (topics.length) {
@@ -54,7 +56,9 @@ export default function Daily() {
     setSt({
       focus, complaint, topic, tomorrowName,
       cats: kk?.length ? kk : DEFAULT_CATEGORIES,
-      hadYesterday: complaints.some(c => c.date === yesterday && (c.nature || '投訴') === '投訴'),
+      hadYesterday: complaints.some(c => c.date === yesterday
+        && (c.dept || (c.nature === '工程投訴' ? '工程其他' : '客房')) === '客房'
+        && (c.nature === '工程投訴' ? '投訴' : (c.nature || '投訴')) === '投訴'),
     })
   }
 
@@ -93,7 +97,7 @@ export default function Daily() {
   const shared = !!focus.shared_at
 
   return (
-    <>
+    <div className="daily-wrap">
       <div className="card">
         <div className="hero" style={{ background: m.s }}>
           <div className="hero-e" style={{ fontSize: 36 }}>{m.e}</div>
@@ -176,6 +180,6 @@ export default function Daily() {
         {tomorrowName ? ` · 明日已指定：${tomorrowName}` : ''}
         <button className="linky" onClick={regen}>🔄 重新選題</button>
       </p>
-    </>
+    </div>
   )
 }

@@ -44,6 +44,7 @@ create table if not exists complaints (
   check_scheduled boolean not null default false,
   recurred boolean not null default false,
   nature text not null default '投訴',
+  dept text not null default '客房',
   photos jsonb not null default '[]',
   created_at timestamptz not null default now()
 );
@@ -76,6 +77,17 @@ create table if not exists training_sections (
   created_at timestamptz not null default now()
 );
 
+-- 加強清潔項目（每日提醒 / 循環排程 / 深度清潔）
+create table if not exists cleaning_items (
+  id uuid primary key default gen_random_uuid(),
+  section text not null check (section in ('daily','cycle','deep')),
+  day int,
+  text text not null,
+  wrong text not null default '',
+  sort_order int not null default 0,
+  created_at timestamptz not null default now()
+);
+
 -- 每日品質重點（自動選題結果與早會分享狀態）
 create table if not exists daily_focus (
   focus_date date primary key,
@@ -101,13 +113,15 @@ create policy "auth all training" on training_sections for all to authenticated 
 create policy "auth all categories" on categories for all to authenticated using (true) with check (true);
 create policy "auth all attendants" on attendants for all to authenticated using (true) with check (true);
 create policy "auth all scores" on scores for all to authenticated using (true) with check (true);
+alter table cleaning_items enable row level security;
+create policy "auth all cleaning" on cleaning_items for all to authenticated using (true) with check (true);
 
 -- 預設 7 個分類（空表才插入）
 insert into categories (name, emoji, color, sort_order)
 select * from (values
-  ('客房清潔','🛏️','#1f7a6d',0),('浴室','🚿','#4a6fa5',1),('服務','🛎️','#b07d2e',2),
-  ('安全','⛑️','#c0564f',3),('蟲害','🐛','#7d9440',4),('遺留物','🎒','#8f7ac9',5),
-  ('工具','🧰','#54808c',6),('工作間','🧺','#5f9e63',7)
+  ('客房清潔','🛏️','#1f7a6d',0),('床品布草','🛌','#2e86ab',1),('浴室','🚿','#4a6fa5',2),
+  ('服務','🛎️','#b07d2e',3),('安全','⛑️','#c0564f',4),('蟲害','🐛','#7d9440',5),
+  ('遺留物','🎒','#8f7ac9',6),('工具','🧰','#54808c',7),('工作間','🧺','#5f9e63',8)
 ) as v(name, emoji, color, sort_order)
 where not exists (select 1 from categories);
 

@@ -128,36 +128,6 @@ export async function deleteScore(id) {
   throwIf(error)
 }
 
-// ── periodic（循環清潔項目）──
-export async function listPeriodic() {
-  if (isLocal) return local.listPeriodic()
-  const { data, error } = await sb.from('periodic_items').select('*').order('sort_order').order('created_at')
-  throwIf(error)
-  return data
-}
-export async function addPeriodic(p) {
-  if (isLocal) return local.addPeriodic(p)
-  const { data, error } = await sb.from('periodic_items').insert(p).select().single()
-  throwIf(error)
-  return data
-}
-export async function updatePeriodic(id, patch) {
-  if (isLocal) return local.updatePeriodic(id, patch)
-  const { data, error } = await sb.from('periodic_items').update(patch).eq('id', id).select().single()
-  throwIf(error)
-  return data
-}
-export async function deletePeriodic(id) {
-  if (isLocal) return local.deletePeriodic(id)
-  const { error } = await sb.from('periodic_items').delete().eq('id', id)
-  throwIf(error)
-}
-export async function importSeedPeriodic(rows) {
-  if (isLocal) return local.importSeedPeriodic(rows)
-  const { error } = await sb.from('periodic_items').insert(rows)
-  throwIf(error)
-}
-
 // ── photos ──
 // 壓縮後上傳；示範模式直接回傳 dataURL 存進記錄，正式模式上傳 Storage 回傳公開網址
 export async function uploadPhoto(file) {
@@ -252,6 +222,36 @@ export async function deleteTraining(id) {
 export async function importSeedTraining(rows) {
   if (isLocal) return local.importSeedTraining(rows)
   const { error } = await sb.from('training_sections').insert(rows)
+  throwIf(error)
+}
+
+// ── cleaning（加強清潔項目）──
+export async function listCleaning() {
+  if (isLocal) return local.listCleaning()
+  const { data, error } = await sb.from('cleaning_items').select('*').order('sort_order').order('day').order('created_at')
+  throwIf(error)
+  return data
+}
+export async function addCleaning(c) {
+  if (isLocal) return local.addCleaning(c)
+  const { data, error } = await sb.from('cleaning_items').insert(c).select().single()
+  throwIf(error)
+  return data
+}
+export async function updateCleaning(id, patch) {
+  if (isLocal) return local.updateCleaning(id, patch)
+  const { data, error } = await sb.from('cleaning_items').update(patch).eq('id', id).select().single()
+  throwIf(error)
+  return data
+}
+export async function deleteCleaning(id) {
+  if (isLocal) return local.deleteCleaning(id)
+  const { error } = await sb.from('cleaning_items').delete().eq('id', id)
+  throwIf(error)
+}
+export async function importSeedCleaning(rows) {
+  if (isLocal) return local.importSeedCleaning(rows)
+  const { error } = await sb.from('cleaning_items').insert(rows)
   throwIf(error)
 }
 

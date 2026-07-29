@@ -1,6 +1,7 @@
 // 預設分類（匯入資料庫後以資料庫為準，可在主題庫頁編輯）
 export const DEFAULT_CATEGORIES = [
   { name: '客房清潔', emoji: '🛏️', color: '#1f7a6d' },
+  { name: '床品布草', emoji: '🛌', color: '#2e86ab' },
   { name: '浴室', emoji: '🚿', color: '#4a6fa5' },
   { name: '服務', emoji: '🛎️', color: '#b07d2e' },
   { name: '安全', emoji: '⛑️', color: '#c0564f' },
@@ -11,8 +12,9 @@ export const DEFAULT_CATEGORIES = [
 ]
 export const CATS = DEFAULT_CATEGORIES.map(c => c.name)
 
-// 客訴性質
-export const NATURES = ['投訴', '濫訴', '工程投訴']
+// 客訴：部門 × 性質
+export const DEPTS = ['客房', '工程其他']
+export const NATURES = ['投訴', '濫訴']
 
 // 預設品質主題（內容一律繁體國語；匯入後以資料庫為準）
 export const seedTopics = [
@@ -64,12 +66,17 @@ export const TRAINING = [
   { emoji: '❓', title: '常見問題', intro: '新人最常犯錯的地方：', steps: ['趕房漏最後檢查 → 寧可慢一分鐘', '憑記憶補品 → 必須核對清單', '見DND照敲 → 先看名單', '遺留物先收起來 → 即報即登記', '杯具房內隨便擦 → 統一消毒'] },
 ]
 
-// 每日清潔加強項目（除日常標準外）——顯示於「循環清潔」模組
-export const DAILY_EXTRA = [
-  '放置拖鞋位置區域及衣櫃抽屜要擦塵',
-  '牙刷架及咖啡杯盒拖出來擦塵',
-  '推拉門及九宮格黑邊框要擦塵',
-  '書桌腳及全身鏡都要擦塵',
+// 加強清潔預設項目（匯入資料庫後以資料庫為準，可在 app 內編輯）
+// section: daily=每日清潔提醒 / cycle=循環清潔（day=每月幾號加強）/ deep=深度清潔
+export const CLEANING_SEED = [
+  { section: 'daily', text: '抹塵：放置拖鞋位置區域、衣櫃抽屜', wrong: '不抹' },
+  { section: 'daily', text: '抹塵：牙刷架、咖啡盒拖出來抹', wrong: '不抹' },
+  { section: 'daily', text: '抹塵：推拉門、九宮格黑邊框', wrong: '不抹' },
+  { section: 'daily', text: '抹塵：書桌腳、全身鏡', wrong: '不抹' },
+  { section: 'daily', text: '電話、遙控器、便籤本、指南牌、推廣卡拿起來抹', wrong: '原封不動，只抹這些物品的週邊' },
+  { section: 'cycle', day: 1, text: '浴缸邊全面除漬' },
+  { section: 'cycle', day: 2, text: '花灑頭除漬' },
+  { section: 'cycle', day: 3, text: '浴室牆身除漬' },
 ]
 
 // 示範模式的樣本客訴（日期相對今天，保證「昨日客訴→今日重點」邏輯看得到）

@@ -7,5 +7,6 @@ drop policy if exists "open training" on training_sections;
 drop policy if exists "open categories" on categories;
 drop policy if exists "open attendants" on attendants;
 drop policy if exists "open scores" on scores;
+drop policy if exists "open cleaning" on cleaning_items;
 drop policy if exists "open upload photos" on storage.objects;
 drop policy if exists "open delete photos" on storage.objects;

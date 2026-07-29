@@ -1,7 +1,7 @@
 // 示範模式資料層：全部存 localStorage，介面與 Supabase 版一致
 import { seedTopics, seedComplaints, TRAINING, DEFAULT_CATEGORIES } from '../data/seedData'
 
-const K = { user: 'hqms_user', complaints: 'hqms_complaints', topics: 'hqms_topics', focus: 'hqms_focus', training: 'hqms_training', categories: 'hqms_categories', attendants: 'hqms_attendants', scores: 'hqms_scores', periodic: 'hqms_periodic' }
+const K = { user: 'hqms_user', complaints: 'hqms_complaints', topics: 'hqms_topics', focus: 'hqms_focus', training: 'hqms_training', categories: 'hqms_categories', attendants: 'hqms_attendants', scores: 'hqms_scores', cleaning: 'hqms_cleaning' }
 const get = (k, fb) => {
   try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : fb } catch { return fb }
 }
@@ -70,27 +70,6 @@ export function deleteTopic(id) {
 }
 export function importSeedTopics(rows) { for (const r of rows) addTopic(r) }
 
-// ── periodic ──
-export function listPeriodic() {
-  ensureSeed()
-  return get(K.periodic, []).slice().sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
-}
-export function addPeriodic(p) {
-  const rows = get(K.periodic, [])
-  const row = { id: uid(), sort_order: rows.length, created_at: new Date().toISOString(), ...p }
-  rows.push(row); set(K.periodic, rows)
-  return row
-}
-export function updatePeriodic(id, patch) {
-  const rows = get(K.periodic, []).map(r => (r.id === id ? { ...r, ...patch } : r))
-  set(K.periodic, rows)
-  return rows.find(r => r.id === id)
-}
-export function deletePeriodic(id) {
-  set(K.periodic, get(K.periodic, []).filter(r => r.id !== id))
-}
-export function importSeedPeriodic(rows) { for (const r of rows) addPeriodic(r) }
-
 // ── categories ──
 export function listCategories() {
   ensureSeed()
@@ -157,6 +136,27 @@ export function updateScore(id, patch) {
 export function deleteScore(id) {
   set(K.scores, get(K.scores, []).filter(r => r.id !== id))
 }
+
+// ── cleaning ──
+export function listCleaning() {
+  ensureSeed()
+  return get(K.cleaning, []).slice().sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || (a.day ?? 0) - (b.day ?? 0))
+}
+export function addCleaning(c) {
+  const rows = get(K.cleaning, [])
+  const row = { id: uid(), day: null, wrong: '', sort_order: rows.length, created_at: new Date().toISOString(), ...c }
+  rows.push(row); set(K.cleaning, rows)
+  return row
+}
+export function updateCleaning(id, patch) {
+  const rows = get(K.cleaning, []).map(r => (r.id === id ? { ...r, ...patch } : r))
+  set(K.cleaning, rows)
+  return rows.find(r => r.id === id)
+}
+export function deleteCleaning(id) {
+  set(K.cleaning, get(K.cleaning, []).filter(r => r.id !== id))
+}
+export function importSeedCleaning(rows) { for (const r of rows) addCleaning(r) }
 
 // ── training ──
 export function listTraining() {

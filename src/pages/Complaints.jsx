@@ -1,15 +1,17 @@
 import { useEffect, useState } from 'react'
 import * as api from '../lib/api'
-import { DEFAULT_CATEGORIES, NATURES } from '../data/seedData'
+import { DEFAULT_CATEGORIES, NATURES, DEPTS } from '../data/seedData'
 import { metaOf } from '../lib/cats'
 import { todayStr, addDaysStr } from '../lib/dates'
 import { toast } from '../lib/toast'
 import { PhotoGrid, PhotoField } from '../components/Photos'
 import Confirm from '../components/Confirm'
 
-const EMPTY = { date: '', room: '', category: '', nature: '投訴', source: 'wechat', guest_comment: '', actual_cause: '', correct_standard: '', improvement: '', photos: [] }
-const natureBadge = n => (n === '濫訴' ? { t: '🚫 濫訴', cls: 'b-gray' } : n === '工程投訴' ? { t: '🔧 工程', cls: 'b-blue' } : null)
+const EMPTY = { date: '', room: '', category: '', dept: '客房', nature: '投訴', source: 'wechat', guest_comment: '', actual_cause: '', correct_standard: '', improvement: '', photos: [] }
 const SOURCES = ['wechat', 'Incident report', 'Guest comment', '總機', '其他']
+// 相容：dept 欄未建立前，由舊的 nature=工程投訴 推斷部門
+const deptOf = c => c.dept || (c.nature === '工程投訴' ? '工程其他' : '客房')
+const natOf = c => (c.nature === '工程投訴' ? '投訴' : (c.nature || '投訴'))
 // 房號 → 樓層（1208→12樓、320→3樓；無房號→null）
 const floorOf = room => {
   const m = String(room || '').match(/\d{3,4}/)
@@ -27,11 +29,13 @@ export default function Complaints() {
   const [cats, setCats] = useState(null)
   const [open, setOpen] = useState(null)
   const [form, setForm] = useState(null)    // null=關閉；{...欄位, id?}=新增/編輯
-  const [ask, setAsk] = useState(null)      // 剛儲存的投訴 → 問是否設為明日重點
-  const [confirmDel, setConfirmDel] = useState(null) // 待確認刪除的記錄
+  const [ask, setAsk] = useState(null)      // 剛儲存的客房投訴 → 問是否設為明日重點
+  const [confirmDel, setConfirmDel] = useState(null)
+  const [deptF, setDeptF] = useState('全部')
   const [natureF, setNatureF] = useState('全部')
   const [catF, setCatF] = useState('全部')
   const [floorF, setFloorF] = useState('全部')
+  const [q, setQ] = useState('')
   const [ym, setYm] = useState(todayStr().slice(0, 7))
 
   useEffect(() => { load() }, [])
@@ -42,37 +46,50 @@ export default function Complaints() {
   }
   const catList = cats || DEFAULT_CATEGORIES
   const m = name => metaOf(catList, name)
-  const natureOf = c => c.nature || '投訴'
 
   const today = todayStr()
   const yesterday = addDaysStr(-1)
   const hasSource = list.length > 0 && 'source' in list[0]
-  const mAll = list.filter(c => c.date.startsWith(ym))       // 選中月份的全部記錄
-  const mGenuine = mAll.filter(c => natureOf(c) === '投訴')
-  const yCount = list.filter(c => natureOf(c) === '投訴' && c.date === yesterday).length
-  const rCount = mGenuine.filter(c => c.recurred).length
-  const rank = catList.map(k => ({ cat: k.name, n: mGenuine.filter(c => c.category === k.name).length }))
+  const hasDept = list.length > 0 && 'dept' in list[0]
+  const mAll = list.filter(c => c.date.startsWith(ym))
+  // 部門統計組
+  const groups = DEPTS.map(d => {
+    const mine = mAll.filter(c => deptOf(c) === d)
+    return {
+      d,
+      y: list.filter(c => deptOf(c) === d && natOf(c) === '投訴' && c.date === yesterday).length,
+      inv: mine.filter(c => natOf(c) === '投訴').length,
+      ab: mine.filter(c => natOf(c) === '濫訴').length,
+      total: mine.length,
+    }
+  })
+  // 排行/樓層/選題：只計 客房×投訴
+  const mCore = mAll.filter(c => deptOf(c) === '客房' && natOf(c) === '投訴')
+  const rank = catList.map(k => ({ cat: k.name, n: mCore.filter(c => c.category === k.name).length }))
     .filter(r => r.n > 0).sort((a, b) => b.n - a.n)
   const maxN = rank[0]?.n || 1
-  // 樓層分佈（只計投訴）
   const floorCount = {}
-  for (const c of mGenuine) {
+  for (const c of mCore) {
     const f = floorOf(c.room)
     const key = f === null ? '無房號' : `${f}`
     floorCount[key] = (floorCount[key] || 0) + 1
   }
-  const floorRank = Object.entries(floorCount)
-    .sort((a, b) => b[1] - a[1])
+  const floorRank = Object.entries(floorCount).sort((a, b) => b[1] - a[1])
   const maxF = floorRank[0]?.[1] || 1
   const floors = [...new Set(mAll.map(c => { const f = floorOf(c.room); return f === null ? '無房號' : `${f}` }))]
     .sort((a, b) => (parseInt(a) || 999) - (parseInt(b) || 999))
   const monthLabel = `${ym.slice(0, 4)}年${parseInt(ym.slice(5), 10)}月`
 
-  const shown = mAll
-    .filter(c => natureF === '全部' || natureOf(c) === natureF)
+  const searching = q.trim().length > 0
+  const base = searching
+    ? list.filter(c => [c.room, c.guest_comment, c.actual_cause, c.correct_standard, c.improvement, c.category].join(' ').includes(q.trim()))
+    : mAll
+  const shown = base
+    .filter(c => deptF === '全部' || deptOf(c) === deptF)
+    .filter(c => natureF === '全部' || natOf(c) === natureF)
     .filter(c => catF === '全部' || c.category === catF)
     .filter(c => {
-      if (floorF === '全部') return true
+      if (searching || floorF === '全部') return true
       const f = floorOf(c.room)
       return floorF === (f === null ? '無房號' : `${f}`)
     })
@@ -87,14 +104,15 @@ export default function Complaints() {
       correct_standard: f.correct_standard, improvement: f.improvement,
       photos: f.photos || [],
     }
+    if (hasDept) payload.dept = f.dept || '客房'
     if (hasSource) payload.source = f.source || 'wechat'
     if (f.id) {
       await api.updateComplaint(f.id, payload)
       toast('已儲存修改')
     } else {
       const row = await api.addComplaint({ ...payload, shared: false, check_scheduled: false, recurred: false })
-      if (payload.nature === '投訴') setAsk(row)
-      else toast(`已記錄（${payload.nature}不會成為早會重點）`)
+      if (payload.nature === '投訴' && (payload.dept || '客房') === '客房') setAsk(row)
+      else toast('已記錄（只有客房投訴會成為早會重點）')
     }
     setForm(null)
     load()
@@ -133,17 +151,26 @@ export default function Complaints() {
             <span className="m-label">{monthLabel}</span>
             <button onClick={() => { setYm(shiftYm(ym, 1)); setFloorF('全部') }}>›</button>
           </div>
-          <div className="stats">
-            <div className="stat"><div className="stat-e">🔔</div><div className={`n ${yCount ? 'warn' : ''}`}>{yCount}</div><div className="l">昨日投訴</div></div>
-            <div className="stat"><div className="stat-e">🗓️</div><div className="n">{mGenuine.length}</div><div className="l">當月投訴</div></div>
-            <div className="stat"><div className="stat-e">🚫</div><div className="n" style={{ color: 'var(--sub)' }}>{mAll.filter(c => natureOf(c) === '濫訴').length}</div><div className="l">濫訴</div></div>
-            <div className="stat"><div className="stat-e">🔧</div><div className="n" style={{ color: 'var(--blue)' }}>{mAll.filter(c => natureOf(c) === '工程投訴').length}</div><div className="l">工程投訴</div></div>
-            <div className="stat"><div className="stat-e">🔁</div><div className={`n ${rCount ? 'warn' : ''}`}>{rCount}</div><div className="l">重複發生</div></div>
+          <div className="dept-wrap">
+            {groups.map(g => (
+              <div className="card dept-card" key={g.d}>
+                <div className="dc-head">
+                  {g.d === '客房' ? '🛏️ 客房' : '🔧 工程部與其他'}
+                  <span className="dc-total">共 {g.total} 單</span>
+                </div>
+                <div className="dc-stats">
+                  <div><b className={g.y ? 'warn' : ''}>{g.y}</b><span>昨日投訴</span></div>
+                  <div><b>{g.inv}</b><span>當月投訴</span></div>
+                  <div><b style={{ color: 'var(--sub)' }}>{g.ab}</b><span>濫訴</span></div>
+                </div>
+              </div>
+            ))}
+            <div className="dept-sum">📊 {monthLabel}全部合計 <b>{mAll.length}</b> 單</div>
           </div>
 
           {rank.length > 0 && (
             <div className="card">
-              <h2>{monthLabel}分類排行<span style={{ fontSize: 11, color: 'var(--sub)', fontWeight: 400 }}>（只計投訴）</span></h2>
+              <h2>{monthLabel}分類排行<span style={{ fontSize: 11, color: 'var(--sub)', fontWeight: 400 }}>（只計客房投訴）</span></h2>
               {rank.map(r => {
                 const mm = m(r.cat)
                 return (
@@ -159,7 +186,7 @@ export default function Complaints() {
 
           {floorRank.length > 0 && (
             <div className="card">
-              <h2>{monthLabel}樓層分佈<span style={{ fontSize: 11, color: 'var(--sub)', fontWeight: 400 }}>（只計投訴，點列表上方樓層籤可篩選）</span></h2>
+              <h2>{monthLabel}樓層分佈<span style={{ fontSize: 11, color: 'var(--sub)', fontWeight: 400 }}>（只計客房投訴）</span></h2>
               {floorRank.map(([f, n]) => (
                 <div className="bar-row" key={f}>
                   <span className="name">{f === '無房號' ? f : `${f} 樓`}</span>
@@ -172,10 +199,19 @@ export default function Complaints() {
         </div>
 
         <div>
-          <h2 style={{ margin: '2px 4px 8px' }}>客訴記錄<span style={{ fontSize: 11.5, color: 'var(--sub)', fontWeight: 400 }}>（{monthLabel} · {shown.length} 筆）</span></h2>
+          <h2 style={{ margin: '2px 4px 8px' }}>
+            客訴記錄
+            <span style={{ fontSize: 11.5, color: 'var(--sub)', fontWeight: 400 }}>
+              （{searching ? `搜尋全部月份 · ${shown.length} 筆` : `${monthLabel} · ${shown.length} 筆`}）
+            </span>
+          </h2>
+          <input className="search-inp" placeholder="🔍 搜尋房號或內容（跨全部月份）" value={q} onChange={e => setQ(e.target.value)} />
           <div className="chips">
-            {['全部', ...NATURES].map(n => (
-              <button key={n} className={`chip ${natureF === n ? 'on' : ''}`} onClick={() => setNatureF(n)}>{n}</button>
+            {['全部', ...DEPTS].map(d => (
+              <button key={d} className={`chip ${deptF === d ? 'on' : ''}`} onClick={() => setDeptF(d)}>{d === '工程其他' ? '🔧 工程其他' : d === '客房' ? '🛏️ 客房' : d}</button>
+            ))}
+            {NATURES.map(n => (
+              <button key={n} className={`chip ${natureF === n ? 'on' : ''}`} onClick={() => setNatureF(natureF === n ? '全部' : n)}>{n}</button>
             ))}
           </div>
           <div className="chips">
@@ -184,7 +220,7 @@ export default function Complaints() {
               <button key={k.name} className={`chip ${catF === k.name ? 'on' : ''}`} onClick={() => setCatF(k.name)}>{k.emoji} {k.name}</button>
             ))}
           </div>
-          {floors.length > 1 && (
+          {!searching && floors.length > 1 && (
             <div className="chips">
               <button className={`chip ${floorF === '全部' ? 'on' : ''}`} onClick={() => setFloorF('全部')}>全部樓層</button>
               {floors.map(f => (
@@ -192,19 +228,21 @@ export default function Complaints() {
               ))}
             </div>
           )}
-          {shown.length === 0 && <div className="note">{monthLabel}沒有符合篩選的記錄</div>}
+          {shown.length === 0 && <div className="note">{searching ? '搜尋不到相關記錄' : `${monthLabel}沒有符合篩選的記錄`}</div>}
           {shown.map(c => {
             const mm = m(c.category)
-            const nb = natureBadge(natureOf(c))
+            const eng = deptOf(c) === '工程其他'
+            const abuse = natOf(c) === '濫訴'
             return (
-              <div className="c-item" key={c.id} style={nb ? { opacity: .8 } : undefined}>
+              <div className="c-item" key={c.id} style={abuse ? { opacity: .8 } : undefined}>
                 <div className="c-head" onClick={() => setOpen(open === c.id ? null : c.id)}>
                   <span className="badge" style={{ background: mm.s, color: mm.c }}>{mm.e} {c.category}</span>
-                  {nb && <span className={`badge ${nb.cls}`}>{nb.t}</span>}
+                  {eng && <span className="badge b-blue">🔧 工程</span>}
+                  {abuse && <span className="badge b-gray">🚫 濫訴</span>}
                   <span className="room">{c.room}</span>
                   <span className="desc">{c.guest_comment}</span>
                   {c.photos?.length > 0 && <span className="ph-count">📷{c.photos.length}</span>}
-                  <span style={{ fontSize: 11, color: 'var(--sub)' }}>{c.date.slice(5)}</span>
+                  <span style={{ fontSize: 11, color: 'var(--sub)' }}>{searching ? c.date : c.date.slice(5)}</span>
                 </div>
                 {open === c.id && (
                   <div className="c-body">
@@ -214,10 +252,18 @@ export default function Complaints() {
                     <div className="kv"><span className="k">正確標準</span><span className="v">{c.correct_standard || '—'}</span></div>
                     <div className="kv"><span className="k">改善措施</span><span className="v">{c.improvement || '—'}</span></div>
                     <PhotoGrid photos={c.photos} />
+                    {hasDept && (
+                      <div className="seg">
+                        {DEPTS.map(d => (
+                          <button key={d} className={`chip ${deptOf(c) === d ? 'on' : ''}`}
+                            onClick={() => deptOf(c) !== d && patch(c, { dept: d })}>{d}</button>
+                        ))}
+                      </div>
+                    )}
                     <div className="seg">
                       {NATURES.map(n => (
-                        <button key={n} className={`chip ${natureOf(c) === n ? 'on' : ''}`}
-                          onClick={() => natureOf(c) !== n && patch(c, { nature: n })}>{n}</button>
+                        <button key={n} className={`chip ${natOf(c) === n ? 'on' : ''}`}
+                          onClick={() => natOf(c) !== n && patch(c, { nature: n })}>{n}</button>
                       ))}
                     </div>
                     <button className={`toggle-row ${c.shared ? 'on' : ''}`} onClick={() => patch(c, { shared: !c.shared })}>
@@ -226,17 +272,14 @@ export default function Complaints() {
                     <button className={`toggle-row ${c.check_scheduled ? 'on' : ''}`} onClick={() => patch(c, { check_scheduled: !c.check_scheduled })}>
                       👁 已排主管重點檢查<span className="tg-state">{c.check_scheduled ? '✓ 是' : '未'}</span>
                     </button>
-                    <button className={`toggle-row ${c.recurred ? 'warn' : ''}`} onClick={() => patch(c, { recurred: !c.recurred })}>
-                      🔁 曾再次發生<span className="tg-state">{c.recurred ? '⚠ 是' : '否'}</span>
-                    </button>
-                    {natureOf(c) === '投訴' && (
+                    {deptOf(c) === '客房' && natOf(c) === '投訴' && (
                       <button className="toggle-row" onClick={async () => {
                         await api.setFocus({ focus_date: addDaysStr(1), source: 'complaint', complaint_id: c.id, topic_id: null })
                         toast('已設為明日早會重點')
                       }}>📌 設為明日早會重點<span className="tg-state">›</span></button>
                     )}
                     <div className="row-actions">
-                      <button className="mini-btn edit" onClick={() => setForm({ ...EMPTY, ...c })}>✏️ 編輯</button>
+                      <button className="mini-btn edit" onClick={() => setForm({ ...EMPTY, ...c, dept: deptOf(c), nature: natOf(c) })}>✏️ 編輯</button>
                       <button className="mini-btn del" onClick={() => setConfirmDel(c)}>🗑 刪除</button>
                     </div>
                   </div>
@@ -244,7 +287,7 @@ export default function Complaints() {
               </div>
             )
           })}
-          <div className="note">排行與早會選題只計「投訴」；濫訴、工程投訴另計數量作參考</div>
+          <div className="note">排行、樓層與早會選題只計「客房 × 投訴」；濫訴與工程另計數量作參考</div>
         </div>
       </div>
 
@@ -254,12 +297,23 @@ export default function Complaints() {
         <div className="modal" onClick={e => { if (e.target === e.currentTarget) setForm(null) }}>
           <div className="sheet">
             <h2>{form.id ? '編輯客訴記錄' : '新增客訴記錄'}</h2>
+            {hasDept && (
+              <div className="f-row">
+                <label>部門</label>
+                <div className="seg" style={{ marginTop: 0 }}>
+                  {DEPTS.map(d => (
+                    <button key={d} className={`chip ${form.dept === d ? 'on' : ''}`}
+                      onClick={() => setForm({ ...form, dept: d })}>{d}</button>
+                  ))}
+                </div>
+              </div>
+            )}
             <div className="f-row">
               <label>性質</label>
               <div className="seg" style={{ marginTop: 0 }}>
                 {NATURES.map(n => (
                   <button key={n} className={`chip ${form.nature === n ? 'on' : ''}`}
-                    onClick={() => setForm({ ...form, nature: n })}>{n}</button>
+                    onClick={() => setForm({ ...form, nature: n })}>{n === '投訴' ? '✓ 投訴（真實問題）' : '🚫 濫訴（不合理）'}</button>
                 ))}
               </div>
             </div>
