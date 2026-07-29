@@ -35,6 +35,7 @@ export default function Complaints() {
   const [natureF, setNatureF] = useState('全部')
   const [catF, setCatF] = useState('全部')
   const [floorF, setFloorF] = useState('全部')
+  const [srcF, setSrcF] = useState('全部')
   const [q, setQ] = useState('')
   const [ym, setYm] = useState(todayStr().slice(0, 7))
 
@@ -84,9 +85,11 @@ export default function Complaints() {
   const base = searching
     ? list.filter(c => [c.room, c.guest_comment, c.actual_cause, c.correct_standard, c.improvement, c.category].join(' ').includes(q.trim()))
     : mAll
+  const isWechat = c => (c.source || '').trim().toLowerCase() === 'wechat'
   const shown = base
     .filter(c => deptF === '全部' || deptOf(c) === deptF)
     .filter(c => natureF === '全部' || natOf(c) === natureF)
+    .filter(c => srcF === '全部' || (srcF === 'wechat' ? isWechat(c) : !isWechat(c)))
     .filter(c => catF === '全部' || c.category === catF)
     .filter(c => {
       if (searching || floorF === '全部') return true
@@ -212,6 +215,9 @@ export default function Complaints() {
             ))}
             {NATURES.map(n => (
               <button key={n} className={`chip ${natureF === n ? 'on' : ''}`} onClick={() => setNatureF(natureF === n ? '全部' : n)}>{n}</button>
+            ))}
+            {hasSource && ['wechat', '其它'].map(s => (
+              <button key={s} className={`chip ${srcF === s ? 'on' : ''}`} onClick={() => setSrcF(srcF === s ? '全部' : s)}>{s === 'wechat' ? '💬 wechat' : '📋 其它來源'}</button>
             ))}
           </div>
           <div className="chips">
