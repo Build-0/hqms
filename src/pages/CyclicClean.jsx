@@ -16,6 +16,7 @@ export default function CyclicClean() {
   const [err, setErr] = useState('')
   const [sub, setSub] = useState(null)     // null=三圓入口；'daily'|'cycle'|'deep'
   const [form, setForm] = useState(null)   // {id?, section, day, grp, text, wrong}
+  const [daySheet, setDaySheet] = useState(null) // 月曆點中的日期
   const [confirmDel, setConfirmDel] = useState(null)
 
   useEffect(() => { load() }, [])
@@ -166,32 +167,43 @@ export default function CyclicClean() {
                 今日（{todayD} 日）加強：{todayTasks.map(t => t.text).join('、')}
               </div>
             )}
-            <div className="cal">
-              {Array.from({ length: 31 }, (_, i) => i + 1).map(d => (
-                <div key={d} className={`cal-d ${daysWith.has(d) ? 'has' : ''} ${d === todayD ? 'today' : ''}`}>{d}</div>
-              ))}
+            <div className="cal cal-full">
+              {Array.from({ length: 31 }, (_, i) => i + 1).map(d => {
+                const tasks = cycle.filter(c => c.day === d)
+                return (
+                  <button key={d} className={`cal-d ${tasks.length ? 'has' : ''} ${d === todayD ? 'today' : ''}`}
+                    onClick={() => setDaySheet(d)}>
+                    <span className="dnum">{d}</span>
+                    {tasks.length > 0 && <span className="dtask">{tasks.map(t => t.text).join('・')}</span>}
+                  </button>
+                )
+              })}
             </div>
+            <p className="note" style={{ textAlign: 'left', margin: '10px 2px 0' }}>
+              ⚠️ 所有清潔並非到指定日才清潔——此排程只是說明：指定日期要「加強」該區域的清潔。點日期格可查看／編輯／新增該日項目。
+            </p>
           </>
         )}
 
-        {rows.length === 0 && <div className="note" style={{ margin: '6px 0' }}>尚無項目，按右上「＋ 新增」</div>}
-        {sub === 'cycle'
-          ? rows.map(r => (
-            <button className="cl-row" key={r.id} onClick={() => openEdit(r)}>
-              <div className="cl-main">
-                <span className="cl-day">{r.day} 日</span>
-                <span>{r.text}</span>
-              </div>
-            </button>
-          ))
-          : renderGrouped(rows)}
-
-        {sub === 'cycle' && (
-          <p className="note" style={{ textAlign: 'left', margin: '10px 2px 0' }}>
-            ⚠️ 所有清潔並非到指定日才清潔——此排程只是說明：指定日期要「加強」該區域的清潔。
-          </p>
-        )}
+        {sub !== 'cycle' && rows.length === 0 && <div className="note" style={{ margin: '6px 0' }}>尚無項目，按右上「＋ 新增」</div>}
+        {sub !== 'cycle' && renderGrouped(rows)}
       </div>
+
+      {daySheet && (
+        <div className="modal" onClick={e => { if (e.target === e.currentTarget) setDaySheet(null) }}>
+          <div className="sheet">
+            <h2>{daySheet} 日的加強項目</h2>
+            {cycle.filter(c => c.day === daySheet).map(r => (
+              <button className="cl-row" key={r.id} onClick={() => { setDaySheet(null); openEdit(r) }}>
+                <div className="cl-main"><span>{r.text}</span></div>
+              </button>
+            ))}
+            {cycle.filter(c => c.day === daySheet).length === 0 && <div className="note" style={{ margin: '4px 0 10px' }}>此日尚無加強項目</div>}
+            <button className="btn" onClick={() => { const d = daySheet; setDaySheet(null); setForm({ section: 'cycle', day: String(d), grp: '', text: '', wrong: '' }) }}>＋ 新增此日項目</button>
+            <button className="btn ghost" onClick={() => setDaySheet(null)}>關閉</button>
+          </div>
+        </div>
+      )}
 
       {form && (
         <div className="modal" onClick={e => { if (e.target === e.currentTarget) setForm(null) }}>
