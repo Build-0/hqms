@@ -82,6 +82,7 @@ create table if not exists cleaning_items (
   id uuid primary key default gen_random_uuid(),
   section text not null check (section in ('daily','cycle','deep')),
   day int,
+  grp text not null default '',
   text text not null,
   wrong text not null default '',
   sort_order int not null default 0,

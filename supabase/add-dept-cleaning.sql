@@ -10,11 +10,14 @@ create table if not exists cleaning_items (
   id uuid primary key default gen_random_uuid(),
   section text not null check (section in ('daily','cycle','deep')),
   day int,
+  grp text not null default '',
   text text not null,
   wrong text not null default '',
   sort_order int not null default 0,
   created_at timestamptz not null default now()
 );
+-- 已建表者補分組欄
+alter table cleaning_items add column if not exists grp text not null default '';
 alter table cleaning_items enable row level security;
 create policy "auth all cleaning" on cleaning_items for all to authenticated using (true) with check (true);
 

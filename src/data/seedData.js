@@ -69,11 +69,11 @@ export const TRAINING = [
 // 加強清潔預設項目（匯入資料庫後以資料庫為準，可在 app 內編輯）
 // section: daily=每日清潔提醒 / cycle=循環清潔（day=每月幾號加強）/ deep=深度清潔
 export const CLEANING_SEED = [
-  { section: 'daily', text: '抹塵：放置拖鞋位置區域、衣櫃抽屜', wrong: '不抹' },
-  { section: 'daily', text: '抹塵：牙刷架、咖啡盒拖出來抹', wrong: '不抹' },
-  { section: 'daily', text: '抹塵：推拉門、九宮格黑邊框', wrong: '不抹' },
-  { section: 'daily', text: '抹塵：書桌腳、全身鏡', wrong: '不抹' },
-  { section: 'daily', text: '電話、遙控器、便籤本、指南牌、推廣卡拿起來抹', wrong: '原封不動，只抹這些物品的週邊' },
+  { section: 'daily', grp: '抹塵', text: '放置拖鞋位置區域、衣櫃抽屜', wrong: '不抹' },
+  { section: 'daily', grp: '抹塵', text: '牙刷架、咖啡盒拖出來', wrong: '不抹' },
+  { section: 'daily', grp: '抹塵', text: '推拉門、九宮格黑邊框', wrong: '不抹' },
+  { section: 'daily', grp: '抹塵', text: '書桌腳、全身鏡', wrong: '不抹' },
+  { section: 'daily', grp: '', text: '電話、遙控器、便籤本、指南牌、推廣卡拿起來抹', wrong: '原封不動，只抹這些物品的週邊' },
   { section: 'cycle', day: 1, text: '浴缸邊全面除漬' },
   { section: 'cycle', day: 2, text: '花灑頭除漬' },
   { section: 'cycle', day: 3, text: '浴室牆身除漬' },
