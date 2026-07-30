@@ -9,6 +9,7 @@ export const CAT_META = {
   '遺留物':   { e: '🎒', c: '#8f7ac9', s: '#ece7f6' },
   '工具':     { e: '🧰', c: '#54808c', s: '#e3edf0' },
   '工作間':   { e: '🧺', c: '#5f9e63', s: '#e7f2e8' },
+  '設備':     { e: '🔌', c: '#5b6ee1', s: '#e7e9fb' },
 }
 export const catMeta = c => CAT_META[c] || { e: '📋', c: '#7a8894', s: '#eef1f4' }
 

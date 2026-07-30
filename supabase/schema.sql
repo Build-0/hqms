@@ -122,7 +122,8 @@ insert into categories (name, emoji, color, sort_order)
 select * from (values
   ('客房清潔','🛏️','#1f7a6d',0),('床品布草','🛌','#2e86ab',1),('浴室','🚿','#4a6fa5',2),
   ('服務','🛎️','#b07d2e',3),('安全','⛑️','#c0564f',4),('蟲害','🐛','#7d9440',5),
-  ('遺留物','🎒','#8f7ac9',6),('工具','🧰','#54808c',7),('工作間','🧺','#5f9e63',8)
+  ('遺留物','🎒','#8f7ac9',6),('工具','🧰','#54808c',7),('工作間','🧺','#5f9e63',8),
+  ('設備','🔌','#5b6ee1',9)
 ) as v(name, emoji, color, sort_order)
 where not exists (select 1 from categories);
 

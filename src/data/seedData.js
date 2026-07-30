@@ -9,6 +9,7 @@ export const DEFAULT_CATEGORIES = [
   { name: '遺留物', emoji: '🎒', color: '#8f7ac9' },
   { name: '工具', emoji: '🧰', color: '#54808c' },
   { name: '工作間', emoji: '🧺', color: '#5f9e63' },
+  { name: '設備', emoji: '🔌', color: '#5b6ee1' },
 ]
 export const CATS = DEFAULT_CATEGORIES.map(c => c.name)
 

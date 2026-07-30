@@ -9,6 +9,10 @@ import Confirm from '../components/Confirm'
 
 const EMPTY = { date: '', room: '', category: '', dept: '客房', nature: '投訴', source: 'wechat', guest_comment: '', actual_cause: '', correct_standard: '', improvement: '', photos: [] }
 const SOURCES = ['wechat', 'Incident report', 'Guest comment', '總機', '其他']
+const DEPT_LABEL = d => (d === '工程其他' ? '工程與其他' : d)
+// 規則：內容含「新鮮污漬／新鮮血漬」的新記錄一律標濫訴
+const FRESH_RE = /新鮮[^，。、]{0,6}(污漬|血漬)/
+const roomNum = r => { const m = String(r || '').match(/\d+/); return m ? parseInt(m[0], 10) : 99999 }
 // 相容：dept 欄未建立前，由舊的 nature=工程投訴 推斷部門
 const deptOf = c => c.dept || (c.nature === '工程投訴' ? '工程其他' : '客房')
 const natOf = c => (c.nature === '工程投訴' ? '投訴' : (c.nature || '投訴'))
@@ -36,6 +40,7 @@ export default function Complaints() {
   const [catF, setCatF] = useState('全部')
   const [floorF, setFloorF] = useState('全部')
   const [srcF, setSrcF] = useState('全部')
+  const [sortF, setSortF] = useState('最新')
   const [q, setQ] = useState('')
   const [ym, setYm] = useState(todayStr().slice(0, 7))
 
@@ -64,11 +69,20 @@ export default function Complaints() {
       total: mine.length,
     }
   })
-  // 排行/樓層/選題：只計 客房×投訴
+  // 排行/樓層/選題：只計 客房×投訴；選了樓層時排行跟著樓層走
   const mCore = mAll.filter(c => deptOf(c) === '客房' && natOf(c) === '投訴')
-  const rank = catList.map(k => ({ cat: k.name, n: mCore.filter(c => c.category === k.name).length }))
+  const floorScope = floorF === '全部' ? mCore : mCore.filter(c => {
+    const f = floorOf(c.room)
+    return floorF === (f === null ? '無房號' : `${f}`)
+  })
+  const rank = catList.map(k => ({ cat: k.name, n: floorScope.filter(c => c.category === k.name).length }))
     .filter(r => r.n > 0).sort((a, b) => b.n - a.n)
   const maxN = rank[0]?.n || 1
+  // 累計統計（全部月份）
+  const allCore = list.filter(c => deptOf(c) === '客房' && natOf(c) === '投訴')
+  const cumRank = catList.map(k => ({ cat: k.name, n: allCore.filter(c => c.category === k.name).length }))
+    .filter(r => r.n > 0).sort((a, b) => b.n - a.n)
+  const maxC = cumRank[0]?.n || 1
   const floorCount = {}
   for (const c of mCore) {
     const f = floorOf(c.room)
@@ -96,6 +110,13 @@ export default function Complaints() {
       const f = floorOf(c.room)
       return floorF === (f === null ? '無房號' : `${f}`)
     })
+    .slice()
+    .sort((a, b) => {
+      if (sortF === '最舊') return a.date.localeCompare(b.date)
+      if (sortF === '房號低→高') return roomNum(a.room) - roomNum(b.room)
+      if (sortF === '房號高→低') return roomNum(b.room) - roomNum(a.room)
+      return b.date.localeCompare(a.date)
+    })
 
   async function save() {
     const f = form
@@ -109,12 +130,19 @@ export default function Complaints() {
     }
     if (hasDept) payload.dept = f.dept || '客房'
     if (hasSource) payload.source = f.source || 'wechat'
+    // 規則：新記錄含「新鮮污漬/血漬」自動標濫訴
+    let autoAbuse = false
+    if (!f.id && payload.nature === '投訴' && FRESH_RE.test([payload.guest_comment, payload.actual_cause, payload.improvement].join(' '))) {
+      payload.nature = '濫訴'
+      autoAbuse = true
+    }
     if (f.id) {
       await api.updateComplaint(f.id, payload)
       toast('已儲存修改')
     } else {
       const row = await api.addComplaint({ ...payload, shared: false, check_scheduled: false, recurred: false })
-      if (payload.nature === '投訴' && (payload.dept || '客房') === '客房') setAsk(row)
+      if (autoAbuse) toast('內容含「新鮮污漬/血漬」，已按規則自動標為濫訴')
+      else if (payload.nature === '投訴' && (payload.dept || '客房') === '客房') setAsk(row)
       else toast('已記錄（只有客房投訴會成為早會重點）')
     }
     setForm(null)
@@ -158,7 +186,7 @@ export default function Complaints() {
             {groups.map(g => (
               <div className="card dept-card" key={g.d}>
                 <div className="dc-head">
-                  {g.d === '客房' ? '🛏️ 客房' : '🔧 工程部與其他'}
+                  {g.d === '客房' ? '🛏️ 客房' : '🔧 工程與其他'}
                   <span className="dc-total">共 {g.total} 單</span>
                 </div>
                 <div className="dc-stats">
@@ -173,7 +201,7 @@ export default function Complaints() {
 
           {rank.length > 0 && (
             <div className="card">
-              <h2>{monthLabel}分類排行<span style={{ fontSize: 11, color: 'var(--sub)', fontWeight: 400 }}>（只計客房投訴）</span></h2>
+              <h2>{monthLabel}{floorF !== '全部' ? ` · ${floorF === '無房號' ? floorF : `${floorF} 樓`}` : ''}分類排行<span style={{ fontSize: 11, color: 'var(--sub)', fontWeight: 400 }}>（只計客房投訴）</span></h2>
               {rank.map(r => {
                 const mm = m(r.cat)
                 return (
@@ -199,6 +227,26 @@ export default function Complaints() {
               ))}
             </div>
           )}
+
+          <div className="card">
+            <h2>累計統計<span style={{ fontSize: 11, color: 'var(--sub)', fontWeight: 400 }}>（全部月份，截至目前）</span></h2>
+            <p style={{ fontSize: 13, lineHeight: 1.8, marginBottom: 8 }}>
+              全部 <b style={{ fontSize: 16 }}>{list.length}</b> 單 ·
+              客房投訴 <b>{allCore.length}</b> ·
+              濫訴 <b style={{ color: 'var(--sub)' }}>{list.filter(c => natOf(c) === '濫訴').length}</b> ·
+              工程與其他 <b style={{ color: 'var(--blue)' }}>{list.filter(c => deptOf(c) === '工程其他').length}</b>
+            </p>
+            {cumRank.map(r => {
+              const mm = m(r.cat)
+              return (
+                <div className="bar-row" key={r.cat}>
+                  <span className="name">{mm.e} {r.cat}</span>
+                  <div className="bar-track"><div className="bar-fill" style={{ width: `${(r.n / maxC) * 100}%`, background: mm.c }} /></div>
+                  <span className="num">{r.n}</span>
+                </div>
+              )
+            })}
+          </div>
         </div>
 
         <div>
@@ -211,7 +259,7 @@ export default function Complaints() {
           <input className="search-inp" placeholder="🔍 搜尋房號或內容（跨全部月份）" value={q} onChange={e => setQ(e.target.value)} />
           <div className="chips">
             {['全部', ...DEPTS].map(d => (
-              <button key={d} className={`chip ${deptF === d ? 'on' : ''}`} onClick={() => setDeptF(d)}>{d === '工程其他' ? '🔧 工程其他' : d === '客房' ? '🛏️ 客房' : d}</button>
+              <button key={d} className={`chip ${deptF === d ? 'on' : ''}`} onClick={() => setDeptF(d)}>{d === '工程其他' ? '🔧 工程與其他' : d === '客房' ? '🛏️ 客房' : d}</button>
             ))}
             {NATURES.map(n => (
               <button key={n} className={`chip ${natureF === n ? 'on' : ''}`} onClick={() => setNatureF(natureF === n ? '全部' : n)}>{n}</button>
@@ -234,6 +282,13 @@ export default function Complaints() {
               ))}
             </div>
           )}
+          <div className="chips">
+            {['最新', '最舊', '房號低→高', '房號高→低'].map(s => (
+              <button key={s} className={`chip ${sortF === s ? 'on' : ''}`} onClick={() => setSortF(s)}>
+                {s.startsWith('房號') ? `🚪 ${s}` : `🕐 ${s}`}
+              </button>
+            ))}
+          </div>
           {shown.length === 0 && <div className="note">{searching ? '搜尋不到相關記錄' : `${monthLabel}沒有符合篩選的記錄`}</div>}
           {shown.map(c => {
             const mm = m(c.category)
@@ -262,7 +317,7 @@ export default function Complaints() {
                       <div className="seg">
                         {DEPTS.map(d => (
                           <button key={d} className={`chip ${deptOf(c) === d ? 'on' : ''}`}
-                            onClick={() => deptOf(c) !== d && patch(c, { dept: d })}>{d}</button>
+                            onClick={() => deptOf(c) !== d && patch(c, { dept: d })}>{DEPT_LABEL(d)}</button>
                         ))}
                       </div>
                     )}
