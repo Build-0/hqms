@@ -83,8 +83,10 @@ export default function Complaints() {
   const cumRank = catList.map(k => ({ cat: k.name, n: allCore.filter(c => c.category === k.name).length }))
     .filter(r => r.n > 0).sort((a, b) => b.n - a.n)
   const maxC = cumRank[0]?.n || 1
+  // 選了分類時，樓層分佈跟著分類走
+  const catScope = catF === '全部' ? mCore : mCore.filter(c => c.category === catF)
   const floorCount = {}
-  for (const c of mCore) {
+  for (const c of catScope) {
     const f = floorOf(c.room)
     const key = f === null ? '無房號' : `${f}`
     floorCount[key] = (floorCount[key] || 0) + 1
@@ -217,7 +219,7 @@ export default function Complaints() {
 
           {floorRank.length > 0 && (
             <div className="card">
-              <h2>{monthLabel}樓層分佈<span style={{ fontSize: 11, color: 'var(--sub)', fontWeight: 400 }}>（只計客房投訴）</span></h2>
+              <h2>{monthLabel}{catF !== '全部' ? ` · ${catF}` : ''}樓層分佈<span style={{ fontSize: 11, color: 'var(--sub)', fontWeight: 400 }}>（只計客房投訴）</span></h2>
               {floorRank.map(([f, n]) => (
                 <div className="bar-row" key={f}>
                   <span className="name">{f === '無房號' ? f : `${f} 樓`}</span>
