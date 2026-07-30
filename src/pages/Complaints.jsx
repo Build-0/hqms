@@ -8,7 +8,7 @@ import { PhotoGrid, PhotoField } from '../components/Photos'
 import Confirm from '../components/Confirm'
 
 const EMPTY = { date: '', room: '', category: '', dept: '客房', nature: '投訴', source: 'wechat', guest_comment: '', actual_cause: '', correct_standard: '', improvement: '', photos: [] }
-const SOURCES = ['wechat', 'Incident report', 'Guest comment', '總機', '其他']
+const SOURCES = ['wechat', 'Incident report', 'Guest comment', 'FO Mail', '總機', '其他']
 const DEPT_LABEL = d => (d === '工程其他' ? '工程與其他' : d)
 // 規則：內容含「新鮮污漬／新鮮血漬」的新記錄一律標濫訴
 const FRESH_RE = /新鮮[^，。、]{0,6}(污漬|血漬)/
