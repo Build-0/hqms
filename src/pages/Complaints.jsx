@@ -301,6 +301,8 @@ export default function Complaints() {
                   {eng && <span className="badge b-blue">🔧 工程</span>}
                   {abuse && <span className="badge b-gray">🚫 濫訴</span>}
                   <span className="room">{c.room}</span>
+                  <button className="row-ico" onClick={e => { e.stopPropagation(); setForm({ ...EMPTY, ...c, dept: deptOf(c), nature: natOf(c) }) }}>✏️</button>
+                  <button className="row-ico del" onClick={e => { e.stopPropagation(); setConfirmDel(c) }}>🗑</button>
                   <span className="desc">{c.guest_comment}</span>
                   {c.photos?.length > 0 && <span className="ph-count">📷{c.photos.length}</span>}
                   <span style={{ fontSize: 11, color: 'var(--sub)' }}>{searching ? c.date : c.date.slice(5)}</span>
@@ -339,10 +341,6 @@ export default function Complaints() {
                         toast('已設為明日早會重點')
                       }}>📌 設為明日早會重點<span className="tg-state">›</span></button>
                     )}
-                    <div className="row-actions">
-                      <button className="mini-btn edit" onClick={() => setForm({ ...EMPTY, ...c, dept: deptOf(c), nature: natOf(c) })}>✏️ 編輯</button>
-                      <button className="mini-btn del" onClick={() => setConfirmDel(c)}>🗑 刪除</button>
-                    </div>
                   </div>
                 )}
               </div>
