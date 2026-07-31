@@ -268,6 +268,12 @@ export async function setFocus(row) {
   throwIf(error)
   return data
 }
+export async function patchFocus(date, patch) {
+  if (isLocal) return local.patchFocus(date, patch)
+  const { data, error } = await sb.from('daily_focus').update(patch).eq('focus_date', date).select().single()
+  throwIf(error)
+  return data
+}
 export async function clearFocus(date) {
   if (isLocal) return local.clearFocus(date)
   const { error } = await sb.from('daily_focus').delete().eq('focus_date', date)

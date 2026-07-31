@@ -78,6 +78,8 @@ h3{font-size:13px;color:var(--sub);font-weight:700;margin:14px 0 6px}
 .qa .q-hint{font-size:11.5px;color:var(--sub);margin-top:8px}
 
 /* ── 統計 ── */
+/* 今日重點（雙主題）*/
+.daily-wrap{max-width:980px}
 /* 部門統計卡 */
 .dept-wrap{display:grid;gap:10px;margin-bottom:12px}
 .dept-card{margin-bottom:0;padding:13px 15px}
@@ -109,6 +111,9 @@ h3{font-size:13px;color:var(--sub);font-weight:700;margin:14px 0 6px}
 .month-nav{display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:10px}
 .month-nav button{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--card);font-size:18px;color:var(--sub);cursor:pointer;line-height:1}
 .month-nav .m-label{font-size:15.5px;font-weight:800}
+.month-nav .panel-w-btn{display:none;width:auto;border-radius:999px;padding:0 13px;font-size:12px;letter-spacing:1px}
+.cx-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px;align-items:start}
+.cx-cards .card{margin-bottom:0}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(76px,1fr));gap:8px;margin-bottom:12px}
 .stat{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:11px 8px;text-align:center}
 .stat .stat-e{font-size:18px;margin-bottom:2px}
@@ -222,7 +227,10 @@ h3{font-size:13px;color:var(--sub);font-weight:700;margin:14px 0 6px}
   .sheet{border-radius:18px;max-width:560px;max-height:86vh}
   .okbad{grid-template-columns:1fr 1fr}
   /* 客訴管理分欄：左側統計固定寬，右側列表鋪滿剩餘 */
-  .cx-grid{display:grid;grid-template-columns:380px minmax(0,1fr);gap:18px;align-items:start}
+  .cx-grid{display:grid;grid-template-columns:var(--panelw,380px) minmax(0,1fr);gap:18px;align-items:start}
+  .month-nav .panel-w-btn{display:block}
+  .daily-wrap{max-width:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(430px,1fr));gap:14px;align-items:start}
+  .daily-wrap .done-btn,.daily-wrap .logic-line{grid-column:1/-1}
   .dept-wrap{grid-template-columns:1fr 1fr}
   .dept-sum{grid-column:1/-1}
   /* 主題庫/教材/加強清潔卡片格 */

@@ -43,6 +43,8 @@ export default function Complaints() {
   const [sortF, setSortF] = useState('最新')
   const [q, setQ] = useState('')
   const [ym, setYm] = useState(todayStr().slice(0, 7))
+  const [pw, setPw] = useState(() => parseInt(localStorage.getItem('hqms_panelw') || '1', 10))
+  const cyclePw = () => { const n = pw % 3 + 1; setPw(n); localStorage.setItem('hqms_panelw', String(n)) }
 
   useEffect(() => { load() }, [])
   async function load() {
@@ -50,8 +52,9 @@ export default function Complaints() {
     setList(c)
     setCats(k?.length ? k : DEFAULT_CATEGORIES)
   }
-  const catList = cats || DEFAULT_CATEGORIES
-  const m = name => metaOf(catList, name)
+  const allCats = cats || DEFAULT_CATEGORIES
+  const catList = allCats.filter(k => k.for_complaints !== false) // 工具等只用於主題庫
+  const m = name => metaOf(allCats, name)
 
   const today = todayStr()
   const yesterday = addDaysStr(-1)
@@ -80,9 +83,17 @@ export default function Complaints() {
   const maxN = rank[0]?.n || 1
   // 累計統計（全部月份）
   const allCore = list.filter(c => deptOf(c) === '客房' && natOf(c) === '投訴')
-  const cumRank = catList.map(k => ({ cat: k.name, n: allCore.filter(c => c.category === k.name).length }))
+  const cumRank = allCats.map(k => ({ cat: k.name, n: allCore.filter(c => c.category === k.name).length }))
     .filter(r => r.n > 0).sort((a, b) => b.n - a.n)
   const maxC = cumRank[0]?.n || 1
+  const cumFloorCount = {}
+  for (const c of allCore) {
+    const f = floorOf(c.room)
+    const key = f === null ? '無房號' : `${f}`
+    cumFloorCount[key] = (cumFloorCount[key] || 0) + 1
+  }
+  const cumFloorRank = Object.entries(cumFloorCount).sort((a, b) => b[1] - a[1])
+  const maxCF = cumFloorRank[0]?.[1] || 1
   // 選了分類時，樓層分佈跟著分類走
   const catScope = catF === '全部' ? mCore : mCore.filter(c => c.category === catF)
   const floorCount = {}
@@ -177,12 +188,13 @@ export default function Complaints() {
 
   return (
     <>
-      <div className="cx-grid">
+      <div className="cx-grid" style={{ '--panelw': ['370px', '700px', '1020px'][pw - 1] }}>
         <div>
           <div className="month-nav">
             <button onClick={() => { setYm(shiftYm(ym, -1)); setFloorF('全部') }}>‹</button>
             <span className="m-label">{monthLabel}</span>
             <button onClick={() => { setYm(shiftYm(ym, 1)); setFloorF('全部') }}>›</button>
+            <button className="panel-w-btn" title="調節統計欄寬度（一/二/三列）" onClick={cyclePw}>{'▢▢▢'.slice(0, pw)}⇔</button>
           </div>
           <div className="dept-wrap">
             {groups.map(g => (
@@ -201,53 +213,68 @@ export default function Complaints() {
             <div className="dept-sum">📊 {monthLabel}全部合計 <b>{mAll.length}</b> 單</div>
           </div>
 
-          {rank.length > 0 && (
+          <div className="cx-cards">
+            {rank.length > 0 && (
+              <div className="card">
+                <h2>{monthLabel}{floorF !== '全部' ? ` · ${floorF === '無房號' ? floorF : `${floorF} 樓`}` : ''}分類排行<span style={{ fontSize: 11, color: 'var(--sub)', fontWeight: 400 }}>（只計客房投訴）</span></h2>
+                {rank.map(r => {
+                  const mm = m(r.cat)
+                  return (
+                    <div className="bar-row" key={r.cat}>
+                      <span className="name">{mm.e} {r.cat}</span>
+                      <div className="bar-track"><div className="bar-fill" style={{ width: `${(r.n / maxN) * 100}%`, background: mm.c }} /></div>
+                      <span className="num">{r.n}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+
             <div className="card">
-              <h2>{monthLabel}{floorF !== '全部' ? ` · ${floorF === '無房號' ? floorF : `${floorF} 樓`}` : ''}分類排行<span style={{ fontSize: 11, color: 'var(--sub)', fontWeight: 400 }}>（只計客房投訴）</span></h2>
-              {rank.map(r => {
+              <h2>累計分類排行<span style={{ fontSize: 11, color: 'var(--sub)', fontWeight: 400 }}>（全部月份）</span></h2>
+              <p style={{ fontSize: 12.5, lineHeight: 1.8, marginBottom: 8 }}>
+                全部 <b style={{ fontSize: 15 }}>{list.length}</b> 單 ·
+                客房投訴 <b>{allCore.length}</b> ·
+                濫訴 <b style={{ color: 'var(--sub)' }}>{list.filter(c => natOf(c) === '濫訴').length}</b> ·
+                工程 <b style={{ color: 'var(--blue)' }}>{list.filter(c => deptOf(c) === '工程其他').length}</b>
+              </p>
+              {cumRank.map(r => {
                 const mm = m(r.cat)
                 return (
                   <div className="bar-row" key={r.cat}>
                     <span className="name">{mm.e} {r.cat}</span>
-                    <div className="bar-track"><div className="bar-fill" style={{ width: `${(r.n / maxN) * 100}%`, background: mm.c }} /></div>
+                    <div className="bar-track"><div className="bar-fill" style={{ width: `${(r.n / maxC) * 100}%`, background: mm.c }} /></div>
                     <span className="num">{r.n}</span>
                   </div>
                 )
               })}
             </div>
-          )}
 
-          {floorRank.length > 0 && (
-            <div className="card">
-              <h2>{monthLabel}{catF !== '全部' ? ` · ${catF}` : ''}樓層分佈<span style={{ fontSize: 11, color: 'var(--sub)', fontWeight: 400 }}>（只計客房投訴）</span></h2>
-              {floorRank.map(([f, n]) => (
-                <div className="bar-row" key={f}>
-                  <span className="name">{f === '無房號' ? f : `${f} 樓`}</span>
-                  <div className="bar-track"><div className="bar-fill" style={{ width: `${(n / maxF) * 100}%`, background: 'var(--accent)' }} /></div>
-                  <span className="num">{n}</span>
-                </div>
-              ))}
-            </div>
-          )}
+            {floorRank.length > 0 && (
+              <div className="card">
+                <h2>{monthLabel}{catF !== '全部' ? ` · ${catF}` : ''}樓層分佈<span style={{ fontSize: 11, color: 'var(--sub)', fontWeight: 400 }}>（只計客房投訴）</span></h2>
+                {floorRank.map(([f, n]) => (
+                  <div className="bar-row" key={f}>
+                    <span className="name">{f === '無房號' ? f : `${f} 樓`}</span>
+                    <div className="bar-track"><div className="bar-fill" style={{ width: `${(n / maxF) * 100}%`, background: 'var(--accent)' }} /></div>
+                    <span className="num">{n}</span>
+                  </div>
+                ))}
+              </div>
+            )}
 
-          <div className="card">
-            <h2>累計統計<span style={{ fontSize: 11, color: 'var(--sub)', fontWeight: 400 }}>（全部月份，截至目前）</span></h2>
-            <p style={{ fontSize: 13, lineHeight: 1.8, marginBottom: 8 }}>
-              全部 <b style={{ fontSize: 16 }}>{list.length}</b> 單 ·
-              客房投訴 <b>{allCore.length}</b> ·
-              濫訴 <b style={{ color: 'var(--sub)' }}>{list.filter(c => natOf(c) === '濫訴').length}</b> ·
-              工程與其他 <b style={{ color: 'var(--blue)' }}>{list.filter(c => deptOf(c) === '工程其他').length}</b>
-            </p>
-            {cumRank.map(r => {
-              const mm = m(r.cat)
-              return (
-                <div className="bar-row" key={r.cat}>
-                  <span className="name">{mm.e} {r.cat}</span>
-                  <div className="bar-track"><div className="bar-fill" style={{ width: `${(r.n / maxC) * 100}%`, background: mm.c }} /></div>
-                  <span className="num">{r.n}</span>
-                </div>
-              )
-            })}
+            {cumFloorRank.length > 0 && (
+              <div className="card">
+                <h2>累計樓層分佈<span style={{ fontSize: 11, color: 'var(--sub)', fontWeight: 400 }}>（全部月份）</span></h2>
+                {cumFloorRank.map(([f, n]) => (
+                  <div className="bar-row" key={f}>
+                    <span className="name">{f === '無房號' ? f : `${f} 樓`}</span>
+                    <div className="bar-track"><div className="bar-fill" style={{ width: `${(n / maxCF) * 100}%`, background: 'var(--blue)' }} /></div>
+                    <span className="num">{n}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 

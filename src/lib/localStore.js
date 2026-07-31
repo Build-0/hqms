@@ -187,6 +187,12 @@ export function setFocus(row) {
   set(K.focus, f)
   return f[row.focus_date]
 }
+export function patchFocus(date, patch) {
+  const f = get(K.focus, {})
+  if (f[date]) f[date] = { ...f[date], ...patch }
+  set(K.focus, f)
+  return f[date]
+}
 export function clearFocus(date) { const f = get(K.focus, {}); delete f[date]; set(K.focus, f) }
 export function markShared(date) {
   const f = get(K.focus, {})

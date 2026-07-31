@@ -7,6 +7,7 @@ create table if not exists categories (
   name text not null unique,
   emoji text not null default '📋',
   color text not null default '#7a8894',
+  for_complaints boolean not null default true,
   sort_order int not null default 0,
   created_at timestamptz not null default now()
 );
@@ -95,6 +96,9 @@ create table if not exists daily_focus (
   source text not null check (source in ('complaint','topic')),
   complaint_id uuid references complaints(id) on delete cascade,
   topic_id uuid references topics(id) on delete cascade,
+  source2 text,
+  complaint_id2 uuid references complaints(id) on delete set null,
+  topic_id2 uuid references topics(id) on delete set null,
   shared_at timestamptz
 );
 
@@ -118,13 +122,13 @@ alter table cleaning_items enable row level security;
 create policy "auth all cleaning" on cleaning_items for all to authenticated using (true) with check (true);
 
 -- 預設 7 個分類（空表才插入）
-insert into categories (name, emoji, color, sort_order)
+insert into categories (name, emoji, color, sort_order, for_complaints)
 select * from (values
-  ('客房清潔','🛏️','#1f7a6d',0),('床品布草','🛌','#2e86ab',1),('浴室','🚿','#4a6fa5',2),
-  ('服務','🛎️','#b07d2e',3),('安全','⛑️','#c0564f',4),('蟲害','🐛','#7d9440',5),
-  ('遺留物','🎒','#8f7ac9',6),('工具','🧰','#54808c',7),('工作間','🧺','#5f9e63',8),
-  ('設備','🔌','#5b6ee1',9)
-) as v(name, emoji, color, sort_order)
+  ('房間','🛏️','#1f7a6d',0,true),('浴室','🚿','#4a6fa5',1,true),('床品布草','🛌','#2e86ab',2,true),
+  ('遺留物','🎒','#8f7ac9',3,true),('蟲害','🐛','#7d9440',4,true),('設備','🔌','#5b6ee1',5,true),
+  ('安全','⛑️','#c0564f',6,true),('服務','🛎️','#b07d2e',7,true),('工作間','🧺','#5f9e63',8,true),
+  ('工具','🧰','#54808c',9,false)
+) as v(name, emoji, color, sort_order, for_complaints)
 where not exists (select 1 from categories);
 
 -- 相片儲存：公開讀取的 photos bucket（客訴現場照、主題示範照）
