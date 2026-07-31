@@ -43,8 +43,22 @@ export default function Complaints() {
   const [sortF, setSortF] = useState('最新')
   const [q, setQ] = useState('')
   const [ym, setYm] = useState(todayStr().slice(0, 7))
-  const [pw, setPw] = useState(() => parseInt(localStorage.getItem('hqms_panelw') || '1', 10))
-  const cyclePw = () => { const n = pw % 3 + 1; setPw(n); localStorage.setItem('hqms_panelw', String(n)) }
+  // 統計欄：可拖動調寬（自動流成一/二/三列）、可整個收起
+  const [pwPx, setPwPx] = useState(() => parseInt(localStorage.getItem('hqms_panelpx') || '380', 10))
+  const [panelOpen, setPanelOpen] = useState(() => localStorage.getItem('hqms_panelopen') !== '0')
+  const togglePanel = () => { setPanelOpen(!panelOpen); localStorage.setItem('hqms_panelopen', panelOpen ? '0' : '1') }
+  const startDrag = e => {
+    e.preventDefault()
+    const startX = e.clientX, startW = pwPx
+    const move = ev => {
+      const w = Math.min(1100, Math.max(300, startW + ev.clientX - startX))
+      setPwPx(w)
+      localStorage.setItem('hqms_panelpx', String(w))
+    }
+    const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up) }
+    window.addEventListener('pointermove', move)
+    window.addEventListener('pointerup', up)
+  }
 
   useEffect(() => { load() }, [])
   async function load() {
@@ -188,13 +202,13 @@ export default function Complaints() {
 
   return (
     <>
-      <div className="cx-grid" style={{ '--panelw': ['370px', '700px', '1020px'][pw - 1] }}>
-        <div>
+      <div className={`cx-grid ${panelOpen ? '' : 'closed'}`} style={{ '--panelw': `${pwPx}px` }}>
+        {panelOpen && <div>
           <div className="month-nav">
             <button onClick={() => { setYm(shiftYm(ym, -1)); setFloorF('全部') }}>‹</button>
             <span className="m-label">{monthLabel}</span>
             <button onClick={() => { setYm(shiftYm(ym, 1)); setFloorF('全部') }}>›</button>
-            <button className="panel-w-btn" title="調節統計欄寬度（一/二/三列）" onClick={cyclePw}>{'▢▢▢'.slice(0, pw)}⇔</button>
+            <button className="panel-w-btn" title="收起統計欄" onClick={togglePanel}>«</button>
           </div>
           <div className="dept-wrap">
             {groups.map(g => (
@@ -276,9 +290,14 @@ export default function Complaints() {
               </div>
             )}
           </div>
-        </div>
+        </div>}
+
+        {panelOpen && <div className="cx-divider" onPointerDown={startDrag} title="拖動調整統計欄寬度" />}
 
         <div>
+          {!panelOpen && (
+            <button className="panel-reopen" onClick={togglePanel} title="展開統計欄">» 統計</button>
+          )}
           <h2 style={{ margin: '2px 4px 8px' }}>
             客訴記錄
             <span style={{ fontSize: 11.5, color: 'var(--sub)', fontWeight: 400 }}>
