@@ -22,6 +22,8 @@ const WD = ['日', '一', '二', '三', '四', '五', '六']
 export default function App() {
   const [user, setUser] = useState(undefined) // undefined = 載入中
   const [tab, setTab] = useState('home')
+  const [side, setSide] = useState(() => localStorage.getItem('hqms_side') !== '0') // 桌面側欄
+  const toggleSide = () => { setSide(!side); localStorage.setItem('hqms_side', side ? '0' : '1') }
   const [msg, setMsg] = useState('')
 
   useEffect(() => {
@@ -46,7 +48,20 @@ export default function App() {
   const now = new Date()
   const cur = MODULES.find(m => m.id === tab)
   return (
-    <div className="phone">
+    <div className={`phone ${side ? 'with-side' : ''}`}>
+      <aside className="side">
+        <div className="side-head">
+          <span>🏨 房務品質系統</span>
+          <button onClick={toggleSide} title="收起側欄">«</button>
+        </div>
+        <button className={`side-item ${tab === 'home' ? 'on' : ''}`} onClick={() => setTab('home')}>🏠 首頁</button>
+        {MODULES.map(m => (
+          <button key={m.id} className={`side-item ${tab === m.id ? 'on' : ''}`} onClick={() => setTab(m.id)}>
+            {m.ico} {m.label}
+          </button>
+        ))}
+      </aside>
+      {!side && <button className="side-reopen" onClick={toggleSide} title="展開側欄">»</button>}
       <header>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           {cur && <button className="back-btn" onClick={() => setTab('home')}>‹</button>}

@@ -78,6 +78,8 @@ h3{font-size:13px;color:var(--sub);font-weight:700;margin:14px 0 6px}
 .qa .q-hint{font-size:11.5px;color:var(--sub);margin-top:8px}
 
 /* ── 統計 ── */
+/* 桌面側欄（Notion 式，手機不顯示）*/
+.side,.side-reopen{display:none}
 /* 今日重點（雙主題）*/
 .daily-wrap{max-width:980px}
 /* 部門統計卡 */
@@ -229,6 +231,17 @@ h3{font-size:13px;color:var(--sub);font-weight:700;margin:14px 0 6px}
   /* 客訴管理分欄：左側統計固定寬，右側列表鋪滿剩餘 */
   .cx-grid{display:grid;grid-template-columns:var(--panelw,380px) minmax(0,1fr);gap:18px;align-items:start}
   .month-nav .panel-w-btn{display:block}
+  /* 側欄 */
+  .side{display:flex;flex-direction:column;gap:2px;position:fixed;left:0;top:0;bottom:0;width:228px;background:var(--card);border-right:1px solid var(--line);padding:12px 10px;z-index:40;overflow-y:auto}
+  .side-head{display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:14.5px;color:var(--accent);padding:6px 6px 14px}
+  .side-head button{border:none;background:none;color:var(--sub);font-size:17px;cursor:pointer;width:28px;height:28px;border-radius:8px}
+  .side-head button:hover{background:var(--bg)}
+  .side-item{display:flex;gap:10px;align-items:center;padding:10px 12px;border-radius:9px;border:none;background:none;font-size:14px;color:var(--ink);cursor:pointer;text-align:left;font-family:inherit}
+  .side-item:hover{background:var(--bg)}
+  .side-item.on{background:var(--accent-soft);color:var(--accent);font-weight:700}
+  .side-reopen{display:block;position:fixed;left:10px;top:12px;z-index:45;width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:var(--card);color:var(--sub);font-size:16px;cursor:pointer}
+  .with-side header{margin-left:228px}
+  .with-side main{margin-left:228px}
   .daily-wrap{max-width:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(430px,1fr));gap:14px;align-items:start}
   .daily-wrap .done-btn,.daily-wrap .logic-line{grid-column:1/-1}
   .dept-wrap{grid-template-columns:1fr 1fr}
