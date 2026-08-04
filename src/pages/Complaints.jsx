@@ -109,14 +109,17 @@ export default function Complaints() {
   }
   const cumFloorRank = Object.entries(cumFloorCount).sort((a, b) => b[1] - a[1])
   const maxCF = cumFloorRank[0]?.[1] || 1
-  // 涉事房務員排行（當月，只計客房投訴）
-  const raCount = {}
-  for (const c of mCore) {
-    if (!c.ra) continue
-    raCount[c.ra] = (raCount[c.ra] || 0) + 1
+  // 涉事人員排行（只計客房投訴）：當月 / 累計 × 房務員 / 主管
+  const rankBy = (rows, field, top = 12) => {
+    const n = {}
+    for (const c of rows) { const v = (c[field] || '').trim(); if (v) n[v] = (n[v] || 0) + 1 }
+    const list = Object.entries(n).sort((a, b) => b[1] - a[1])
+    return { rows: list.slice(0, top), max: list[0]?.[1] || 1, total: list.length }
   }
-  const raRank = Object.entries(raCount).sort((a, b) => b[1] - a[1]).slice(0, 12)
-  const maxRA = raRank[0]?.[1] || 1
+  const raRank = rankBy(mCore, 'ra')
+  const supRank = rankBy(mCore, 'supervisor')
+  const cumRaRank = rankBy(allCore, 'ra')
+  const cumSupRank = rankBy(allCore, 'supervisor')
   // 選了分類時，樓層分佈跟著分類走
   const catScope = catF === '全部' ? mCore : mCore.filter(c => c.category === catF)
   const floorCount = {}
@@ -287,18 +290,25 @@ export default function Complaints() {
               </div>
             )}
 
-            {raRank.length > 0 && (
-              <div className="card">
-                <h2>{monthLabel}涉事房務員<span style={{ fontSize: 11, color: 'var(--sub)', fontWeight: 400 }}>（只計客房投訴，前12名）</span></h2>
-                {raRank.map(([name, n]) => (
+            {[
+              { key: 'ra-m', title: `${monthLabel}涉事房務員`, r: raRank, color: 'var(--amber)' },
+              { key: 'sup-m', title: `${monthLabel}涉事主管`, r: supRank, color: '#a3599b' },
+              { key: 'ra-c', title: '累計涉事房務員', r: cumRaRank, color: 'var(--amber)', cum: true },
+              { key: 'sup-c', title: '累計涉事主管', r: cumSupRank, color: '#a3599b', cum: true },
+            ].filter(x => x.r.rows.length > 0).map(x => (
+              <div className="card" key={x.key}>
+                <h2>{x.title}<span style={{ fontSize: 11, color: 'var(--sub)', fontWeight: 400 }}>
+                  （{x.cum ? '全部月份' : '只計客房投訴'}{x.r.total > x.r.rows.length ? `，前${x.r.rows.length}／共${x.r.total}人` : `，共${x.r.total}人`}）
+                </span></h2>
+                {x.r.rows.map(([name, n]) => (
                   <div className="bar-row" key={name}>
                     <span className="name">{name}</span>
-                    <div className="bar-track"><div className="bar-fill" style={{ width: `${(n / maxRA) * 100}%`, background: 'var(--amber)' }} /></div>
+                    <div className="bar-track"><div className="bar-fill" style={{ width: `${(n / x.r.max) * 100}%`, background: x.color }} /></div>
                     <span className="num">{n}</span>
                   </div>
                 ))}
               </div>
-            )}
+            ))}
 
             {cumFloorRank.length > 0 && (
               <div className="card">
