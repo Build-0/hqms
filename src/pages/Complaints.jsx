@@ -75,14 +75,6 @@ export default function Complaints() {
   const hasSource = list.length > 0 && 'source' in list[0]
   const hasDept = list.length > 0 && 'dept' in list[0]
   const hasStaff = list.length > 0 && 'ra' in list[0]
-  // 房務員排行（當月，只計客房投訴）
-  const raCount = {}
-  for (const c of mAll) {
-    if (deptOf(c) !== '客房' || natOf(c) !== '投訴' || !c.ra) continue
-    raCount[c.ra] = (raCount[c.ra] || 0) + 1
-  }
-  const raRank = Object.entries(raCount).sort((a, b) => b[1] - a[1]).slice(0, 12)
-  const maxRA = raRank[0]?.[1] || 1
   const mAll = list.filter(c => c.date.startsWith(ym))
   // 部門統計組
   const groups = DEPTS.map(d => {
@@ -117,6 +109,14 @@ export default function Complaints() {
   }
   const cumFloorRank = Object.entries(cumFloorCount).sort((a, b) => b[1] - a[1])
   const maxCF = cumFloorRank[0]?.[1] || 1
+  // 涉事房務員排行（當月，只計客房投訴）
+  const raCount = {}
+  for (const c of mCore) {
+    if (!c.ra) continue
+    raCount[c.ra] = (raCount[c.ra] || 0) + 1
+  }
+  const raRank = Object.entries(raCount).sort((a, b) => b[1] - a[1]).slice(0, 12)
+  const maxRA = raRank[0]?.[1] || 1
   // 選了分類時，樓層分佈跟著分類走
   const catScope = catF === '全部' ? mCore : mCore.filter(c => c.category === catF)
   const floorCount = {}
