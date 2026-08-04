@@ -7,7 +7,7 @@ import { toast } from '../lib/toast'
 import { PhotoGrid, PhotoField } from '../components/Photos'
 import Confirm from '../components/Confirm'
 
-const EMPTY = { date: '', room: '', category: '', dept: '客房', nature: '投訴', source: 'wechat', guest_comment: '', actual_cause: '', correct_standard: '', improvement: '', photos: [] }
+const EMPTY = { date: '', room: '', category: '', dept: '客房', nature: '投訴', source: 'wechat', guest_comment: '', actual_cause: '', correct_standard: '', improvement: '', ra: '', supervisor: '', photos: [] }
 const SOURCES = ['wechat', 'Incident report', 'Guest comment', 'FO Mail', '總機', '其他']
 const DEPT_LABEL = d => (d === '工程其他' ? '工程與其他' : d)
 // 規則：內容含「新鮮污漬／新鮮血漬」的新記錄一律標濫訴
@@ -74,6 +74,15 @@ export default function Complaints() {
   const yesterday = addDaysStr(-1)
   const hasSource = list.length > 0 && 'source' in list[0]
   const hasDept = list.length > 0 && 'dept' in list[0]
+  const hasStaff = list.length > 0 && 'ra' in list[0]
+  // 房務員排行（當月，只計客房投訴）
+  const raCount = {}
+  for (const c of mAll) {
+    if (deptOf(c) !== '客房' || natOf(c) !== '投訴' || !c.ra) continue
+    raCount[c.ra] = (raCount[c.ra] || 0) + 1
+  }
+  const raRank = Object.entries(raCount).sort((a, b) => b[1] - a[1]).slice(0, 12)
+  const maxRA = raRank[0]?.[1] || 1
   const mAll = list.filter(c => c.date.startsWith(ym))
   // 部門統計組
   const groups = DEPTS.map(d => {
@@ -124,7 +133,7 @@ export default function Complaints() {
 
   const searching = q.trim().length > 0
   const base = searching
-    ? list.filter(c => [c.room, c.guest_comment, c.actual_cause, c.correct_standard, c.improvement, c.category].join(' ').includes(q.trim()))
+    ? list.filter(c => [c.room, c.guest_comment, c.actual_cause, c.correct_standard, c.improvement, c.category, c.ra, c.supervisor].join(' ').toLowerCase().includes(q.trim().toLowerCase()))
     : mAll
   const isWechat = c => (c.source || '').trim().toLowerCase() === 'wechat'
   const shown = base
@@ -157,6 +166,7 @@ export default function Complaints() {
     }
     if (hasDept) payload.dept = f.dept || '客房'
     if (hasSource) payload.source = f.source || 'wechat'
+    if (hasStaff) { payload.ra = (f.ra || '').trim(); payload.supervisor = (f.supervisor || '').trim() }
     // 規則：新記錄含「新鮮污漬/血漬」自動標濫訴
     let autoAbuse = false
     if (!f.id && payload.nature === '投訴' && FRESH_RE.test([payload.guest_comment, payload.actual_cause, payload.improvement].join(' '))) {
@@ -277,6 +287,19 @@ export default function Complaints() {
               </div>
             )}
 
+            {raRank.length > 0 && (
+              <div className="card">
+                <h2>{monthLabel}涉事房務員<span style={{ fontSize: 11, color: 'var(--sub)', fontWeight: 400 }}>（只計客房投訴，前12名）</span></h2>
+                {raRank.map(([name, n]) => (
+                  <div className="bar-row" key={name}>
+                    <span className="name">{name}</span>
+                    <div className="bar-track"><div className="bar-fill" style={{ width: `${(n / maxRA) * 100}%`, background: 'var(--amber)' }} /></div>
+                    <span className="num">{n}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
             {cumFloorRank.length > 0 && (
               <div className="card">
                 <h2>累計樓層分佈<span style={{ fontSize: 11, color: 'var(--sub)', fontWeight: 400 }}>（全部月份）</span></h2>
@@ -362,6 +385,11 @@ export default function Complaints() {
                     <div className="kv"><span className="k">實際原因</span><span className="v">{c.actual_cause || '—'}</span></div>
                     <div className="kv"><span className="k">正確標準</span><span className="v">{c.correct_standard || '—'}</span></div>
                     <div className="kv"><span className="k">改善措施</span><span className="v">{c.improvement || '—'}</span></div>
+                    {hasStaff && (c.ra || c.supervisor) && (
+                      <div className="kv"><span className="k">涉事人員</span><span className="v">
+                        {c.ra ? `房務員 ${c.ra}` : ''}{c.ra && c.supervisor ? ' · ' : ''}{c.supervisor ? `主管 ${c.supervisor}` : ''}
+                      </span></div>
+                    )}
                     <PhotoGrid photos={c.photos} />
                     {hasDept && (
                       <div className="seg">
@@ -444,6 +472,12 @@ export default function Complaints() {
             {F('實際原因', 'actual_cause', 'textarea', { placeholder: '查證後的真正原因…' })}
             {F('正確標準', 'correct_standard', 'textarea', { placeholder: '應該怎麼做…' })}
             {F('改善措施', 'improvement', 'textarea', { placeholder: '採取了什麼行動…' })}
+            {hasStaff && (
+              <div style={{ display: 'flex', gap: 10 }}>
+                <div style={{ flex: 1 }}>{F('涉事房務員', 'ra', 'input', { placeholder: '例：Sammi' })}</div>
+                <div style={{ flex: 1 }}>{F('涉事主管', 'supervisor', 'input', { placeholder: '例：Irene' })}</div>
+              </div>
+            )}
             <PhotoField label="現場相片（早會展示用）" photos={form.photos} onChange={p => setForm({ ...form, photos: p })} />
             <button className="btn" onClick={save}>儲存</button>
             <button className="btn ghost" onClick={() => setForm(null)}>取消</button>
