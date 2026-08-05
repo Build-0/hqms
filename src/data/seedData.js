@@ -13,6 +13,10 @@ export const DEFAULT_CATEGORIES = [
 ]
 export const CATS = DEFAULT_CATEGORIES.map(c => c.name)
 
+// 清潔度考核七維度（每項 1–5 分，滿分 35）
+export const SCORE_DIMS = ['抹塵', '吸塵', '鋪床', '清潔器皿', '玻璃及鏡面', '物品整齊度', '做房車整潔度']
+export const SCORE_MAX = SCORE_DIMS.length * 5
+
 // 客訴：部門 × 性質
 export const DEPTS = ['客房', '工程其他']
 export const NATURES = ['投訴', '濫訴']
