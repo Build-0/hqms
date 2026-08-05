@@ -290,6 +290,19 @@ export default function Complaints() {
               </div>
             )}
 
+            {cumFloorRank.length > 0 && (
+              <div className="card">
+                <h2>累計樓層分佈<span style={{ fontSize: 11, color: 'var(--sub)', fontWeight: 400 }}>（全部月份）</span></h2>
+                {cumFloorRank.map(([f, n]) => (
+                  <div className="bar-row" key={f}>
+                    <span className="name">{f === '無房號' ? f : `${f} 樓`}</span>
+                    <div className="bar-track"><div className="bar-fill" style={{ width: `${(n / maxCF) * 100}%`, background: 'var(--blue)' }} /></div>
+                    <span className="num">{n}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
             {[
               { key: 'ra-m', title: `${monthLabel}涉事房務員`, r: raRank, color: 'var(--amber)' },
               { key: 'sup-m', title: `${monthLabel}涉事主管`, r: supRank, color: '#a3599b' },
@@ -309,19 +322,6 @@ export default function Complaints() {
                 ))}
               </div>
             ))}
-
-            {cumFloorRank.length > 0 && (
-              <div className="card">
-                <h2>累計樓層分佈<span style={{ fontSize: 11, color: 'var(--sub)', fontWeight: 400 }}>（全部月份）</span></h2>
-                {cumFloorRank.map(([f, n]) => (
-                  <div className="bar-row" key={f}>
-                    <span className="name">{f === '無房號' ? f : `${f} 樓`}</span>
-                    <div className="bar-track"><div className="bar-fill" style={{ width: `${(n / maxCF) * 100}%`, background: 'var(--blue)' }} /></div>
-                    <span className="num">{n}</span>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
         </div>}
 
