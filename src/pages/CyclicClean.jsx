@@ -4,9 +4,10 @@ import { CLEANING_SEED } from '../data/seedData'
 import { todayStr } from '../lib/dates'
 import { toast } from '../lib/toast'
 import Confirm from '../components/Confirm'
+import { PhotoGrid, PhotoField } from '../components/Photos'
 
 const SECTIONS = [
-  { key: 'daily', icon: '🧹', title: '每日清潔', sub: '提醒', color: '#1f7a6d', hint: '除日常標準外，每天都要做到：' },
+  { key: 'daily', icon: '🧹', title: '每日清潔', sub: '每天的習慣', color: '#1f7a6d' },
   { key: 'cycle', icon: '📅', title: '循環清潔', sub: '月曆排程', color: '#4a6fa5', hint: null },
   { key: 'deep', icon: '🧽', title: '深度清潔', sub: '長週期', color: '#8f7ac9', hint: '週期較長的深度項目：' },
 ]
@@ -60,6 +61,7 @@ export default function CyclicClean() {
       day: f.section === 'cycle' ? (parseInt(f.day, 10) || null) : null,
     }
     if (hasGrp()) payload.grp = (f.grp || '').trim()
+    if (hasPhotos()) payload.photos = f.photos || []
     if (!payload.text) { toast('請填內容'); return }
     if (f.section === 'cycle' && (!payload.day || payload.day < 1 || payload.day > 31)) { toast('日期請填 1–31'); return }
     if (f.id) {
@@ -76,8 +78,11 @@ export default function CyclicClean() {
   function hasGrp() {
     return items.length === 0 || 'grp' in items[0]
   }
+  function hasPhotos() {
+    return items.length === 0 || 'photos' in items[0]
+  }
 
-  // 每日/深度：同名分組聚合顯示，「以上錯誤做法」只顯示一次
+  // 每日/深度：同名分組聚合，圖文卡片顯示（有圖顯示圖）
   function renderGrouped(rows) {
     const groups = []
     for (const r of rows) {
@@ -86,32 +91,34 @@ export default function CyclicClean() {
       if (last && last.g === g && g) last.items.push(r)
       else groups.push({ g, items: [r] })
     }
+    const card = r => (
+      <div className="cl-card" key={r.id} onClick={() => openEdit(r)}>
+        {r.photos?.length > 0
+          ? <div className="cl-imgs">{r.photos.slice(0, 2).map((p, i) => <img key={i} src={p} alt="" loading="lazy" />)}</div>
+          : <div className="cl-imgs empty">📷 點此加圖</div>}
+        <div className="cl-text">
+          <div className="cl-t">{r.text}</div>
+          {r.wrong && <div className="cl-wrong">✗ 錯誤做法：{r.wrong}</div>}
+        </div>
+      </div>
+    )
     return groups.map((gr, gi) => {
       if (gr.g) {
         const wrongs = [...new Set(gr.items.map(r => (r.wrong || '').trim()).filter(Boolean))]
         return (
-          <div key={gi} style={{ marginBottom: 12 }}>
+          <div key={gi} style={{ marginBottom: 14 }}>
             <div className="cl-grp-title">{gr.g}：</div>
-            {gr.items.map(r => (
-              <button className="cl-row" key={r.id} onClick={() => openEdit(r)}>
-                <div className="cl-main"><span>{r.text}</span></div>
-              </button>
-            ))}
-            {wrongs.length > 0 && <div className="cl-wrong" style={{ margin: '2px 4px 0' }}>✗ 以上錯誤做法：{wrongs.join('、')}</div>}
+            <div className="cl-cards">{gr.items.map(card)}</div>
+            {wrongs.length > 0 && <div className="cl-wrong" style={{ margin: '6px 4px 0' }}>✗ 以上錯誤做法：{wrongs.join('、')}</div>}
           </div>
         )
       }
-      return gr.items.map(r => (
-        <button className="cl-row" key={r.id} onClick={() => openEdit(r)}>
-          <div className="cl-main"><span>{r.text}</span></div>
-          {r.wrong && <div className="cl-wrong">✗ 錯誤做法：{r.wrong}</div>}
-        </button>
-      ))
+      return <div className="cl-cards" key={gi}>{gr.items.map(card)}</div>
     })
   }
 
   function openEdit(r) {
-    setForm({ ...r, day: r.day == null ? '' : String(r.day), grp: r.grp || '' })
+    setForm({ ...r, day: r.day == null ? '' : String(r.day), grp: r.grp || '', photos: r.photos || [] })
   }
 
   // ── 三圓入口 ──
@@ -151,12 +158,15 @@ export default function CyclicClean() {
   const rows = sub === 'cycle' ? cycle : bySection(sub)
   return (
     <>
-      <button className="linky" style={{ fontSize: 13.5, margin: '0 0 8px', padding: 0 }} onClick={() => setSub(null)}>‹ 加強清潔</button>
+      <button className="linky" style={{ fontSize: 13.5, margin: '0 0 8px', padding: 0 }} onClick={() => setSub(null)}>‹ 衛生與整潔</button>
+      {sub === 'daily' && (
+        <div className="daily-banner">💡 這不是每週或每月的深度清潔項目，而是<b>每天需要做到的「習慣」</b>。</div>
+      )}
       <div className="card">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-          <h2 style={{ margin: 0 }}>{sec.icon} {sec.title}{sec.key === 'daily' && '（提醒）'}</h2>
+          <h2 style={{ margin: 0 }}>{sec.icon} {sec.title}</h2>
           <button className="linky" style={{ fontSize: 13 }}
-            onClick={() => setForm({ section: sub, day: sub === 'cycle' ? String(todayD) : null, grp: '', text: '', wrong: '' })}>＋ 新增</button>
+            onClick={() => setForm({ section: sub, day: sub === 'cycle' ? String(todayD) : null, grp: '', text: '', wrong: '', photos: [] })}>＋ 新增</button>
         </div>
         {sec.hint && <p className="src-note">{sec.hint}</p>}
 
@@ -230,6 +240,9 @@ export default function CyclicClean() {
                 <label>錯誤做法（可留空；同分組會合併為「以上錯誤做法」）</label>
                 <input value={form.wrong || ''} onChange={e => setForm({ ...form, wrong: e.target.value })} placeholder="例：不抹" />
               </div>
+            )}
+            {form.section !== 'cycle' && hasPhotos() && (
+              <PhotoField label="示範相片（讓同事看圖養成習慣，可放 1–2 張）" photos={form.photos} onChange={p => setForm({ ...form, photos: p })} />
             )}
             <button className="btn" onClick={save}>儲存</button>
             {form.id && <button className="btn danger" onClick={() => setConfirmDel(form)}>🗑 刪除此項目</button>}

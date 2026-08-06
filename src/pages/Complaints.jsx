@@ -247,7 +247,7 @@ export default function Complaints() {
                 {rank.map(r => {
                   const mm = m(r.cat)
                   return (
-                    <div className="bar-row" key={r.cat}>
+                    <div className={`bar-row click ${catF === r.cat ? 'sel' : ''}`} key={r.cat} onClick={() => setCatF(catF === r.cat ? '全部' : r.cat)}>
                       <span className="name">{mm.e} {r.cat}</span>
                       <div className="bar-track"><div className="bar-fill" style={{ width: `${(r.n / maxN) * 100}%`, background: mm.c }} /></div>
                       <span className="num">{r.n}</span>
@@ -268,7 +268,7 @@ export default function Complaints() {
               {cumRank.map(r => {
                 const mm = m(r.cat)
                 return (
-                  <div className="bar-row" key={r.cat}>
+                  <div className={`bar-row click ${catF === r.cat ? 'sel' : ''}`} key={r.cat} onClick={() => setCatF(catF === r.cat ? '全部' : r.cat)}>
                     <span className="name">{mm.e} {r.cat}</span>
                     <div className="bar-track"><div className="bar-fill" style={{ width: `${(r.n / maxC) * 100}%`, background: mm.c }} /></div>
                     <span className="num">{r.n}</span>
@@ -281,7 +281,7 @@ export default function Complaints() {
               <div className="card">
                 <h2>{monthLabel}{catF !== '全部' ? ` · ${catF}` : ''}樓層分佈<span style={{ fontSize: 11, color: 'var(--sub)', fontWeight: 400 }}>（只計客房投訴）</span></h2>
                 {floorRank.map(([f, n]) => (
-                  <div className="bar-row" key={f}>
+                  <div className={`bar-row click ${floorF === f ? 'sel' : ''}`} key={f} onClick={() => setFloorF(floorF === f ? '全部' : f)}>
                     <span className="name">{f === '無房號' ? f : `${f} 樓`}</span>
                     <div className="bar-track"><div className="bar-fill" style={{ width: `${(n / maxF) * 100}%`, background: 'var(--accent)' }} /></div>
                     <span className="num">{n}</span>
@@ -294,7 +294,7 @@ export default function Complaints() {
               <div className="card">
                 <h2>累計樓層分佈<span style={{ fontSize: 11, color: 'var(--sub)', fontWeight: 400 }}>（全部月份）</span></h2>
                 {cumFloorRank.map(([f, n]) => (
-                  <div className="bar-row" key={f}>
+                  <div className={`bar-row click ${floorF === f ? 'sel' : ''}`} key={f} onClick={() => setFloorF(floorF === f ? '全部' : f)}>
                     <span className="name">{f === '無房號' ? f : `${f} 樓`}</span>
                     <div className="bar-track"><div className="bar-fill" style={{ width: `${(n / maxCF) * 100}%`, background: 'var(--blue)' }} /></div>
                     <span className="num">{n}</span>
@@ -314,7 +314,7 @@ export default function Complaints() {
                   （{x.cum ? '全部月份' : '只計客房投訴'}{x.r.total > x.r.rows.length ? `，前${x.r.rows.length}／共${x.r.total}人` : `，共${x.r.total}人`}）
                 </span></h2>
                 {x.r.rows.map(([name, n]) => (
-                  <div className="bar-row" key={name}>
+                  <div className="bar-row click" key={name} onClick={() => setQ(q === name ? '' : name)}>
                     <span className="name">{name}</span>
                     <div className="bar-track"><div className="bar-fill" style={{ width: `${(n / x.r.max) * 100}%`, background: x.color }} /></div>
                     <span className="num">{n}</span>

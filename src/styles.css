@@ -103,6 +103,13 @@ h3{font-size:13px;color:var(--sub);font-weight:700;margin:14px 0 6px}
 .sc-btn{flex:1;height:40px;border:1.5px solid var(--line);border-radius:9px;background:var(--card);font-size:15px;font-weight:700;color:var(--sub);cursor:pointer;font-family:inherit}
 .sc-btn.on{background:var(--accent);border-color:var(--accent);color:#fff}
 .sc-btn.low.on{background:var(--red);border-color:var(--red)}
+/* 評分列表：名字 + 七維色塊條 */
+.sc-name{flex:1;min-width:0;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sc-name .cn{color:var(--sub);font-weight:400;font-size:12.5px}
+.dim-strip{display:flex;gap:2px;flex-shrink:0}
+.dim-strip .dblk{width:11px;height:20px;border-radius:2px}
+.dim-legend{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:10.5px;color:var(--sub);margin:2px 4px 0}
+.dim-legend span{white-space:nowrap}
 /* 加強清潔 */
 .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin:6px 0 12px}
 .cal-d{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;min-height:58px;padding:5px 3px;border:none;border-radius:9px;font-size:12.5px;color:var(--sub);background:var(--bg);cursor:pointer;font-family:inherit}
@@ -114,6 +121,17 @@ h3{font-size:13px;color:var(--sub);font-weight:700;margin:14px 0 6px}
 .sub-grid{padding:22px 10px 8px}
 .hi-sub{font-size:11px;color:var(--sub)}
 .cl-grp-title{font-size:14px;font-weight:800;margin:2px 2px 8px}
+/* 每日清潔引言 */
+.daily-banner{background:#fff5e0;border:1px solid #f0dca8;border-radius:12px;padding:12px 14px;font-size:14px;line-height:1.6;color:#7a5a1e;margin-bottom:12px}
+/* 圖文卡片 */
+.cl-cards{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cl-card{background:var(--bg);border:1px solid var(--line);border-radius:12px;overflow:hidden;cursor:pointer;text-align:left}
+.cl-card .cl-imgs{display:flex;gap:2px;aspect-ratio:16/10;background:#eef1f4}
+.cl-card .cl-imgs img{flex:1;width:100%;height:100%;object-fit:cover}
+.cl-card .cl-imgs.empty{align-items:center;justify-content:center;color:var(--sub);font-size:12.5px}
+.cl-card .cl-text{padding:9px 11px}
+.cl-card .cl-t{font-size:13.5px;line-height:1.5;font-weight:600}
+@media (max-width:380px){.cl-cards{grid-template-columns:1fr}}
 .cl-row{display:block;width:100%;text-align:left;background:var(--bg);border:1px solid var(--line);border-radius:11px;padding:11px 13px;margin-bottom:8px;cursor:pointer;font-family:inherit;color:var(--ink)}
 .cl-main{display:flex;gap:9px;align-items:flex-start;font-size:13.5px;line-height:1.6}
 .cl-day{flex-shrink:0;background:var(--accent-soft);color:var(--accent);font-size:11.5px;font-weight:800;padding:2px 9px;border-radius:999px;margin-top:1px}
@@ -133,6 +151,10 @@ h3{font-size:13px;color:var(--sub);font-weight:700;margin:14px 0 6px}
 .stat .l{font-size:11px;color:var(--sub);margin-top:2px}
 .stat .n.warn{color:var(--red)}
 .bar-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:12px}
+.bar-row.click{cursor:pointer;border-radius:7px;padding:2px 4px;margin:0 -4px 6px}
+.bar-row.click:hover{background:var(--bg)}
+.bar-row.click.sel{background:var(--accent-soft)}
+.bar-row.click.sel .name{font-weight:800;color:var(--accent)}
 .bar-row .name{width:86px;color:var(--sub);text-align:right;flex-shrink:0}
 .bar-track{flex:1;background:#eef1f4;border-radius:5px;height:16px;overflow:hidden}
 .bar-fill{height:100%;border-radius:5px;min-width:4px}
@@ -246,13 +268,13 @@ h3{font-size:13px;color:var(--sub);font-weight:700;margin:14px 0 6px}
   .cx-divider:hover::after{background:var(--accent);width:3px}
   .panel-reopen{display:inline-block;margin:0 0 8px;padding:7px 14px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--sub);font-size:12.5px;cursor:pointer;font-family:inherit}
   .month-nav .panel-w-btn{display:block}
-  .daily-wrap{max-width:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(430px,1fr));gap:14px;align-items:start}
+  .daily-wrap{max-width:900px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(400px,1fr));gap:14px;align-items:start}
   .daily-wrap .done-btn,.daily-wrap .logic-line{grid-column:1/-1}
   .dept-wrap{grid-template-columns:1fr 1fr}
   .dept-sum{grid-column:1/-1}
   /* 主題庫/教材/加強清潔卡片格 */
   .t-grid{grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
   .tr-grid{grid-template-columns:repeat(auto-fill,minmax(320px,1fr));align-items:start}
-  /* 今日重點：內容寬度上限，避免超寬螢幕一行字拉太長 */
-  .daily-wrap{max-width:980px}
+  /* 今日重點：內容寬度上限＋置中 */
+  .daily-wrap{max-width:900px;margin:0 auto}
 }

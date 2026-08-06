@@ -86,6 +86,7 @@ create table if not exists cleaning_items (
   grp text not null default '',
   text text not null,
   wrong text not null default '',
+  photos jsonb not null default '[]',
   sort_order int not null default 0,
   created_at timestamptz not null default now()
 );

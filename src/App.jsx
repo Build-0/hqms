@@ -14,7 +14,7 @@ const MODULES = [
   { id: 'complaint', ico: '📋', label: '客訴管理', color: '#c0564f', Page: Complaints },
   { id: 'topics', ico: '📚', label: '主題庫', color: '#4a6fa5', Page: Topics },
   { id: 'training', ico: '🎓', label: '新人教材', color: '#b07d2e', Page: Training },
-  { id: 'cyclic', ico: '🧽', label: '加強清潔', color: '#54808c', Page: CyclicClean },
+  { id: 'cyclic', ico: '🧽', label: '衛生與整潔', color: '#54808c', Page: CyclicClean },
   { id: 'scores', ico: '⭐', label: '清潔評分', color: '#8f7ac9', Page: Scores },
 ]
 const WD = ['日', '一', '二', '三', '四', '五', '六']
