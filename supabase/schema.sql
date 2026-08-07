@@ -81,7 +81,7 @@ create table if not exists training_sections (
 -- 加強清潔項目（每日提醒 / 循環排程 / 深度清潔）
 create table if not exists cleaning_items (
   id uuid primary key default gen_random_uuid(),
-  section text not null check (section in ('daily','cycle','deep')),
+  section text not null check (section in ('daily','spot','cycle','deep')),
   day int,
   grp text not null default '',
   text text not null,

@@ -8,6 +8,7 @@ import { PhotoGrid, PhotoField } from '../components/Photos'
 
 const SECTIONS = [
   { key: 'daily', icon: '🧹', title: '每日清潔', sub: '每天的習慣', color: '#1f7a6d' },
+  { key: 'spot', icon: '🔍', title: '常見錯誤／衛生點', sub: '相片對照', color: '#c0564f', hint: '以相片為主，記住這些容易漏或做錯的位置：' },
   { key: 'cycle', icon: '📅', title: '循環清潔', sub: '月曆排程', color: '#4a6fa5', hint: null },
   { key: 'deep', icon: '🧽', title: '深度清潔', sub: '長週期', color: '#8f7ac9', hint: '週期較長的深度項目：' },
 ]
