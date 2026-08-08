@@ -123,15 +123,27 @@ h3{font-size:13px;color:var(--sub);font-weight:700;margin:14px 0 6px}
 .cl-grp-title{font-size:14px;font-weight:800;margin:2px 2px 8px}
 /* 每日清潔引言 */
 .daily-banner{background:#fff5e0;border:1px solid #f0dca8;border-radius:12px;padding:12px 14px;font-size:14px;line-height:1.6;color:#7a5a1e;margin-bottom:12px}
-/* 圖文卡片 */
-.cl-cards{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.cl-card{background:var(--bg);border:1px solid var(--line);border-radius:12px;overflow:hidden;cursor:pointer;text-align:left}
-.cl-card .cl-imgs{display:flex;gap:2px;aspect-ratio:16/10;background:#eef1f4}
-.cl-card .cl-imgs img{flex:1;width:100%;height:100%;object-fit:cover}
-.cl-card .cl-imgs.empty{align-items:center;justify-content:center;color:var(--sub);font-size:12.5px}
-.cl-card .cl-text{padding:9px 11px}
-.cl-card .cl-t{font-size:13.5px;line-height:1.5;font-weight:600}
-@media (max-width:380px){.cl-cards{grid-template-columns:1fr}}
+/* 分組標題（明顯，與內容區別）*/
+.cl-grp-title{font-size:15px;font-weight:800;color:var(--ink);background:var(--accent-soft);border-left:4px solid var(--accent);padding:7px 12px;border-radius:0 8px 8px 0;margin:2px 0 10px}
+/* 正確/錯誤 兩欄對照卡 */
+.cl-cards{display:grid;gap:12px}
+.cl-card2{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;cursor:pointer;text-align:left}
+.cl-card2 .cl-t{font-size:14.5px;font-weight:700;line-height:1.5;margin-bottom:10px}
+.cl-cmp{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cl-side{border-radius:10px;overflow:hidden;border:1.5px solid}
+.cl-side.good{border-color:#bfe0cc}
+.cl-side.bad{border-color:#eec6c2}
+.cl-side-h{font-size:12px;font-weight:800;padding:6px 9px;line-height:1.4}
+.cl-side.good .cl-side-h{background:#e6f3ec;color:var(--accent)}
+.cl-side.bad .cl-side-h{background:var(--red-soft);color:var(--red)}
+.cl-side .cl-imgs{display:flex;gap:2px;aspect-ratio:4/3;background:#eef1f4}
+.cl-side .cl-imgs img{flex:1;width:100%;height:100%;object-fit:cover}
+.cl-side .cl-imgs.empty{align-items:center;justify-content:center;color:var(--sub);font-size:11.5px}
+/* 後勤工作黃字區 */
+.logi-box{background:#fff5e0;border:1px solid #f0dca8;border-radius:11px;padding:10px 13px;margin-top:12px}
+.logi-h{font-size:13px;font-weight:800;color:#a5741a;margin-bottom:6px}
+.logi-item{font-size:14px;font-weight:700;color:#b7791f;line-height:1.7;cursor:pointer}
+.logi-item:hover{text-decoration:underline}
 .cl-row{display:block;width:100%;text-align:left;background:var(--bg);border:1px solid var(--line);border-radius:11px;padding:11px 13px;margin-bottom:8px;cursor:pointer;font-family:inherit;color:var(--ink)}
 .cl-main{display:flex;gap:9px;align-items:flex-start;font-size:13.5px;line-height:1.6}
 .cl-day{flex-shrink:0;background:var(--accent-soft);color:var(--accent);font-size:11.5px;font-weight:800;padding:2px 9px;border-radius:999px;margin-top:1px}

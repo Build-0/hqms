@@ -231,7 +231,7 @@ export default function Topics() {
             {F('一句提醒', 'reminder')}
             {F('早會提問', 'question', 'input', { placeholder: '用來抽問同事、加強記憶' })}
             {F('提問答案', 'answer')}
-            <PhotoField label="示範相片（正確做法）" photos={form.photos} onChange={p => setForm({ ...form, photos: p })} />
+            <PhotoField label="示範相片（正確做法，可放 GIF 動作示範）" photos={form.photos} onChange={p => setForm({ ...form, photos: p })} max={4} />
             <button className="btn" onClick={save}>儲存主題</button>
             <button className="btn ghost" onClick={() => setForm(null)}>取消</button>
           </div>

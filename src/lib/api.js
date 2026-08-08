@@ -133,8 +133,9 @@ export async function deleteScore(id) {
 export async function uploadPhoto(file) {
   const { blob, dataUrl } = await compressImage(file)
   if (isLocal) return dataUrl
-  const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`
-  const { error } = await sb.storage.from('photos').upload(path, blob, { contentType: 'image/jpeg' })
+  const isGif = file.type === 'image/gif'
+  const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${isGif ? 'gif' : 'jpg'}`
+  const { error } = await sb.storage.from('photos').upload(path, blob, { contentType: isGif ? 'image/gif' : 'image/jpeg' })
   throwIf(error)
   return sb.storage.from('photos').getPublicUrl(path).data.publicUrl
 }

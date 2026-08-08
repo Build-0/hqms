@@ -3,6 +3,7 @@ import * as api from '../lib/api'
 import { TRAINING } from '../data/seedData'
 import { toast } from '../lib/toast'
 import Confirm from '../components/Confirm'
+import { PhotoGrid, PhotoField } from '../components/Photos'
 
 export default function Training() {
   const [list, setList] = useState(null)
@@ -28,10 +29,12 @@ export default function Training() {
     load()
   }
 
+  const hasPhotos = () => list.length === 0 || 'photos' in list[0]
+
   function openEdit(t) {
     setForm(t
-      ? { ...t, _steps: (t.steps || []).join('\n') }
-      : { emoji: '📄', title: '', intro: '', _steps: '' })
+      ? { ...t, _steps: (t.steps || []).join('\n'), photos: t.photos || [] }
+      : { emoji: '📄', title: '', intro: '', _steps: '', photos: [] })
   }
 
   async function save() {
@@ -41,6 +44,7 @@ export default function Training() {
       intro: form.intro.trim(),
       steps: form._steps.split('\n').map(s => s.trim()).filter(Boolean),
     }
+    if (hasPhotos()) payload.photos = form.photos || []
     if (form.id) {
       await api.updateTraining(form.id, payload)
       toast('已儲存修改')
@@ -93,7 +97,7 @@ export default function Training() {
           <div className="acc" key={t.id}>
             <div className="acc-h" onClick={() => setOpen(open === t.id ? null : t.id)}>
               <span className="acc-e">{t.emoji}</span>
-              <span className="acc-t">{t.title}<br /><span className="acc-n">{(t.steps || []).length} 個要點</span></span>
+              <span className="acc-t">{t.title}<br /><span className="acc-n">{(t.steps || []).length} 個要點{t.photos?.length ? ` · 📷${t.photos.length}` : ''}</span></span>
               <button className="logout" style={{ color: 'var(--sub)', background: '#eef1f4' }}
                 onClick={e => { e.stopPropagation(); openEdit(t) }}>✏️</button>
               <span style={{ color: 'var(--sub)' }}>{open === t.id ? '－' : '＋'}</span>
@@ -102,6 +106,7 @@ export default function Training() {
               <div className="acc-b">
                 {t.intro}
                 <ol>{(t.steps || []).map((s, j) => <li key={j}>{s}</li>)}</ol>
+                {t.photos?.length > 0 && <PhotoGrid photos={t.photos} />}
               </div>
             )}
           </div>
@@ -117,6 +122,7 @@ export default function Training() {
             {F('章節名稱', 'title')}
             {F('開場一句', 'intro', 'input', { placeholder: '例：入房到報房的標準次序：' })}
             {F('要點（每行一項）', '_steps', 'textarea', { style: { height: 140 } })}
+            {hasPhotos() && <PhotoField label="配圖（示範照或 GIF）" photos={form.photos} onChange={p => setForm({ ...form, photos: p })} max={4} />}
             <button className="btn" onClick={save}>儲存章節</button>
             {form.id && (
               <button className="btn danger" onClick={() => setConfirmDel(form)}>🗑 刪除此章節</button>

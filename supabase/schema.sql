@@ -74,6 +74,7 @@ create table if not exists training_sections (
   title text not null,
   intro text not null default '',
   steps jsonb not null default '[]',
+  photos jsonb not null default '[]',
   sort_order int not null default 0,
   created_at timestamptz not null default now()
 );
@@ -87,6 +88,7 @@ create table if not exists cleaning_items (
   text text not null,
   wrong text not null default '',
   photos jsonb not null default '[]',
+  photos_wrong jsonb not null default '[]',
   sort_order int not null default 0,
   created_at timestamptz not null default now()
 );
