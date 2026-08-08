@@ -5,12 +5,13 @@ import { todayStr } from '../lib/dates'
 import { toast } from '../lib/toast'
 import Confirm from '../components/Confirm'
 import { PhotoGrid, PhotoField } from '../components/Photos'
+import Icon from '../components/Icon'
 
 const SECTIONS = [
-  { key: 'daily', icon: '🧹', title: '每日清潔', sub: '每天的習慣', color: '#1f7a6d' },
-  { key: 'spot', icon: '🔍', title: '常見錯誤／衛生點', sub: '相片對照', color: '#c0564f', hint: '以相片為主，記住這些容易漏或做錯的位置：' },
-  { key: 'cycle', icon: '📅', title: '循環清潔', sub: '月曆排程', color: '#4a6fa5', hint: null },
-  { key: 'deep', icon: '🧽', title: '深度清潔', sub: '長週期', color: '#8f7ac9', hint: '週期較長的深度項目：' },
+  { key: 'daily', icon: 'sun', title: '每日清潔', sub: '每天的習慣', color: '#1f7a6d' },
+  { key: 'spot', icon: 'search', title: '常見錯誤／衛生點', sub: '相片對照', color: '#c0564f', hint: '以相片為主，記住這些容易漏或做錯的位置：' },
+  { key: 'cycle', icon: 'calendar', title: '循環清潔', sub: '月曆排程', color: '#4a6fa5', hint: null },
+  { key: 'deep', icon: 'drop', title: '深度清潔', sub: '長週期', color: '#8f7ac9', hint: '週期較長的深度項目：' },
 ]
 
 export default function CyclicClean() {
@@ -140,7 +141,7 @@ export default function CyclicClean() {
         <div className="home-grid sub-grid">
           {SECTIONS.map(s => (
             <button className="home-item" key={s.key} onClick={() => setSub(s.key)}>
-              <span className="hi-circle sm" style={{ background: s.color + '1a', borderColor: s.color + '55' }}>{s.icon}</span>
+              <span className="hi-circle sm" style={{ background: s.color + '26', borderColor: 'transparent' }}><Icon name={s.icon} size={28} color={s.color} width={2.2} /></span>
               <span className="hi-label">{s.title}</span>
               <span className="hi-sub">{s.sub} · {bySection(s.key).length} 項</span>
             </button>
@@ -170,7 +171,7 @@ export default function CyclicClean() {
       )}
       <div className="card">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-          <h2 style={{ margin: 0 }}>{sec.icon} {sec.title}</h2>
+          <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 7 }}><Icon name={sec.icon} size={18} color={sec.color} /> {sec.title}</h2>
           <button className="linky" style={{ fontSize: 13 }}
             onClick={() => setForm({ section: sub, day: sub === 'cycle' ? String(todayD) : null, grp: '', text: '', wrong: '', photos: [] })}>＋ 新增</button>
         </div>

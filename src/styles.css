@@ -18,8 +18,9 @@ main{flex:1;overflow-y:auto;padding:14px 14px 96px}
 /* ── 首頁圓形入口 ── */
 .home-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:26px 10px;padding:30px 10px}
 .home-item{background:none;border:none;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:10px}
-.hi-circle{width:76px;height:76px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:33px;border:1.5px solid var(--line);box-shadow:0 2px 10px rgba(0,0,0,.06)}
+.hi-circle{width:76px;height:76px;border-radius:50%;display:flex;align-items:center;justify-content:center}
 .hi-label{font-size:13.5px;color:var(--ink);font-weight:600}
+.hdr-ico{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .back-btn{background:rgba(255,255,255,.16);border:none;color:#fff;width:34px;height:34px;border-radius:50%;font-size:22px;cursor:pointer;line-height:1;flex-shrink:0;padding-bottom:4px}
 /* ── 今日重點摺疊區塊 ── */
 .dsec{border:1px solid var(--line);border-radius:12px;margin-top:10px;overflow:hidden;background:var(--card)}
