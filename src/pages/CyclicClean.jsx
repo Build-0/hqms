@@ -186,19 +186,21 @@ export default function CyclicClean() {
             )}
             <div className="cal cal-full">
               {Array.from({ length: 31 }, (_, i) => i + 1).map(d => {
-                const tasks = cycle.filter(c => c.day === d)
+                const reg = cycle.filter(c => c.day === d && c.grp !== '後勤')
+                const logi = cycle.filter(c => c.day === d && c.grp === '後勤')
                 return (
-                  <button key={d} className={`cal-d ${tasks.length ? 'has' : ''} ${d === todayD ? 'today' : ''}`}
+                  <button key={d} className={`cal-d ${reg.length || logi.length ? 'has' : ''} ${d === todayD ? 'today' : ''}`}
                     onClick={() => setDaySheet(d)}>
                     <span className="dnum">{d}</span>
-                    {tasks.length > 0 && <span className="dtask">{tasks.map(t => t.text).join('・')}</span>}
+                    {reg.length > 0 && <span className="dtask">{reg.map(t => t.text).join('・')}</span>}
+                    {logi.length > 0 && <span className="dtask logi">{logi.map(t => t.text).join('・')}</span>}
                   </button>
                 )
               })}
             </div>
             {logistics.length > 0 && (
               <div className="logi-box">
-                <div className="logi-h">🛠 後勤工作（不定期）</div>
+                <div className="logi-h">🛠 未排期後勤（點擊設定日期）</div>
                 {logistics.map(r => (
                   <div className="logi-item" key={r.id} onClick={() => openEdit(r)}>{r.text}</div>
                 ))}
@@ -220,8 +222,9 @@ export default function CyclicClean() {
           <div className="sheet">
             <h2>{daySheet} 日的加強項目</h2>
             {cycle.filter(c => c.day === daySheet).map(r => (
-              <button className="cl-row" key={r.id} onClick={() => { setDaySheet(null); openEdit(r) }}>
-                <div className="cl-main"><span>{r.text}</span></div>
+              <button className="cl-row" key={r.id} onClick={() => { setDaySheet(null); openEdit(r) }}
+                style={r.grp === '後勤' ? { borderColor: '#f0dca8', background: '#fff5e0' } : undefined}>
+                <div className="cl-main"><span style={r.grp === '後勤' ? { color: '#b7791f', fontWeight: 700 } : undefined}>{r.grp === '後勤' ? '🟡 ' : ''}{r.text}</span></div>
               </button>
             ))}
             {cycle.filter(c => c.day === daySheet).length === 0 && <div className="note" style={{ margin: '4px 0 10px' }}>此日尚無加強項目</div>}
@@ -236,10 +239,19 @@ export default function CyclicClean() {
           <div className="sheet">
             <h2>{form.id ? '編輯項目' : '新增項目'}（{sec.title}）</h2>
             {form.section === 'cycle' && (
-              <div className="f-row">
-                <label>每月幾號加強（1–31，留空＝後勤/不定期項）</label>
-                <input type="number" min="1" max="31" value={form.day || ''} onChange={e => setForm({ ...form, day: e.target.value })} placeholder="留空為後勤工作" />
-              </div>
+              <>
+                <div className="f-row">
+                  <label>類型</label>
+                  <div className="seg" style={{ marginTop: 0 }}>
+                    <button className={`chip ${form.grp !== '後勤' ? 'on' : ''}`} onClick={() => setForm({ ...form, grp: '' })}>🟢 一般清潔</button>
+                    <button className={`chip ${form.grp === '後勤' ? 'on' : ''}`} onClick={() => setForm({ ...form, grp: '後勤' })} style={form.grp === '後勤' ? { background: '#b7791f', borderColor: '#b7791f' } : undefined}>🟡 後勤工作</button>
+                  </div>
+                </div>
+                <div className="f-row">
+                  <label>每月幾號（1–31，留空＝未排期）</label>
+                  <input type="number" min="1" max="31" value={form.day || ''} onChange={e => setForm({ ...form, day: e.target.value })} placeholder="例：1" />
+                </div>
+              </>
             )}
             {form.section !== 'cycle' && hasGrp() && (
               <div className="f-row">
