@@ -58,6 +58,7 @@ export default function App() {
         <div className="date">
           {now.getFullYear()}年{now.getMonth() + 1}月{now.getDate()}日（星期{WD[now.getDay()]}）
           {api.isLocal && ' · 示範模式'}{api.isOpen && ' · 開放模式'}
+          <span style={{ opacity: .6 }}> · 版本 {__BUILD__}</span>
         </div>
       </header>
       <main>
