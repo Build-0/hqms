@@ -67,7 +67,7 @@ export default function CyclicClean() {
     if (hasPhotosWrong()) payload.photos_wrong = f.photos_wrong || []
     if (!payload.text) { toast('請填內容'); return }
     // 循環清潔：填了日期就綁該日；留空＝後勤/不定期項（黃字顯示）
-    if (f.section === 'cycle' && payload.day && (payload.day < 1 || payload.day > 31)) { toast('日期請填 1–31，或留空為後勤項'); return }
+    if (f.section === 'cycle' && (!payload.day || payload.day < 1 || payload.day > 31)) { toast('請填每月幾號（1–31）'); return }
     if (f.id) {
       await api.updateCleaning(f.id, payload)
       toast('已儲存修改')
@@ -161,7 +161,6 @@ export default function CyclicClean() {
 
   // ── 分區內頁 ──
   const sec = SECTIONS.find(s => s.key === sub)
-  const logistics = cycle.filter(c => !c.day) // 後勤/不定期項
   const rows = sub === 'cycle' ? cycle : bySection(sub)
   return (
     <>
@@ -198,14 +197,6 @@ export default function CyclicClean() {
                 )
               })}
             </div>
-            {logistics.length > 0 && (
-              <div className="logi-box">
-                <div className="logi-h">🛠 未排期後勤（點擊設定日期）</div>
-                {logistics.map(r => (
-                  <div className="logi-item" key={r.id} onClick={() => openEdit(r)}>{r.text}</div>
-                ))}
-              </div>
-            )}
             <p className="note" style={{ textAlign: 'left', margin: '10px 2px 0' }}>
               ⚠️ 所有清潔並非到指定日才清潔——此排程只是說明：指定日期要「加強」該區域的清潔。點日期格可查看／編輯／新增該日項目。
               <br /><b style={{ color: 'var(--ink)' }}>主管有權利根據實際情況調整。</b>
@@ -248,7 +239,7 @@ export default function CyclicClean() {
                   </div>
                 </div>
                 <div className="f-row">
-                  <label>每月幾號（1–31，留空＝未排期）</label>
+                  <label>每月幾號（1–31）</label>
                   <input type="number" min="1" max="31" value={form.day || ''} onChange={e => setForm({ ...form, day: e.target.value })} placeholder="例：1" />
                 </div>
               </>
