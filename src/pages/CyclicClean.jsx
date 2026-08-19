@@ -243,7 +243,7 @@ export default function CyclicClean() {
                 return (
                   <button key={d} className={`cal-d ${reg.length || logi.length ? 'has' : ''} ${d === todayD ? 'today' : ''}`}
                     onClick={() => setDaySheet(d)}>
-                    <span className="dnum">{d}</span>
+                    <span className="dnum">{d}{[...reg, ...logi].some(t => t.photos?.length) ? ' 📷' : ''}</span>
                     {reg.length > 0 && <span className="dtask">{reg.map(t => t.text).join('・')}</span>}
                     {logi.length > 0 && <span className="dtask logi">{logi.map(t => t.text).join('・')}</span>}
                   </button>
@@ -271,13 +271,16 @@ export default function CyclicClean() {
           <div className="sheet">
             <h2>{daySheet} 日的加強項目</h2>
             {cycle.filter(c => c.day === daySheet).map(r => (
-              <button className="cl-row" key={r.id} onClick={() => { setDaySheet(null); openEdit(r) }}
-                style={r.grp === '後勤' ? { borderColor: '#f0dca8', background: '#fff5e0' } : undefined}>
-                <div className="cl-main"><span style={r.grp === '後勤' ? { color: '#b7791f', fontWeight: 700 } : undefined}>{r.grp === '後勤' ? '🟡 ' : ''}{r.text}</span></div>
-              </button>
+              <div key={r.id} style={{ marginBottom: 8 }}>
+                <button className="cl-row" style={{ marginBottom: r.photos?.length ? 6 : 0, ...(r.grp === '後勤' ? { borderColor: '#f0dca8', background: '#fff5e0' } : {}) }}
+                  onClick={() => { setDaySheet(null); openEdit(r) }}>
+                  <div className="cl-main"><span style={r.grp === '後勤' ? { color: '#b7791f', fontWeight: 700 } : undefined}>{r.grp === '後勤' ? '🟡 ' : ''}{r.text}</span></div>
+                </button>
+                {r.photos?.length > 0 && <PhotoGrid photos={r.photos} />}
+              </div>
             ))}
             {cycle.filter(c => c.day === daySheet).length === 0 && <div className="note" style={{ margin: '4px 0 10px' }}>此日尚無加強項目</div>}
-            <button className="btn" onClick={() => { const d = daySheet; setDaySheet(null); setForm({ section: 'cycle', day: String(d), grp: '', text: '', wrong: '' }) }}>＋ 新增此日項目</button>
+            <button className="btn" onClick={() => { const d = daySheet; setDaySheet(null); setForm({ section: 'cycle', day: String(d), grp: '', text: '', wrong: '', photos: [] }) }}>＋ 新增此日項目</button>
             <button className="btn ghost" onClick={() => setDaySheet(null)}>關閉</button>
           </div>
         </div>
@@ -328,6 +331,9 @@ export default function CyclicClean() {
                 <label>錯誤做法（可留空）</label>
                 <input value={form.wrong || ''} onChange={e => setForm({ ...form, wrong: e.target.value })} placeholder="例：不抹" />
               </div>
+            )}
+            {form.section === 'cycle' && hasPhotos() && (
+              <PhotoField label="示範相片（可放 GIF）" photos={form.photos} onChange={p => setForm({ ...form, photos: p })} max={4} />
             )}
             {form.section !== 'cycle' && hasPhotos() && (
               <PhotoField label="✓ 正確做法相片（遠景＋近景，可放 GIF）" photos={form.photos} onChange={p => setForm({ ...form, photos: p })} max={4} />
