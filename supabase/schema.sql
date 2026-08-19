@@ -85,6 +85,7 @@ create table if not exists cleaning_items (
   section text not null check (section in ('daily','spot','cycle','deep')),
   day int,
   grp text not null default '',
+  area text not null default '',
   text text not null,
   wrong text not null default '',
   photos jsonb not null default '[]',

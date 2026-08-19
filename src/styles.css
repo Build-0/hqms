@@ -141,6 +141,30 @@ h3{font-size:13px;color:var(--sub);font-weight:700;margin:14px 0 6px}
 .cl-side .cl-imgs{display:flex;gap:2px;aspect-ratio:4/3;background:#eef1f4}
 .cl-side .cl-imgs img{flex:1;width:100%;height:100%;object-fit:cover}
 .cl-side .cl-imgs.empty{align-items:center;justify-content:center;color:var(--sub);font-size:11.5px}
+/* ═══ 每日清潔 A 版：抹塵優先橫幅 + 房間/浴室分區 + 緊湊卡 ═══ */
+.da-prio{background:linear-gradient(135deg,var(--accent),#155e54);border-radius:15px;padding:14px 16px;color:#fff;margin-bottom:4px;box-shadow:0 5px 16px rgba(31,122,109,.26)}
+.da-prio .da-rank{background:#fff;color:#155e54;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;letter-spacing:.5px}
+.da-prio h3{font-size:21px;font-weight:800;letter-spacing:2px;margin:8px 0 0}
+.da-prio p{font-size:12px;opacity:.9;margin-top:5px}
+.area{display:flex;align-items:center;gap:8px}
+.area .dot{width:29px;height:29px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px}
+.area.room .dot{background:var(--accent-soft)}
+.area.bath .dot{background:var(--blue-soft)}
+.area .nm{font-size:14.5px;font-weight:800}
+.area .ct{font-size:11px;color:var(--sub);margin-left:auto;background:var(--card);border:1px solid var(--line);padding:2px 9px;border-radius:999px}
+.da-cards{display:grid;gap:11px}
+.da-card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px;cursor:pointer;text-align:left}
+.da-ttl{font-size:14.5px;font-weight:700;line-height:1.5;margin-bottom:11px}
+.da-block{border-radius:11px;padding:9px 10px 10px;margin-bottom:8px}
+.da-block:last-child{margin-bottom:0}
+.da-block.ok{background:#effaf3;border:1px solid #d3eadd}
+.da-block.no{background:var(--red-soft);border:1px solid #eed3ce}
+.da-block .da-lab{font-size:12px;font-weight:800;margin-bottom:8px}
+.da-block.ok .da-lab{color:var(--accent)}
+.da-block.no .da-lab{color:var(--red)}
+.da-duo{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.da-ph{aspect-ratio:4/3;border-radius:9px;object-fit:cover;width:100%;background:#eef1f4;cursor:zoom-in}
+.da-duo .da-ph.empty{grid-column:1/-1;display:flex;align-items:center;justify-content:center;color:var(--sub);font-size:12px;font-weight:600;cursor:pointer;border:1.5px dashed var(--line)}
 /* 後勤工作黃字區 */
 .logi-box{background:#fff5e0;border:1px solid #f0dca8;border-radius:11px;padding:10px 13px;margin-top:12px}
 .logi-h{font-size:13px;font-weight:800;color:#a5741a;margin-bottom:6px}

@@ -21,6 +21,7 @@ export default function CyclicClean() {
   const [form, setForm] = useState(null)   // {id?, section, day, grp, text, wrong}
   const [daySheet, setDaySheet] = useState(null) // 月曆點中的日期
   const [confirmDel, setConfirmDel] = useState(null)
+  const [big, setBig] = useState(null)     // 放大檢視的相片
 
   useEffect(() => { load() }, [])
   async function load() {
@@ -63,6 +64,7 @@ export default function CyclicClean() {
       day: f.section === 'cycle' ? (parseInt(f.day, 10) || null) : null,
     }
     if (hasGrp()) payload.grp = (f.grp || '').trim()
+    if (hasArea()) payload.area = (f.area || '').trim()
     if (hasPhotos()) payload.photos = f.photos || []
     if (hasPhotosWrong()) payload.photos_wrong = f.photos_wrong || []
     if (!payload.text) { toast('請填內容'); return }
@@ -88,10 +90,76 @@ export default function CyclicClean() {
   function hasPhotosWrong() {
     return items.length === 0 || 'photos_wrong' in items[0]
   }
+  function hasArea() {
+    return items.length === 0 || 'area' in items[0]
+  }
+  const AREAS = ['房間', '浴室']
+  const areaMeta = a => (a === '浴室' ? { e: '🚿', cls: 'bath' } : { e: '🛏️', cls: 'room' })
 
-  const imgs = arr => arr.slice(0, 2).map((p, i) => <img key={i} src={p} alt="" loading="lazy" />)
+  // 照片格：遠+近；空則佔位。點圖放大（不觸發編輯）
+  const photoCells = arr => {
+    const a = arr || []
+    if (!a.length) return <div className="da-ph empty">📷 待補圖（遠＋近）</div>
+    return a.slice(0, 4).map((p, i) => (
+      <img className="da-ph" key={i} src={p} alt="" loading="lazy"
+        onClick={e => { e.stopPropagation(); setBig(p) }} />
+    ))
+  }
+  // A 版緊湊卡：標題 + 正確(遠近) + 錯誤(遠近)
+  const cardA = r => (
+    <div className="da-card" key={r.id} onClick={() => openEdit(r)}>
+      <div className="da-ttl">{r.text}</div>
+      <div className="da-block ok">
+        <div className="da-lab">✓ 正確做法</div>
+        <div className="da-duo">{photoCells(r.photos)}</div>
+      </div>
+      <div className="da-block no">
+        <div className="da-lab">✗ 錯誤做法{r.wrong ? `：${r.wrong}` : ''}</div>
+        <div className="da-duo">{photoCells(r.photos_wrong)}</div>
+      </div>
+    </div>
+  )
 
-  // 每日/常見錯誤/深度：正確 vs 錯誤 兩欄對照卡
+  // 每日清潔：類別(grp)優先橫幅 → 房間/浴室分區 → A卡
+  function renderDaily(rows) {
+    const cats = []
+    for (const r of rows) {
+      const g = (r.grp || '其他').trim() || '其他'
+      let c = cats.find(x => x.g === g)
+      if (!c) { c = { g, items: [] }; cats.push(c) }
+      c.items.push(r)
+    }
+    return cats.map((cat, ci) => {
+      const areas = hasArea()
+        ? [...AREAS, '其他'].map(a => ({ a, items: cat.items.filter(r => (r.area || '其他') === a) })).filter(x => x.items.length)
+        : [{ a: '', items: cat.items }]
+      return (
+        <div key={ci}>
+          <div className="da-prio">
+            <span className="da-rank">每日最高優先</span>
+            <h3>{cat.g}</h3>
+            <p>每天必做。看不見的塵，客人一摸就知道。</p>
+          </div>
+          {areas.map((ar, ai) => {
+            const m = ar.a ? areaMeta(ar.a) : null
+            return (
+              <div key={ai}>
+                {ar.a && (
+                  <div className={`area ${m.cls}`} style={{ margin: '14px 2px 10px' }}>
+                    <span className="dot">{m.e}</span><span className="nm">{ar.a}區域</span>
+                    <span className="ct">{ar.items.length} 個位置</span>
+                  </div>
+                )}
+                <div className="da-cards">{ar.items.map(cardA)}</div>
+              </div>
+            )
+          })}
+        </div>
+      )
+    })
+  }
+
+  // 常見錯誤／深度：grp 分組 → A卡
   function renderGrouped(rows) {
     const groups = []
     for (const r of rows) {
@@ -100,31 +168,16 @@ export default function CyclicClean() {
       if (last && last.g === g && g) last.items.push(r)
       else groups.push({ g, items: [r] })
     }
-    const card = r => (
-      <div className="cl-card2" key={r.id} onClick={() => openEdit(r)}>
-        <div className="cl-t">{r.text}</div>
-        <div className="cl-cmp">
-          <div className="cl-side good">
-            <div className="cl-side-h">✓ 正確做法</div>
-            {r.photos?.length > 0 ? <div className="cl-imgs">{imgs(r.photos)}</div> : <div className="cl-imgs empty">＋ 加正確圖</div>}
-          </div>
-          <div className="cl-side bad">
-            <div className="cl-side-h">✗ 錯誤做法{r.wrong ? `：${r.wrong}` : ''}</div>
-            {r.photos_wrong?.length > 0 ? <div className="cl-imgs">{imgs(r.photos_wrong)}</div> : <div className="cl-imgs empty">＋ 加錯誤圖</div>}
-          </div>
-        </div>
-      </div>
-    )
     return groups.map((gr, gi) => (
       <div key={gi} style={{ marginBottom: 14 }}>
         {gr.g && <div className="cl-grp-title">{gr.g}</div>}
-        <div className="cl-cards">{gr.items.map(card)}</div>
+        <div className="da-cards">{gr.items.map(cardA)}</div>
       </div>
     ))
   }
 
   function openEdit(r) {
-    setForm({ ...r, day: r.day == null ? '' : String(r.day), grp: r.grp || '', photos: r.photos || [], photos_wrong: r.photos_wrong || [] })
+    setForm({ ...r, day: r.day == null ? '' : String(r.day), grp: r.grp || '', area: r.area || '', photos: r.photos || [], photos_wrong: r.photos_wrong || [] })
   }
 
   // ── 三圓入口 ──
@@ -172,7 +225,7 @@ export default function CyclicClean() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
           <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 7 }}><Icon name={sec.icon} size={18} color={sec.color} /> {sec.title}</h2>
           <button className="linky" style={{ fontSize: 13 }}
-            onClick={() => setForm({ section: sub, day: sub === 'cycle' ? String(todayD) : null, grp: '', text: '', wrong: '', photos: [] })}>＋ 新增</button>
+            onClick={() => setForm({ section: sub, day: sub === 'cycle' ? String(todayD) : null, grp: sub === 'daily' ? '抹塵' : '', area: sub === 'daily' ? '房間' : '', text: '', wrong: '', photos: [], photos_wrong: [] })}>＋ 新增</button>
         </div>
         {sec.hint && <p className="src-note">{sec.hint}</p>}
 
@@ -205,8 +258,13 @@ export default function CyclicClean() {
         )}
 
         {sub !== 'cycle' && rows.length === 0 && <div className="note" style={{ margin: '6px 0' }}>尚無項目，按右上「＋ 新增」</div>}
-        {sub !== 'cycle' && renderGrouped(rows)}
+        {sub === 'daily' && renderDaily(rows)}
+        {(sub === 'spot' || sub === 'deep') && renderGrouped(rows)}
       </div>
+
+      {big && (
+        <div className="lightbox" onClick={() => setBig(null)}><img src={big} alt="" /></div>
+      )}
 
       {daySheet && (
         <div className="modal" onClick={e => { if (e.target === e.currentTarget) setDaySheet(null) }}>
@@ -244,9 +302,20 @@ export default function CyclicClean() {
                 </div>
               </>
             )}
+            {form.section === 'daily' && hasArea() && (
+              <div className="f-row">
+                <label>區域</label>
+                <div className="seg" style={{ marginTop: 0 }}>
+                  {AREAS.map(a => {
+                    const m = areaMeta(a)
+                    return <button key={a} className={`chip ${form.area === a ? 'on' : ''}`} onClick={() => setForm({ ...form, area: a })}>{m.e} {a}</button>
+                  })}
+                </div>
+              </div>
+            )}
             {form.section !== 'cycle' && hasGrp() && (
               <div className="f-row">
-                <label>分組（可留空；同分組的項目會列在同一標題下）</label>
+                <label>{form.section === 'daily' ? '類別（例：抹塵）' : '分組（可留空；同分組的項目會列在同一標題下）'}</label>
                 <input value={form.grp || ''} onChange={e => setForm({ ...form, grp: e.target.value })} placeholder="例：抹塵" />
               </div>
             )}
@@ -261,10 +330,10 @@ export default function CyclicClean() {
               </div>
             )}
             {form.section !== 'cycle' && hasPhotos() && (
-              <PhotoField label="✓ 正確做法相片（可放 GIF 動作示範）" photos={form.photos} onChange={p => setForm({ ...form, photos: p })} max={4} />
+              <PhotoField label="✓ 正確做法相片（遠景＋近景，可放 GIF）" photos={form.photos} onChange={p => setForm({ ...form, photos: p })} max={4} />
             )}
             {form.section !== 'cycle' && hasPhotosWrong() && (
-              <PhotoField label="✗ 錯誤做法相片（對照用）" photos={form.photos_wrong} onChange={p => setForm({ ...form, photos_wrong: p })} max={4} />
+              <PhotoField label="✗ 錯誤做法相片（遠景＋近景，對照用）" photos={form.photos_wrong} onChange={p => setForm({ ...form, photos_wrong: p })} max={4} />
             )}
             <button className="btn" onClick={save}>儲存</button>
             {form.id && <button className="btn danger" onClick={() => setConfirmDel(form)}>🗑 刪除此項目</button>}
