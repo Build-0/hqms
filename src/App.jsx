@@ -13,10 +13,10 @@ import Icon from './components/Icon'
 const MODULES = [
   { id: 'daily', icon: 'focus', label: '今日重點', color: '#1f7a6d', Page: Daily },
   { id: 'complaint', icon: 'chat', label: '客訴管理', color: '#c0564f', Page: Complaints },
-  { id: 'topics', icon: 'book', label: '主題庫', color: '#4a6fa5', Page: Topics },
+  { id: 'topics', icon: 'book', label: '培訓主題庫', color: '#4a6fa5', Page: Topics },
   { id: 'training', icon: 'cap', label: '新人教材', color: '#b07d2e', Page: Training },
-  { id: 'cyclic', icon: 'clean', label: '衛生與整潔', color: '#54808c', Page: CyclicClean },
-  { id: 'scores', icon: 'star', label: '清潔評分', color: '#8f7ac9', Page: Scores },
+  { id: 'cyclic', icon: 'clean', label: '清潔要點', color: '#54808c', Page: CyclicClean },
+  { id: 'scores', icon: 'star', label: '房務員清潔評分', color: '#8f7ac9', Page: Scores },
 ]
 const WD = ['日', '一', '二', '三', '四', '五', '六']
 

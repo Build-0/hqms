@@ -93,13 +93,48 @@ export default function Scores() {
   const openForm = p => setForm(p.cur ? { ...p.cur, dims: { ...emptyDims(), ...(p.cur.dims || {}) } }
     : { date: todayStr(), attendant_id: p.a.id, room: '', dims: emptyDims(), inspector: '', note: '', photos: [] })
 
-  // 上傳名單：覆蓋人名/樓層，不動分數；比對員工ID（無則英文名）
+  // 貼上文字 → 解析 → 套用
   async function syncRoster() {
     const rows = (upload || '').split(/\r?\n/).map(l => l.trim()).filter(Boolean).map(l => {
       const p = l.split(/\t|,/).map(s => s.trim())
       return { floor: p[0] || '', name: p[1] || '', name_cn: p[2] || '', emp_id: (p[3] || '').replace(/\D/g, '') }
     }).filter(r => r.name || r.name_cn)
     if (!rows.length) { toast('沒有解析到名單，請檢查格式'); return }
+    await applyRoster(rows)
+  }
+
+  // 上傳 Excel/CSV 檔 → 自動找欄位 → 套用
+  async function onRosterFile(e) {
+    const file = e.target.files[0]; e.target.value = ''
+    if (!file) return
+    try {
+      const XLSX = await import('xlsx')
+      const data = new Uint8Array(await file.arrayBuffer())
+      const wb = XLSX.read(data, { type: 'array' })
+      const aoa = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, defval: '' })
+      // 找表頭行（含 Floor/樓/English/中文/ID 任一）
+      let hi = aoa.findIndex(r => r.some(c => /floor|樓|english|chinese|中文|英文|name|姓名|\bid\b|員工/i.test(String(c))))
+      if (hi < 0) hi = 0
+      const hdr = aoa[hi].map(c => String(c).toLowerCase())
+      const col = (...keys) => hdr.findIndex(h => keys.some(k => h.includes(k)))
+      let cFloor = col('floor', '樓'), cEn = col('english', '英文'), cCn = col('chinese', '中文'), cId = col('id', '員工', '編號')
+      // 找不到欄位時退回位置：樓層 英文 中文 ID
+      if (cEn < 0 && cCn < 0) { cFloor = 1; cEn = 2; cCn = 3; cId = 4 }
+      const rows = aoa.slice(hi + 1).map(r => ({
+        floor: String(cFloor >= 0 ? r[cFloor] : '').trim(),
+        name: String(cEn >= 0 ? r[cEn] : '').trim(),
+        name_cn: String(cCn >= 0 ? r[cCn] : '').trim(),
+        emp_id: String(cId >= 0 ? r[cId] : '').replace(/\D/g, ''),
+      })).map(r => ({ ...r, name: r.name || r.name_cn })).filter(r => r.name)
+      if (!rows.length) { toast('讀不到名單，請確認檔案有「英文名/中文名」欄'); return }
+      await applyRoster(rows)
+    } catch (ex) {
+      toast('讀取失敗：' + ex.message)
+    }
+  }
+
+  // 覆蓋人名/樓層，不動分數；比對員工ID（無則英文名）
+  async function applyRoster(rows) {
     const keyOf = x => (x.emp_id || x.name).toLowerCase()
     const curMap = new Map(attendants.map(a => [(a.emp_id || a.name).toLowerCase(), a]))
     let add = 0, upd = 0, off = 0
@@ -259,11 +294,16 @@ export default function Scores() {
         <div className="modal" onClick={e => { if (e.target === e.currentTarget) setUpload(null) }}>
           <div className="sheet">
             <h2>上傳名單（覆蓋人名與樓層）</h2>
-            <p className="src-note">從 Excel 選取「樓層／英文名／中文名／員工ID」幾欄，複製後貼到下面（每人一行，欄位用 Tab 或逗號分隔）。<b>只會更新人名、樓層與名單增減，不影響任何評分。</b>名單外的人會被停用（記錄保留）。</p>
-            <textarea style={{ width: '100%', height: 160, border: '1px solid var(--line)', borderRadius: 10, padding: 10, fontSize: 13, fontFamily: 'monospace', background: 'var(--bg)' }}
+            <p className="src-note"><b>只更新人名、樓層與名單增減，不影響任何評分。</b>名單外的人會被停用（記錄保留）。系統會自動辨識 Excel 的樓層／英文名／中文名／員工ID 欄。</p>
+            <label className="btn" style={{ display: 'block', textAlign: 'center', cursor: 'pointer' }}>
+              📂 選擇 Excel 檔（.xlsx / .csv）
+              <input type="file" accept=".xlsx,.xls,.csv" hidden onChange={onRosterFile} />
+            </label>
+            <div style={{ textAlign: 'center', fontSize: 12, color: 'var(--sub)', margin: '10px 0 6px' }}>— 或 貼上文字 —</div>
+            <textarea style={{ width: '100%', height: 120, border: '1px solid var(--line)', borderRadius: 10, padding: 10, fontSize: 13, fontFamily: 'monospace', background: 'var(--bg)' }}
               value={upload} onChange={e => setUpload(e.target.value)}
-              placeholder={'3A\tJenny Lai\t賴振莉\t100672\n3B\tMoney Zeng\t曾翠華\t100971\n…'} />
-            <button className="btn" onClick={syncRoster}>套用名單</button>
+              placeholder={'從 Excel 複製整段貼上：\n3A\tJenny Lai\t賴振莉\t100672\n3B\tMoney Zeng\t曾翠華\t100971'} />
+            <button className="btn ghost" onClick={syncRoster}>套用貼上的文字</button>
             <button className="btn ghost" onClick={() => setUpload(null)}>取消</button>
           </div>
         </div>

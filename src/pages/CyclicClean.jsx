@@ -217,7 +217,7 @@ export default function CyclicClean() {
   const rows = sub === 'cycle' ? cycle : bySection(sub)
   return (
     <>
-      <button className="linky" style={{ fontSize: 13.5, margin: '0 0 8px', padding: 0 }} onClick={() => setSub(null)}>‹ 衛生與整潔</button>
+      <button className="linky" style={{ fontSize: 13.5, margin: '0 0 8px', padding: 0 }} onClick={() => setSub(null)}>‹ 清潔要點</button>
       {sub === 'daily' && (
         <div className="daily-banner">💡 這不是每週或每月的深度清潔項目，而是<b>每天需要做到的「習慣」</b>。</div>
       )}
