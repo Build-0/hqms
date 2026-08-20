@@ -39,6 +39,7 @@ export default function Complaints() {
   const [natureF, setNatureF] = useState('全部')
   const [catF, setCatF] = useState('全部')
   const [floorF, setFloorF] = useState('全部')
+  const [allScope, setAllScope] = useState(false) // true=列表顯示全部月份（點累計排行時）
   const [srcF, setSrcF] = useState('全部')
   const [sortF, setSortF] = useState('最新')
   const [q, setQ] = useState('')
@@ -135,9 +136,10 @@ export default function Complaints() {
   const monthLabel = `${ym.slice(0, 4)}年${parseInt(ym.slice(5), 10)}月`
 
   const searching = q.trim().length > 0
+  const wholeSpan = searching || allScope // 顯示全部月份
   const base = searching
     ? list.filter(c => [c.room, c.guest_comment, c.actual_cause, c.correct_standard, c.improvement, c.category, c.ra, c.supervisor].join(' ').toLowerCase().includes(q.trim().toLowerCase()))
-    : mAll
+    : (allScope ? list : mAll)
   const isWechat = c => (c.source || '').trim().toLowerCase() === 'wechat'
   const shown = base
     .filter(c => deptF === '全部' || deptOf(c) === deptF)
@@ -218,9 +220,9 @@ export default function Complaints() {
       <div className={`cx-grid ${panelOpen ? '' : 'closed'}`} style={{ '--panelw': `${pwPx}px` }}>
         {panelOpen && <div>
           <div className="month-nav">
-            <button onClick={() => { setYm(shiftYm(ym, -1)); setFloorF('全部') }}>‹</button>
+            <button onClick={() => { setYm(shiftYm(ym, -1)); setFloorF('全部'); setAllScope(false) }}>‹</button>
             <span className="m-label">{monthLabel}</span>
-            <button onClick={() => { setYm(shiftYm(ym, 1)); setFloorF('全部') }}>›</button>
+            <button onClick={() => { setYm(shiftYm(ym, 1)); setFloorF('全部'); setAllScope(false) }}>›</button>
             <button className="panel-w-btn" title="收起統計欄" onClick={togglePanel}>«</button>
           </div>
           <div className="dept-wrap">
@@ -247,7 +249,7 @@ export default function Complaints() {
                 {rank.map(r => {
                   const mm = m(r.cat)
                   return (
-                    <div className={`bar-row click ${catF === r.cat ? 'sel' : ''}`} key={r.cat} onClick={() => setCatF(catF === r.cat ? '全部' : r.cat)}>
+                    <div className={`bar-row click ${catF === r.cat ? 'sel' : ''}`} key={r.cat} onClick={() => { setAllScope(false); setCatF(catF === r.cat ? '全部' : r.cat) }}>
                       <span className="name">{mm.e} {r.cat}</span>
                       <div className="bar-track"><div className="bar-fill" style={{ width: `${(r.n / maxN) * 100}%`, background: mm.c }} /></div>
                       <span className="num">{r.n}</span>
@@ -268,7 +270,7 @@ export default function Complaints() {
               {cumRank.map(r => {
                 const mm = m(r.cat)
                 return (
-                  <div className={`bar-row click ${catF === r.cat ? 'sel' : ''}`} key={r.cat} onClick={() => setCatF(catF === r.cat ? '全部' : r.cat)}>
+                  <div className={`bar-row click ${catF === r.cat ? 'sel' : ''}`} key={r.cat} onClick={() => { const on = catF !== r.cat; setCatF(on ? r.cat : '全部'); setAllScope(on) }}>
                     <span className="name">{mm.e} {r.cat}</span>
                     <div className="bar-track"><div className="bar-fill" style={{ width: `${(r.n / maxC) * 100}%`, background: mm.c }} /></div>
                     <span className="num">{r.n}</span>
@@ -281,7 +283,7 @@ export default function Complaints() {
               <div className="card">
                 <h2>{monthLabel}{catF !== '全部' ? ` · ${catF}` : ''}樓層分佈<span style={{ fontSize: 11, color: 'var(--sub)', fontWeight: 400 }}>（只計客房投訴）</span></h2>
                 {floorRank.map(([f, n]) => (
-                  <div className={`bar-row click ${floorF === f ? 'sel' : ''}`} key={f} onClick={() => setFloorF(floorF === f ? '全部' : f)}>
+                  <div className={`bar-row click ${floorF === f ? 'sel' : ''}`} key={f} onClick={() => { setAllScope(false); setFloorF(floorF === f ? '全部' : f) }}>
                     <span className="name">{f === '無房號' ? f : `${f} 樓`}</span>
                     <div className="bar-track"><div className="bar-fill" style={{ width: `${(n / maxF) * 100}%`, background: 'var(--accent)' }} /></div>
                     <span className="num">{n}</span>
@@ -294,7 +296,7 @@ export default function Complaints() {
               <div className="card">
                 <h2>累計樓層分佈<span style={{ fontSize: 11, color: 'var(--sub)', fontWeight: 400 }}>（全部月份）</span></h2>
                 {cumFloorRank.map(([f, n]) => (
-                  <div className={`bar-row click ${floorF === f ? 'sel' : ''}`} key={f} onClick={() => setFloorF(floorF === f ? '全部' : f)}>
+                  <div className={`bar-row click ${floorF === f ? 'sel' : ''}`} key={f} onClick={() => { const on = floorF !== f; setFloorF(on ? f : '全部'); setAllScope(on) }}>
                     <span className="name">{f === '無房號' ? f : `${f} 樓`}</span>
                     <div className="bar-track"><div className="bar-fill" style={{ width: `${(n / maxCF) * 100}%`, background: 'var(--blue)' }} /></div>
                     <span className="num">{n}</span>
@@ -334,8 +336,9 @@ export default function Complaints() {
           <h2 style={{ margin: '2px 4px 8px' }}>
             客訴記錄
             <span style={{ fontSize: 11.5, color: 'var(--sub)', fontWeight: 400 }}>
-              （{searching ? `搜尋全部月份 · ${shown.length} 筆` : `${monthLabel} · ${shown.length} 筆`}）
+              （{searching ? '搜尋全部月份' : allScope ? '全部月份' : monthLabel} · {shown.length} 筆）
             </span>
+            {allScope && !searching && <button className="linky" style={{ fontSize: 12 }} onClick={() => { setAllScope(false); setCatF('全部'); setFloorF('全部') }}>↩ 回到{monthLabel}</button>}
           </h2>
           <input className="search-inp" placeholder="🔍 搜尋房號或內容（跨全部月份）" value={q} onChange={e => setQ(e.target.value)} />
           <div className="chips">
@@ -386,7 +389,7 @@ export default function Complaints() {
                   {c.photos?.length > 0 && <span className="ph-count">📷{c.photos.length}</span>}
                   <button className="row-ico" onClick={e => { e.stopPropagation(); setForm({ ...EMPTY, ...c, dept: deptOf(c), nature: natOf(c) }) }}>✏️</button>
                   <button className="row-ico del" onClick={e => { e.stopPropagation(); setConfirmDel(c) }}>🗑</button>
-                  <span style={{ fontSize: 11, color: 'var(--sub)' }}>{searching ? c.date : c.date.slice(5)}</span>
+                  <span style={{ fontSize: 11, color: 'var(--sub)' }}>{wholeSpan ? c.date : c.date.slice(5)}</span>
                 </div>
                 {open === c.id && (
                   <div className="c-body">
