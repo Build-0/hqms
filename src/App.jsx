@@ -12,11 +12,11 @@ import Icon from './components/Icon'
 // 首頁圓形入口：之後加新模組（清潔劑、機器…）直接在這裡加一行
 const MODULES = [
   { id: 'daily', icon: 'focus', label: '今日重點', color: '#1f7a6d', Page: Daily },
-  { id: 'complaint', icon: 'chat', label: '客訴管理', color: '#c0564f', Page: Complaints },
   { id: 'topics', icon: 'book', label: '培訓主題庫', color: '#4a6fa5', Page: Topics },
-  { id: 'training', icon: 'cap', label: '新人教材', color: '#b07d2e', Page: Training },
   { id: 'cyclic', icon: 'clean', label: '清潔要點', color: '#54808c', Page: CyclicClean },
+  { id: 'training', icon: 'cap', label: '新人教材', color: '#b07d2e', Page: Training },
   { id: 'scores', icon: 'star', label: '房務員清潔評分', color: '#8f7ac9', Page: Scores },
+  { id: 'complaint', icon: 'chat', label: '客訴管理', color: '#c0564f', Page: Complaints },
 ]
 const WD = ['日', '一', '二', '三', '四', '五', '六']
 
