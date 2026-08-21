@@ -205,6 +205,12 @@ export default function Topics() {
               )}
             </div>
             <button className="btn" style={{ marginTop: 16 }} onClick={() => setTomorrow(view)}>📌 設為明日早會重點</button>
+            <div className="f-row" style={{ marginTop: 10, marginBottom: 6 }}>
+              <label>移動到分類</label>
+              <select value={view.category} onChange={async e => { const to = e.target.value; if (to !== view.category) { await api.updateTopic(view.id, { category: to }); toast(`已移到「${to}」`); setCat(to); setView({ ...view, category: to }); load() } }}>
+                {cats.map(k => <option key={k.name} value={k.name}>{k.emoji} {k.name}</option>)}
+              </select>
+            </div>
             <div className="row-actions">
               <button className="mini-btn edit" onClick={() => openEdit(view)}>✏️ 編輯</button>
               <button className="mini-btn del" onClick={() => setConfirmDel(view)}>🗑 刪除</button>
