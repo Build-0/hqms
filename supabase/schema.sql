@@ -45,6 +45,7 @@ create table if not exists complaints (
   check_scheduled boolean not null default false,
   recurred boolean not null default false,
   nature text not null default '投訴',
+  tags jsonb not null default '[]',
   dept text not null default '客房',
   photos jsonb not null default '[]',
   created_at timestamptz not null default now()

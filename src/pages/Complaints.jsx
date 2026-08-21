@@ -7,7 +7,7 @@ import { toast } from '../lib/toast'
 import { PhotoGrid, PhotoField } from '../components/Photos'
 import Confirm from '../components/Confirm'
 
-const EMPTY = { date: '', room: '', category: '', dept: '客房', nature: '投訴', source: 'wechat', guest_comment: '', actual_cause: '', correct_standard: '', improvement: '', ra: '', supervisor: '', photos: [] }
+const EMPTY = { date: '', room: '', category: '', tags: [], dept: '客房', nature: '投訴', source: 'wechat', guest_comment: '', actual_cause: '', correct_standard: '', improvement: '', ra: '', supervisor: '', photos: [] }
 const SOURCES = ['wechat', 'Incident report', 'Guest comment', 'FO Mail', '總機', '其他']
 const DEPT_LABEL = d => (d === '工程其他' ? '工程與其他' : d)
 // 規則：內容含「新鮮污漬／新鮮血漬」的新記錄一律標濫訴
@@ -76,6 +76,8 @@ export default function Complaints() {
   const hasSource = list.length > 0 && 'source' in list[0]
   const hasDept = list.length > 0 && 'dept' in list[0]
   const hasStaff = list.length > 0 && 'ra' in list[0]
+  const hasTags = list.length > 0 && 'tags' in list[0]
+  const catsOf = c => [...new Set([c.category, ...(c.tags || [])])].filter(Boolean) // 主分類＋附加標籤
   const mAll = list.filter(c => c.date.startsWith(ym))
   // 部門統計組
   const groups = DEPTS.map(d => {
@@ -94,12 +96,12 @@ export default function Complaints() {
     const f = floorOf(c.room)
     return floorF === (f === null ? '無房號' : `${f}`)
   })
-  const rank = catList.map(k => ({ cat: k.name, n: floorScope.filter(c => c.category === k.name).length }))
+  const rank = catList.map(k => ({ cat: k.name, n: floorScope.filter(c => catsOf(c).includes(k.name)).length }))
     .filter(r => r.n > 0).sort((a, b) => b.n - a.n)
   const maxN = rank[0]?.n || 1
   // 累計統計（全部月份）
   const allCore = list.filter(c => deptOf(c) === '客房' && natOf(c) === '投訴')
-  const cumRank = allCats.map(k => ({ cat: k.name, n: allCore.filter(c => c.category === k.name).length }))
+  const cumRank = allCats.map(k => ({ cat: k.name, n: allCore.filter(c => catsOf(c).includes(k.name)).length }))
     .filter(r => r.n > 0).sort((a, b) => b.n - a.n)
   const maxC = cumRank[0]?.n || 1
   const cumFloorCount = {}
@@ -145,7 +147,7 @@ export default function Complaints() {
     .filter(c => deptF === '全部' || deptOf(c) === deptF)
     .filter(c => natureF === '全部' || natOf(c) === natureF)
     .filter(c => srcF === '全部' || (srcF === 'wechat' ? isWechat(c) : !isWechat(c)))
-    .filter(c => catF === '全部' || c.category === catF)
+    .filter(c => catF === '全部' || catsOf(c).includes(catF))
     .filter(c => {
       if (searching || floorF === '全部') return true
       const f = floorOf(c.room)
@@ -169,6 +171,7 @@ export default function Complaints() {
       correct_standard: f.correct_standard, improvement: f.improvement,
       photos: f.photos || [],
     }
+    if (hasTags) payload.tags = (f.tags || []).filter(t => t && t !== payload.category)
     if (hasDept) payload.dept = f.dept || '客房'
     if (hasSource) payload.source = f.source || 'wechat'
     if (hasStaff) { payload.ra = (f.ra || '').trim(); payload.supervisor = (f.supervisor || '').trim() }
@@ -382,6 +385,7 @@ export default function Complaints() {
               <div className="c-item" key={c.id} style={abuse ? { opacity: .8 } : undefined}>
                 <div className="c-head" onClick={() => setOpen(open === c.id ? null : c.id)}>
                   <span className="badge" style={{ background: mm.s, color: mm.c }}>{mm.e} {c.category}</span>
+                  {(c.tags || []).filter(t => t !== c.category).map(t => { const tm = m(t); return <span key={t} className="badge" style={{ background: tm.s, color: tm.c, opacity: .85 }}>{tm.e} {t}</span> })}
                   {eng && <span className="badge b-blue">🔧 工程</span>}
                   {abuse && <span className="badge b-gray">🚫 濫訴</span>}
                   <span className="room">{c.room}</span>
@@ -476,11 +480,23 @@ export default function Complaints() {
               </div>
             )}
             <div className="f-row">
-              <label>問題分類</label>
+              <label>主分類</label>
               <select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}>
                 {catList.map(k => <option key={k.name} value={k.name}>{k.emoji} {k.name}</option>)}
               </select>
             </div>
+            {hasTags && (
+              <div className="f-row">
+                <label>其他相關分類（可多選，用於同時涉及多類的投訴）</label>
+                <div className="chips" style={{ flexWrap: 'wrap', overflowX: 'visible' }}>
+                  {catList.filter(k => k.name !== form.category).map(k => {
+                    const on = (form.tags || []).includes(k.name)
+                    return <button key={k.name} className={`chip ${on ? 'on' : ''}`}
+                      onClick={() => setForm({ ...form, tags: on ? form.tags.filter(t => t !== k.name) : [...(form.tags || []), k.name] })}>{k.emoji} {k.name}</button>
+                  })}
+                </div>
+              </div>
+            )}
             {F('客人反映內容', 'guest_comment', 'textarea', { placeholder: '客人說了什麼…' })}
             {F('實際原因', 'actual_cause', 'textarea', { placeholder: '查證後的真正原因…' })}
             {F('正確標準', 'correct_standard', 'textarea', { placeholder: '應該怎麼做…' })}

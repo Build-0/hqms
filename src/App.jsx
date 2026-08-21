@@ -5,7 +5,6 @@ import Daily from './pages/Daily'
 import Complaints from './pages/Complaints'
 import Scores from './pages/Scores'
 import Topics from './pages/Topics'
-import Training from './pages/Training'
 import CyclicClean from './pages/CyclicClean'
 import Icon from './components/Icon'
 
@@ -14,7 +13,6 @@ const MODULES = [
   { id: 'daily', icon: 'focus', label: '今日重點', color: '#1f7a6d', Page: Daily },
   { id: 'topics', icon: 'book', label: '培訓主題庫', color: '#4a6fa5', Page: Topics },
   { id: 'cyclic', icon: 'clean', label: '清潔要點', color: '#54808c', Page: CyclicClean },
-  { id: 'training', icon: 'cap', label: '新人教材', color: '#b07d2e', Page: Training },
   { id: 'scores', icon: 'star', label: '房務員清潔評分', color: '#8f7ac9', Page: Scores },
   { id: 'complaint', icon: 'chat', label: '客訴管理', color: '#c0564f', Page: Complaints },
 ]
