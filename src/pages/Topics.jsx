@@ -130,7 +130,7 @@ export default function Topics() {
         <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--sub)' }}>分類</span>
         <button className="linky" style={{ fontSize: 13 }} onClick={() => setMgr(true)}>⚙️ 編輯分類</button>
       </div>
-      <div className="chips">
+      <div className="chips wrap">
         {cats.map(k => (
           <button key={k.name} className={`chip ${k.name === cat ? 'on' : ''}`} onClick={() => setCat(k.name)}>
             {k.emoji} {k.name}<span style={{ opacity: .6 }}> {topics.filter(t => t.category === k.name).length}</span>
