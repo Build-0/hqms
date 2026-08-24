@@ -32,6 +32,7 @@ export default function Topics() {
 
   if (!topics || !cats) return <div className="note">載入中…</div>
   const canEditCats = !!cats[0]?.id
+  const topicCats = cats.filter(k => k.for_topics !== false) // 主題庫用的分類（可與客訴不同）
   const inCat = topics.filter(t => t.category === cat)
   const m = name => metaOf(cats, name)
 
@@ -127,11 +128,11 @@ export default function Topics() {
   return (
     <>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0 4px 6px' }}>
-        <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--sub)' }}>分類</span>
+        <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--sub)' }}>分類 · 共 {topics.length} 個主題</span>
         <button className="linky" style={{ fontSize: 13 }} onClick={() => setMgr(true)}>⚙️ 編輯分類</button>
       </div>
       <div className="chips wrap">
-        {cats.map(k => (
+        {topicCats.map(k => (
           <button key={k.name} className={`chip ${k.name === cat ? 'on' : ''}`} onClick={() => setCat(k.name)}>
             {k.emoji} {k.name}<span style={{ opacity: .6 }}> {topics.filter(t => t.category === k.name).length}</span>
           </button>
@@ -145,7 +146,7 @@ export default function Topics() {
         {inCat.map(t => {
           const mm = m(t.category)
           return (
-            <div className="t-item" key={t.id} onClick={() => { setView(t); setShowA(false); setArmed(false) }}>
+            <div className="t-item" key={t.id} onClick={() => { setView(t); setShowA(false) }}>
               <div className="t-ico" style={{ background: mm.s }}>{mm.e}</div>
               <div className="t-mid">
                 <div className="tt">{t.title}</div>
@@ -208,7 +209,7 @@ export default function Topics() {
             <div className="f-row" style={{ marginTop: 10, marginBottom: 6 }}>
               <label>移動到分類</label>
               <select value={view.category} onChange={async e => { const to = e.target.value; if (to !== view.category) { await api.updateTopic(view.id, { category: to }); toast(`已移到「${to}」`); setCat(to); setView({ ...view, category: to }); load() } }}>
-                {cats.map(k => <option key={k.name} value={k.name}>{k.emoji} {k.name}</option>)}
+                {topicCats.map(k => <option key={k.name} value={k.name}>{k.emoji} {k.name}</option>)}
               </select>
             </div>
             <div className="row-actions">
@@ -226,7 +227,7 @@ export default function Topics() {
             <div className="f-row">
               <label>分類</label>
               <select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}>
-                {cats.map(k => <option key={k.name} value={k.name}>{k.emoji} {k.name}</option>)}
+                {topicCats.map(k => <option key={k.name} value={k.name}>{k.emoji} {k.name}</option>)}
               </select>
             </div>
             {F('主題名稱', 'title')}
@@ -251,7 +252,7 @@ export default function Topics() {
             {!canEditCats && (
               <p className="src-note">目前顯示的是內建預設分類。要啟用增改功能，請先在 Supabase SQL Editor 執行 <b>supabase/add-modules.sql</b>。</p>
             )}
-            {cats.map(k => (
+            {topicCats.map(k => (
               <div key={k.name} style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 8 }}>
                 <div className="t-ico" style={{ background: k.color + '22' }}>{k.emoji}</div>
                 <span style={{ flex: 1, fontSize: 14, fontWeight: 600 }}>{k.name}</span>
