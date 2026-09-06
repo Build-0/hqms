@@ -133,32 +133,25 @@ export default function Scores() {
     }
   }
 
-  // 覆蓋人名/樓層，不動分數；比對員工ID（無則英文名）
+  // 只新增名單上的新同事；絕不覆蓋、絕不停用任何既有房務員（避免壞名單再洗掉資料）。
+  // 比對員工ID優先、其次英文名：檔案內重複或資料庫已有者一律略過。
   async function applyRoster(rows) {
-    const keyOf = x => (x.emp_id || x.name).toLowerCase()
-    const curMap = new Map(attendants.map(a => [(a.emp_id || a.name).toLowerCase(), a]))
-    let add = 0, upd = 0, off = 0
-    const seenKeys = new Set()
-    for (let i = 0; i < rows.length; i++) {
-      const r = rows[i]; const k = keyOf(r); seenKeys.add(k)
-      const hit = curMap.get(k) || attendants.find(a => a.name.toLowerCase() === r.name.toLowerCase())
-      if (hit) {
-        const patch = {}
-        if (r.name && r.name !== hit.name) patch.name = r.name
-        if (r.name_cn !== (hit.name_cn || '')) patch.name_cn = r.name_cn
-        if (r.floor !== (hit.floor || '')) patch.floor = r.floor
-        if (r.emp_id && r.emp_id !== (hit.emp_id || '')) patch.emp_id = r.emp_id
-        if (!hit.active) patch.active = true
-        if (Object.keys(patch).length) { await api.updateAttendant(hit.id, patch); upd++ }
-      } else { await api.addAttendant({ name: r.name || r.name_cn, name_cn: r.name_cn, floor: r.floor, emp_id: r.emp_id, sort_order: i }); add++ }
+    const norm = s => String(s || '').toLowerCase().replace(/\s+/g, '')
+    const existIds = new Set(attendants.filter(a => a.emp_id).map(a => a.emp_id))
+    const existNames = new Set(attendants.map(a => norm(a.name)).filter(Boolean))
+    const seen = new Set()
+    let add = 0, dup = 0
+    for (const r of rows) {
+      const idKey = r.emp_id || '', nameKey = norm(r.name)
+      const dedupKey = idKey || nameKey
+      if (!dedupKey || seen.has(dedupKey) || (idKey && existIds.has(idKey)) || existNames.has(nameKey)) { dup++; continue }
+      seen.add(dedupKey)
+      await api.addAttendant({ name: r.name || r.name_cn, name_cn: r.name_cn, floor: r.floor, emp_id: r.emp_id, sort_order: attendants.length + add })
+      add++
     }
-    // 名單外的現有人員：停用（保留分數）
-    for (const a of attendants) {
-      if (!a.active) continue
-      const k = (a.emp_id || a.name).toLowerCase()
-      if (!seenKeys.has(k) && !rows.some(r => r.name.toLowerCase() === a.name.toLowerCase())) { await api.updateAttendant(a.id, { active: false }); off++ }
-    }
-    setUpload(null); toast(`名單已更新：新增 ${add}、更新 ${upd}、停用 ${off}`); load()
+    setUpload(null)
+    toast(add ? `已新增 ${add} 位新房務員${dup ? `（略過 ${dup} 位既有／重複）` : ''}` : `沒有新同事可加（略過 ${dup} 位既有／重複）`)
+    load()
   }
 
   return (
@@ -293,8 +286,8 @@ export default function Scores() {
       {upload != null && (
         <div className="modal" onClick={e => { if (e.target === e.currentTarget) setUpload(null) }}>
           <div className="sheet">
-            <h2>上傳名單（覆蓋人名與樓層）</h2>
-            <p className="src-note"><b>只更新人名、樓層與名單增減，不影響任何評分。</b>名單外的人會被停用（記錄保留）。系統會自動辨識 Excel 的樓層／英文名／中文名／員工ID 欄。</p>
+            <h2>上傳名單（只新增，不覆蓋）</h2>
+            <p className="src-note"><b>只會加入名單上的新同事；不會改動、不會停用任何既有房務員，評分完全不受影響。</b>與現有員工ID或英文名相同者一律略過（重複的也只加一次）。系統會自動辨識 Excel 的樓層／英文名／中文名／員工ID 欄。</p>
             <label className="btn" style={{ display: 'block', textAlign: 'center', cursor: 'pointer' }}>
               📂 選擇 Excel 檔（.xlsx / .csv）
               <input type="file" accept=".xlsx,.xls,.csv" hidden onChange={onRosterFile} />
