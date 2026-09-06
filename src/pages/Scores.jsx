@@ -31,7 +31,7 @@ export default function Scores() {
   const [form, setForm] = useState(null)
   const [roster, setRoster] = useState(false)
   const [upload, setUpload] = useState(null) // 上傳名單面板文字
-  const [newName, setNewName] = useState('')
+  const [newAtt, setNewAtt] = useState({ floor: '', name: '', name_cn: '' })
   const [confirmDel, setConfirmDel] = useState(null)
   const [filter, setFilter] = useState('全部') // 全部 / 等級 / 未評 / 維度名
   const [q, setQ] = useState('')
@@ -88,7 +88,12 @@ export default function Scores() {
     setForm(null); load()
   }
   async function delScore(id) { await api.deleteScore(id); setConfirmDel(null); setOpen(null); toast('已刪除，恢復未評'); load() }
-  async function addName() { const n = newName.trim(); if (!n) return; await api.addAttendant({ name: n }); setNewName(''); toast(`已加入 ${n}`); load() }
+  async function addName() {
+    const name = newAtt.name.trim(), name_cn = newAtt.name_cn.trim(), floor = newAtt.floor.trim()
+    if (!name && !name_cn) return
+    await api.addAttendant({ name: name || name_cn, name_cn, floor, sort_order: attendants.length })
+    setNewAtt({ floor: '', name: '', name_cn: '' }); toast(`已加入 ${name || name_cn}`); load()
+  }
 
   const openForm = p => setForm(p.cur ? { ...p.cur, dims: { ...emptyDims(), ...(p.cur.dims || {}) } }
     : { date: todayStr(), attendant_id: p.a.id, room: '', dims: emptyDims(), inspector: '', note: '', photos: [] })
@@ -318,10 +323,17 @@ export default function Scores() {
                   onClick={async () => { try { await api.deleteAttendant(a.id); toast('已刪除'); load() } catch (ex) { toast(ex.message) } }}>✕</button>
               </div>
             ))}
-            <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-              <input style={{ flex: 1, border: '1px solid var(--line)', borderRadius: 10, padding: '9px 12px', fontSize: 14, fontFamily: 'inherit', background: 'var(--bg)' }}
-                placeholder="新房務員姓名" value={newName} onChange={e => setNewName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') addName() }} />
-              <button className="btn" style={{ width: 'auto', margin: 0, padding: '9px 18px' }} onClick={addName}>加入</button>
+            <div style={{ borderTop: '1px solid var(--line)', marginTop: 12, paddingTop: 12 }}>
+              <div style={{ fontSize: 12, color: 'var(--sub)', marginBottom: 6 }}>新增房務員（英文名或中文名填一個即可，樓層可空）</div>
+              <div style={{ display: 'flex', gap: 6 }}>
+                <input style={{ width: 54, border: '1px solid var(--line)', borderRadius: 10, padding: '9px 6px', fontSize: 14, fontFamily: 'inherit', textAlign: 'center', background: 'var(--bg)' }}
+                  placeholder="樓層" value={newAtt.floor} onChange={e => setNewAtt({ ...newAtt, floor: e.target.value })} />
+                <input style={{ flex: 1, minWidth: 0, border: '1px solid var(--line)', borderRadius: 10, padding: '9px 12px', fontSize: 14, fontFamily: 'inherit', background: 'var(--bg)' }}
+                  placeholder="英文名" value={newAtt.name} onChange={e => setNewAtt({ ...newAtt, name: e.target.value })} onKeyDown={e => { if (e.key === 'Enter') addName() }} />
+                <input style={{ flex: 1, minWidth: 0, border: '1px solid var(--line)', borderRadius: 10, padding: '9px 12px', fontSize: 14, fontFamily: 'inherit', background: 'var(--bg)' }}
+                  placeholder="中文名" value={newAtt.name_cn} onChange={e => setNewAtt({ ...newAtt, name_cn: e.target.value })} onKeyDown={e => { if (e.key === 'Enter') addName() }} />
+              </div>
+              <button className="btn" style={{ marginTop: 8 }} onClick={addName} disabled={!newAtt.name.trim() && !newAtt.name_cn.trim()}>加入</button>
             </div>
             <button className="btn ghost" onClick={() => setRoster(false)}>完成</button>
           </div>
