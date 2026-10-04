@@ -15,8 +15,8 @@ const LEVELS = [
 ]
 const levelOf = n => LEVELS.find(l => n >= l.min)
 const levelColor = n => levelOf(n).color
-// 單維度分數配色（1紅→5綠），讓七項一眼分清高低
-const DIM_COLORS = { 0: '#e0e4e8', 1: '#c0564f', 2: '#dd8844', 3: '#d9b430', 4: '#7bAA4e', 5: '#2f8f43' }
+// 單維度分數配色：與總分四級同一套（1-2 紅/橙 → 3 藍 → 4-5 綠），全模組顏色一致
+const DIM_COLORS = { 0: '#e0e4e8', 1: '#c62828', 2: '#e69500', 3: '#2f6fba', 4: '#4aa57a', 5: '#1b8a5a' }
 const dimColor = v => DIM_COLORS[parseInt(v, 10) || 0]
 const sumDims = d => SCORE_DIMS.reduce((t, k) => t + (parseInt(d[k], 10) || 0), 0)
 const emptyDims = () => Object.fromEntries(SCORE_DIMS.map(k => [k, 0]))
