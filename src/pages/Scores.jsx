@@ -30,8 +30,8 @@ export default function Scores() {
   const [open, setOpen] = useState(null)
   const [form, setForm] = useState(null)
   const [roster, setRoster] = useState(false)
-  const [upload, setUpload] = useState(null) // 上傳名單面板文字
-  const [newAtt, setNewAtt] = useState({ floor: '', name: '', name_cn: '' })
+  const [addOpen, setAddOpen] = useState(false)
+  const [newAtt, setNewAtt] = useState({ emp_id: '', name_cn: '', name: '', floor: '' })
   const [confirmDel, setConfirmDel] = useState(null)
   const [filter, setFilter] = useState('全部') // 全部 / 等級 / 未評 / 維度名
   const [q, setQ] = useState('')
@@ -89,75 +89,20 @@ export default function Scores() {
   }
   async function delScore(id) { await api.deleteScore(id); setConfirmDel(null); setOpen(null); toast('已刪除，恢復未評'); load() }
   async function addName() {
-    const name = newAtt.name.trim(), name_cn = newAtt.name_cn.trim(), floor = newAtt.floor.trim()
-    if (!name && !name_cn) return
-    await api.addAttendant({ name: name || name_cn, name_cn, floor, sort_order: attendants.length })
-    setNewAtt({ floor: '', name: '', name_cn: '' }); toast(`已加入 ${name || name_cn}`); load()
+    const emp_id = newAtt.emp_id.trim(), name = newAtt.name.trim(), name_cn = newAtt.name_cn.trim(), floor = newAtt.floor.trim()
+    if (!name && !name_cn) { toast('請填中文名或英文名'); return }
+    const norm = x => String(x || '').toLowerCase().replace(/s+/g, '')
+    const dup = attendants.find(a => (emp_id && a.emp_id === emp_id) || (name && norm(a.name) === norm(name)) || (name_cn && norm(a.name_cn) === norm(name_cn)))
+    if (dup) { toast(`已有相同員工：${nameOf(dup)}${dup.emp_id ? ' (' + dup.emp_id + ')' : ''}`); return }
+    try {
+      await api.addAttendant({ name: name || name_cn, name_cn, floor, emp_id, sort_order: attendants.length })
+    } catch (ex) { toast('新增失敗：' + ex.message); return }
+    setNewAtt({ emp_id: '', name_cn: '', name: '', floor: '' }); setAddOpen(false)
+    toast(`已新增 ${name || name_cn}`); load()
   }
 
   const openForm = p => setForm(p.cur ? { ...p.cur, dims: { ...emptyDims(), ...(p.cur.dims || {}) } }
     : { date: todayStr(), attendant_id: p.a.id, room: '', dims: emptyDims(), inspector: '', note: '', photos: [] })
-
-  // 貼上文字 → 解析 → 套用
-  async function syncRoster() {
-    const rows = (upload || '').split(/\r?\n/).map(l => l.trim()).filter(Boolean).map(l => {
-      const p = l.split(/\t|,/).map(s => s.trim())
-      return { floor: p[0] || '', name: p[1] || '', name_cn: p[2] || '', emp_id: (p[3] || '').replace(/\D/g, '') }
-    }).filter(r => r.name || r.name_cn)
-    if (!rows.length) { toast('沒有解析到名單，請檢查格式'); return }
-    await applyRoster(rows)
-  }
-
-  // 上傳 Excel/CSV 檔 → 自動找欄位 → 套用
-  async function onRosterFile(e) {
-    const file = e.target.files[0]; e.target.value = ''
-    if (!file) return
-    try {
-      const XLSX = await import('xlsx')
-      const data = new Uint8Array(await file.arrayBuffer())
-      const wb = XLSX.read(data, { type: 'array' })
-      const aoa = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, defval: '' })
-      // 找表頭行（含 Floor/樓/English/中文/ID 任一）
-      let hi = aoa.findIndex(r => r.some(c => /floor|樓|english|chinese|中文|英文|name|姓名|\bid\b|員工/i.test(String(c))))
-      if (hi < 0) hi = 0
-      const hdr = aoa[hi].map(c => String(c).toLowerCase())
-      const col = (...keys) => hdr.findIndex(h => keys.some(k => h.includes(k)))
-      let cFloor = col('floor', '樓'), cEn = col('english', '英文'), cCn = col('chinese', '中文'), cId = col('id', '員工', '編號')
-      // 找不到欄位時退回位置：樓層 英文 中文 ID
-      if (cEn < 0 && cCn < 0) { cFloor = 1; cEn = 2; cCn = 3; cId = 4 }
-      const rows = aoa.slice(hi + 1).map(r => ({
-        floor: String(cFloor >= 0 ? r[cFloor] : '').trim(),
-        name: String(cEn >= 0 ? r[cEn] : '').trim(),
-        name_cn: String(cCn >= 0 ? r[cCn] : '').trim(),
-        emp_id: String(cId >= 0 ? r[cId] : '').replace(/\D/g, ''),
-      })).map(r => ({ ...r, name: r.name || r.name_cn })).filter(r => r.name)
-      if (!rows.length) { toast('讀不到名單，請確認檔案有「英文名/中文名」欄'); return }
-      await applyRoster(rows)
-    } catch (ex) {
-      toast('讀取失敗：' + ex.message)
-    }
-  }
-
-  // 只新增名單上的新同事；絕不覆蓋、絕不停用任何既有房務員（避免壞名單再洗掉資料）。
-  // 比對員工ID優先、其次英文名：檔案內重複或資料庫已有者一律略過。
-  async function applyRoster(rows) {
-    const norm = s => String(s || '').toLowerCase().replace(/\s+/g, '')
-    const existIds = new Set(attendants.filter(a => a.emp_id).map(a => a.emp_id))
-    const existNames = new Set(attendants.map(a => norm(a.name)).filter(Boolean))
-    const seen = new Set()
-    let add = 0, dup = 0
-    for (const r of rows) {
-      const idKey = r.emp_id || '', nameKey = norm(r.name)
-      const dedupKey = idKey || nameKey
-      if (!dedupKey || seen.has(dedupKey) || (idKey && existIds.has(idKey)) || existNames.has(nameKey)) { dup++; continue }
-      seen.add(dedupKey)
-      await api.addAttendant({ name: r.name || r.name_cn, name_cn: r.name_cn, floor: r.floor, emp_id: r.emp_id, sort_order: attendants.length + add })
-      add++
-    }
-    setUpload(null)
-    toast(add ? `已新增 ${add} 位新房務員${dup ? `（略過 ${dup} 位既有／重複）` : ''}` : `沒有新同事可加（略過 ${dup} 位既有／重複）`)
-    load()
-  }
 
   return (
     <>
@@ -172,7 +117,7 @@ export default function Scores() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
           <h2 style={{ margin: 0 }}>分數分布<span style={{ fontSize: 11, color: 'var(--sub)', fontWeight: 400 }}>（{rated.length}/{people.length} 人已評 · 滿分 {SCORE_MAX}）</span></h2>
           <div style={{ display: 'flex', gap: 6 }}>
-            <button className="logout" style={{ color: 'var(--accent)', background: 'var(--accent-soft)' }} onClick={() => setUpload('')}>⬆ 上傳名單</button>
+            <button className="logout" style={{ color: 'var(--accent)', background: 'var(--accent-soft)' }} onClick={() => setAddOpen(true)}>＋ 新增員工</button>
             <button className="logout" style={{ color: 'var(--sub)', background: '#eef1f4' }} onClick={() => setRoster(true)}>👥 {attendants.length}</button>
           </div>
         </div>
@@ -288,21 +233,25 @@ export default function Scores() {
         </div>
       )}
 
-      {upload != null && (
-        <div className="modal" onClick={e => { if (e.target === e.currentTarget) setUpload(null) }}>
+      {addOpen && (
+        <div className="modal" onClick={e => { if (e.target === e.currentTarget) setAddOpen(false) }}>
           <div className="sheet">
-            <h2>上傳名單（只新增，不覆蓋）</h2>
-            <p className="src-note"><b>只會加入名單上的新同事；不會改動、不會停用任何既有房務員，評分完全不受影響。</b>與現有員工ID或英文名相同者一律略過（重複的也只加一次）。系統會自動辨識 Excel 的樓層／英文名／中文名／員工ID 欄。</p>
-            <label className="btn" style={{ display: 'block', textAlign: 'center', cursor: 'pointer' }}>
-              📂 選擇 Excel 檔（.xlsx / .csv）
-              <input type="file" accept=".xlsx,.xls,.csv" hidden onChange={onRosterFile} />
-            </label>
-            <div style={{ textAlign: 'center', fontSize: 12, color: 'var(--sub)', margin: '10px 0 6px' }}>— 或 貼上文字 —</div>
-            <textarea style={{ width: '100%', height: 120, border: '1px solid var(--line)', borderRadius: 10, padding: 10, fontSize: 13, fontFamily: 'monospace', background: 'var(--bg)' }}
-              value={upload} onChange={e => setUpload(e.target.value)}
-              placeholder={'從 Excel 複製整段貼上：\n3A\tJenny Lai\t賴振莉\t100672\n3B\tMoney Zeng\t曾翠華\t100971'} />
-            <button className="btn ghost" onClick={syncRoster}>套用貼上的文字</button>
-            <button className="btn ghost" onClick={() => setUpload(null)}>取消</button>
+            <h2>新增員工</h2>
+            <label style={{ display: 'block', fontSize: 12, color: 'var(--sub)', margin: '8px 0 4px' }}>員工編號</label>
+            <input style={{ width: '100%', border: '1px solid var(--line)', borderRadius: 10, padding: '10px 12px', fontSize: 15, fontFamily: 'inherit', background: 'var(--bg)' }}
+              placeholder="例如 100672" inputMode="numeric" value={newAtt.emp_id} onChange={e => setNewAtt({ ...newAtt, emp_id: e.target.value })} />
+            <label style={{ display: 'block', fontSize: 12, color: 'var(--sub)', margin: '8px 0 4px' }}>中文姓名</label>
+            <input style={{ width: '100%', border: '1px solid var(--line)', borderRadius: 10, padding: '10px 12px', fontSize: 15, fontFamily: 'inherit', background: 'var(--bg)' }}
+              placeholder="例如 賴振莉" value={newAtt.name_cn} onChange={e => setNewAtt({ ...newAtt, name_cn: e.target.value })} />
+            <label style={{ display: 'block', fontSize: 12, color: 'var(--sub)', margin: '8px 0 4px' }}>英文姓名</label>
+            <input style={{ width: '100%', border: '1px solid var(--line)', borderRadius: 10, padding: '10px 12px', fontSize: 15, fontFamily: 'inherit', background: 'var(--bg)' }}
+              placeholder="例如 Jenny Lai" value={newAtt.name} onChange={e => setNewAtt({ ...newAtt, name: e.target.value })} />
+            <label style={{ display: 'block', fontSize: 12, color: 'var(--sub)', margin: '8px 0 4px' }}>負責樓層</label>
+            <input style={{ width: '100%', border: '1px solid var(--line)', borderRadius: 10, padding: '10px 12px', fontSize: 15, fontFamily: 'inherit', background: 'var(--bg)' }}
+              placeholder="例如 3A" value={newAtt.floor} onChange={e => setNewAtt({ ...newAtt, floor: e.target.value })} />
+            <p className="src-note" style={{ marginTop: 8 }}>中文或英文姓名填一個即可；編號、樓層可留空。</p>
+            <button className="btn" onClick={addName}>加入</button>
+            <button className="btn ghost" onClick={() => setAddOpen(false)}>取消</button>
           </div>
         </div>
       )}
@@ -323,18 +272,6 @@ export default function Scores() {
                   onClick={async () => { try { await api.deleteAttendant(a.id); toast('已刪除'); load() } catch (ex) { toast(ex.message) } }}>✕</button>
               </div>
             ))}
-            <div style={{ borderTop: '1px solid var(--line)', marginTop: 12, paddingTop: 12 }}>
-              <div style={{ fontSize: 12, color: 'var(--sub)', marginBottom: 6 }}>新增房務員（英文名或中文名填一個即可，樓層可空）</div>
-              <div style={{ display: 'flex', gap: 6 }}>
-                <input style={{ width: 54, border: '1px solid var(--line)', borderRadius: 10, padding: '9px 6px', fontSize: 14, fontFamily: 'inherit', textAlign: 'center', background: 'var(--bg)' }}
-                  placeholder="樓層" value={newAtt.floor} onChange={e => setNewAtt({ ...newAtt, floor: e.target.value })} />
-                <input style={{ flex: 1, minWidth: 0, border: '1px solid var(--line)', borderRadius: 10, padding: '9px 12px', fontSize: 14, fontFamily: 'inherit', background: 'var(--bg)' }}
-                  placeholder="英文名" value={newAtt.name} onChange={e => setNewAtt({ ...newAtt, name: e.target.value })} onKeyDown={e => { if (e.key === 'Enter') addName() }} />
-                <input style={{ flex: 1, minWidth: 0, border: '1px solid var(--line)', borderRadius: 10, padding: '9px 12px', fontSize: 14, fontFamily: 'inherit', background: 'var(--bg)' }}
-                  placeholder="中文名" value={newAtt.name_cn} onChange={e => setNewAtt({ ...newAtt, name_cn: e.target.value })} onKeyDown={e => { if (e.key === 'Enter') addName() }} />
-              </div>
-              <button className="btn" style={{ marginTop: 8 }} onClick={addName} disabled={!newAtt.name.trim() && !newAtt.name_cn.trim()}>加入</button>
-            </div>
             <button className="btn ghost" onClick={() => setRoster(false)}>完成</button>
           </div>
         </div>
