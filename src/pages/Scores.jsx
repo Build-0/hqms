@@ -8,10 +8,10 @@ import Confirm from '../components/Confirm'
 
 // 總分等級（滿分 35）
 const LEVELS = [
-  { key: '優良', min: 28, color: 'var(--accent)' },
-  { key: '一般', min: 21, color: 'var(--amber)' },
-  { key: '需注意', min: 18, color: '#dd8844' },
-  { key: '需培訓', min: 0, color: 'var(--red)' },
+  { key: '優良', min: 28, color: '#1b8a5a' },
+  { key: '一般', min: 21, color: '#2f6fba' },
+  { key: '需注意', min: 18, color: '#e69500' },
+  { key: '需培訓', min: 0, color: '#c62828' },
 ]
 const levelOf = n => LEVELS.find(l => n >= l.min)
 const levelColor = n => levelOf(n).color
