@@ -11,13 +11,12 @@ const LEVELS = [
   { key: '優良', min: 28, color: '#1b8a5a' },
   { key: '一般', min: 21, color: '#2f6fba' },
   { key: '需注意', min: 18, color: '#e69500' },
-  { key: '需培訓', min: 0, color: '#c62828' },
+  { key: '立刻培訓', min: 0, color: '#c62828' },
 ]
 const levelOf = n => LEVELS.find(l => n >= l.min)
 const levelColor = n => levelOf(n).color
-// 單維度分數配色：與總分四級同一套（1-2 紅/橙 → 3 藍 → 4-5 綠），全模組顏色一致
-const DIM_COLORS = { 0: '#e0e4e8', 1: '#c62828', 2: '#e69500', 3: '#2f6fba', 4: '#4aa57a', 5: '#1b8a5a' }
-const dimColor = v => DIM_COLORS[parseInt(v, 10) || 0]
+// 單維度用星星（單色），顏色只留給總分四級，兩套不再撞色
+const Stars = ({ v }) => <span className="stars"><span className="f">{'★'.repeat(v)}</span><span className="o">{'★'.repeat(5 - v)}</span></span>
 const sumDims = d => SCORE_DIMS.reduce((t, k) => t + (parseInt(d[k], 10) || 0), 0)
 const emptyDims = () => Object.fromEntries(SCORE_DIMS.map(k => [k, 0]))
 const WEAK = 2
@@ -171,7 +170,7 @@ export default function Scores() {
               : <span className="badge b-gray">未評</span>}
             {p.a.floor && <span style={{ fontSize: 11, color: 'var(--sub)', flexShrink: 0, width: 24 }}>{p.a.floor}</span>}
             <span className="sc-name">{p.a.name}{p.a.name_cn ? <span className="cn"> {p.a.name_cn}</span> : ''}</span>
-            {p.cur && <span className="dim-strip">{SCORE_DIMS.map(k => <span key={k} className="dblk" style={{ background: dimColor(p.dims[k]) }} title={`${k}:${p.dims[k] || '–'}`} />)}</span>}
+            {p.cur && <span className="dim-strip">{SCORE_DIMS.map(k => <span key={k} className="dblk" style={{ height: 4 + 3 * (parseInt(p.dims[k], 10) || 0) }} title={`${k}:${p.dims[k] || '–'}`} />)}</span>}
             <button className="row-ico" onClick={e => { e.stopPropagation(); openForm(p) }}>{p.cur ? '✏️' : '＋'}</button>
             {p.cur && <button className="row-ico del" onClick={e => { e.stopPropagation(); setConfirmDel(p.cur) }}>🗑</button>}
           </div>
@@ -181,8 +180,8 @@ export default function Scores() {
                 {SCORE_DIMS.map(k => {
                   const v = parseInt(p.dims[k], 10) || 0
                   return (
-                    <div className="dim-cell" key={k} style={{ borderColor: dimColor(v), background: dimColor(v) + '18' }}>
-                      <span className="dv" style={{ color: dimColor(v) }}>{v || '–'}</span>
+                    <div className="dim-cell" key={k}>
+                      <span className="dv">{v ? <Stars v={v} /> : '–'}</span>
                       <span className="dk">{k}</span>
                     </div>
                   )
@@ -219,7 +218,7 @@ export default function Scores() {
                 <div className="score-seg">
                   {[1, 2, 3, 4, 5].map(v => (
                     <button key={v} className="sc-btn" onClick={() => setForm({ ...form, dims: { ...form.dims, [k]: v } })}
-                      style={(parseInt(form.dims[k], 10) || 0) === v ? { background: dimColor(v), borderColor: dimColor(v), color: '#fff' } : undefined}>{v}</button>
+                      style={(parseInt(form.dims[k], 10) || 0) === v ? { background: 'var(--ink)', borderColor: 'var(--ink)', color: '#fff' } : undefined}>{v}<span style={{ fontSize: 12 }}>★</span></button>
                   ))}
                 </div>
               </div>
