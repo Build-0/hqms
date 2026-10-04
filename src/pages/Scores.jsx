@@ -169,8 +169,7 @@ export default function Scores() {
               ? <span className="badge" style={{ background: levelColor(p.total) + '22', color: levelColor(p.total), fontSize: 13, minWidth: 30, textAlign: 'center' }}>{p.total}</span>
               : <span className="badge b-gray">未評</span>}
             {p.a.floor && <span style={{ fontSize: 11, color: 'var(--sub)', flexShrink: 0, width: 24 }}>{p.a.floor}</span>}
-            <span className="sc-name">{p.a.name}{p.a.name_cn ? <span className="cn"> {p.a.name_cn}</span> : ''}</span>
-            {p.cur && <span className="dim-strip">{SCORE_DIMS.map(k => <span key={k} className="dblk" style={{ height: 4 + 3 * (parseInt(p.dims[k], 10) || 0) }} title={`${k}:${p.dims[k] || '–'}`} />)}</span>}
+            <span className="sc-name">{p.a.name}{p.a.name_cn ? <span className="cn"> {p.a.name_cn}</span> : ''}{p.weak.length > 0 && <span className="sc-weak">弱項：{p.weak.join('、')}</span>}</span>
             <button className="row-ico" onClick={e => { e.stopPropagation(); openForm(p) }}>{p.cur ? '✏️' : '＋'}</button>
             {p.cur && <button className="row-ico del" onClick={e => { e.stopPropagation(); setConfirmDel(p.cur) }}>🗑</button>}
           </div>
