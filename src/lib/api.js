@@ -106,7 +106,7 @@ export async function deleteAttendant(id) {
 export async function listScores() {
   if (isLocal) return local.listScores()
   const { data, error } = await sb.from('scores').select('*')
-    .order('date', { ascending: false }).order('created_at', { ascending: false }).limit(300)
+    .order('date', { ascending: false }).order('created_at', { ascending: false }).limit(1000)
   throwIf(error)
   return data
 }

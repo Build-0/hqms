@@ -22,14 +22,19 @@ export default function Topics() {
   const [catForm, setCatForm] = useState(null) // 分類編輯表單 {id?, name, emoji, color, _old}
 
   useEffect(() => { load() }, [])
+  const [err, setErr] = useState('')
   async function load() {
-    const [t, k] = await Promise.all([api.listTopics(), api.listCategories()])
-    setTopics(t)
-    const kk = k?.length ? k : DEFAULT_CATEGORIES
-    setCats(kk)
-    setCat(prev => (prev && kk.some(x => x.name === prev) ? prev : kk[0]?.name || ''))
+    try {
+      const [t, k] = await Promise.all([api.listTopics(), api.listCategories()])
+      setTopics(t)
+      const kk = k?.length ? k : DEFAULT_CATEGORIES
+      setCats(kk)
+      setCat(prev => (prev && kk.some(x => x.name === prev) ? prev : kk[0]?.name || ''))
+      setErr('')
+    } catch (ex) { setErr(ex.message) }
   }
 
+  if (err && (!topics || !cats)) return <div className="card"><p className="src-note">讀取失敗：{err}</p><button className="btn" onClick={load}>重試</button></div>
   if (!topics || !cats) return <div className="note">載入中…</div>
   const canEditCats = !!cats[0]?.id
   const topicCats = cats.filter(k => k.for_topics !== false) // 主題庫用的分類（可與客訴不同）

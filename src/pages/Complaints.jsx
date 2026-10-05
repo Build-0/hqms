@@ -22,6 +22,9 @@ const floorOf = room => {
   if (!m) return null
   return m[0].length === 4 ? parseInt(m[0].slice(0, 2), 10) : parseInt(m[0].slice(0, 1), 10)
 }
+// localStorage 在無痕模式等情況會丟錯，讀寫都包起來
+const lsGet = k => { try { return localStorage.getItem(k) } catch { return null } }
+const lsSet = (k, v) => { try { localStorage.setItem(k, v) } catch {} }
 const shiftYm = (ym, d) => {
   const [y, m] = ym.split('-').map(Number)
   const t = new Date(y, m - 1 + d, 1)
@@ -45,16 +48,16 @@ export default function Complaints() {
   const [q, setQ] = useState('')
   const [ym, setYm] = useState(todayStr().slice(0, 7))
   // 統計欄：可拖動調寬（自動流成一/二/三列）、可整個收起
-  const [pwPx, setPwPx] = useState(() => parseInt(localStorage.getItem('hqms_panelpx') || '380', 10))
-  const [panelOpen, setPanelOpen] = useState(() => localStorage.getItem('hqms_panelopen') !== '0')
-  const togglePanel = () => { setPanelOpen(!panelOpen); localStorage.setItem('hqms_panelopen', panelOpen ? '0' : '1') }
+  const [pwPx, setPwPx] = useState(() => parseInt(lsGet('hqms_panelpx') || '380', 10))
+  const [panelOpen, setPanelOpen] = useState(() => lsGet('hqms_panelopen') !== '0')
+  const togglePanel = () => { setPanelOpen(!panelOpen); lsSet('hqms_panelopen', panelOpen ? '0' : '1') }
   const startDrag = e => {
     e.preventDefault()
     const startX = e.clientX, startW = pwPx
     const move = ev => {
       const w = Math.min(1100, Math.max(300, startW + ev.clientX - startX))
       setPwPx(w)
-      localStorage.setItem('hqms_panelpx', String(w))
+      lsSet('hqms_panelpx', String(w))
     }
     const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up) }
     window.addEventListener('pointermove', move)
@@ -63,9 +66,11 @@ export default function Complaints() {
 
   useEffect(() => { load() }, [])
   async function load() {
-    const [c, k] = await Promise.all([api.listComplaints(), api.listCategories()])
-    setList(c)
-    setCats(k?.length ? k : DEFAULT_CATEGORIES)
+    try {
+      const [c, k] = await Promise.all([api.listComplaints(), api.listCategories()])
+      setList(c)
+      setCats(k?.length ? k : DEFAULT_CATEGORIES)
+    } catch (ex) { toast('讀取客訴失敗：' + ex.message) }
   }
   const allCats = cats || DEFAULT_CATEGORIES
   const catList = allCats.filter(k => k.for_complaints !== false) // 工具等只用於主題庫

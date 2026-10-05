@@ -82,15 +82,17 @@ export default function Scores() {
     const dims = emptyDims()
     for (const k of SCORE_DIMS) dims[k] = parseInt(f.dims[k], 10) || 0
     const payload = { date: f.date || todayStr(), attendant_id: f.attendant_id, room: f.room, dims, score: sumDims(dims), inspector: f.inspector || '', note: f.note || '', photos: f.photos || [] }
-    if (f.id) { await api.updateScore(f.id, payload); toast('已更新評分') }
-    else { await api.addScore(payload); toast('已記錄評分') }
+    try {
+      if (f.id) { await api.updateScore(f.id, payload); toast('已更新評分') }
+      else { await api.addScore(payload); toast('已記錄評分') }
+    } catch (ex) { toast('儲存失敗：' + ex.message); return }
     setForm(null); load()
   }
   async function delScore(id) { await api.deleteScore(id); setConfirmDel(null); setOpen(null); toast('已刪除，恢復未評'); load() }
   async function addName() {
     const emp_id = newAtt.emp_id.trim(), name = newAtt.name.trim(), name_cn = newAtt.name_cn.trim(), floor = newAtt.floor.trim()
     if (!name && !name_cn) { toast('請填中文名或英文名'); return }
-    const norm = x => String(x || '').toLowerCase().replace(/s+/g, '')
+    const norm = x => String(x || '').toLowerCase().replace(/\s+/g, '')
     const dup = attendants.find(a => (emp_id && a.emp_id === emp_id) || (name && norm(a.name) === norm(name)) || (name_cn && norm(a.name_cn) === norm(name_cn)))
     if (dup) { toast(`已有相同員工：${nameOf(dup)}${dup.emp_id ? ' (' + dup.emp_id + ')' : ''}`); return }
     try {
@@ -169,8 +171,8 @@ export default function Scores() {
               ? <span className="badge" style={{ background: levelColor(p.total) + '22', color: levelColor(p.total), fontSize: 13, minWidth: 30, textAlign: 'center' }}>{p.total}</span>
               : <span className="badge b-gray">未評</span>}
             {p.a.floor && <span style={{ fontSize: 11, color: 'var(--sub)', flexShrink: 0, width: 24 }}>{p.a.floor}</span>}
-            <span className="sc-name">{p.a.name}{p.a.name_cn ? <span className="cn"> {p.a.name_cn}</span> : ''}{p.weak.length > 0 && <span className="sc-weak">弱項：{p.weak.join('、')}</span>}</span>
-            <button className="row-ico" onClick={e => { e.stopPropagation(); openForm(p) }}>{p.cur ? '✏️' : '＋'}</button>
+            <span className="sc-name">{p.a.name}{p.a.name_cn ? <span className="cn"> {p.a.name_cn}</span> : ''}{p.weak.length > 0 && <span className="sc-weak">弱項：{p.weak.length > 3 ? `${p.weak.slice(0, 3).join('、')} 等 ${p.weak.length} 項` : p.weak.join('、')}</span>}</span>
+            {!p.cur && <button className="row-ico" onClick={e => { e.stopPropagation(); openForm(p) }}>＋</button>}
             {p.cur && <button className="row-ico del" onClick={e => { e.stopPropagation(); setConfirmDel(p.cur) }}>🗑</button>}
           </div>
           {open === p.a.id && p.cur && (

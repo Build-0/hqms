@@ -7,6 +7,7 @@ import Scores from './pages/Scores'
 import Topics from './pages/Topics'
 import CyclicClean from './pages/CyclicClean'
 import Icon from './components/Icon'
+import { toast } from './lib/toast'
 
 // 首頁圓形入口：之後加新模組（清潔劑、機器…）直接在這裡加一行
 const MODULES = [
@@ -37,6 +38,13 @@ export default function App() {
     }
     window.addEventListener('hqms-toast', fn)
     return () => { window.removeEventListener('hqms-toast', fn); clearTimeout(h) }
+  }, [])
+
+  // 任何沒被接住的儲存／載入錯誤都提示出來，避免按了沒反應
+  useEffect(() => {
+    const fn = e => { toast('操作失敗：' + (e.reason?.message || e.reason || '未知錯誤')); e.preventDefault() }
+    window.addEventListener('unhandledrejection', fn)
+    return () => window.removeEventListener('unhandledrejection', fn)
   }, [])
 
   if (user === undefined) return null

@@ -112,9 +112,14 @@ function FocusCard({ label, complaint, topic, cats }) {
 export default function Daily() {
   const [st, setSt] = useState(null)
 
+  const [err, setErr] = useState('')
   useEffect(() => { load() }, [])
 
   async function load() {
+    try { await loadFocus(); setErr('') } catch (ex) { setErr(ex.message) }
+  }
+
+  async function loadFocus() {
     const today = todayStr()
     const yesterday = addDaysStr(-1)
     const [complaints, topics, kk] = await Promise.all([api.listComplaints(), api.listTopics(), api.listCategories()])
@@ -179,6 +184,7 @@ export default function Daily() {
     toast('已重新選題')
   }
 
+  if (err && !st) return <div className="card"><p className="src-note">讀取失敗：{err}</p><button className="btn" onClick={load}>重試</button></div>
   if (!st) return <div className="note">載入中…</div>
   const { focus, s1, s2, tomorrowName } = st
   const slots = [s1, s2].filter(s => s && (s.complaint || s.topic))
