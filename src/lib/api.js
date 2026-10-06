@@ -287,3 +287,47 @@ export async function markShared(date) {
   throwIf(error)
   return data
 }
+
+// ── findings（查房快速記錄）──
+export async function listFindingTags() {
+  if (isLocal) return local.listFindingTags()
+  const { data, error } = await sb.from('finding_tags').select('*').order('sort_order').order('created_at')
+  throwIf(error)
+  return data
+}
+export async function addFindingTag(t) {
+  if (isLocal) return local.addFindingTag(t)
+  const { data, error } = await sb.from('finding_tags').insert(t).select().single()
+  throwIf(error)
+  return data
+}
+export async function updateFindingTag(id, patch) {
+  if (isLocal) return local.updateFindingTag(id, patch)
+  const { data, error } = await sb.from('finding_tags').update(patch).eq('id', id).select().single()
+  throwIf(error)
+  return data
+}
+export async function deleteFindingTag(id) {
+  if (isLocal) return local.deleteFindingTag(id)
+  const { error } = await sb.from('finding_tags').delete().eq('id', id)
+  throwIf(error)
+}
+export async function listFindings(sinceDate) {
+  if (isLocal) return local.listFindings(sinceDate)
+  let q = sb.from('findings').select('*')
+  if (sinceDate) q = q.gte('date', sinceDate)
+  const { data, error } = await q.order('date', { ascending: false }).order('created_at', { ascending: false }).limit(2000)
+  throwIf(error)
+  return data
+}
+export async function addFindings(rows) {
+  if (isLocal) return local.addFindings(rows)
+  const { data, error } = await sb.from('findings').insert(rows).select()
+  throwIf(error)
+  return data
+}
+export async function deleteFinding(id) {
+  if (isLocal) return local.deleteFinding(id)
+  const { error } = await sb.from('findings').delete().eq('id', id)
+  throwIf(error)
+}

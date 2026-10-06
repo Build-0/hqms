@@ -8,5 +8,7 @@ create policy "open categories" on categories for all to anon using (true) with 
 create policy "open attendants" on attendants for all to anon using (true) with check (true);
 create policy "open scores" on scores for all to anon using (true) with check (true);
 create policy "open cleaning" on cleaning_items for all to anon using (true) with check (true);
+create policy "open finding_tags" on finding_tags for all to anon using (true) with check (true);
+create policy "open findings" on findings for all to anon using (true) with check (true);
 create policy "open upload photos" on storage.objects for insert to anon with check (bucket_id = 'photos');
 create policy "open delete photos" on storage.objects for delete to anon using (bucket_id = 'photos');

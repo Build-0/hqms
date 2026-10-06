@@ -1,7 +1,7 @@
 // 示範模式資料層：全部存 localStorage，介面與 Supabase 版一致
-import { seedTopics, seedComplaints, TRAINING, DEFAULT_CATEGORIES } from '../data/seedData'
+import { seedTopics, seedComplaints, TRAINING, DEFAULT_CATEGORIES, DEFAULT_FINDING_TAGS } from '../data/seedData'
 
-const K = { user: 'hqms_user', complaints: 'hqms_complaints', topics: 'hqms_topics', focus: 'hqms_focus', training: 'hqms_training', categories: 'hqms_categories', attendants: 'hqms_attendants', scores: 'hqms_scores', cleaning: 'hqms_cleaning' }
+const K = { user: 'hqms_user', complaints: 'hqms_complaints', topics: 'hqms_topics', focus: 'hqms_focus', training: 'hqms_training', categories: 'hqms_categories', attendants: 'hqms_attendants', scores: 'hqms_scores', cleaning: 'hqms_cleaning', ftags: 'hqms_finding_tags', findings: 'hqms_findings' }
 const get = (k, fb) => {
   try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : fb } catch { return fb }
 }
@@ -199,4 +199,45 @@ export function markShared(date) {
   if (f[date]) f[date].shared_at = new Date().toISOString()
   set(K.focus, f)
   return f[date]
+}
+
+// ── findings（查房快速記錄）──
+export function listFindingTags() {
+  ensureSeed()
+  if (!localStorage.getItem(K.ftags)) {
+    const topics = get(K.topics, [])
+    set(K.ftags, DEFAULT_FINDING_TAGS.map(([name, dim, topic], i) => ({
+      id: uid(), name, dim, active: true, sort_order: i + 1, created_at: new Date().toISOString(),
+      topic_id: (topics.find(t => t.title === topic) || {}).id || null,
+    })))
+  }
+  return get(K.ftags, []).slice().sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+}
+export function addFindingTag(t) {
+  const rows = get(K.ftags, [])
+  const row = { id: uid(), active: true, created_at: new Date().toISOString(), ...t }
+  rows.push(row); set(K.ftags, rows)
+  return row
+}
+export function updateFindingTag(id, patch) {
+  const rows = get(K.ftags, []).map(r => (r.id === id ? { ...r, ...patch } : r))
+  set(K.ftags, rows)
+  return rows.find(r => r.id === id)
+}
+export function deleteFindingTag(id) {
+  set(K.ftags, get(K.ftags, []).filter(r => r.id !== id))
+  set(K.findings, get(K.findings, []).map(f => (f.tag_id === id ? { ...f, tag_id: null } : f)))
+}
+export function listFindings(sinceDate) {
+  return get(K.findings, []).filter(f => !sinceDate || f.date >= sinceDate)
+    .sort((a, b) => b.date.localeCompare(a.date) || (b.created_at || '').localeCompare(a.created_at || ''))
+}
+export function addFindings(list) {
+  const rows = get(K.findings, [])
+  const added = list.map(f => ({ id: uid(), created_at: new Date().toISOString(), ...f }))
+  set(K.findings, [...added, ...rows])
+  return added
+}
+export function deleteFinding(id) {
+  set(K.findings, get(K.findings, []).filter(r => r.id !== id))
 }

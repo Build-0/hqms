@@ -8,5 +8,7 @@ drop policy if exists "open categories" on categories;
 drop policy if exists "open attendants" on attendants;
 drop policy if exists "open scores" on scores;
 drop policy if exists "open cleaning" on cleaning_items;
+drop policy if exists "open finding_tags" on finding_tags;
+drop policy if exists "open findings" on findings;
 drop policy if exists "open upload photos" on storage.objects;
 drop policy if exists "open delete photos" on storage.objects;
