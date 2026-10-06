@@ -5,6 +5,7 @@ import { todayStr } from '../lib/dates'
 import { toast } from '../lib/toast'
 import { PhotoGrid, PhotoField } from '../components/Photos'
 import Confirm from '../components/Confirm'
+import { ReportModal, ScoresReport } from '../components/Reports'
 
 // 總分等級（滿分 35）
 const LEVELS = [
@@ -30,6 +31,7 @@ export default function Scores() {
   const [form, setForm] = useState(null)
   const [roster, setRoster] = useState(false)
   const [addOpen, setAddOpen] = useState(false)
+  const [report, setReport] = useState(false)
   const [newAtt, setNewAtt] = useState({ emp_id: '', name_cn: '', name: '', floor: '' })
   const [confirmDel, setConfirmDel] = useState(null)
   const [filter, setFilter] = useState('全部') // 全部 / 等級 / 未評 / 維度名
@@ -119,6 +121,7 @@ export default function Scores() {
           <h2 style={{ margin: 0 }}>分數分布<span style={{ fontSize: 11, color: 'var(--sub)', fontWeight: 400 }}>（{rated.length}/{people.length} 人已評 · 滿分 {SCORE_MAX}）</span></h2>
           <div style={{ display: 'flex', gap: 6 }}>
             <button className="logout" style={{ color: 'var(--accent)', background: 'var(--accent-soft)' }} onClick={() => setAddOpen(true)}>＋ 新增員工</button>
+            <button className="logout" style={{ color: 'var(--sub)', background: '#eef1f4' }} onClick={() => setReport(true)}>📄 匯出</button>
             <button className="logout" style={{ color: 'var(--sub)', background: '#eef1f4' }} onClick={() => setRoster(true)}>👥 {attendants.length}</button>
           </div>
         </div>
@@ -233,6 +236,18 @@ export default function Scores() {
         </div>
       )}
 
+      {report && (
+        <ReportModal title="房務員清潔評分報告" sub={todayStr()} onClose={() => setReport(false)}>
+          <ScoresReport data={{
+            ratedN: rated.length, totalN: people.length, max: SCORE_MAX,
+            levels: LEVELS.map(l => ({ key: l.key, color: l.color, n: levelCount(l.key), range: l.min === 0 ? '<18' : l.min === 18 ? '18–20' : l.min === 21 ? '21–27' : '≥28' })),
+            dimWeak: SCORE_DIMS.map(k => ({ k, n: dimWeakCount[k] })),
+            follow: rated.filter(p => { const k = levelOf(p.total).key; return k === '立刻培訓' || k === '需注意' })
+              .sort((x, y) => x.total - y.total)
+              .map(p => ({ floor: p.a.floor, name: nameOf(p.a), total: p.total, color: levelColor(p.total), weak: p.weak, date: p.cur.date })),
+          }} />
+        </ReportModal>
+      )}
       {addOpen && (
         <div className="modal" onClick={e => { if (e.target === e.currentTarget) setAddOpen(false) }}>
           <div className="sheet">

@@ -5,6 +5,7 @@ import { DEFAULT_CATEGORIES } from '../data/seedData'
 import { todayStr, addDaysStr } from '../lib/dates'
 import { toast } from '../lib/toast'
 import { PhotoGrid } from '../components/Photos'
+import { ReportModal, DailyReport } from '../components/Reports'
 
 const isCore = c => (c.dept || (c.nature === '工程投訴' ? '工程其他' : '客房')) === '客房'
   && (c.nature === '工程投訴' ? '投訴' : (c.nature || '投訴')) === '投訴'
@@ -113,6 +114,7 @@ export default function Daily() {
   const [st, setSt] = useState(null)
 
   const [err, setErr] = useState('')
+  const [report, setReport] = useState(false)
   useEffect(() => { load() }, [])
 
   async function load() {
@@ -207,6 +209,11 @@ export default function Daily() {
           complaint={s.complaint} topic={s.topic} cats={st.cats} />
       ))}
 
+      {report && (
+        <ReportModal title="今日早會品質重點" sub={todayStr()} onClose={() => setReport(false)}>
+          <DailyReport slots={slots} />
+        </ReportModal>
+      )}
       <button className={`done-btn ${shared ? 'done' : ''}`} onClick={shared ? undefined : share}>
         {shared
           ? `✓ 已於早會分享（${new Date(focus.shared_at).toTimeString().slice(0, 5)}）`
@@ -217,6 +224,7 @@ export default function Daily() {
         📅 {st.hadYesterday ? '昨日有投訴 → 以客訴為重點' : '昨日無投訴 → 主題輪替'}
         {tomorrowName ? ` · 明日已指定：${tomorrowName}` : ''}
         <button className="linky" onClick={regen}>🔄 重新選題</button>
+        <button className="linky" onClick={() => setReport(true)}>📄 匯出</button>
       </p>
     </div>
   )

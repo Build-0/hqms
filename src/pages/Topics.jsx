@@ -6,6 +6,7 @@ import { addDaysStr } from '../lib/dates'
 import { toast } from '../lib/toast'
 import { PhotoGrid, PhotoField } from '../components/Photos'
 import Confirm from '../components/Confirm'
+import { ReportModal, TopicsReport } from '../components/Reports'
 
 const EMPTY = { category: '', title: '', why: '', correct_steps: [], mistakes: [], supervisor_check: '', reminder: '', question: '', answer: '', photos: [] }
 
@@ -18,6 +19,7 @@ export default function Topics() {
   const [form, setForm] = useState(null)     // 主題編輯表單
   const [confirmDel, setConfirmDel] = useState(null)     // 待確認刪除的主題
   const [confirmDelCat, setConfirmDelCat] = useState(null) // 待確認刪除的分類
+  const [report, setReport] = useState(false)
   const [mgr, setMgr] = useState(false)      // 分類管理面板
   const [catForm, setCatForm] = useState(null) // 分類編輯表單 {id?, name, emoji, color, _old}
 
@@ -134,7 +136,7 @@ export default function Topics() {
     <>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0 4px 6px' }}>
         <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--sub)' }}>分類 · 共 {topics.length} 個主題</span>
-        <button className="linky" style={{ fontSize: 13 }} onClick={() => setMgr(true)}>⚙️ 編輯分類</button>
+        <span><button className="linky" style={{ fontSize: 13 }} onClick={() => setReport(true)}>📄 匯出</button><button className="linky" style={{ fontSize: 13 }} onClick={() => setMgr(true)}>⚙️ 編輯分類</button></span>
       </div>
       <div className="chips wrap">
         {topicCats.map(k => (
@@ -165,6 +167,11 @@ export default function Topics() {
       <div className="note">主題持續累積，形成酒店專屬品質知識庫 · 按右下 ＋ 新增</div>
       <button className="fab" onClick={() => openEdit(null)}>＋</button>
 
+      {report && (
+        <ReportModal title="培訓主題庫" sub={`共 ${topics.length} 個主題`} onClose={() => setReport(false)}>
+          <TopicsReport total={topics.length} groups={topicCats.map(k => ({ name: k.name, items: topics.filter(t => t.category === k.name) })).filter(g => g.items.length)} />
+        </ReportModal>
+      )}
       {view && (
         <div className="modal" onClick={e => { if (e.target === e.currentTarget) setView(null) }}>
           <div className="sheet">

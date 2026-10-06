@@ -6,6 +6,7 @@ import { todayStr, addDaysStr } from '../lib/dates'
 import { toast } from '../lib/toast'
 import { PhotoGrid, PhotoField } from '../components/Photos'
 import Confirm from '../components/Confirm'
+import { ReportModal, ComplaintsReport } from '../components/Reports'
 
 const EMPTY = { date: '', room: '', category: '', tags: [], dept: '客房', nature: '投訴', source: 'wechat', guest_comment: '', actual_cause: '', correct_standard: '', improvement: '', ra: '', supervisor: '', photos: [] }
 const SOURCES = ['wechat', 'Incident report', 'Guest comment', 'FO Mail', '總機', '其他']
@@ -46,6 +47,7 @@ export default function Complaints() {
   const [srcF, setSrcF] = useState('全部')
   const [sortF, setSortF] = useState('最新')
   const [q, setQ] = useState('')
+  const [report, setReport] = useState(false)
   const [ym, setYm] = useState(todayStr().slice(0, 7))
   // 統計欄：可拖動調寬（自動流成一/二/三列）、可整個收起
   const [pwPx, setPwPx] = useState(() => parseInt(lsGet('hqms_panelpx') || '380', 10))
@@ -225,6 +227,16 @@ export default function Complaints() {
 
   return (
     <>
+      {report && (
+        <ReportModal title={`客訴月報 · ${monthLabel}`} sub={`共 ${mAll.length} 單`} onClose={() => setReport(false)}>
+          <ComplaintsReport data={{
+            inv: mCore.length, ab: mAll.filter(c => natOf(c) === '濫訴').length, eng: mAll.filter(c => deptOf(c) === '工程其他').length, total: mAll.length,
+            rank: (() => { const o = {}; for (const c of mCore) for (const k of catsOf(c)) o[k] = (o[k] || 0) + 1; return Object.entries(o).map(([cat, n]) => ({ cat, n })).sort((a, b) => b.n - a.n).slice(0, 12) })(),
+            floorRank: (() => { const o = {}; for (const c of mCore) { const f = floorOf(c.room); const key = f === null ? '無房號' : `${f}`; o[key] = (o[key] || 0) + 1 } return Object.entries(o).sort((a, b) => b[1] - a[1]).slice(0, 12) })(),
+            rows: mAll.slice().sort((a, b) => b.date.localeCompare(a.date)).map(c => ({ date: c.date, room: c.room, category: c.category, tag: natOf(c) === '濫訴' ? '濫訴' : deptOf(c) === '工程其他' ? '工程' : '', guest_comment: c.guest_comment, improvement: c.improvement })),
+          }} />
+        </ReportModal>
+      )}
       <div className={`cx-grid ${panelOpen ? '' : 'closed'}`} style={{ '--panelw': `${pwPx}px` }}>
         {panelOpen && <div>
           <div className="month-nav">
@@ -348,6 +360,7 @@ export default function Complaints() {
             </span>
             {allScope && !searching && <button className="linky" style={{ fontSize: 12 }} onClick={() => { setAllScope(false); setCatF('全部'); setFloorF('全部') }}>↩ 回到{monthLabel}</button>}
           </h2>
+          <button className="linky" style={{ fontSize: 13, margin: '0 4px 8px' }} onClick={() => setReport(true)}>📄 匯出 {monthLabel} PDF 報告</button>
           <input className="search-inp" placeholder="🔍 搜尋房號或內容（跨全部月份）" value={q} onChange={e => setQ(e.target.value)} />
           <div className="chips">
             {['全部', ...DEPTS].map(d => (

@@ -6,6 +6,7 @@ import { toast } from '../lib/toast'
 import Confirm from '../components/Confirm'
 import { PhotoGrid, PhotoField } from '../components/Photos'
 import Icon from '../components/Icon'
+import { ReportModal, CleaningReport } from '../components/Reports'
 
 const SECTIONS = [
   { key: 'daily', icon: 'sun', title: '每日清潔', sub: '每天的習慣', color: '#1f7a6d' },
@@ -22,6 +23,7 @@ export default function CyclicClean() {
   const [daySheet, setDaySheet] = useState(null) // 月曆點中的日期
   const [confirmDel, setConfirmDel] = useState(null)
   const [big, setBig] = useState(null)     // 放大檢視的相片
+  const [report, setReport] = useState(false)
 
   useEffect(() => { load() }, [])
   async function load() {
@@ -202,6 +204,12 @@ export default function CyclicClean() {
         </div>
         {!err && items.length === 0 && (
           <button className="add-topic" onClick={importSeed}>⬇ 匯入預設項目</button>
+        )}
+        <button className="add-topic" style={{ marginTop: 14 }} onClick={() => setReport(true)}>📄 匯出清潔要點 PDF 報告</button>
+        {report && (
+          <ReportModal title="清潔要點" sub={todayStr()} onClose={() => setReport(false)}>
+            <CleaningReport data={{ daily: bySection('daily'), spot: bySection('spot'), cycle, deep: bySection('deep') }} />
+          </ReportModal>
         )}
         {todayTasks.length > 0 && (
           <div className="quote" style={{ marginTop: 14 }}>
