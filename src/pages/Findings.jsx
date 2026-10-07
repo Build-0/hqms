@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import * as api from '../lib/api'
-import { SCORE_DIMS } from '../data/seedData'
+import { SCORE_DIMS, COMMON_FINDING_TAGS } from '../data/seedData'
 import { todayStr, addDaysStr } from '../lib/dates'
 import { toast } from '../lib/toast'
 import { PhotoGrid, PhotoField } from '../components/Photos'
@@ -22,6 +22,7 @@ const floorOfRoom = r => {
   return null
 }
 const floorOfAtt = a => { const m = String(a.floor || '').match(/^(\d+)/); return m ? parseInt(m[1], 10) : null }
+const OTHER_TAG = '其他'
 const REPEAT_DAYS = 30
 const REPEAT_MIN = 2
 
@@ -50,8 +51,9 @@ export default function Findings() {
   const attById = useMemo(() => Object.fromEntries(atts.map(a => [a.id, a])), [atts])
   const tagById = useMemo(() => Object.fromEntries(tags.map(t => [t.id, t])), [tags])
   const topicById = useMemo(() => Object.fromEntries(topics.map(t => [t.id, t])), [topics])
-  const nameOf = a => a ? (a.name_cn || a.name) + (a.name_cn && a.name && a.name !== a.name_cn ? ` ${a.name}` : '') : '（已刪除）'
-  const shortName = a => a ? (a.name_cn || a.name) : '—'
+  // 平時工作用英文名溝通：一律英文名在前（沒有英文名才用中文名）
+  const nameOf = a => a ? (a.name || a.name_cn) + (a.name_cn && a.name && a.name !== a.name_cn ? ` ${a.name_cn}` : '') : '（已刪除）'
+  const shortName = a => a ? (a.name || a.name_cn) : '—'
 
   if (!rows) return <div className="note">載入中…</div>
 
@@ -71,7 +73,7 @@ export default function Findings() {
   const repSince = addDaysStr(-REPEAT_DAYS + 1)
   const repMap = {}
   for (const f of rows) {
-    if (f.date < repSince || !f.attendant_id) continue
+    if (f.date < repSince || !f.attendant_id || (!f.tag_id && f.tag === OTHER_TAG)) continue
     const tk = f.tag_id || f.tag
     const k = f.attendant_id + '|' + tk
     if (!repMap[k]) repMap[k] = { attendant_id: f.attendant_id, tag: (tagById[f.tag_id] || {}).name || f.tag, n: 0, last: f.date }
@@ -91,17 +93,18 @@ export default function Findings() {
   async function save(next) {
     const f = form
     if (!f.attendant_id) { toast('請揀房務員'); return }
-    if (!f.tag_ids.length) { toast('請揀最少一個問題'); return }
+    if (!f.tag_ids.length && !f.note.trim()) { toast('請揀問題，或喺「補充」寫低問題'); return }
     setSaving(true)
     const batch = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
-    const list = f.tag_ids.map(id => ({
+    const ids = f.tag_ids.length ? f.tag_ids : [null] // 冇適合嘅標籤：只靠補充文字記一筆
+    const list = ids.map(id => ({
       date: f.date || todayStr(), attendant_id: f.attendant_id, room: f.room.trim(), tag_id: id,
-      tag: (tagById[id] || {}).name || '', photos: f.photos, note: f.note.trim(), inspector: f.inspector.trim(), batch,
+      tag: id ? (tagById[id] || {}).name || '' : OTHER_TAG, photos: f.photos, note: f.note.trim(), inspector: f.inspector.trim(), batch,
     }))
     try { await api.addFindings(list) } catch (ex) { setSaving(false); toast('儲存失敗：' + ex.message); return }
     setSaving(false)
     lsSet(LS_ATT, f.attendant_id); lsSet(LS_INSP, f.inspector.trim())
-    toast(`已記錄 ${list.length} 個問題`)
+    toast(f.tag_ids.length ? `已記錄 ${list.length} 個問題` : '已記錄（其他問題）')
     if (next) newForm({ attendant_id: f.attendant_id, inspector: f.inspector })
     else setForm(null)
     load()
@@ -119,7 +122,12 @@ export default function Findings() {
   const quick = form ? [...(lastAtt && lastAtt.active && !suggested.includes(lastAtt) ? [lastAtt] : []), ...suggested] : []
   if (form && form.attendant_id && attById[form.attendant_id] && !quick.includes(attById[form.attendant_id])) quick.unshift(attById[form.attendant_id])
 
-  const tagsByDim = [...SCORE_DIMS, '其他'].map(d => ({ d, list: activeTags.filter(t => (SCORE_DIMS.includes(t.dim) ? t.dim : '其他') === d) })).filter(g => g.list.length)
+  const common = COMMON_FINDING_TAGS.map(n => activeTags.find(t => t.name === n)).filter(Boolean)
+  const commonIds = new Set(common.map(t => t.id))
+  const tagsByDim = [
+    ...(common.length ? [{ d: '⭐ 常用問題', list: common }] : []),
+    ...[...SCORE_DIMS, '其他'].map(d => ({ d, list: activeTags.filter(t => !commonIds.has(t.id) && (SCORE_DIMS.includes(t.dim) ? t.dim : '其他') === d) })).filter(g => g.list.length),
+  ]
 
   return (
     <>
@@ -192,7 +200,7 @@ export default function Findings() {
               </select>
             </div>
             <div className="f-row">
-              <label>④ 問題（可揀多個）</label>
+              <label>④ 問題（可揀多個 · 冇適合嘅可以唔揀，喺下面「補充」寫）</label>
               {tagsByDim.map(g => (
                 <div key={g.d} className="fd-dim">
                   <div className="fd-dim-h">{g.d}</div>
@@ -206,9 +214,9 @@ export default function Findings() {
                 </div>
               ))}
             </div>
-            <div className="f-row"><label>補充（可留空 · 可用鍵盤🎤講）</label><input value={form.note} onChange={e => setForm({ ...form, note: e.target.value })} placeholder="例：浴缸邊" /></div>
+            <div className="f-row"><label>補充（揀咗問題可留空 · 可用鍵盤🎤講）</label><input value={form.note} onChange={e => setForm({ ...form, note: e.target.value })} placeholder="例：浴缸邊" /></div>
             <div className="f-row"><label>抽查人</label><input value={form.inspector} onChange={e => setForm({ ...form, inspector: e.target.value })} placeholder="例：Benny" /></div>
-            <button className="btn" disabled={saving || !form.attendant_id || !form.tag_ids.length} onClick={() => save(true)}>{saving ? '儲存中…' : '儲存，記下一間'}</button>
+            <button className="btn" disabled={saving || !form.attendant_id || (!form.tag_ids.length && !form.note.trim())} onClick={() => save(true)}>{saving ? '儲存中…' : '儲存，記下一間'}</button>
             <button className="btn ghost" disabled={saving} onClick={() => save(false)} style={{ color: 'var(--accent)', fontWeight: 700 }}>儲存並關閉</button>
             <button className="btn ghost" onClick={() => setForm(null)}>取消</button>
           </div>
@@ -235,7 +243,7 @@ export default function Findings() {
                       {(tp.correct_steps || []).length > 0 && <ol className="fd-steps">{tp.correct_steps.map((s, i) => <li key={i}>{s}</li>)}</ol>}
                       {tp.question && <div className="fd-q">❓ {tp.question}</div>}
                     </>
-                  ) : <div className="fd-std-none">未連結主題 · 可在「⚙ 問題標籤」連結主題庫，之後會顯示正確做法</div>}
+                  ) : it.tag === OTHER_TAG && !it.tag_id ? <div className="fd-std-none">其他問題 · 見上面補充</div> : <div className="fd-std-none">未連結主題 · 可在「⚙ 問題標籤」連結主題庫，之後會顯示正確做法</div>}
                 </div>
               )
             })}

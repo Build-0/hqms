@@ -65,7 +65,7 @@ export default function Scores() {
     [k, people.filter(p => p.cur && (parseInt(p.dims[k], 10) || 0) > 0 && (parseInt(p.dims[k], 10) || 0) <= WEAK).length]))
   const maxLv = Math.max(1, ...LEVELS.map(l => levelCount(l.key)), unrated.length)
 
-  const nameOf = a => a.name + (a.name_cn ? ` ${a.name_cn}` : '')
+  const nameOf = a => a.name + (a.name_cn && a.name_cn !== a.name ? ` ${a.name_cn}` : '')
   const searching = q.trim().length > 0
   let shown = people
   if (searching) shown = people.filter(p => nameOf(p.a).toLowerCase().includes(q.trim().toLowerCase()) || (p.a.floor || '').toLowerCase().includes(q.trim().toLowerCase()))
@@ -174,7 +174,7 @@ export default function Scores() {
               ? <span className="badge" style={{ background: levelColor(p.total) + '22', color: levelColor(p.total), fontSize: 13, minWidth: 30, textAlign: 'center' }}>{p.total}</span>
               : <span className="badge b-gray">未評</span>}
             {p.a.floor && <span style={{ fontSize: 11, color: 'var(--sub)', flexShrink: 0, width: 24 }}>{p.a.floor}</span>}
-            <span className="sc-name">{p.a.name}{p.a.name_cn ? <span className="cn"> {p.a.name_cn}</span> : ''}{p.weak.length > 0 && <span className="sc-weak">弱項：{p.weak.length > 3 ? `${p.weak.slice(0, 3).join('、')} 等 ${p.weak.length} 項` : p.weak.join('、')}</span>}</span>
+            <span className="sc-name">{p.a.name}{p.a.name_cn && p.a.name_cn !== p.a.name ? <span className="cn"> {p.a.name_cn}</span> : ''}{p.weak.length > 0 && <span className="sc-weak">弱項：{p.weak.length > 3 ? `${p.weak.slice(0, 3).join('、')} 等 ${p.weak.length} 項` : p.weak.join('、')}</span>}</span>
             {!p.cur && <button className="row-ico" onClick={e => { e.stopPropagation(); openForm(p) }}>＋</button>}
             {p.cur && <button className="row-ico del" onClick={e => { e.stopPropagation(); setConfirmDel(p.cur) }}>🗑</button>}
           </div>
