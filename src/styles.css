@@ -624,3 +624,6 @@ header h1{flex:1 1 auto !important;min-width:0}
 .dy-good b{display:block;margin-bottom:2px;color:var(--accent)}.dy-good span{display:block}
 .dy-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:6px 0}.dy-foot .btn{margin:0;flex:1}
 .dy-note{font-size:12px;color:var(--sub);text-align:center;margin:8px 4px 20px;line-height:1.6}
+
+.dy-sub{display:flex;align-items:center;justify-content:space-between;margin:-4px 4px 10px;font-size:12.5px;color:var(--sub)}
+.dy-sub .linky{font-size:14px;font-weight:700;padding:6px 4px}
