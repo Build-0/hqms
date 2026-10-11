@@ -598,3 +598,6 @@ header h1{flex:1 1 6em !important;min-width:5.5em}
 .gate-big{font-size:17px !important;padding:12px 20px !important;min-height:48px}
 header>div:first-child{flex-wrap:nowrap}
 header h1{flex:1 1 auto !important;min-width:0}
+
+.rpt-th{width:44px;height:44px;object-fit:cover;border-radius:4px;display:block}
+.rpt-t td.rpt-red{font-weight:700}

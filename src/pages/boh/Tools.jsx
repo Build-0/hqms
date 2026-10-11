@@ -6,7 +6,7 @@ import { Thumb, ImageField, useImages, setCachedImage, ListManager, num } from '
 
 const EMPTY = { name: '', category: '', stock: 0, in_use: 0, min_stock: 0, status: '啟用', notes: '', image: '' }
 
-export default function Tools({ d, edit, reload }) {
+export default function Tools({ d, edit, reload, reg }) {
   const [q, setQ] = useState('')
   const [fk, setFk] = useState('all')
   const [form, setForm] = useState(null)
@@ -51,6 +51,15 @@ export default function Tools({ d, edit, reload }) {
     try { await api.dbDelete('tools', t.id); toast('已刪除'); setDel(null); setForm(null); reload() } catch (ex) { toast('刪除失敗：' + ex.message) }
   }
 
+  if (reg) reg.current = () => ({
+    title: '清潔工具',
+    filterText: [fk === 'all' ? '' : fk === 'low' ? '需補貨' : fk === 'off' ? '停用' : fk === 'on' ? '啟用' : fk, q.trim() && `搜尋「${q.trim()}」`].filter(Boolean).join(' · ') || '全部工具',
+    cols: ['名稱', '庫存', '在用', '最低', '狀態'],
+    groups: groups.map(g => ({
+      name: g.c,
+      rows: g.items.map(t => ({ photo: img(t.id), cells: [t.name, t.stock, num(t.in_use) || 0, num(t.min_stock) || '—', t.status], cls: ['', low(t) ? 'rpt-red' : '', '', '', ''] })),
+    })),
+  })
   const chip = (k, t) => <button key={k} className={`chip ${fk === k ? 'on' : ''}`} onClick={() => setFk(k)}>{t}</button>
   return (
     <>

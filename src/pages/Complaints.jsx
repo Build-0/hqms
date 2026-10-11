@@ -227,16 +227,21 @@ export default function Complaints() {
 
   return (
     <>
-      {report && (
-        <ReportModal title={`客訴月報 · ${monthLabel}`} sub={`共 ${mAll.length} 單`} onClose={() => setReport(false)}>
-          <ComplaintsReport data={{
-            inv: mCore.length, ab: mAll.filter(c => natOf(c) === '濫訴').length, eng: mAll.filter(c => deptOf(c) === '工程其他').length, total: mAll.length,
-            rank: (() => { const o = {}; for (const c of mCore) for (const k of catsOf(c)) o[k] = (o[k] || 0) + 1; return Object.entries(o).map(([cat, n]) => ({ cat, n })).sort((a, b) => b.n - a.n).slice(0, 12) })(),
-            floorRank: (() => { const o = {}; for (const c of mCore) { const f = floorOf(c.room); const key = f === null ? '無房號' : `${f}`; o[key] = (o[key] || 0) + 1 } return Object.entries(o).sort((a, b) => b[1] - a[1]).slice(0, 12) })(),
-            rows: mAll.slice().sort((a, b) => b.date.localeCompare(a.date)).map(c => ({ date: c.date, room: c.room, category: c.category, tag: natOf(c) === '濫訴' ? '濫訴' : deptOf(c) === '工程其他' ? '工程' : '', guest_comment: c.guest_comment, improvement: c.improvement })),
-          }} />
-        </ReportModal>
-      )}
+      {report && (() => {
+        const scope = searching ? '搜尋全部月份' : allScope ? '全部月份' : monthLabel
+        const fText = [scope, deptF !== '全部' && DEPT_LABEL(deptF), natureF !== '全部' && natureF, srcF !== '全部' && srcF, catF !== '全部' && catF, floorF !== '全部' && (floorF === '無房號' ? floorF : `${floorF} 樓`), searching && `搜尋「${q.trim()}」`].filter(Boolean).join(' · ')
+        const core = shown.filter(c => deptOf(c) === '客房' && natOf(c) === '投訴')
+        return (
+          <ReportModal title="客訴報告" sub={`${fText} · 共 ${shown.length} 單`} onClose={() => setReport(false)}>
+            <ComplaintsReport data={{
+              inv: core.length, ab: shown.filter(c => natOf(c) === '濫訴').length, eng: shown.filter(c => deptOf(c) === '工程其他').length, total: shown.length,
+              rank: (() => { const o = {}; for (const c of core) for (const k of catsOf(c)) o[k] = (o[k] || 0) + 1; return Object.entries(o).map(([cat, n]) => ({ cat, n })).sort((x, y) => y.n - x.n).slice(0, 12) })(),
+              floorRank: (() => { const o = {}; for (const c of core) { const f = floorOf(c.room); const key = f === null ? '無房號' : `${f}`; o[key] = (o[key] || 0) + 1 } return Object.entries(o).sort((x, y) => y[1] - x[1]).slice(0, 12) })(),
+              rows: shown.slice().sort((x, y) => y.date.localeCompare(x.date)).map(c => ({ date: c.date, room: c.room, category: c.category, tag: natOf(c) === '濫訴' ? '濫訴' : deptOf(c) === '工程其他' ? '工程' : '', guest_comment: c.guest_comment, improvement: c.improvement })),
+            }} />
+          </ReportModal>
+        )
+      })()}
       <div className={`cx-grid ${panelOpen ? '' : 'closed'}`} style={{ '--panelw': `${pwPx}px` }}>
         {panelOpen && <div>
           <div className="month-nav">
@@ -360,7 +365,7 @@ export default function Complaints() {
             </span>
             {allScope && !searching && <button className="linky" style={{ fontSize: 12 }} onClick={() => { setAllScope(false); setCatF('全部'); setFloorF('全部') }}>↩ 回到{monthLabel}</button>}
           </h2>
-          <button className="linky" style={{ fontSize: 13, margin: '0 4px 8px' }} onClick={() => setReport(true)}>📄 匯出 {monthLabel} PDF 報告</button>
+          <button className="linky" style={{ fontSize: 13, margin: '0 4px 8px' }} onClick={() => setReport(true)}>📄 匯出目前篩選結果（{shown.length} 單）</button>
           <input className="search-inp" placeholder="🔍 搜尋房號或內容（跨全部月份）" value={q} onChange={e => setQ(e.target.value)} />
           <div className="chips">
             {['全部', ...DEPTS].map(d => (

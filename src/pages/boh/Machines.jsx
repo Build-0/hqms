@@ -9,7 +9,7 @@ const STATUS_CLS = { 正常: 'b-teal', 維修中: 'b-amber', 報廢: 'b-gray', �
 const numOf = l => (String(l || '').match(/(\d+)\s*$/) || [])[1]
 
 // 吸塵機與設備共用：每台獨立、可記保養記錄
-export default function Machines({ kind, d, edit, reload }) {
+export default function Machines({ kind, d, edit, reload, reg }) {
   const isVac = kind === 'vacuum'
   const C = isVac
     ? { table: 'vacuums', mtable: 'vacuum_maintenance', fk: 'vacuum_id', items: d.vacuums, maint: d.vacMaint, statuses: ['正常', '維修中', '報廢'], icon: '🌀', name: '吸塵機', groupOf: v => v.floor_code || '（未填位置）' }
@@ -74,6 +74,19 @@ export default function Machines({ kind, d, edit, reload }) {
   }
   const cur = view && (C.items.find(x => x.id === view.id) || view)
 
+  if (reg) reg.current = () => ({
+    title: C.name,
+    filterText: [st, grp, q.trim() && `搜尋「${q.trim()}」`].filter(Boolean).join(' · ') || `全部${C.name}`,
+    cols: isVac ? ['機號', '型號／品牌', '序號', '狀態'] : ['設備', '機號／型號', '位置', '狀態'],
+    groups: groups.map(g => ({
+      name: g.g,
+      rows: g.items.map(x => ({
+        photo: img(x.id),
+        cells: isVac ? [title(x), sub(x) || '—', x.serial || '—', x.status] : [title(x), [x.label, x.model, x.brand].filter(Boolean).join(' · ') || '—', x.floor_code || '—', x.status],
+        cls: ['', '', '', x.status !== '正常' ? 'rpt-red' : ''],
+      })),
+    })),
+  })
   const chip = (on, set, t, k) => <button key={k} className={`chip ${on ? 'on' : ''}`} onClick={set}>{t}</button>
   return (
     <>

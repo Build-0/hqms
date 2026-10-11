@@ -285,42 +285,44 @@ export function BohReport({ data }) {
   )
 }
 
-// ── 缺陷管理 ──
+// ── 缺陷管理（舊版，已由下面按樓層版本取代）──
 export function DefectReport({ data }) {
-  const { defects, severity, status } = data
+  const { rows, filterText, severity, status } = data
   const [withPhotos, setWithPhotos] = useState(true)
   const lab = (arr, v) => (arr.find(x => x.value === v) || {}).label || v || '—'
-  const count = st => defects.filter(d => d.status === st).length
-  const open = defects.filter(d => d.status !== 'done')
-  const sevRank = { high: 0, medium: 1, low: 2 }
-  const list = open.slice().sort((a, b) => (sevRank[a.severity] ?? 3) - (sevRank[b.severity] ?? 3) || String(a.register_date || a.created_at).localeCompare(String(b.register_date || b.created_at))).slice(0, 150)
-  const byType = {}, byFloor = {}
-  for (const d of open) { byType[d.type || '（未填）'] = (byType[d.type || '（未填）'] || 0) + 1; byFloor[d.floor ? d.floor + ' 樓' : '（未填）'] = (byFloor[d.floor ? d.floor + ' 樓' : '（未填）'] || 0) + 1 }
   const sevColor = { high: '#c62828', medium: '#e69500', low: '#2f6fba' }
+  const cnt = st => rows.filter(d => d.status === st).length
+  const floors = [...new Set(rows.map(d => d.floor || ''))].sort((a, b) => (parseInt(a) || 999) - (parseInt(b) || 999))
+  const clean = n => String(n || '').replace(/\s*【查房#[^】]*】/g, '').trim()
   return (
     <>
+      <p className="rpt-mut">篩選：{filterText}　·　共 {rows.length} 筆</p>
       <div className="rpt-kpis">
-        <div className="rpt-k"><b>{defects.length}</b><small>全部記錄</small></div>
-        <div className="rpt-k"><b style={{ color: '#c62828' }}>{count('pending')}</b><small>待處理</small></div>
-        <div className="rpt-k"><b style={{ color: '#e69500' }}>{count('processing')}</b><small>處理中</small></div>
-        <div className="rpt-k"><b style={{ color: '#1b8a5a' }}>{count('done')}</b><small>已修復</small></div>
+        <div className="rpt-k"><b>{rows.length}</b><small>符合筆數</small></div>
+        <div className="rpt-k"><b style={{ color: '#c62828' }}>{cnt('pending')}</b><small>待處理</small></div>
+        <div className="rpt-k"><b style={{ color: '#e69500' }}>{cnt('processing')}</b><small>處理中</small></div>
+        <div className="rpt-k"><b style={{ color: '#1b8a5a' }}>{cnt('done')}</b><small>已修復</small></div>
       </div>
-      <div className="rpt-two">
-        <div><Sub>未完成 · 缺陷類型</Sub><Bars rows={obj2rows(byType).slice(0, 10)} color="#c62828" /></div>
-        <div><Sub>未完成 · 樓層分佈</Sub><Bars rows={obj2rows(byFloor).slice(0, 12)} /></div>
-      </div>
-      <Sub>未完成明細（嚴重程度高至低，最多 150 筆；共 {open.length} 筆）</Sub>
       <label className="rpt-noprint rpt-check"><input type="checkbox" checked={withPhotos} onChange={e => setWithPhotos(e.target.checked)} /> 附上相片</label>
-      {list.length === 0 ? <Empty>沒有未完成缺陷</Empty> : list.map((d, i) => (
-        <div className="rpt-fd" key={i}>
-          {withPhotos && Array.isArray(d.photos) && d.photos.length > 0 && <div className="rpt-fd-ph">{d.photos.slice(0, 2).map((p, k) => <img key={k} src={p} alt="" />)}</div>}
-          <div className="rpt-fd-tx">
-            <div><b>{d.room}</b> <span className="rpt-mut">· {d.register_date || (d.created_at || '').slice(0, 10)}</span> <span className="rpt-tag" style={{ background: sevColor[d.severity] || '#6b7785' }}>{lab(severity, d.severity)}</span> <span className="rpt-mut">{lab(status, d.status)}</span></div>
-            <div style={{ fontWeight: 700 }}>{d.type}</div>
-            {d.note && <div className="rpt-mut">{d.note}</div>}
+      {rows.length === 0 && <Empty>沒有符合篩選的記錄</Empty>}
+      {floors.map(f => {
+        const list = rows.filter(d => (d.floor || '') === f).sort((a, b) => String(a.room).localeCompare(String(b.room), undefined, { numeric: true }) || String(a.register_date || a.created_at).localeCompare(String(b.register_date || b.created_at)))
+        return (
+          <div key={f}>
+            <Sub>{f ? f + ' 樓' : '（未填樓層）'} · {list.length} 筆</Sub>
+            {list.map((d, i) => (
+              <div className="rpt-fd" key={i}>
+                {withPhotos && Array.isArray(d.photos) && d.photos.length > 0 && <div className="rpt-fd-ph">{d.photos.slice(0, 2).map((p, k) => <img key={k} src={p} alt="" />)}</div>}
+                <div className="rpt-fd-tx">
+                  <div><b style={{ fontSize: '1.15em' }}>{d.room}</b> <span className="rpt-tag" style={{ background: sevColor[d.severity] || '#6b7785' }}>{lab(severity, d.severity)}</span> <span className="rpt-mut">{lab(status, d.status)} · {d.register_date || (d.created_at || '').slice(0, 10)}</span></div>
+                  <div style={{ fontWeight: 700 }}>{d.type}</div>
+                  {clean(d.note) && <div className="rpt-mut">{clean(d.note)}</div>}
+                </div>
+              </div>
+            ))}
           </div>
-        </div>
-      ))}
+        )
+      })}
     </>
   )
 }
@@ -367,5 +369,37 @@ export function SpeechSheet({ items }) {
         )
       })}
     </div>
+  )
+}
+
+// ── 後勤清單報告（跟目前分頁與篩選）──
+export function ListReport({ data }) {
+  const { filterText, cols, groups } = data
+  const [withPhotos, setWithPhotos] = useState(true)
+  const total = groups.reduce((n, g) => n + g.rows.length, 0)
+  const hasPhoto = groups.some(g => g.rows.some(r => r.photo))
+  const showPh = withPhotos && hasPhoto
+  return (
+    <>
+      <p className="rpt-mut">篩選：{filterText}　·　共 {total} 項</p>
+      {hasPhoto && <label className="rpt-noprint rpt-check"><input type="checkbox" checked={withPhotos} onChange={e => setWithPhotos(e.target.checked)} /> 附上相片</label>}
+      {total === 0 && <Empty>沒有符合篩選的項目</Empty>}
+      {groups.map(g => (
+        <div key={g.name}>
+          <Sub>{g.name} · {g.rows.length}</Sub>
+          <table className="rpt-t">
+            <thead><tr>{showPh && <th style={{ width: 56 }}></th>}{cols.map(c => <th key={c}>{c}</th>)}</tr></thead>
+            <tbody>
+              {g.rows.map((r, i) => (
+                <tr key={i}>
+                  {showPh && <td>{r.photo ? <img className="rpt-th" src={r.photo} alt="" /> : null}</td>}
+                  {r.cells.map((c, k) => <td key={k} className={(r.cls && r.cls[k]) || ''}>{c}</td>)}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ))}
+    </>
   )
 }

@@ -103,6 +103,7 @@ export default function Defects({ session, init }) {
   }
   const pick = (k, v) => { setF({ search: '', floor: '', status: '', severity: '', type: '', [k]: v }); setTab('list') }
 
+  const filterText = [f.floor && `${f.floor} 樓`, f.status && stOf(f.status).label, f.severity && sevOf(f.severity).label, f.type, f.search.trim() && `搜尋「${f.search.trim()}」`].filter(Boolean).join(' · ') || '全部記錄'
   const sel = (key, label, opts) => (
     <select className="df-sel" value={f[key]} onChange={e => setF({ ...f, [key]: e.target.value })}>
       <option value="">{label}</option>
@@ -232,8 +233,8 @@ export default function Defects({ session, init }) {
       {confirmDel && <Confirm text={`會刪除 ${confirmDel.room} 房「${confirmDel.type}」這筆缺陷記錄。`} onConfirm={() => del(confirmDel)} onCancel={() => setConfirmDel(null)} />}
 
       {report && (
-        <ReportModal title="缺陷管理報告" sub={todayStr()} onClose={() => setReport(false)}>
-          <DefectReport data={{ defects: list, severity: SEVERITY, status: STATUS }} />
+        <ReportModal title="缺陷管理報告" sub={`${filterText} · ${todayStr()}`} onClose={() => setReport(false)}>
+          <DefectReport data={{ rows: shown, filterText, severity: SEVERITY, status: STATUS }} />
         </ReportModal>
       )}
     </div>

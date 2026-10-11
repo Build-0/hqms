@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import * as api from '../lib/api'
 import { todayStr } from '../lib/dates'
 import { PERMS } from '../lib/accounts'
-import { ReportModal, BohReport } from '../components/Reports'
+import { ReportModal, ListReport } from '../components/Reports'
 import Chemicals from './boh/Chemicals'
 import Machines from './boh/Machines'
 import Tools from './boh/Tools'
@@ -23,7 +23,8 @@ export default function Boh({ session, init }) {
   const [tab, setTab] = useState('chem')
   const [d, setD] = useState(null)
   const [err, setErr] = useState('')
-  const [report, setReport] = useState(false)
+  const [report, setReport] = useState(null)   // 目前篩選結果的報告資料
+  const reg = useRef(null)                    // 目前分頁登記的「產生報告」函式
 
   useEffect(() => { load() }, [])
   async function load() {
@@ -40,45 +41,22 @@ export default function Boh({ session, init }) {
   }
   if (!d) return <div className="note">載入中…</div>
 
-  function reportData() {
-    const cnt = (arr, key) => { const o = {}; arr.forEach(x => { const k = x[key] || '（未填）'; o[k] = (o[k] || 0) + 1 }); return o }
-    const act = p => p.status !== '停用'
-    const low = d.products.filter(p => act(p) && num(p.min_stock) > 0 && num(p.stock) < num(p.min_stock)).map(p => ({ name: p.name_zh, stock: p.stock, min: p.min_stock }))
-    const expiring = []
-    d.batches.forEach(b => {
-      const p = d.products.find(x => x.id === b.product_id)
-      if (!p || !act(p) || !b.expiry_date || num(b.qty_remaining) <= 0) return
-      const dd = daysUntil(b.expiry_date)
-      if (dd !== null && dd <= 30) expiring.push({ name: p.name_zh, expiry: b.expiry_date, qty: b.qty_remaining, days: dd })
-    })
-    expiring.sort((a, b) => a.days - b.days)
-    const byType = {}
-    d.equipment.forEach(e => { const t = e.type || '（未填）'; byType[t] = byType[t] || {}; byType[t][e.status] = (byType[t][e.status] || 0) + 1 })
-    const byCat = {}
-    d.tools.forEach(t => { const c = t.category || '（未分類）'; const o = (byCat[c] = byCat[c] || { items: 0, stock: 0 }); o.items++; o.stock += num(t.stock) })
-    return {
-      products: { active: d.products.filter(act).length, total: d.products.length }, low, expiring,
-      vacuums: { total: d.vacuums.length, byStatus: cnt(d.vacuums, 'status'), byFloor: cnt(d.vacuums, 'floor_code') },
-      equipment: { total: d.equipment.length, byStatus: cnt(d.equipment, 'status'), byType },
-      tools: { total: d.tools.length, byCat },
-    }
-  }
 
   return (
     <div className="df-wrap">
       {err && <div className="card" style={{ borderColor: 'var(--red)' }}><p style={{ fontSize: 13, lineHeight: 1.7 }}>讀取失敗：{err}</p></div>}
       <div className="chips wrap" style={{ marginBottom: 6 }}>
         {TABS.map(([k, t]) => <button key={k} className={`chip ${tab === k ? 'on' : ''}`} onClick={() => setTab(k)}>{t}</button>)}
-        <button className="chip" onClick={() => setReport(true)}>📄 匯出</button>
+        <button className="chip" onClick={() => setReport((reg.current && reg.current()) || { title: '', filterText: '', cols: [], groups: [] })}>📄 匯出</button>
       </div>
       {!edit && <p className="note" style={{ textAlign: 'left', margin: '0 4px 6px' }}>目前帳號只可查看</p>}
-      {tab === 'chem' && <Chemicals d={d} edit={edit} reload={load} init={init} />}
-      {tab === 'vac' && <Machines kind="vacuum" d={d} edit={edit} reload={load} />}
-      {tab === 'tool' && <Tools d={d} edit={edit} reload={load} />}
-      {tab === 'eq' && <Machines kind="equipment" d={d} edit={edit} reload={load} />}
+      {tab === 'chem' && <Chemicals d={d} edit={edit} reload={load} init={init} reg={reg} />}
+      {tab === 'vac' && <Machines kind="vacuum" d={d} edit={edit} reload={load} reg={reg} />}
+      {tab === 'tool' && <Tools d={d} edit={edit} reload={load} reg={reg} />}
+      {tab === 'eq' && <Machines kind="equipment" d={d} edit={edit} reload={load} reg={reg} />}
       {report && (
-        <ReportModal title="後勤管理報告" sub={todayStr()} onClose={() => setReport(false)}>
-          <BohReport data={reportData()} />
+        <ReportModal title={`後勤管理 · ${report.title}`} sub={`${report.filterText} · ${todayStr()}`} onClose={() => setReport(null)}>
+          <ListReport data={report} />
         </ReportModal>
       )}
     </div>

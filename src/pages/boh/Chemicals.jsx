@@ -6,7 +6,7 @@ import { Thumb, ImageField, useImages, setCachedImage, num, today, daysUntil } f
 
 const EMPTY = { category_id: '', name_zh: '', name_en: '', applicable_zh: '', dilution_zh: '', rinse: 'no', min_stock: 0, status: '啟用', image: '' }
 
-export default function Chemicals({ d, edit, reload, init }) {
+export default function Chemicals({ d, edit, reload, init, reg }) {
   const [sub, setSub] = useState('list')       // list / report
   const [q, setQ] = useState('')
   const [fk, setFk] = useState(init?.fk || 'all')
@@ -78,6 +78,18 @@ export default function Chemicals({ d, edit, reload, init }) {
     try { await api.dbRpc('delete_batch', { p_batch_id: b.id }); toast('已刪除批次'); setDel(null); reload() } catch (ex) { toast('刪除失敗：' + ex.message) }
   }
 
+  if (reg) reg.current = () => ({
+    title: '清潔劑',
+    filterText: [fk === 'all' ? '' : fk === 'low' ? '需補貨' : fk === 'exp' ? '臨期' : fk === 'off' ? '停用' : (d.cats.find(c => String(c.id) === String(fk)) || {}).name_zh, q.trim() && `搜尋「${q.trim()}」`].filter(Boolean).join(' · ') || '全部（啟用中）',
+    cols: ['名稱', '庫存', '最低', '最近到期', '狀態'],
+    groups: groups.map(g => ({
+      name: `${g.c.icon || ''} ${g.c.name_zh}`,
+      rows: g.items.map(p => {
+        const b = batchesOf(p.id).find(x => num(x.qty_remaining) > 0 && x.expiry_date)
+        return { photo: img(p.id), cells: [p.name_zh, p.stock, num(p.min_stock) || '—', b ? b.expiry_date : '—', active(p) ? '啟用' : '停用'], cls: ['', low(p) ? 'rpt-red' : '', '', b && daysUntil(b.expiry_date) <= 30 ? 'rpt-red' : '', ''] }
+      }),
+    })),
+  })
   const chip = (k, t) => <button key={k} className={`chip ${fk === k ? 'on' : ''}`} onClick={() => setFk(k)}>{t}</button>
   return (
     <>

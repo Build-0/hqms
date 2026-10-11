@@ -168,8 +168,8 @@ export default function Topics() {
       <button className="fab" onClick={() => openEdit(null)}>＋</button>
 
       {report && (
-        <ReportModal title="培訓主題庫" sub={`共 ${topics.length} 個主題`} onClose={() => setReport(false)}>
-          <TopicsReport total={topics.length} groups={topicCats.map(k => ({ name: k.name, items: topics.filter(t => t.category === k.name) })).filter(g => g.items.length)} />
+        <ReportModal title={`培訓主題庫 · ${cat}`} sub={`分類：${cat} · 共 ${inCat.length} 個主題`} onClose={() => setReport(false)}>
+          <TopicsReport total={inCat.length} groups={[{ name: cat, items: inCat }]} />
         </ReportModal>
       )}
       {view && (

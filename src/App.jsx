@@ -14,8 +14,6 @@ import Embed from './components/Embed'
 import Gate from './components/Gate'
 import Confirm from './components/Confirm'
 import { getSession, clearSession, PERMS, ROLE_LABEL } from './lib/accounts'
-import { ReportModal, BohReport, DefectReport } from './components/Reports'
-import { todayStr } from './lib/dates'
 import { toast } from './lib/toast'
 
 // 首頁圓形入口：之後加新模組（清潔劑、機器…）直接在這裡加一行
@@ -55,7 +53,6 @@ export default function App() {
   const [rk, setRk] = useState(0)                        // 刷新計數：改變即重新載入目前頁面資料
   const [newVer, setNewVer] = useState(false)       // 偵測到新版本
   const [askLogout, setAskLogout] = useState(false)   // 登出前確認，避免撳錯
-  const [rpt, setRpt] = useState(null)   // 嵌入模組的匯出報告 {id, data}
 
   useEffect(() => {
     api.getUser().then(setUser)
@@ -119,12 +116,6 @@ export default function App() {
     await new Promise(r => setTimeout(r, Math.max(0, 800 - (Date.now() - t0))))
     setRefreshing(false)
   }
-  const exportEmbed = () => {
-    const w = document.querySelector('iframe.embed-frame')?.contentWindow
-    const data = w && w.__getReport && w.__getReport()
-    if (!data) { toast(cur.id === 'defect' ? '請先登入缺陷系統，並等資料載入完成' : '資料尚未載入完成，請稍後再試'); return }
-    setRpt({ id: cur.id, data })
-  }
   const goBack = () => setTab(cur && !cur.embed && !cur.top ? 'quality' : 'home')
   const title = cur ? cur.label : inQuality ? '房間品質' : '酒店客房管理系統'
   return (
@@ -134,7 +125,6 @@ export default function App() {
           {(cur || inQuality) && <button className="back-btn" onClick={cur ? goBack : () => setTab('home')}>‹</button>}
           {cur && <span className="hdr-ico" style={{ background: 'rgba(255,255,255,.2)' }}><Icon name={cur.icon} size={18} color="#fff" /></span>}
           <h1 style={{ flex: 1 }}>{title}</h1>
-          {cur?.embed && <button className="logout" onClick={exportEmbed}>📄 匯出</button>}
           <button className="hdr-gear" onClick={() => setSettings(true)} aria-label="設定"><Icon name="gear" size={26} color="#fff" width={2} /></button>
         </div>
         {tab === 'home' && (
@@ -203,11 +193,6 @@ export default function App() {
             setAskLogout(false)
             if (api.isOpen) { clearSession(); setTab('home'); setSessionState(null) } else { await api.signOut(); setUser(null) }
           }} />
-      )}
-      {rpt && (
-        <ReportModal title={rpt.id === 'boh' ? '後勤管理報告' : '缺陷管理報告'} sub={todayStr()} onClose={() => setRpt(null)}>
-          {rpt.id === 'boh' ? <BohReport data={rpt.data} /> : <DefectReport data={rpt.data} />}
-        </ReportModal>
       )}
       {msg && <div className="toast">{msg}</div>}
     </div>
