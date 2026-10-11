@@ -388,3 +388,7 @@ h3{font-size:13px;color:var(--sub);font-weight:700;margin:14px 0 6px}
 .fd-std-none{margin-top:6px;font-size:12px;color:var(--sub)}
 .fd-mgr-row{border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:8px}
 .fd-inp{flex:1;min-width:0;width:100%;border:1px solid var(--line);border-radius:10px;padding:9px 10px;font-size:14px;font-family:inherit;background:var(--bg);color:var(--ink)}
+
+.btn.fd-issue{background:var(--red)}.btn.fd-good{background:#1b8a5a}
+.fd-tag.good{background:#e3f3ea;color:#1b8a5a}.fd-std-h.good{color:#1b8a5a}.fd-goodmark{margin-right:4px}
+.fd-warn-list{background:var(--bg);border-radius:10px;padding:8px 12px;margin-bottom:12px;font-size:13px;line-height:1.7;text-align:left}

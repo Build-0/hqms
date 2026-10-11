@@ -185,3 +185,45 @@ export function CleaningReport({ data }) {
     </>
   )
 }
+
+// ── 查房記錄 ──
+export function FindingsReport({ data }) {
+  const { issueN, goodN, peopleN, tagRank, byPerson, repeats, rows } = data
+  return (
+    <>
+      <div className="rpt-kpis" style={{ gridTemplateColumns: 'repeat(3,1fr)' }}>
+        <div className="rpt-k"><b style={{ color: '#c62828' }}>{issueN}</b><small>有問題（次）</small></div>
+        <div className="rpt-k"><b style={{ color: '#1b8a5a' }}>{goodN}</b><small>做得好（次）</small></div>
+        <div className="rpt-k"><b>{peopleN}</b><small>涉及同事</small></div>
+      </div>
+      <div className="rpt-two">
+        <div><Sub>問題類型排行</Sub>{tagRank.length ? <Bars rows={tagRank} color="#c62828" /> : <Empty>沒有問題記錄</Empty>}</div>
+        <div><Sub>重複出現（30 日內同一問題 ≥2 次）</Sub>
+          {repeats.length ? <table className="rpt-t"><tbody>{repeats.slice(0, 10).map((r, i) => <tr key={i}><td>{r.name}</td><td>{r.tag}</td><td className="rpt-red">×{r.n}</td></tr>)}</tbody></table> : <Empty>沒有</Empty>}
+        </div>
+      </div>
+      <Sub>按同事統計</Sub>
+      {byPerson.length === 0 ? <Empty /> : (
+        <table className="rpt-t">
+          <thead><tr><th>樓層</th><th>同事</th><th>有問題</th><th>做得好</th></tr></thead>
+          <tbody>{byPerson.map((p, i) => <tr key={i}><td>{p.floor || '—'}</td><td>{p.name}</td><td className={p.issue ? 'rpt-red' : 'rpt-mut'}>{p.issue}</td><td style={{ color: p.good ? '#1b8a5a' : '#6b7785' }}>{p.good}</td></tr>)}</tbody>
+        </table>
+      )}
+      <Sub>記錄明細</Sub>
+      {rows.length === 0 ? <Empty>這段時間沒有記錄</Empty> : (
+        <table className="rpt-t">
+          <thead><tr><th>日期</th><th>房號</th><th>同事</th><th>類型</th><th>內容</th></tr></thead>
+          <tbody>
+            {rows.map((r, i) => (
+              <tr key={i}>
+                <td className="rpt-nw">{r.date.slice(5)}</td><td className="rpt-nw">{r.room || '—'}</td><td>{r.name}</td>
+                <td className="rpt-nw" style={{ color: r.kind === 'good' ? '#1b8a5a' : '#c62828' }}>{r.kind === 'good' ? '做得好' : '有問題'}</td>
+                <td>{r.tags}{r.note ? <span className="rpt-mut"> · {r.note}</span> : ''}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </>
+  )
+}
