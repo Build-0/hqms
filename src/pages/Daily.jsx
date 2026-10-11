@@ -110,6 +110,32 @@ function FocusCard({ label, complaint, topic, cats }) {
   )
 }
 
+// 近 7 日查房摘要：最常見問題（含相片、涉及樓層）與做得好
+function Digest({ digest }) {
+  if (!digest || (!digest.top.length && !digest.good.length)) return null
+  return (
+    <div className="card">
+      <h2>近 7 日查房重點</h2>
+      {digest.top.length > 0 && <div className="dg-sec">最常見問題</div>}
+      {digest.top.map((t, i) => (
+        <div className="dg-item" key={t.name}>
+          <div className="dg-top"><span className="dg-rank">{i + 1}</span><b className="dg-name">{t.name}</b><span className="badge b-red">{t.n} 次</span></div>
+          {t.floors.length > 0 && <div className="dg-meta">涉及樓層：{t.floors.map(f => f + ' 樓').join('、')}</div>}
+          <PhotoGrid photos={t.photos} />
+        </div>
+      ))}
+      {digest.good.length > 0 && <div className="dg-sec good">⭐ 做得好（早會可以表揚）</div>}
+      {digest.good.map(t => (
+        <div className="dg-item" key={t.name}>
+          <div className="dg-top"><b className="dg-name">{t.name}</b><span className="badge b-teal">{t.n} 次</span></div>
+          {t.floors.length > 0 && <div className="dg-meta">樓層：{t.floors.map(f => f + ' 樓').join('、')}</div>}
+          <PhotoGrid photos={t.photos} />
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export default function Daily() {
   const [st, setSt] = useState(null)
 
@@ -129,17 +155,42 @@ export default function Daily() {
     const ycs = complaints.filter(c => c.date === yesterday && isCore(c))
     const pick = n => (topics.length ? topics[(Math.floor(Date.parse(today + 'T00:00:00Z') / 86400000) + n) % topics.length] : null)
 
+    // 近 7 日查房記錄 → 最常見問題、做得好（今日重點的主要來源）
+    const digest = { top: [], good: [], topTopicIds: [] }
+    try {
+      const [fr, ft] = await Promise.all([api.listFindings(addDaysStr(-6)), api.listFindingTags()])
+      const tagById = Object.fromEntries(ft.map(t => [t.id, t]))
+      const floorOf = r => { const m = String(r || '').replace(/\D/g, ''); return m.length >= 4 ? m.slice(0, m.length - 2) : m.length === 3 ? m[0] : '' }
+      const group = rows => {
+        const g = {}
+        for (const f of rows) {
+          const name = (tagById[f.tag_id] || {}).name || f.tag
+          if (!name) continue
+          const o = (g[name] = g[name] || { name, n: 0, floors: new Set(), photos: [], topic_id: (tagById[f.tag_id] || {}).topic_id || null })
+          o.n++
+          const fl = floorOf(f.room); if (fl) o.floors.add(fl)
+          for (const p of f.photos || []) if (o.photos.length < 3) o.photos.push(p)
+        }
+        return Object.values(g).sort((a, b) => b.n - a.n).map(o => ({ ...o, floors: [...o.floors].sort((a, b) => a - b) }))
+      }
+      const isGood = f => String(f.batch || '').startsWith('good-')
+      digest.top = group(fr.filter(f => !isGood(f) && f.tag !== '其他')).slice(0, 3)
+      digest.good = group(fr.filter(isGood)).slice(0, 3)
+      digest.topTopicIds = [...new Set(digest.top.map(t => t.topic_id).filter(Boolean))]
+    } catch { /* 查房資料不可用時，照舊選題 */ }
+
     let focus = await api.getFocus(today)
     if (!focus) {
       const s1 = ycs[0]
         ? { source: 'complaint', complaint_id: ycs[0].id, topic_id: null }
-        : (pick(0) ? { source: 'topic', topic_id: pick(0).id, complaint_id: null } : null)
+        : (digest.topTopicIds[0] ? { source: 'topic', topic_id: digest.topTopicIds[0], complaint_id: null } : pick(0) ? { source: 'topic', topic_id: pick(0).id, complaint_id: null } : null)
       if (s1) {
         // 第二主題：第二宗昨日客訴，否則輪替另一個主題
         let s2 = null
         if (ycs[1]) s2 = { source2: 'complaint', complaint_id2: ycs[1].id, topic_id2: null }
         else {
-          const t2 = s1.source === 'topic' ? pick(1) : pick(0)
+          const wanted = digest.topTopicIds[s1.source === 'topic' ? 1 : 0]
+          const t2 = (wanted && topics.find(t => t.id === wanted)) || (s1.source === 'topic' ? pick(1) : pick(0))
           if (t2 && t2.id !== s1.topic_id) s2 = { source2: 'topic', topic_id2: t2.id, complaint_id2: null }
         }
         try {
@@ -172,7 +223,7 @@ export default function Daily() {
         ? `客訴案例（${complaints.find(c => c.id === tf.complaint_id)?.room ?? '?'} 房）`
         : topics.find(t => t.id === tf.topic_id)?.title
     }
-    setSt({ focus, s1, s2, cats, tomorrowName, hadYesterday: ycs.length > 0 })
+    setSt({ focus, s1, s2, cats, tomorrowName, hadYesterday: ycs.length > 0, digest })
   }
 
   async function share() {
@@ -188,15 +239,18 @@ export default function Daily() {
 
   if (err && !st) return <div className="card"><p className="src-note">讀取失敗：{err}</p><button className="btn" onClick={load}>重試</button></div>
   if (!st) return <div className="note">載入中…</div>
-  const { focus, s1, s2, tomorrowName } = st
+  const { focus, s1, s2, tomorrowName, digest } = st
   const slots = [s1, s2].filter(s => s && (s.complaint || s.topic))
 
   if (!focus || slots.length === 0) {
     return (
+      <div className="daily-wrap">
+        <Digest digest={digest} />
       <div className="card">
         <h2>今日暫無品質重點</h2>
         <p className="src-note">主題庫還沒有內容，或原本的重點已被刪除。</p>
         {focus && <button className="btn" onClick={regen}>重新選題</button>}
+      </div>
       </div>
     )
   }
@@ -204,6 +258,7 @@ export default function Daily() {
   const shared = !!focus.shared_at
   return (
     <div className="daily-wrap">
+      <Digest digest={digest} />
       {slots.map((s, i) => (
         <FocusCard key={i} label={slots.length > 1 ? `重點${['一', '二'][i]}` : null}
           complaint={s.complaint} topic={s.topic} cats={st.cats} />

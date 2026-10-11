@@ -504,3 +504,10 @@ header.hdr-home h1{font-size:25px;font-weight:800;letter-spacing:.5px}
 .hm-sub{font-size:11.5px;color:var(--sub)}
 .hm-wide{width:100%;margin-top:10px}.hm-wide b{font-size:17px}
 @media (min-width:760px){.hm{max-width:640px;margin-left:auto;margin-right:auto}.hm-grid{grid-template-columns:repeat(4,1fr)}}
+
+/* 今日重點：近 7 日查房摘要 */
+.dg-sec{font-size:12.5px;font-weight:700;color:var(--red);margin:10px 2px 4px}.dg-sec.good{color:var(--accent);margin-top:16px}
+.dg-item{padding:10px 0;border-top:1px solid var(--line)}.dg-item:first-of-type{border-top:none}
+.dg-top{display:flex;align-items:center;gap:8px}
+.dg-rank{width:22px;height:22px;border-radius:50%;background:var(--red-soft);color:var(--red);font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.dg-name{flex:1;font-size:15px}.dg-meta{font-size:12px;color:var(--sub);margin:4px 0 0 30px}
