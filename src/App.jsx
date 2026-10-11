@@ -28,9 +28,9 @@ const MODULES = [
 ]
 // 首頁三大系統卡：房間品質（內含上面各模組）／後勤管理（嵌入）／缺陷管理（待加入）
 const SYSTEMS = [
-  { id: 'quality', icon: 'clipcheck', label: '房間品質', sub: '查房、評分、客訴、培訓', color: '#1f7a6d' },
-  { id: 'boh', icon: 'box', label: '後勤管理', sub: '清潔劑、吸塵機、工具、設備', color: '#4a6fa5' },
-  { id: 'defect', icon: 'wrench', label: '缺陷管理', sub: '房間缺陷登記、跟進與統計', color: '#c0564f' },
+  { id: 'quality', icon: 'clipcheck', label: '房間品質', sub: '檢查、評分、報告', color: '#1f7a6d' },
+  { id: 'boh', icon: 'box', label: '後勤管理', sub: '物資、庫存、設備', color: '#4a6fa5' },
+  { id: 'defect', icon: 'wrench', label: '缺陷管理', sub: '登記、跟進、統計', color: '#c0564f' },
 ]
 const WD = ['日', '一', '二', '三', '四', '五', '六']
 
@@ -99,24 +99,25 @@ export default function App() {
       </header>
       <main className={cur?.embed ? 'embed-main' : ''}>
         {cur ? <cur.Page key={tab} /> : inQuality ? (
-          <div className="mod-grid">
+          <div className="home-grid">
             {MODULES.filter(m => !m.embed).map(m => (
-              <button className="mod-card" key={m.id} onClick={() => setTab(m.id)}>
-                <span className="mod-ico" style={{ background: m.color + '1f' }}><Icon name={m.icon} size={26} color={m.color} width={2.1} /></span>
-                <b>{m.label}</b>
-                <span>{m.sub}</span>
+              <button className="home-item" key={m.id} onClick={() => setTab(m.id)}>
+                <span className="hi-circle" style={{ background: m.color + '26', borderColor: 'transparent' }}><Icon name={m.icon} size={33} color={m.color} width={2.2} /></span>
+                <span className="hi-label">{m.label}</span>
               </button>
             ))}
           </div>
         ) : (
-          <div className="sys-list">
-            {SYSTEMS.map(sy => (
-              <button className="sys-row" key={sy.id} onClick={() => setTab(sy.id)}>
-                <span className="sys-ico" style={{ background: sy.color + '1f' }}><Icon name={sy.icon} size={30} color={sy.color} width={2} /></span>
-                <span className="sys-txt"><b>{sy.label}</b><span>{sy.sub}</span></span>
-                <span className="sys-go">›</span>
-              </button>
-            ))}
+          <div className="sys-home">
+            <div className="sys-grid">
+              {SYSTEMS.map(sy => (
+                <button className="sys-card" key={sy.id} onClick={() => setTab(sy.id)}>
+                  <Icon name={sy.icon} size={30} color="var(--ink)" width={1.9} />
+                  <b>{sy.label}</b>
+                  <span>{sy.sub}</span>
+                </button>
+              ))}
+            </div>
           </div>
         )}
       </main>

@@ -490,6 +490,13 @@ body { background:#f4f6f8 !important; }
 <style id="unify3">
 body, button, input, select, textarea { font-family:-apple-system,"PingFang TC","Microsoft JhengHei","Noto Sans TC",sans-serif !important; }
 </style>
+<style id="unify4">
+/* 與品質系統同一套：主色一律用綠，設定齒輪移到右上角不佔一行 */
+:root { --info:#1f7a6d; --info-bg:#e2f0ee; }
+.add-fab, .admin-fab { background:#1f7a6d !important; box-shadow:0 4px 12px rgba(31,122,109,.4) !important; }
+.page-header { position:absolute !important; top:8px; right:10px; padding:0 !important; border:0 !important; background:transparent !important; z-index:300; }
+#searchRow { padding-right:58px !important; }
+</style>
 </head>
 <body>
 
@@ -840,8 +847,8 @@ body, button, input, select, textarea { font-family:-apple-system,"PingFang TC",
 //  CONFIG — fill these in with your own Supabase project values
 //  Dashboard → Project Settings → Data API / API Keys
 // ============================================================================
-var SUPABASE_URL = "https://qxgntqtzaefapjyxaqhs.supabase.co";
-var SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF4Z250cXR6YWVmYXBqeXhhcWhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5NzM5ODQsImV4cCI6MjEwMjU0OTk4NH0.PZeJEbGlBFIE1GVCjAJZgPEw_v9R_AYc956HlJoimlg";
+var SUPABASE_URL = "https://uwgpoipjhqnxyayapbzh.supabase.co";
+var SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV3Z3BvaXBqaHFueHlheWFwYnpoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4Njg5ODksImV4cCI6MjEwMDQ0NDk4OX0.FAbaYltBApRYB7ioWn0Z62w-LZrWUTAAMmRgziWGR6c";
 
 var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -903,7 +910,7 @@ async function selectNoImage(table, orders) {
 async function loadAll() {
   var asc = { ascending: true }, desc = { ascending: false };
   var r = await Promise.all([
-    sb.from("categories").select("*").order("sort_order"),
+    sb.from("boh_categories").select("*").order("sort_order"),
     selectNoImage("products", [["sort_order"]]),
     selectNoImage("vacuums", [["floor_code"], ["model"]]),
     sb.from("vacuum_maintenance").select("*").order("service_date", desc),
@@ -2109,7 +2116,7 @@ async function saveCatManager() {
   if (!res.error) {
     closeCatManager();
     if (catMgrMode === "cleaning") {
-      var cc = await sb.from("categories").select("*").order("sort_order"); if (!cc.error) categories = cc.data || [];
+      var cc = await sb.from("boh_categories").select("*").order("sort_order"); if (!cc.error) categories = cc.data || [];
       var pr = await reloadNoImage("products", [["sort_order"]]); if (pr) products = pr;
     } else if (catMgrMode === "equipment") {
       var ec = await sb.from("equipment_types").select("*").order("sort_order"); if (!ec.error) equipTypesList = ec.data || [];

@@ -34,6 +34,14 @@ h1.font-bold.text-lg { display:none !important; }
 body, button, input, select, textarea { font-family:-apple-system,"PingFang TC","Microsoft JhengHei","Noto Sans TC",sans-serif !important; }
 .bg-white.rounded-lg, .bg-white.rounded-xl { border-radius:16px !important; box-shadow:0 1px 2px rgba(20,35,48,.04),0 6px 16px rgba(20,35,48,.05) !important; }
 </style>
+<style id="unify4">
+/* 與品質系統同一套：取消重複的標題列，只留分頁；按鈕主色統一為綠 */
+.bg-slate-800 > div:first-child { display:none !important; }
+.bg-blue-600, .bg-blue-500, .bg-green-600, .bg-green-500, .bg-indigo-600 { background-color:#1f7a6d !important; }
+.hover:bg-blue-700:hover, .hover:bg-green-700:hover, .hover:bg-blue-600:hover { background-color:#17635a !important; }
+.text-blue-600, .text-blue-700 { color:#1f7a6d !important; }
+.border-blue-500, .border-blue-600, .ring-blue-500 { border-color:#1f7a6d !important; }
+</style>
 </head>
 <body>
 <div id="root"></div>
@@ -42,8 +50,8 @@ body, button, input, select, textarea { font-family:-apple-system,"PingFang TC",
 const { useState, useEffect, useRef } = React;
 
 // ============ Supabase 連線設定 ============
-const SUPABASE_URL = 'https://lxzaeowijxtayogkhjij.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx4emFlb3dpanh0YXlvZ2toamlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0ODM5OTEsImV4cCI6MjA5NTA1OTk5MX0.6B_YLKKaoiJY9Iw-QTBY2TwNIndQxkk-yc8M-TDcxXM';
+const SUPABASE_URL = 'https://uwgpoipjhqnxyayapbzh.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV3Z3BvaXBqaHFueHlheWFwYnpoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4Njg5ODksImV4cCI6MjEwMDQ0NDk4OX0.FAbaYltBApRYB7ioWn0Z62w-LZrWUTAAMmRgziWGR6c';
 const STORAGE_BUCKET = 'defect-photos';
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // ===========================================
@@ -187,9 +195,9 @@ function App() {
     setLoading(true);
     try {
       const [u, t, d] = await Promise.all([
-        sb.from('users').select('*').order('id'),
+        sb.from('defect_users').select('*').order('id'),
         sb.from('defect_types').select('*').order('id'),
-        sb.from('defects').select('*').order('created_at', { ascending: false }),
+        sb.from('defect_records').select('*').order('created_at', { ascending: false }),
       ]);
       if (u.error) console.error('載入用戶失敗:', u.error);
       if (t.error) console.error('載入類型失敗:', t.error);
@@ -218,7 +226,7 @@ function App() {
     setLoginLoading(true);
     setLoginError('');
     try {
-      const { data, error } = await sb.from('users').select('*')
+      const { data, error } = await sb.from('defect_users').select('*')
         .eq('id', trimmedId).eq('password', trimmedPwd).eq('active', true).maybeSingle();
 
       if (error) {
@@ -229,7 +237,7 @@ function App() {
         setLoginId('');
         setLoginPwd('');
       } else {
-        const { data: userExists, error: checkErr } = await sb.from('users').select('id, active')
+        const { data: userExists, error: checkErr } = await sb.from('defect_users').select('id, active')
           .eq('id', trimmedId).maybeSingle();
         if (checkErr) setLoginError('系統連線錯誤：' + checkErr.message);
         else if (!userExists) setLoginError('找不到此員工編號');
@@ -284,7 +292,7 @@ function App() {
         register_date: form.registerDate || null,
         fixed_date: form.fixedDate || null,
       };
-      const { data, error } = await sb.from('defects').update(updateData).eq('id', editingDefect.id).select().single();
+      const { data, error } = await sb.from('defect_records').update(updateData).eq('id', editingDefect.id).select().single();
       if (error) { console.error('儲存失敗:', error); alert('儲存失敗：' + error.message); setSubmitting(false); return; }
       setDefects(defects.map(d => d.id === editingDefect.id ? fromDb(data) : d));
       setEditingDefect(null);
@@ -295,7 +303,7 @@ function App() {
         created_by: currentUser.id, created_by_name: currentUser.name,
         register_date: form.registerDate || today(),
       };
-      const { data, error } = await sb.from('defects').insert(insertData).select().single();
+      const { data, error } = await sb.from('defect_records').insert(insertData).select().single();
       if (error) { console.error('新增失敗:', error); alert('新增失敗：' + error.message); setSubmitting(false); return; }
       setDefects([fromDb(data), ...defects]);
     }
@@ -343,7 +351,7 @@ function App() {
   const handleDeleteDefect = async (id) => {
     if (!window.confirm('確認刪除此記錄？相片也會一併刪除')) return;
     const target = defects.find(d => d.id === id);
-    const { error } = await sb.from('defects').delete().eq('id', id);
+    const { error } = await sb.from('defect_records').delete().eq('id', id);
     if (error) { console.error('刪除失敗:', error); return; }
     if (target?.photos?.length > 0) await deletePhotosFromStorage(target.photos);
     setDefects(defects.filter(d => d.id !== id));
@@ -365,7 +373,7 @@ function App() {
       updateData.fixed_date = null;
     }
 
-    const { data, error } = await sb.from('defects').update(updateData).eq('id', id).select().single();
+    const { data, error } = await sb.from('defect_records').update(updateData).eq('id', id).select().single();
     if (error) { console.error('更新失敗:', error); return; }
     setDefects(defects.map(d => d.id === id ? fromDb(data) : d));
   };
@@ -862,7 +870,7 @@ function UsersView({users, reload}) {
   const handleAdd = async () => {
     if (!newUser.id || !newUser.name) return;
     if (users.find(u=>u.id===newUser.id)) return;
-    const { error } = await sb.from('users').insert({...newUser, active: true});
+    const { error } = await sb.from('defect_users').insert({...newUser, active: true});
     if (error) { console.error('新增失敗:', error); return; }
     setNewUser({id:'', name:'', role:'supervisor', password:'hskp1234'});
     setShowAdd(false);
@@ -871,13 +879,13 @@ function UsersView({users, reload}) {
 
   const handleResetPwd = async (u) => {
     if (!window.confirm('確認重設密碼為 hskp1234？')) return;
-    const { error } = await sb.from('users').update({password: 'hskp1234'}).eq('id', u.id);
+    const { error } = await sb.from('defect_users').update({password: 'hskp1234'}).eq('id', u.id);
     if (error) { console.error('重設失敗:', error); return; }
     reload();
   };
 
   const handleToggle = async (u) => {
-    const { error } = await sb.from('users').update({active: !u.active}).eq('id', u.id);
+    const { error } = await sb.from('defect_users').update({active: !u.active}).eq('id', u.id);
     if (error) { console.error('切換失敗:', error); return; }
     reload();
   };
