@@ -581,3 +581,20 @@ header h1{flex:1 1 6em !important;min-width:5.5em}
 .sp-opt input{width:20px;height:20px;flex-shrink:0;accent-color:var(--accent)}
 .sp-t{flex:1;font-size:14.5px;font-weight:600}.sp-t small{display:block;font-weight:400;color:var(--sub);font-size:11.5px;margin-top:2px}
 .sp-ph{font-size:12px;color:var(--sub);flex-shrink:0}
+
+/* ── 右上角設定齒輪（大觸控範圍）與設定面板 ── */
+.hdr-gear{flex-shrink:0;width:46px;height:46px;border-radius:50%;border:none;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;cursor:pointer;margin-left:auto}
+.hdr-gear:active{background:rgba(255,255,255,.34)}
+.st-sheet{padding-bottom:calc(18px + env(safe-area-inset-bottom,0px))}
+.st-title{font-size:22px;margin-bottom:2px}
+.st-who{font-size:14px;color:var(--sub);margin-bottom:12px}
+.st-lab{font-size:13px;font-weight:700;color:var(--sub);margin:10px 2px 6px}
+.st-seg{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.st-seg button{min-height:60px;border:2px solid var(--line);background:var(--card);border-radius:16px;font-family:inherit;font-size:18px;font-weight:800;color:var(--ink);cursor:pointer}
+.st-seg button.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.st-btn{width:100%;min-height:60px;margin-top:12px;border:2px solid var(--line);background:var(--card);border-radius:16px;font-family:inherit;font-size:18px;font-weight:800;color:var(--ink);display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer}
+.st-btn.out{color:var(--red);border-color:var(--red-soft);background:var(--red-soft)}
+.st-btn svg.spin{animation:rfspin .8s linear infinite}
+.gate-big{font-size:17px !important;padding:12px 20px !important;min-height:48px}
+header>div:first-child{flex-wrap:nowrap}
+header h1{flex:1 1 auto !important;min-width:0}
