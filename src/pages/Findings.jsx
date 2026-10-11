@@ -7,8 +7,8 @@ import { PhotoGrid, PhotoField } from '../components/Photos'
 import Confirm from '../components/Confirm'
 import { ReportModal, FindingsReport } from '../components/Reports'
 
-// 查房快速記錄：影相 → 房號 → 揀房務員 → 揀問題標籤。全程不用打字。
-// 同一次可揀多個標籤：每個標籤存一筆（共用相片與 batch），方便日後按「人 × 問題」統計。
+// 查房快速記錄：拍照 → 房號 → 選房務員 → 選問題標籤。全程不用打字。
+// 同一次可選多個標籤：每個標籤存一筆（共用相片與 batch），方便日後按「人 × 問題」統計。
 
 const LS_ATT = 'hqms_last_attendant'
 const LS_INSP = 'hqms_last_inspector'
@@ -45,8 +45,9 @@ export default function Findings() {
   const [confirmDel, setConfirmDel] = useState(null)
   const [range, setRange] = useState(7)
   const [kindF, setKindF] = useState('全部')   // 全部 / 有問題 / 做得好
-  const [warn, setWarn] = useState(null)        // 揀咗已有記錄嘅同事 → 確認彈窗
+  const [warn, setWarn] = useState(null)        // 選了已有記錄的同事 → 確認彈窗
   const [report, setReport] = useState(false)
+  const [withPhotos, setWithPhotos] = useState(true)   // 報告是否附相片
   const [who, setWho] = useState('')            // 只看某位房務員
 
   useEffect(() => { load() }, [])
@@ -101,7 +102,7 @@ export default function Findings() {
       photos: [], note: '', inspector: keep?.inspector ?? lsGet(LS_INSP),
     })
   }
-  // 揀人：「有問題」入口，如果佢之前已有記錄就先彈提示，確認先繼續
+  // 選人：「有問題」入口，如果該同事之前已有記錄就先彈出提示，確認後才繼續
   function pickAtt(id) {
     setForm(f => ({ ...f, attendant_id: id }))
     if (!id || form.kind !== 'issue' || id === form.confirmedAtt) return
@@ -118,11 +119,11 @@ export default function Findings() {
   }
   async function save(next) {
     const f = form
-    if (!f.attendant_id) { toast('請揀房務員'); return }
-    if (!f.tag_ids.length && !f.note.trim()) { toast(f.kind === 'good' ? '請揀做得好嘅地方，或喺「補充」寫低' : '請揀問題，或喺「補充」寫低問題'); return }
+    if (!f.attendant_id) { toast('請選擇房務員'); return }
+    if (!f.tag_ids.length && !f.note.trim()) { toast(f.kind === 'good' ? '請選擇做得好的地方，或在「補充」寫下來' : '請選擇問題，或在「補充」寫下問題'); return }
     setSaving(true)
     const batch = `${f.kind === 'good' ? 'good-' : ''}${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
-    const ids = f.tag_ids.length ? f.tag_ids : [null] // 冇適合嘅標籤：只靠補充文字記一筆
+    const ids = f.tag_ids.length ? f.tag_ids : [null] // 沒有適合的標籤：只靠補充文字記一筆
     const list = ids.map(id => ({
       date: f.date || todayStr(), attendant_id: f.attendant_id, room: f.room.trim(), tag_id: id,
       tag: id ? (tagById[id] || {}).name || '' : (f.kind === 'good' ? OTHER_GOOD : OTHER_TAG), photos: f.photos, note: f.note.trim(), inspector: f.inspector.trim(), batch,
@@ -178,7 +179,7 @@ export default function Findings() {
       </div>
       <div style={{ display: 'flex', justifyContent: 'flex-end', margin: '6px 2px 10px' }}>
         <button className="logout" style={{ color: 'var(--sub)', background: '#eef1f4', marginRight: 6 }} onClick={() => setReport(true)}>📄 匯出</button>
-        <button className="logout" style={{ color: 'var(--sub)', background: '#eef1f4' }} onClick={() => setMgr(true)}>⚙ 問題標籤（{activeTags.length}）</button>
+        <button className="logout" style={{ color: 'var(--sub)', background: '#eef1f4' }} onClick={() => setMgr(true)}>⚙ 標籤管理（{activeTags.length}）</button>
       </div>
 
       {repeats.length > 0 && (
@@ -201,7 +202,7 @@ export default function Findings() {
       </div>
 
       <h2 style={{ margin: '4px 4px 10px' }}>查房記錄<span style={{ fontSize: 11.5, color: 'var(--sub)', fontWeight: 400 }}>（{batches.length} 次 · {batches.reduce((n, b) => n + b.items.length, 0)} 個問題）</span></h2>
-      {batches.length === 0 && <div className="note">呢段時間未有記錄。查房見到問題，㩒上面「📷 記錄問題」。</div>}
+      {batches.length === 0 && <div className="note">這段時間還沒有記錄。查房發現問題，請按上面的「⚠ 記錄問題」。</div>}
       {batches.map(b => (
         <div className="c-item fd-item" key={b.key} onClick={() => setView(b)}>
           <div className="fd-thumb">{b.photos[0] ? <img src={b.photos[0]} alt="" loading="lazy" /> : <span>📋</span>}{b.photos.length > 1 && <span className="fd-pn">{b.photos.length}</span>}</div>
@@ -218,7 +219,7 @@ export default function Findings() {
         <div className="modal" onClick={e => { if (e.target === e.currentTarget) setForm(null) }}>
           <div className="sheet">
             <h2>{form.kind === 'good' ? '⭐ 表揚做得好' : '記錄問題'}</h2>
-            <PhotoField label="① 影相" photos={form.photos} onChange={p => setForm({ ...form, photos: p })} max={4} />
+            <PhotoField label="① 拍照" photos={form.photos} onChange={p => setForm({ ...form, photos: p })} max={4} />
             <div style={{ display: 'flex', gap: 10 }}>
               <div style={{ flex: 1 }} className="f-row"><label>② 房號</label><input inputMode="numeric" value={form.room} onChange={e => setForm({ ...form, room: e.target.value })} placeholder="例：1016" /></div>
               <div style={{ flex: 1 }} className="f-row"><label>日期</label><input type="date" value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} /></div>
@@ -240,7 +241,7 @@ export default function Findings() {
               </select>
             </div>
             <div className="f-row">
-              <label>{form.kind === 'good' ? '④ 做得好嘅地方（可揀多個 · 冇適合嘅喺下面「補充」寫）' : '④ 問題（可揀多個 · 冇適合嘅可以唔揀，喺下面「補充」寫）'}</label>
+              <label>{form.kind === 'good' ? '④ 做得好的地方（可多選 · 沒有適合的請在下面「補充」填寫）' : '④ 問題（可多選 · 沒有適合的可以不選，在下面「補充」填寫）'}</label>
               {groups.map(g => (
                 <div key={g.d} className="fd-dim">
                   <div className="fd-dim-h">{g.d}</div>
@@ -254,7 +255,7 @@ export default function Findings() {
                 </div>
               ))}
             </div>
-            <div className="f-row"><label>補充（揀咗問題可留空 · 可用鍵盤🎤講）</label><input value={form.note} onChange={e => setForm({ ...form, note: e.target.value })} placeholder="例：浴缸邊" /></div>
+            <div className="f-row"><label>補充（已選問題可留空 · 可用鍵盤🎤語音輸入）</label><input value={form.note} onChange={e => setForm({ ...form, note: e.target.value })} placeholder="例：浴缸邊" /></div>
             <div className="f-row"><label>抽查人</label><input value={form.inspector} onChange={e => setForm({ ...form, inspector: e.target.value })} placeholder="例：Benny" /></div>
             <button className="btn" disabled={saving || !form.attendant_id || (!form.tag_ids.length && !form.note.trim())} onClick={() => save(true)}>{saving ? '儲存中…' : '儲存，記下一間'}</button>
             <button className="btn ghost" disabled={saving} onClick={() => save(false)} style={{ color: 'var(--accent)', fontWeight: 700 }}>儲存並關閉</button>
@@ -267,7 +268,7 @@ export default function Findings() {
         <div className="modal" style={{ zIndex: 60 }}>
           <div className="sheet center">
             <h2 style={{ marginBottom: 6 }}>{shortName(attById[warn.id])} 已有記錄</h2>
-            <p style={{ fontSize: 14, lineHeight: 1.6, marginBottom: 8 }}>此同事喺入面已經有 <b>{warn.n}</b> 筆記錄（近 {HIST_DAYS} 日），是否確定新增？</p>
+            <p style={{ fontSize: 14, lineHeight: 1.6, marginBottom: 8 }}>此同事在系統中已經有 <b>{warn.n}</b> 筆記錄（近 {HIST_DAYS} 日），是否確定新增？</p>
             <div className="fd-warn-list">
               {warn.recent.map((r, i) => <div key={i}><span className="fd-sub">{r.date.slice(5).replace('-', '/')}</span> {r.tags.join('、')}</div>)}
             </div>
@@ -279,11 +280,11 @@ export default function Findings() {
 
       {report && (
         <ReportModal title="查房記錄報告" sub={`近 ${range} 日${who ? ' · ' + shortName(attById[who]) : ''}${kindF !== '全部' ? ' · ' + kindF : ''}`} onClose={() => setReport(false)}>
-          <FindingsReport data={{
+          <FindingsReport withPhotos={withPhotos} onTogglePhotos={setWithPhotos} data={{
             issueN: issueB.length, goodN: goodB.length, peopleN: byPerson.length,
             tagRank, byPerson,
             repeats: repeats.map(r => ({ name: shortName(attById[r.attendant_id]), tag: r.tag, n: r.n })),
-            rows: batches.map(b => ({ date: b.date, room: b.room, name: shortName(attById[b.attendant_id]), kind: b.kind, tags: b.items.map(tagName).join('、'), note: b.note })),
+            rows: batches.map(b => ({ date: b.date, room: b.room, name: shortName(attById[b.attendant_id]), kind: b.kind, tags: b.items.map(tagName).join('、'), note: b.note, photos: b.photos || [] })),
           }} />
         </ReportModal>
       )}
@@ -312,19 +313,20 @@ export default function Findings() {
                 </div>
               )
             })}
-            <button className="btn danger" style={{ marginTop: 14 }} onClick={() => setConfirmDel(view)}>刪除呢次記錄</button>
+            <button className="btn danger" style={{ marginTop: 14 }} onClick={() => setConfirmDel(view)}>刪除這次記錄</button>
             <button className="btn ghost" onClick={() => setView(null)}>關閉</button>
           </div>
         </div>
       )}
 
       {mgr && <TagManager tags={tags} topics={topics} onClose={() => setMgr(false)} onChanged={load} />}
-      {confirmDel && <Confirm text={`會刪除呢次記錄（${confirmDel.items.length} 個問題）。`} onConfirm={() => delBatch(confirmDel)} onCancel={() => setConfirmDel(null)} />}
+      {confirmDel && <Confirm text={`會刪除這次記錄（${confirmDel.items.length} 個問題）。`} onConfirm={() => delBatch(confirmDel)} onCancel={() => setConfirmDel(null)} />}
     </>
   )
 }
 
 function TagManager({ tags, topics, onClose, onChanged }) {
+  const [tab, setTab] = useState('issue')   // issue=問題標籤 / good=做得好標籤
   const [adding, setAdding] = useState({ name: '', dim: SCORE_DIMS[0] })
   const [confirmDel, setConfirmDel] = useState(null)
   const topicOpts = topics.slice().sort((a, b) => (a.category + a.title).localeCompare(b.category + b.title))
@@ -335,7 +337,7 @@ function TagManager({ tags, topics, onClose, onChanged }) {
     const name = adding.name.trim()
     if (!name) { toast('請填標籤名稱'); return }
     if (tags.some(t => t.name === name)) { toast('已有同名標籤'); return }
-    try { await api.addFindingTag({ name, dim: adding.dim, sort_order: tags.length + 1 }) } catch (ex) { toast('新增失敗：' + ex.message); return }
+    try { await api.addFindingTag({ name, dim: tab === 'good' ? GOOD_DIM : adding.dim, sort_order: tags.length + 1 }) } catch (ex) { toast('新增失敗：' + ex.message); return }
     setAdding({ name: '', dim: adding.dim }); toast('已新增'); onChanged()
   }
   async function del(t) {
@@ -345,39 +347,43 @@ function TagManager({ tags, topics, onClose, onChanged }) {
   return (
     <div className="modal" onClick={e => { if (e.target === e.currentTarget) onClose() }}>
       <div className="sheet">
-        <h2>問題標籤</h2>
-        <p className="src-note">每個標籤可連結主題庫一個主題：檢視記錄時會顯示嗰個主題嘅正確做法。停用嘅標籤唔會再出現喺記錄表單，但舊記錄保留。</p>
-        {tags.map(t => (
+        <h2>標籤管理</h2>
+        <div className="chips" style={{ marginBottom: 8 }}>
+          <button className={`chip ${tab === 'issue' ? 'on' : ''}`} onClick={() => setTab('issue')}>⚠ 問題標籤（{tags.filter(t => t.dim !== GOOD_DIM).length}）</button>
+          <button className={`chip ${tab === 'good' ? 'on' : ''}`} onClick={() => setTab('good')}>⭐ 做得好標籤（{tags.filter(t => t.dim === GOOD_DIM).length}）</button>
+        </div>
+        <p className="src-note">每個標籤可連結主題庫一個主題：檢視記錄時會顯示該主題的正確做法。停用的標籤不會再出現在記錄表單，但舊記錄會保留。</p>
+        {tags.filter(t => (t.dim === GOOD_DIM) === (tab === 'good')).map(t => (
           <div key={t.id} className="fd-mgr-row" style={{ opacity: t.active === false ? .5 : 1 }}>
             <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
               <input className="fd-inp" defaultValue={t.name} onBlur={e => { const v = e.target.value.trim(); if (v && v !== t.name) patch(t, { name: v }) }} />
               <button className="logout" style={{ color: 'var(--sub)', background: '#eef1f4', flexShrink: 0 }} onClick={() => patch(t, { active: t.active === false })}>{t.active === false ? '啟用' : '停用'}</button>
               <button className="logout" style={{ color: 'var(--red)', background: 'var(--red-soft)', flexShrink: 0 }} onClick={() => setConfirmDel(t)}>✕</button>
             </div>
-            <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
-              <select className="fd-inp" style={{ flex: '0 0 38%' }} value={SCORE_DIMS.includes(t.dim) || t.dim === GOOD_DIM ? t.dim : ''} onChange={e => patch(t, { dim: e.target.value })}>
-                <option value="">其他</option><option value={GOOD_DIM}>⭐ 做得好（正面）</option>
+            {tab === 'issue' && <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
+              <select className="fd-inp" style={{ flex: '0 0 38%' }} value={SCORE_DIMS.includes(t.dim) ? t.dim : ''} onChange={e => patch(t, { dim: e.target.value })}>
+                <option value="">其他</option>
                 {SCORE_DIMS.map(d => <option key={d} value={d}>{d}</option>)}
               </select>
               <select className="fd-inp" value={t.topic_id || ''} onChange={e => patch(t, { topic_id: e.target.value || null })}>
                 <option value="">（未連結主題）</option>
                 {topicOpts.map(tp => <option key={tp.id} value={tp.id}>{tp.category}｜{tp.title}</option>)}
               </select>
-            </div>
+            </div>}
           </div>
         ))}
         <div className="fd-mgr-row" style={{ borderStyle: 'dashed' }}>
-          <input className="fd-inp" placeholder="新標籤，例：浴缸邊有水垢" value={adding.name} onChange={e => setAdding({ ...adding, name: e.target.value })} />
+          <input className="fd-inp" placeholder={tab === 'good' ? '新標籤，例：主動協助同事' : '新標籤，例：浴缸邊有水垢'} value={adding.name} onChange={e => setAdding({ ...adding, name: e.target.value })} />
           <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
-            <select className="fd-inp" value={adding.dim} onChange={e => setAdding({ ...adding, dim: e.target.value })}>
+            {tab === 'issue' && <select className="fd-inp" value={adding.dim} onChange={e => setAdding({ ...adding, dim: e.target.value })}>
               {SCORE_DIMS.map(d => <option key={d} value={d}>{d}</option>)}
-              <option value="">其他</option><option value={GOOD_DIM}>⭐ 做得好（正面）</option>
-            </select>
+              <option value="">其他</option>
+            </select>}
             <button className="logout" style={{ color: '#fff', background: 'var(--accent)', flexShrink: 0, padding: '8px 16px' }} onClick={add}>＋ 新增</button>
           </div>
         </div>
         <button className="btn ghost" onClick={onClose}>完成</button>
-        {confirmDel && <Confirm text={`刪除標籤「${confirmDel.name}」？舊記錄會保留標籤名稱。想暫時唔用可以改按「停用」。`} onConfirm={() => del(confirmDel)} onCancel={() => setConfirmDel(null)} />}
+        {confirmDel && <Confirm text={`刪除標籤「${confirmDel.name}」？舊記錄會保留標籤名稱。想暫時不用可以改按「停用」。`} onConfirm={() => del(confirmDel)} onCancel={() => setConfirmDel(null)} />}
       </div>
     </div>
   )

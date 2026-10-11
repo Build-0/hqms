@@ -187,7 +187,7 @@ export function CleaningReport({ data }) {
 }
 
 // ── 查房記錄 ──
-export function FindingsReport({ data }) {
+export function FindingsReport({ data, withPhotos, onTogglePhotos }) {
   const { issueN, goodN, peopleN, tagRank, byPerson, repeats, rows } = data
   return (
     <>
@@ -210,20 +210,19 @@ export function FindingsReport({ data }) {
         </table>
       )}
       <Sub>記錄明細</Sub>
-      {rows.length === 0 ? <Empty>這段時間沒有記錄</Empty> : (
-        <table className="rpt-t">
-          <thead><tr><th>日期</th><th>房號</th><th>同事</th><th>類型</th><th>內容</th></tr></thead>
-          <tbody>
-            {rows.map((r, i) => (
-              <tr key={i}>
-                <td className="rpt-nw">{r.date.slice(5)}</td><td className="rpt-nw">{r.room || '—'}</td><td>{r.name}</td>
-                <td className="rpt-nw" style={{ color: r.kind === 'good' ? '#1b8a5a' : '#c62828' }}>{r.kind === 'good' ? '做得好' : '有問題'}</td>
-                <td>{r.tags}{r.note ? <span className="rpt-mut"> · {r.note}</span> : ''}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+      <label className="rpt-noprint rpt-check"><input type="checkbox" checked={withPhotos} onChange={e => onTogglePhotos(e.target.checked)} /> 附上相片</label>
+      {rows.length === 0 ? <Empty>這段時間沒有記錄</Empty> : rows.map((r, i) => (
+        <div className="rpt-fd" key={i}>
+          {withPhotos && r.photos.length > 0 && (
+            <div className="rpt-fd-ph">{r.photos.slice(0, 4).map((p, k) => <img key={k} src={p} alt="" />)}</div>
+          )}
+          <div className="rpt-fd-tx">
+            <div><b>{r.name}</b>{r.room ? <span className="rpt-mut"> · {r.room} 房</span> : ''} <span className="rpt-mut">· {r.date.slice(5)}</span></div>
+            <div style={{ color: r.kind === 'good' ? '#1b8a5a' : '#c62828', fontWeight: 700 }}>{r.kind === 'good' ? '⭐ 做得好：' : '⚠ 問題：'}{r.tags}</div>
+            {r.note && <div className="rpt-mut">{r.note}</div>}
+          </div>
+        </div>
+      ))}
     </>
   )
 }
