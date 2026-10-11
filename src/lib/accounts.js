@@ -61,3 +61,10 @@ export const getSession = () => {
 }
 export const setSession = acc => { try { localStorage.setItem(SKEY, acc.key) } catch {} }
 export const clearSession = () => { try { localStorage.removeItem(SKEY) } catch {} }
+
+// 匯出（PDF、CSV）只限管理員；非「開放登入」模式（Supabase 帳號）視為管理員
+export const EXPORT_MSG = '匯出功能只限管理員使用，請聯繫管理員。'
+export function canExport() {
+  const acc = getSession()
+  return !acc || acc.role === 'admin'
+}

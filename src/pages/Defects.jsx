@@ -5,7 +5,7 @@ import { toast } from '../lib/toast'
 import { PhotoGrid, PhotoField } from '../components/Photos'
 import Confirm from '../components/Confirm'
 import { ReportModal, DefectReport } from '../components/Reports'
-import { PERMS } from '../lib/accounts'
+import { PERMS, canExport, EXPORT_MSG } from '../lib/accounts'
 
 // 房間缺陷登記（原「房間缺陷登記系統」改寫為原生模組）
 const SEVERITY = [
@@ -96,6 +96,7 @@ export default function Defects({ session, init }) {
     try { await api.deleteDefect(d.id); toast('已刪除'); setConfirmDel(null); setView(null); load() } catch (ex) { toast('刪除失敗：' + ex.message) }
   }
   function exportCsv() {
+    if (!canExport()) { toast(EXPORT_MSG); return }
     const rows = shown.map(d => [d.room, `${d.floor}F`, d.type, sevOf(d.severity).label, stOf(d.status).label, (d.note || '').replace(/"/g, '""'), regDate(d), d.fixed_date || '', d.created_by_name || '', new Date(d.created_at).toLocaleString('zh-TW')])
     const csv = '﻿' + [['房號', '樓層', '缺陷類型', '嚴重程度', '狀態', '備註', '登記日期', '修復日期', '登記人', '建立時間'], ...rows].map(r => r.map(c => `"${c}"`).join(',')).join('\n')
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = `缺陷記錄_${todayStr()}.csv`; a.click()

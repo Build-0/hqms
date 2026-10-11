@@ -1,9 +1,23 @@
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { todayStr } from '../lib/dates'
+import { canExport, EXPORT_MSG } from '../lib/accounts'
 
 // 報告外殼：全螢幕預覽 + 「儲存為 PDF」（瀏覽器列印 → 另存 PDF；手機用分享 → 列印/存成 PDF）
 export function ReportModal({ title, sub, onClose, children }) {
+  // 只有管理員可以匯出；其他帳號只顯示提示
+  if (!canExport()) {
+    return createPortal(
+      <div className="modal" style={{ zIndex: 90 }} onClick={e => { if (e.target === e.currentTarget) onClose() }}>
+        <div className="sheet center">
+          <h2 style={{ marginBottom: 6 }}>🔒 沒有匯出權限</h2>
+          <p style={{ fontSize: 14, color: 'var(--sub)', lineHeight: 1.7, marginBottom: 14 }}>{EXPORT_MSG}</p>
+          <button className="btn" onClick={onClose}>知道了</button>
+        </div>
+      </div>,
+      document.body
+    )
+  }
   const now = new Date()
   const stamp = `${todayStr()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
   return createPortal(
