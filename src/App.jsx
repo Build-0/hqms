@@ -73,6 +73,9 @@ export default function App() {
   const now = new Date()
   const cur = MODULES.find(m => m.id === tab)
   const inQuality = tab === 'quality'
+  const locked = id => !!session && (PERMS[session.role][id] || 'none') === 'none'
+  // 即使被封鎖的頁面（例如舊分頁狀態）也一律退回首頁
+  if (tab !== 'home' && session && (((cur && cur.id === 'boh') && locked('boh')) || ((cur && cur.id === 'defect') && locked('defect')) || ((tab === 'quality' || (cur && !cur.embed)) && locked('quality')))) setTimeout(() => setTab('home'), 0)
   const exportEmbed = () => {
     const w = document.querySelector('iframe.embed-frame')?.contentWindow
     const data = w && w.__getReport && w.__getReport()
@@ -113,10 +116,11 @@ export default function App() {
           <div className="sys-home">
             <div className="sys-grid">
               {SYSTEMS.map(sy => (
-                <button className="sys-card" key={sy.id} onClick={() => setTab(sy.id)}>
+                <button className={`sys-card ${locked(sy.id) ? 'locked' : ''}`} key={sy.id} onClick={() => (locked(sy.id) ? toast('此帳號沒有權限進入「' + sy.label + '」') : setTab(sy.id))}>
                   <Icon name={sy.icon} size={30} color="var(--ink)" width={1.9} />
                   <b>{sy.label}</b>
                   <span>{sy.sub}</span>
+                  {locked(sy.id) && <i>🔒 無權限</i>}
                 </button>
               ))}
             </div>

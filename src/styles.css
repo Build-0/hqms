@@ -430,3 +430,6 @@ main.embed-main{position:relative;padding:0;overflow:hidden;min-height:calc(100v
 /* 唯讀帳號：隱藏品質系統的新增、編輯入口（真正的阻擋在 api.js） */
 .phone.ro .fab, .phone.ro .row-ico, .phone.ro .add-topic { display:none !important; }
 .phone.ro .fd-big, .phone.ro .fd-good, .phone.ro .fd-issue { display:none !important; }
+
+.sys-card.locked{opacity:.45;cursor:not-allowed}
+.sys-card.locked i{font-style:normal;font-size:10px;background:var(--bg);color:var(--sub);border-radius:999px;padding:1px 8px}

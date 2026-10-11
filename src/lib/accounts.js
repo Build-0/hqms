@@ -2,12 +2,12 @@
 // 角色：admin 管理員／store 倉管員／clerk 文員／supervisor 樓層主管（來自原缺陷系統，已排除已改任其他角色者）
 export const ROLE_LABEL = { admin: '管理員', store: '倉管員', clerk: '文員', supervisor: '樓層主管' }
 
-// 各系統權限：edit 可編輯／view 只可查看／register 只可登記（缺陷）
+// 各系統權限：edit 可編輯／register 只可登記（缺陷）／none 封鎖（顯示為灰色，點擊不能進入）
 export const PERMS = {
   admin: { quality: 'edit', boh: 'edit', defect: 'edit' },
-  store: { quality: 'view', boh: 'edit', defect: 'edit' },
-  clerk: { quality: 'view', boh: 'view', defect: 'edit' },
-  supervisor: { quality: 'view', boh: 'view', defect: 'register' },
+  store: { quality: 'none', boh: 'edit', defect: 'edit' },
+  clerk: { quality: 'none', boh: 'none', defect: 'edit' },
+  supervisor: { quality: 'none', boh: 'none', defect: 'register' },
 }
 
 export const ACCOUNTS = [
