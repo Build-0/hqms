@@ -25,14 +25,14 @@ const stOf = v => STATUS.find(s => s.value === v) || { label: v || '—', cls: '
 const regDate = d => d.register_date || (d.created_at || '').slice(0, 10)
 const EMPTY = () => ({ floor: '3', roomNum: '01', type: '', severity: 'medium', note: '', photos: [], registerDate: todayStr(), fixedDate: '' })
 
-export default function Defects({ session }) {
+export default function Defects({ session, init }) {
   // edit＝可編輯全部；register＝只可新增登記與查看
   const full = !session || PERMS[session.role].defect === 'edit'
   const [list, setList] = useState(null)
   const [types, setTypes] = useState([])
   const [err, setErr] = useState('')
   const [tab, setTab] = useState('list')
-  const [f, setF] = useState({ search: '', floor: '', status: '', severity: '', type: '' })
+  const [f, setF] = useState({ search: '', floor: '', status: init?.status || '', severity: '', type: '' })
   const [sortBy, setSortBy] = useState('date-desc')
   const [form, setForm] = useState(null)       // 新增／編輯表單
   const [view, setView] = useState(null)

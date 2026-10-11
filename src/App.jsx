@@ -7,6 +7,7 @@ import Topics from './pages/Topics'
 import CyclicClean from './pages/CyclicClean'
 import Defects from './pages/Defects'
 import Boh from './pages/Boh'
+import Home from './pages/Home'
 import Findings from './pages/Findings'
 import Icon from './components/Icon'
 import Embed from './components/Embed'
@@ -40,6 +41,8 @@ export default function App() {
   const [tab, setTab] = useState('home')
   const [msg, setMsg] = useState('')
   const [session, setSessionState] = useState(() => (api.isOpen ? getSession() : null))
+  const [init, setInit] = useState(null)   // 從首頁摘要跳入時的預設篩選
+  const go = (t, i) => { setInit(i || null); setTab(t) }
   const [rpt, setRpt] = useState(null)   // 嵌入模組的匯出報告 {id, data}
 
   useEffect(() => {
@@ -86,7 +89,7 @@ export default function App() {
   const title = cur ? cur.label : inQuality ? '房間品質' : '酒店客房管理系統'
   return (
     <div className={`phone ${session && PERMS[session.role].quality !== 'edit' && (inQuality || (cur && !cur.embed && !cur.top)) ? 'ro' : ''}`}>
-      <header>
+      <header className={tab === 'home' ? 'hdr-home' : ''}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           {(cur || inQuality) && <button className="back-btn" onClick={cur ? goBack : () => setTab('home')}>‹</button>}
           {cur && <span className="hdr-ico" style={{ background: 'rgba(255,255,255,.2)' }}><Icon name={cur.icon} size={18} color="#fff" /></span>}
@@ -96,14 +99,16 @@ export default function App() {
             ? <button className="logout" onClick={() => { clearSession(); setTab('home'); setSessionState(null) }}>登出</button>
             : <button className="logout" onClick={async () => { await api.signOut(); setUser(null) }}>登出</button>}
         </div>
-        <div className="date">
-          {now.getFullYear()}年{now.getMonth() + 1}月{now.getDate()}日（星期{WD[now.getDay()]}）
-          {api.isLocal && ' · 示範模式'}{session && ` · ${session.name}（${ROLE_LABEL[session.role]}）`}
-          <span style={{ opacity: .6 }}> · 版本 {__BUILD__}</span>
-        </div>
+        {tab === 'home' && (
+          <div className="hdr-sub">
+            <span className="hdr-date">{now.getMonth() + 1}月{now.getDate()}日　星期{WD[now.getDay()]}</span>
+            {api.isLocal && <span className="hdr-user">示範模式</span>}
+            {session && <span className="hdr-user">{session.name} · {ROLE_LABEL[session.role]}</span>}
+          </div>
+        )}
       </header>
       <main className={cur?.embed ? 'embed-main' : ''}>
-        {cur ? <cur.Page key={tab} session={session} /> : inQuality ? (
+        {cur ? <cur.Page key={tab} session={session} init={init} /> : inQuality ? (
           <div className="home-grid">
             {MODULES.filter(m => !m.embed && !m.top).map(m => (
               <button className="home-item" key={m.id} onClick={() => setTab(m.id)}>
@@ -116,7 +121,7 @@ export default function App() {
           <div className="sys-home">
             <div className="sys-grid">
               {SYSTEMS.map(sy => (
-                <button className={`sys-card ${locked(sy.id) ? 'locked' : ''}`} key={sy.id} onClick={() => (locked(sy.id) ? toast('此帳號沒有權限進入「' + sy.label + '」') : setTab(sy.id))}>
+                <button className={`sys-card ${locked(sy.id) ? 'locked' : ''}`} key={sy.id} onClick={() => (locked(sy.id) ? toast('此帳號沒有權限進入「' + sy.label + '」') : go(sy.id))}>
                   <Icon name={sy.icon} size={30} color="var(--ink)" width={1.9} />
                   <b>{sy.label}</b>
                   <span>{sy.sub}</span>
@@ -124,6 +129,8 @@ export default function App() {
                 </button>
               ))}
             </div>
+            <Home session={session} go={go} />
+            <div className="ver-line">版本 {__BUILD__}</div>
           </div>
         )}
       </main>

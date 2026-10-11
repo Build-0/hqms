@@ -18,7 +18,7 @@ const COLS = {
 const TABS = [['chem', '清潔劑'], ['vac', '吸塵機'], ['tool', '清潔工具'], ['eq', '設備']]
 const EMPTY = { products: [], batches: [], cats: [], vacuums: [], vacMaint: [], floors: [], tools: [], toolCats: [], equipment: [], equipMaint: [], types: [] }
 
-export default function Boh({ session }) {
+export default function Boh({ session, init }) {
   const edit = !session || PERMS[session.role].boh === 'edit'
   const [tab, setTab] = useState('chem')
   const [d, setD] = useState(null)
@@ -72,7 +72,7 @@ export default function Boh({ session }) {
         <button className="chip" onClick={() => setReport(true)}>📄 匯出</button>
       </div>
       {!edit && <p className="note" style={{ textAlign: 'left', margin: '0 4px 6px' }}>目前帳號只可查看</p>}
-      {tab === 'chem' && <Chemicals d={d} edit={edit} reload={load} />}
+      {tab === 'chem' && <Chemicals d={d} edit={edit} reload={load} init={init} />}
       {tab === 'vac' && <Machines kind="vacuum" d={d} edit={edit} reload={load} />}
       {tab === 'tool' && <Tools d={d} edit={edit} reload={load} />}
       {tab === 'eq' && <Machines kind="equipment" d={d} edit={edit} reload={load} />}

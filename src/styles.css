@@ -485,3 +485,22 @@ main.embed-main{position:relative;padding:0;overflow:hidden;min-height:calc(100v
 .st-fl{width:52px;flex-shrink:0;border:1px solid var(--line);border-radius:10px;padding:9px 6px;font-size:13px;font-family:inherit;background:var(--bg);text-align:center}
 .st-nm{flex:1;min-width:0;border:1px solid var(--line);border-radius:10px;padding:9px 8px;font-size:13.5px;font-family:inherit;background:var(--bg)}
 .pf-line{display:flex;gap:10px;font-size:13px;padding:4px 0;border-top:1px solid var(--line)}.pf-line span:first-child{color:var(--sub);flex:0 0 46px}
+
+/* ── 標題列層級 ── */
+header h1{font-size:19px;font-weight:800;letter-spacing:.3px}
+header.hdr-home{padding:20px 18px 16px}
+header.hdr-home h1{font-size:25px;font-weight:800;letter-spacing:.5px}
+.hdr-sub{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px}
+.hdr-date{font-size:16px;font-weight:700}
+.hdr-user{font-size:13px;background:rgba(255,255,255,.18);border-radius:999px;padding:3px 11px;font-weight:600}
+.ver-line{text-align:center;font-size:11px;color:var(--sub);opacity:.7;margin:26px 0 8px}
+/* ── 首頁今日概覽 ── */
+.hm{margin-top:26px}
+.hm-h{font-size:18px;margin:0 2px 10px}
+.hm-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.hm-tile,.hm-wide{display:flex;flex-direction:column;align-items:flex-start;gap:3px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;cursor:pointer;font-family:inherit;color:var(--ink);text-align:left;box-shadow:0 1px 2px rgba(20,35,48,.04),0 6px 16px rgba(20,35,48,.05)}
+.hm-lab{font-size:13px;color:var(--sub);font-weight:600}
+.hm-num{font-size:34px;line-height:1.1;font-weight:800}
+.hm-sub{font-size:11.5px;color:var(--sub)}
+.hm-wide{width:100%;margin-top:10px}.hm-wide b{font-size:17px}
+@media (min-width:760px){.hm{max-width:640px;margin-left:auto;margin-right:auto}.hm-grid{grid-template-columns:repeat(4,1fr)}}

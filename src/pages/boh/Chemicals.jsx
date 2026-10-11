@@ -6,10 +6,10 @@ import { Thumb, ImageField, useImages, setCachedImage, num, today, daysUntil } f
 
 const EMPTY = { category_id: '', name_zh: '', name_en: '', applicable_zh: '', dilution_zh: '', rinse: 'no', min_stock: 0, status: '啟用', image: '' }
 
-export default function Chemicals({ d, edit, reload }) {
+export default function Chemicals({ d, edit, reload, init }) {
   const [sub, setSub] = useState('list')       // list / report
   const [q, setQ] = useState('')
-  const [fk, setFk] = useState('all')
+  const [fk, setFk] = useState(init?.fk || 'all')
   const [form, setForm] = useState(null)
   const [orig, setOrig] = useState('')
   const [recv, setRecv] = useState(null)

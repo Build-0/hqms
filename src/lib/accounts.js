@@ -11,29 +11,32 @@ export const PERMS = {
 }
 
 export const ACCOUNTS = [
-  { key: 'benny', name: 'Benny', role: 'admin', h: 'd9631e1d951ce64bee6e4ad7c67862023ad6587a322370720067234f2f9698c8' },
-  { key: 'winnie', name: 'Winnie', role: 'admin', h: '112a68568856924b77276e4ebbf651e0bc19f70c877b72cec3c4127c9805012c' },
-  { key: 'ice', name: 'Ice', role: 'admin', h: 'cdf244dc85325f7545c554cdf0e8da8468bc3bc1f7f1e6dec6781945b29b00d7' },
-  { key: 'kit', name: 'Kit', role: 'admin', h: '67666e672d2634f316ba9fe3a08fd58319e613c7c4d34b1b605da717d550ec17' },
-  { key: 'duncan', name: 'Duncan', role: 'store', h: 'ded36397a770970b8f7341a38d1e3d2b996a65e73e3457e279bf34ee879dbb46' },
-  { key: 'ray', name: 'Ray', role: 'store', h: 'd12b88538f65c71b9d9e36b8bd26fdebd62e36743d8bc8619710450b0ff1c084' },
-  { key: 'abby', name: 'Abby', role: 'clerk', h: '0f3d18cff317d122e44d450743474837941084f517542dfbe33b51dfd1cbe031' },
-  { key: 'nico', name: 'Nico', role: 'clerk', h: '838fb33b3691516541b0f73a4f2e45e3339e05ca15f4bf58b48197ab23c87fe9' },
-  { key: '100224', name: 'Cindy Ngan', id: '100224', role: 'supervisor', h: '0d22c6c764388a3abd605d1fa7a3eb54488e7f1d095d8d7139b4d638a5bf94d8' },
-  { key: '100262', name: 'Jenny Nip', id: '100262', role: 'supervisor', h: '28ebc7ad6e62edb4d1a182ffa63d65806dd645e3e0e0eaae4483876d68864c9b' },
-  { key: '100266', name: 'Irene Lin', id: '100266', role: 'supervisor', h: '5f0ce240c7fbf4899ccc599c6a08d478b08ae9ae1b64203347bba4189bce3bc9' },
-  { key: '100276', name: 'Cici Li', id: '100276', role: 'supervisor', h: '7b345de991f158ba70149ca22d8c253f338f0a39beaa6371cce9272252224f09' },
-  { key: '100658', name: 'Linda Wu', id: '100658', role: 'supervisor', h: '768d7c2f0d5a9dc6e1c16d29a6c4bfd989c57e722a5a61067f24ecf1af96d746' },
-  { key: '100662', name: 'Annie Feng', id: '100662', role: 'supervisor', h: 'c7a44e12a6378111a18cd574820cfc45444327096ec1f12ae51c27427fbb30bd' },
-  { key: '100667', name: 'Bobo Zhang', id: '100667', role: 'supervisor', h: '5cfdc6cda2c6c76e89b0951c2b336cf6c3dd81c5c25c5c050dfb759061db8dda' },
-  { key: '100668', name: 'Rose Zhang', id: '100668', role: 'supervisor', h: '8dfb3995f66062e343d9434d2c5576197f36514deb811f77c2369ff631d969f5' },
-  { key: '100779', name: 'Ling Gong', id: '100779', role: 'supervisor', h: '50de884d930405f43bac99031082d3a16c1abbe536310f3b400efc21b4c0ad75' },
-  { key: '100806', name: 'May Liu', id: '100806', role: 'supervisor', h: '21ba15073f3016d224dc81ac4f1948ad7e793f966d1168953fc91aa63ffa7c49' },
-  { key: '100922', name: 'Edward Xu', id: '100922', role: 'supervisor', h: 'c4657fba0e5666f98cb1d21547e9a43af6bff7fc56c8b0833f6c0ab43941f86f' },
-  { key: '101002', name: 'Anita Chou', id: '101002', role: 'supervisor', h: 'b14653c144abe2edd7f8e7f409185413360aacac94fa005dd699182d612b7e05' },
-  { key: '101170', name: 'Gigi Zeng', id: '101170', role: 'supervisor', h: 'c2890a618b1fe050c98751c4a31b73c58b7ef62e82148a2b45639b776d75c4b1' },
-  { key: '101488', name: 'Candy Huang', id: '101488', role: 'supervisor', h: '951941274377a29cf38ccb4b6b20302d065ab61429a2ea39b312c0077dff206f' },
-  { key: '101494', name: 'Nick Su', id: '101494', role: 'supervisor', h: '8ad42d0e4eb606ef04217df374699c7532420274c0a75bdc3f7595ed3e839697' },
+  { key: '101428', id: '101428', name: 'Benny Liang', role: 'admin', h: '901b3984c5d157ef0f4420d64f8a64d1b618c1f415397978ea155745b4c40e7c' },
+  { key: '100663', id: '100663', name: 'Winnie Weng', role: 'admin', h: 'bd866592c407e1d71fdb6bb5e61aa61607f41b21c498b4ef9a0220f852436635' },
+  { key: '100830', id: '100830', name: 'Ice Zhang', role: 'admin', h: '45ecd4680bf8150732a3c635ddbc32c589d259598eda0f5f92d37b97eb430777' },
+  { key: '101117', id: '101117', name: 'Kit Law', role: 'admin', h: 'f4e1541c4a67d7c66e752a39cab1cfc3ea62917b19941b5ec6eb4b3c7d915bf4' },
+  { key: '101082', id: '101082', name: 'Duncan Wang', role: 'store', h: '0a2ff7964c250afbee366225409307a2145b29cd9779294936b9534dfd0d6e34' },
+  { key: '101055', id: '101055', name: 'Ray Liao', role: 'store', h: 'd218613e13d79df1a94fd6891dc6a0cb198b6aa3024ede6e71f0c7edeb5c5fad' },
+  { key: '100684', id: '100684', name: 'Abby Liu', role: 'clerk', h: '010eb8b8e81a90475fbc57fb43615336951eb15e7a00e12e0d03d0eff77fcff9' },
+  { key: '101323', id: '101323', name: 'Nico Yan', role: 'clerk', h: 'e7f1f329a90f1144f647d2ad8813735e88773dfc16dea01b5c56a368d71ab3f9' },
+  { key: '100266', id: '100266', name: 'Irene Lin', role: 'supervisor', h: 'f34cb49a43c8eaefe49169dd76e0c62ab4ff7f22c95b7029e25f89344a453ada' },
+  { key: '101488', id: '101488', name: 'Candy Huang', role: 'supervisor', h: '7861080ea570274c14b6f98875620dee91f777b4de9079edddfb8b2386736500' },
+  { key: '100276', id: '100276', name: 'Cici Li', role: 'supervisor', h: 'b28e68362b821830ee8eb999b2fd922a356452642e76013655a0c2e3441c367e' },
+  { key: '101170', id: '101170', name: 'Gigi Zeng', role: 'supervisor', h: '5aee6a8dfb9366e757e0fb82d1239cbd116ee4009e35d3b8e123c27a3ed77e03' },
+  { key: '100662', id: '100662', name: 'Annie Feng', role: 'supervisor', h: '3abf2ab3e8ff52b526f8cb5f15f7eeab450ce7774c097c9c64168a04389b4c9f' },
+  { key: '100667', id: '100667', name: 'Bobo Zhang', role: 'supervisor', h: 'e600ffbdeb2b8b0a9f3b9e86b7504ca903ceca9b42d053c349d3ebf9d75301bb' },
+  { key: '100668', id: '100668', name: 'Rose Zhang', role: 'supervisor', h: '5ab965294548b72cf38b9514b006757c1790a3c647184084133d383dbc28aa7d' },
+  { key: '100658', id: '100658', name: 'Linda Wu', role: 'supervisor', h: '633629c8cb6aa783b858ba5872b29c1bbf6d93e8b6c85b22aa8059485eb8bf88' },
+  { key: '100262', id: '100262', name: 'Jenny Nip', role: 'supervisor', h: '3ae63deb5cd003fce39eadd7750a5ac320a45fa3ac18893b6d561ff9d51a9038' },
+  { key: '100224', id: '100224', name: 'Cindy Ngan', role: 'supervisor', h: '5823a72676d4611912dc6eb2cc1d77d11f0a73a9800807bb83c4923647ebed7b' },
+  { key: '100922', id: '100922', name: 'Edward Xu', role: 'supervisor', h: '8ebc8d063de8f7ef6f93a80c4395a9362785118d447492bc3d37ec99ff949a39' },
+  { key: '100779', id: '100779', name: 'Ling Gong', role: 'supervisor', h: 'f9645ad1e06ebeee08f6b3a26083d7274f0e6ad67f3d6b3ed27762665e3113d6' },
+  { key: '101494', id: '101494', name: 'Nick Su', role: 'supervisor', h: 'e0c71963433a28e2974d28726ae610125bb4b0152c90bc8628fbd22be2fc0050' },
+  { key: '100957', id: '100957', name: 'David Kim', role: 'supervisor', h: '3d9902a72fd67069c50fb83a04e496034d8447cc829a53408aaf62a7d0cedc07' },
+  { key: '100660', id: '100660', name: 'Eddie Li', role: 'supervisor', h: 'e10aec7946aeab405d7d1ef3d7f2d1168d328a5425c59a348e2b13d8c479e453' },
+  { key: '100617', id: '100617', name: 'Serito Froilan', role: 'supervisor', h: '9e1b2df9f7c0b37d55e57b3de83cf91fa7146bb55322dd3bee6ad63c2d4c095f' },
+  { key: '100669', id: '100669', name: 'Tony Cao', role: 'supervisor', h: 'c29c090ba62f69669295d8c7ad31e160e48e3797210cb18cea76743609a2af0f' },
+  { key: '100926', id: '100926', name: 'Joe Huang', role: 'supervisor', h: '0777ffc7338c7e7cb29824ce407867b0929f8b96aef8a9938124e4382a3779d2' },
 ]
 
 async function sha256(text) {
@@ -43,8 +46,11 @@ async function sha256(text) {
 
 // 以帳號名（或主管員工編號）加密碼驗證，成功回傳帳號
 export async function verifyLogin(input, password) {
-  const k = String(input || '').trim().toLowerCase()
+  const k = String(input || '').trim().toLowerCase().replace(/\s+/g, ' ')
+  if (!k) return null
+  const first = a => a.name.toLowerCase().split(' ')[0]
   const acc = ACCOUNTS.find(a => a.key === k || a.name.toLowerCase() === k)
+    || (ACCOUNTS.filter(a => first(a) === k).length === 1 ? ACCOUNTS.find(a => first(a) === k) : null)
   if (!acc) return null
   return (await sha256(`hotel-v2:${acc.key}:${password}`)) === acc.h ? acc : null
 }
