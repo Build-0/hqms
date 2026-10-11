@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<!-- This site is hosted on Netlify. Anyone can build and deploy a site
+     like this one for free: https://netlify.new/?utm_campaign=loops&utm_source=ai-legible&utm_medium=owned&utm_content=comment&utm_id=f018a38e-6390-4cb8-853e-958be97d260e
+     Netlify hosting facts for this site: static/SSR served via Netlify Edge. -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>房間缺陷登記系統</title>
+<!-- Icons: 水墨放大鏡 -->
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1e293b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="缺陷登記">
+<script src="https://cdn.tailwindcss.com"></script>
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7/babel.min.js"></script>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Microsoft JhengHei", sans-serif; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+// ============ Supabase 連線設定 ============
+const SUPABASE_URL = 'https://lxzaeowijxtayogkhjij.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx4emFlb3dpanh0YXlvZ2toamlqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0ODM5OTEsImV4cCI6MjA5NTA1OTk5MX0.6B_YLKKaoiJY9Iw-QTBY2TwNIndQxkk-yc8M-TDcxXM';
+const STORAGE_BUCKET = 'defect-photos';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+// ===========================================
+
+const today = () => new Date().toISOString().slice(0, 10);
+
+const SEVERITY_OPTIONS = [
+  { value: 'high', label: '嚴重', color: 'bg-red-100 text-red-700 border-red-300', dot: 'bg-red-500' },
+  { value: 'medium', label: '中度', color: 'bg-yellow-100 text-yellow-700 border-yellow-300', dot: 'bg-yellow-500' },
+  { value: 'low', label: '輕微', color: 'bg-blue-100 text-blue-700 border-blue-300', dot: 'bg-blue-500' },
+];
+
+const STATUS_OPTIONS = [
+  { value: 'pending', label: '待處理', color: 'bg-red-100 text-red-700' },
+  { value: 'processing', label: '處理中', color: 'bg-yellow-100 text-yellow-700' },
+  { value: 'done', label: '已修復', color: 'bg-green-100 text-green-700' },
+];
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return '';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit' });
+};
+
+const formatDateTime = (dateStr) => {
+  if (!dateStr) return '';
+  return new Date(dateStr).toLocaleString('zh-TW');
+};
+
+const fromDb = (d) => ({
+  id: d.id,
+  room: d.room,
+  floor: d.floor,
+  type: d.type,
+  severity: d.severity,
+  status: d.status,
+  note: d.note || '',
+  photos: d.photos || [],
+  createdBy: d.created_by,
+  createdByName: d.created_by_name,
+  createdAt: d.created_at,
+  updatedAt: d.updated_at,
+  registerDate: d.register_date || d.created_at?.slice(0, 10) || '',
+  fixedDate: d.fixed_date || '',
+});
+
+// ============ 圖片壓縮工具 ============
+const compressImage = (file, maxSize = 1600, quality = 0.82) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = reject;
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = reject;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let { width, height } = img;
+        if (width > height && width > maxSize) {
+          height = height * maxSize / width; width = maxSize;
+        } else if (height > maxSize) {
+          width = width * maxSize / height; height = maxSize;
+        }
+        canvas.width = width; canvas.height = height;
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+        canvas.toBlob(b => b ? resolve(b) : reject(new Error('壓縮失敗')), 'image/jpeg', quality);
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+};
+
+// ============ 從 Storage 刪除照片 ============
+const deletePhotosFromStorage = async (urls) => {
+  if (!urls || urls.length === 0) return;
+  const paths = urls.map(url => {
+    const m = url.match(new RegExp(`/${STORAGE_BUCKET}/(.+)$`));
+    return m ? decodeURIComponent(m[1]) : null;
+  }).filter(Boolean);
+  if (paths.length > 0) {
+    await sb.storage.from(STORAGE_BUCKET).remove(paths);
+  }
+};
+
+function App() {
+  const [users, setUsers] = useState([]);
+  const [defectTypes, setDefectTypes] = useState([]);
+  const [defects, setDefects] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // 登入狀態 — 利用 localStorage 保持登入（重新整理不用重登）
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('defect_current_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch { return null; }
+  });
+
+  const [loginId, setLoginId] = useState('');
+  const [loginPwd, setLoginPwd] = useState('');
+  const [loginError, setLoginError] = useState('');
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('list');
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [editingDefect, setEditingDefect] = useState(null);
+  const [viewingDefect, setViewingDefect] = useState(null);
+  const [filters, setFilters] = useState({ floor: '', status: '', severity: '', type: '', search: '' });
+  const [sortBy, setSortBy] = useState('date-desc'); // date-desc, date-asc, room-asc, room-desc
+  const [form, setForm] = useState({ floor: '3', roomNum: '01', type: '', severity: 'medium', note: '', photos: [], registerDate: today(), fixedDate: '' });
+  const [submitting, setSubmitting] = useState(false);
+  const [uploadingPhotos, setUploadingPhotos] = useState(false);
+
+  const sessionUploadsRef = useRef([]);
+  const originalPhotosRef = useRef([]);
+  const [showBackTop, setShowBackTop] = useState(false);
+
+  // 監聽滾動，顯示返回頂部按鈕
+  useEffect(() => {
+    const onScroll = () => setShowBackTop(window.scrollY > 300);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  // 點擊統計項目 → 跳轉到篩選後的列表
+  const handleStatsFilter = (filterKey, filterValue) => {
+    setFilters({ floor: '', status: '', severity: '', type: '', search: '', [filterKey]: filterValue });
+    setActiveTab('list');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // 同步 localStorage
+  useEffect(() => {
+    if (currentUser) {
+      localStorage.setItem('defect_current_user', JSON.stringify(currentUser));
+    } else {
+      localStorage.removeItem('defect_current_user');
+    }
+  }, [currentUser]);
+
+  const loadAll = async () => {
+    setLoading(true);
+    try {
+      const [u, t, d] = await Promise.all([
+        sb.from('users').select('*').order('id'),
+        sb.from('defect_types').select('*').order('id'),
+        sb.from('defects').select('*').order('created_at', { ascending: false }),
+      ]);
+      if (u.error) console.error('載入用戶失敗:', u.error);
+      if (t.error) console.error('載入類型失敗:', t.error);
+      if (d.error) console.error('載入缺陷失敗:', d.error);
+      if (u.data) setUsers(u.data);
+      if (t.data) setDefectTypes(t.data.map(x => x.name));
+      if (d.data) setDefects(d.data.map(fromDb));
+    } catch (err) {
+      console.error('載入資料錯誤:', err);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => { loadAll(); }, []);
+
+  const resetForm = () => setForm({ floor: '3', roomNum: '01', type: '', severity: 'medium', note: '', photos: [], registerDate: today(), fixedDate: '' });
+
+  // ============ 登入 ============
+  const handleLogin = async () => {
+    const trimmedId = loginId.trim();
+    const trimmedPwd = loginPwd.trim();
+    if (!trimmedId || !trimmedPwd) { setLoginError('請輸入員工編號和密碼'); return; }
+
+    setLoginLoading(true);
+    setLoginError('');
+    try {
+      const { data, error } = await sb.from('users').select('*')
+        .eq('id', trimmedId).eq('password', trimmedPwd).eq('active', true).maybeSingle();
+
+      if (error) {
+        setLoginError('系統連線錯誤：' + error.message);
+      } else if (data) {
+        setCurrentUser(data);
+        setLoginError('');
+        setLoginId('');
+        setLoginPwd('');
+      } else {
+        const { data: userExists, error: checkErr } = await sb.from('users').select('id, active')
+          .eq('id', trimmedId).maybeSingle();
+        if (checkErr) setLoginError('系統連線錯誤：' + checkErr.message);
+        else if (!userExists) setLoginError('找不到此員工編號');
+        else if (!userExists.active) setLoginError('此帳號已被停用，請聯繫管理員');
+        else setLoginError('密碼錯誤，請重新輸入');
+      }
+    } catch (err) {
+      setLoginError('網路連線失敗，請檢查網路後重試');
+    }
+    setLoginLoading(false);
+  };
+
+  // ============ 上傳照片到 Storage（自動壓縮） ============
+  const handlePhotoUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    e.target.value = '';
+    const remaining = 5 - form.photos.length;
+    const toAdd = files.slice(0, remaining);
+    if (toAdd.length === 0) return;
+
+    setUploadingPhotos(true);
+    const uploadedUrls = [];
+    for (const file of toAdd) {
+      try {
+        const blob = await compressImage(file);
+        const fileName = `${form.floor}${form.roomNum}/${Date.now()}-${Math.random().toString(36).slice(2,8)}.jpg`;
+        const { error } = await sb.storage.from(STORAGE_BUCKET).upload(fileName, blob, { contentType: 'image/jpeg' });
+        if (error) { console.error('上傳失敗:', error); continue; }
+        const { data: urlData } = sb.storage.from(STORAGE_BUCKET).getPublicUrl(fileName);
+        uploadedUrls.push(urlData.publicUrl);
+        sessionUploadsRef.current.push(urlData.publicUrl);
+      } catch (err) { console.error('處理失敗:', err); }
+    }
+    setForm(f => ({ ...f, photos: [...f.photos, ...uploadedUrls] }));
+    setUploadingPhotos(false);
+  };
+
+  // ============ 提交新增 / 編輯 ============
+  const handleSubmitDefect = async () => {
+    if (!form.type) { alert('請選擇缺陷類型'); return; }
+    if (uploadingPhotos) { alert('請等待相片上傳完成'); return; }
+    setSubmitting(true);
+    const room = `${form.floor}${form.roomNum}`;
+
+    const removedOriginals = originalPhotosRef.current.filter(p => !form.photos.includes(p));
+    const orphanUploads = sessionUploadsRef.current.filter(p => !form.photos.includes(p));
+
+    if (editingDefect) {
+      const updateData = {
+        room, floor: form.floor, type: form.type, severity: form.severity,
+        note: form.note, photos: form.photos, updated_at: new Date().toISOString(),
+        register_date: form.registerDate || null,
+        fixed_date: form.fixedDate || null,
+      };
+      const { data, error } = await sb.from('defects').update(updateData).eq('id', editingDefect.id).select().single();
+      if (error) { console.error('儲存失敗:', error); alert('儲存失敗：' + error.message); setSubmitting(false); return; }
+      setDefects(defects.map(d => d.id === editingDefect.id ? fromDb(data) : d));
+      setEditingDefect(null);
+    } else {
+      const insertData = {
+        room, floor: form.floor, type: form.type, severity: form.severity,
+        status: 'pending', note: form.note, photos: form.photos,
+        created_by: currentUser.id, created_by_name: currentUser.name,
+        register_date: form.registerDate || today(),
+      };
+      const { data, error } = await sb.from('defects').insert(insertData).select().single();
+      if (error) { console.error('新增失敗:', error); alert('新增失敗：' + error.message); setSubmitting(false); return; }
+      setDefects([fromDb(data), ...defects]);
+    }
+
+    await deletePhotosFromStorage([...removedOriginals, ...orphanUploads]);
+    sessionUploadsRef.current = [];
+    originalPhotosRef.current = [];
+    resetForm();
+    setShowAddModal(false);
+    setSubmitting(false);
+  };
+
+  const handleCancelModal = async () => {
+    const toDelete = [...sessionUploadsRef.current];
+    sessionUploadsRef.current = [];
+    originalPhotosRef.current = [];
+    setShowAddModal(false);
+    setEditingDefect(null);
+    resetForm();
+    if (toDelete.length > 0) deletePhotosFromStorage(toDelete);
+  };
+
+  const openNewDefectModal = () => {
+    setActiveTab('list');
+    resetForm();
+    setEditingDefect(null);
+    originalPhotosRef.current = [];
+    sessionUploadsRef.current = [];
+    setShowAddModal(true);
+  };
+
+  const handleEditDefect = (d) => {
+    setEditingDefect(d);
+    originalPhotosRef.current = d.photos || [];
+    sessionUploadsRef.current = [];
+    setForm({
+      floor: d.floor, roomNum: d.room.slice(-2), type: d.type,
+      severity: d.severity, note: d.note, photos: d.photos || [],
+      registerDate: d.registerDate || '',
+      fixedDate: d.fixedDate || '',
+    });
+    setShowAddModal(true);
+  };
+
+  const handleDeleteDefect = async (id) => {
+    if (!window.confirm('確認刪除此記錄？相片也會一併刪除')) return;
+    const target = defects.find(d => d.id === id);
+    const { error } = await sb.from('defects').delete().eq('id', id);
+    if (error) { console.error('刪除失敗:', error); return; }
+    if (target?.photos?.length > 0) await deletePhotosFromStorage(target.photos);
+    setDefects(defects.filter(d => d.id !== id));
+  };
+
+  // ============ 狀態變更 + 自動填充已修復日期 ============
+  const handleStatusChange = async (id, newStatus) => {
+    const currentDefect = defects.find(d => d.id === id);
+    const updateData = {
+      status: newStatus,
+      updated_at: new Date().toISOString(),
+    };
+    // 改為「已修復」→ 自動填充今天日期（若尚未有修復日期）
+    if (newStatus === 'done' && !currentDefect.fixedDate) {
+      updateData.fixed_date = today();
+    }
+    // 從「已修復」改回其他狀態 → 清除修復日期
+    if (currentDefect.status === 'done' && newStatus !== 'done') {
+      updateData.fixed_date = null;
+    }
+
+    const { data, error } = await sb.from('defects').update(updateData).eq('id', id).select().single();
+    if (error) { console.error('更新失敗:', error); return; }
+    setDefects(defects.map(d => d.id === id ? fromDb(data) : d));
+  };
+
+  const filteredDefects = defects.filter(d => {
+    if (filters.floor && d.floor !== filters.floor) return false;
+    if (filters.status && d.status !== filters.status) return false;
+    if (filters.severity && d.severity !== filters.severity) return false;
+    if (filters.type && d.type !== filters.type) return false;
+    if (filters.search && !d.room.includes(filters.search) && !(d.note||'').includes(filters.search) && !(d.createdByName||'').includes(filters.search)) return false;
+    return true;
+  }).sort((a, b) => {
+    switch (sortBy) {
+      case 'room-asc':  return (parseInt(a.room)||0) - (parseInt(b.room)||0);
+      case 'room-desc': return (parseInt(b.room)||0) - (parseInt(a.room)||0);
+      case 'date-asc':  return (a.registerDate || a.createdAt).localeCompare(b.registerDate || b.createdAt);
+      case 'date-desc': return (b.registerDate || b.createdAt).localeCompare(a.registerDate || a.createdAt);
+      default: return 0;
+    }
+  });
+
+  const exportToCSV = () => {
+    const headers = ['房號', '樓層', '缺陷類型', '嚴重程度', '狀態', '備註', '登記日期', '修復日期', '登記人', '建立時間'];
+    const rows = filteredDefects.map(d => [
+      d.room, `${d.floor}F`, d.type,
+      SEVERITY_OPTIONS.find(s => s.value === d.severity)?.label,
+      STATUS_OPTIONS.find(s => s.value === d.status)?.label,
+      (d.note || '').replace(/"/g, '""'),
+      d.registerDate || '',
+      d.fixedDate || '',
+      d.createdByName,
+      new Date(d.createdAt).toLocaleString('zh-TW'),
+    ]);
+    const csv = '\uFEFF' + [headers, ...rows].map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `缺陷記錄_${today()}.csv`; a.click();
+  };
+
+  // ============ Loading 畫面 ============
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-100">
+        <div className="text-center">
+          <div className="inline-block w-12 h-12 border-4 border-slate-300 border-t-slate-800 rounded-full animate-spin mb-3"></div>
+          <p className="text-slate-600">連線中...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // ============ 登入畫面 ============
+  if (!currentUser) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-4 text-white text-2xl">🔑</div>
+            <h1 className="text-2xl font-bold text-slate-800">房間缺陷登記系統</h1>
+            <p className="text-slate-500 text-sm mt-1">Housekeeping Defect System</p>
+          </div>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">員工編號</label>
+              <input type="text" value={loginId} onChange={e => setLoginId(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && !loginLoading && handleLogin()}
+                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500"
+                placeholder="例如 101428" disabled={loginLoading}/>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">密碼</label>
+              <input type="password" value={loginPwd} onChange={e => setLoginPwd(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && !loginLoading && handleLogin()}
+                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500"
+                placeholder="請輸入密碼" disabled={loginLoading}/>
+            </div>
+            {loginError && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                <p className="text-red-600 text-sm">{loginError}</p>
+              </div>
+            )}
+            <button onClick={handleLogin} disabled={loginLoading}
+              className="w-full bg-slate-800 text-white py-2.5 rounded-lg font-medium hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed">
+              {loginLoading ? '登入中...' : '登入'}
+            </button>
+          </div>
+          <p className="mt-6 text-xs text-slate-400 text-center">☁️ 資料儲存於 Supabase 雲端</p>
+        </div>
+      </div>
+    );
+  }
+
+  const isAdmin = currentUser.role === 'admin';
+
+  // ============ 主畫面 ============
+  return (
+    <div className="min-h-screen bg-slate-50">
+      <div className="bg-slate-800 text-white">
+        <div className="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
+          <div>
+            <h1 className="font-bold text-lg">房間缺陷登記系統</h1>
+            <p className="text-xs text-slate-300">{currentUser.name}（{currentUser.id}）{isAdmin && ' · 管理員'}</p>
+          </div>
+          <button onClick={() => setCurrentUser(null)} className="text-sm hover:bg-slate-700 px-3 py-1.5 rounded">
+            登出 ⏏
+          </button>
+        </div>
+        <div className="max-w-6xl mx-auto px-4 flex gap-1 overflow-x-auto">
+          <TabBtn active={activeTab==='list'} onClick={()=>setActiveTab('list')}>📋 缺陷列表</TabBtn>
+          <TabBtn active={activeTab==='add'} onClick={openNewDefectModal}>➕ 新增登記</TabBtn>
+          {isAdmin && <TabBtn active={activeTab==='stats'} onClick={()=>setActiveTab('stats')}>📊 統計報表</TabBtn>}
+          {isAdmin && <TabBtn active={activeTab==='users'} onClick={()=>setActiveTab('users')}>👥 用戶管理</TabBtn>}
+          {isAdmin && <TabBtn active={activeTab==='types'} onClick={()=>setActiveTab('types')}>⚙️ 類型設定</TabBtn>}
+        </div>
+      </div>
+
+      <div className="max-w-6xl mx-auto p-4">
+        {activeTab === 'list' && (
+          <div>
+            <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                <input type="text" placeholder="🔍 搜尋房號/備註" value={filters.search}
+                  onChange={e => setFilters({...filters, search: e.target.value})}
+                  className="col-span-2 md:col-span-1 px-3 py-2 border border-slate-300 rounded text-sm"/>
+                <select value={filters.floor} onChange={e=>setFilters({...filters,floor:e.target.value})} className="px-2 py-2 border border-slate-300 rounded text-sm">
+                  <option value="">所有樓層</option>
+                  {Array.from({length:10},(_,i)=>i+3).map(f=><option key={f} value={String(f)}>{f}F</option>)}
+                </select>
+                <select value={filters.status} onChange={e=>setFilters({...filters,status:e.target.value})} className="px-2 py-2 border border-slate-300 rounded text-sm">
+                  <option value="">所有狀態</option>
+                  {STATUS_OPTIONS.map(s=><option key={s.value} value={s.value}>{s.label}</option>)}
+                </select>
+                <select value={filters.severity} onChange={e=>setFilters({...filters,severity:e.target.value})} className="px-2 py-2 border border-slate-300 rounded text-sm">
+                  <option value="">所有程度</option>
+                  {SEVERITY_OPTIONS.map(s=><option key={s.value} value={s.value}>{s.label}</option>)}
+                </select>
+                <select value={filters.type} onChange={e=>setFilters({...filters,type:e.target.value})} className="px-2 py-2 border border-slate-300 rounded text-sm">
+                  <option value="">所有類型</option>
+                  {defectTypes.map(t=><option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
+              <div className="flex justify-between items-center mt-3 text-sm flex-wrap gap-2">
+                <div className="flex items-center gap-3">
+                  <span className="text-slate-600">共 <b>{filteredDefects.length}</b> 筆</span>
+                  <select value={sortBy} onChange={e=>setSortBy(e.target.value)}
+                    className="px-2 py-1.5 border border-slate-300 rounded text-xs bg-white">
+                    <option value="date-desc">日期 新→舊</option>
+                    <option value="date-asc">日期 舊→新</option>
+                    <option value="room-asc">房號 低→高</option>
+                    <option value="room-desc">房號 高→低</option>
+                  </select>
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={loadAll} className="px-3 py-1.5 bg-slate-200 text-slate-700 rounded hover:bg-slate-300 text-xs">🔄 重新載入</button>
+                  {isAdmin && filteredDefects.length > 0 && (
+                    <button onClick={exportToCSV} className="px-3 py-1.5 bg-green-600 text-white rounded hover:bg-green-700 text-xs">
+                      ⬇ 匯出 CSV
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {filteredDefects.length === 0 ? (
+              <div className="bg-white rounded-lg p-12 text-center text-slate-400">
+                <p className="text-4xl mb-2">📭</p>
+                <p>{defects.length === 0 ? '還沒有任何缺陷記錄，點擊「新增登記」開始' : '沒有符合條件的記錄'}</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {filteredDefects.map(d => <DefectCard key={d.id} d={d} isAdmin={isAdmin} onEdit={handleEditDefect} onDelete={handleDeleteDefect} onStatusChange={handleStatusChange} onView={setViewingDefect}/>)}
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'stats' && isAdmin && <StatsView defects={defects} defectTypes={defectTypes} users={users} onFilter={handleStatsFilter}/>}
+        {activeTab === 'users' && isAdmin && <UsersView users={users} reload={loadAll}/>}
+        {activeTab === 'types' && isAdmin && <TypesView defectTypes={defectTypes} reload={loadAll}/>}
+      </div>
+
+      {/* ============ 新增 / 編輯 Modal ============ */}
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl w-full max-w-lg max-h-screen overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b p-4 flex justify-between items-center z-10">
+              <h2 className="font-bold text-lg">{editingDefect ? '編輯缺陷記錄' : '新增缺陷記錄'}</h2>
+              <button onClick={handleCancelModal} className="text-2xl leading-none">×</button>
+            </div>
+            <div className="p-4 space-y-4">
+              {/* 房號 */}
+              <div>
+                <label className="block text-sm font-medium mb-1">房號 *</label>
+                <div className="flex gap-2">
+                  <select value={form.floor} onChange={e=>setForm({...form,floor:e.target.value})} className="flex-1 px-3 py-2 border border-slate-300 rounded">
+                    {Array.from({length:10},(_,i)=>i+3).map(f=><option key={f} value={String(f)}>{f} 樓</option>)}
+                  </select>
+                  <select value={form.roomNum} onChange={e=>setForm({...form,roomNum:e.target.value})} className="flex-1 px-3 py-2 border border-slate-300 rounded">
+                    {Array.from({length:82},(_,i)=>String(i+1).padStart(2,'0')).map(n=><option key={n} value={n}>{n} 號房</option>)}
+                  </select>
+                </div>
+                <p className="text-xs text-slate-500 mt-1">已選：房號 <b>{form.floor}{form.roomNum}</b></p>
+              </div>
+
+              {/* 缺陷類型 */}
+              <div>
+                <label className="block text-sm font-medium mb-1">缺陷類型 *</label>
+                <select value={form.type} onChange={e=>setForm({...form,type:e.target.value})} className="w-full px-3 py-2 border border-slate-300 rounded">
+                  <option value="">請選擇</option>
+                  {defectTypes.map(t=><option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
+
+              {/* 嚴重程度 */}
+              <div>
+                <label className="block text-sm font-medium mb-1">嚴重程度 *</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {SEVERITY_OPTIONS.map(s=>(
+                    <button key={s.value} onClick={()=>setForm({...form,severity:s.value})}
+                      className={`py-2 rounded border-2 text-sm font-medium ${form.severity===s.value?s.color:'bg-white text-slate-500 border-slate-200'}`}>
+                      {s.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 管理員：登記日期（可修改） */}
+              {isAdmin && (
+                <div>
+                  <label className="block text-sm font-medium mb-1">📅 登記日期</label>
+                  <input type="date" value={form.registerDate}
+                    onChange={e => setForm({...form, registerDate: e.target.value})}
+                    className="w-full px-3 py-2 border border-slate-300 rounded text-sm"/>
+                  <p className="text-xs text-slate-400 mt-1">可修改此工單的登記日期（預設為今天）</p>
+                </div>
+              )}
+
+              {/* 管理員：已修復日期（僅編輯已修復的工單時顯示） */}
+              {isAdmin && editingDefect && editingDefect.status === 'done' && (
+                <div>
+                  <label className="block text-sm font-medium mb-1">✅ 修復日期</label>
+                  <input type="date" value={form.fixedDate}
+                    onChange={e => setForm({...form, fixedDate: e.target.value})}
+                    className="w-full px-3 py-2 border border-slate-300 rounded text-sm"/>
+                  <p className="text-xs text-slate-400 mt-1">可修改修復完成的日期</p>
+                </div>
+              )}
+
+              {/* 備註 */}
+              <div>
+                <label className="block text-sm font-medium mb-1">備註</label>
+                <textarea value={form.note} onChange={e=>setForm({...form,note:e.target.value})} rows={3}
+                  className="w-full px-3 py-2 border border-slate-300 rounded text-sm" placeholder="補充說明（選填）"/>
+              </div>
+
+              {/* 照片 */}
+              <div>
+                <label className="block text-sm font-medium mb-1">相片（最多 5 張）</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {form.photos.map((p, i)=>(
+                    <div key={i} className="relative aspect-square">
+                      <img src={p} className="w-full h-full object-cover rounded border"/>
+                      <button onClick={()=>setForm({...form,photos:form.photos.filter((_,idx)=>idx!==i)})}
+                        className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">×</button>
+                    </div>
+                  ))}
+                  {uploadingPhotos && (
+                    <div className="aspect-square border-2 border-dashed border-blue-300 rounded flex flex-col items-center justify-center bg-blue-50">
+                      <div className="w-6 h-6 border-2 border-blue-300 border-t-blue-600 rounded-full animate-spin"></div>
+                      <span className="text-xs text-blue-600 mt-1">上傳中...</span>
+                    </div>
+                  )}
+                  {!uploadingPhotos && form.photos.length < 5 && (
+                    <label className="aspect-square border-2 border-dashed border-slate-300 rounded flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50">
+                      <span className="text-2xl">📷</span>
+                      <span className="text-xs text-slate-500 mt-1">加相片</span>
+                      <input type="file" accept="image/*" multiple onChange={handlePhotoUpload} className="hidden"/>
+                    </label>
+                  )}
+                </div>
+                <p className="text-xs text-slate-500 mt-1">☁️ 相片自動壓縮後儲存至雲端</p>
+              </div>
+            </div>
+            <div className="sticky bottom-0 bg-white border-t p-4 flex gap-2 z-10">
+              <button onClick={handleCancelModal}
+                className="flex-1 py-2.5 border border-slate-300 rounded font-medium" disabled={submitting}>取消</button>
+              <button onClick={handleSubmitDefect} disabled={submitting || uploadingPhotos}
+                className="flex-1 py-2.5 bg-slate-800 text-white rounded font-medium hover:bg-slate-700 disabled:opacity-50">
+                {submitting ? '儲存中...' : uploadingPhotos ? '相片上傳中...' : (editingDefect ? '儲存修改' : '確認登記')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {viewingDefect && <DetailModal d={viewingDefect} isAdmin={isAdmin} onClose={()=>setViewingDefect(null)} onStatusChange={handleStatusChange}/>}
+
+      {/* ============ 返回頂部按鈕 ============ */}
+      {showBackTop && (
+        <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          className="fixed bottom-6 right-6 w-12 h-12 bg-slate-800 text-white rounded-full shadow-lg flex items-center justify-center text-xl hover:bg-slate-700 transition-all z-40"
+          title="返回頂部">
+          ↑
+        </button>
+      )}
+    </div>
+  );
+}
+
+function TabBtn({active, onClick, children}) {
+  return (
+    <button onClick={onClick} className={`px-3 py-2.5 text-sm font-medium border-b-2 whitespace-nowrap ${active?'border-white text-white':'border-transparent text-slate-300 hover:text-white'}`}>
+      {children}
+    </button>
+  );
+}
+
+// ============ 缺陷卡片 ============
+function DefectCard({d, isAdmin, onEdit, onDelete, onStatusChange, onView}) {
+  const sev = SEVERITY_OPTIONS.find(s=>s.value===d.severity);
+  const stat = STATUS_OPTIONS.find(s=>s.value===d.status);
+  return (
+    <div className="bg-white rounded-lg shadow-sm p-4 hover:shadow-md transition">
+      <div className="flex justify-between items-start gap-3">
+        <div className="flex-1 min-w-0 cursor-pointer" onClick={()=>onView(d)}>
+          <div className="flex items-center gap-2 flex-wrap mb-1.5">
+            <span className="font-bold text-lg">{d.room}</span>
+            <span className={`px-2 py-0.5 rounded text-xs border ${sev.color}`}>{sev.label}</span>
+            <span className={`px-2 py-0.5 rounded text-xs ${stat.color}`}>
+              {stat.label}
+              {d.status === 'done' && d.fixedDate && (
+                <span className="ml-1">({d.fixedDate})</span>
+              )}
+            </span>
+          </div>
+          <p className="font-medium text-slate-800">{d.type}</p>
+          {d.note && <p className="text-sm text-slate-600 mt-1 line-clamp-2">{d.note}</p>}
+          <div className="flex items-center gap-3 mt-2 text-xs text-slate-500 flex-wrap">
+            <span>{d.createdByName}</span>
+            <span>📅 登記：{d.registerDate}</span>
+            {d.photos?.length > 0 && <span>📷 {d.photos.length}</span>}
+          </div>
+        </div>
+        {d.photos?.[0] && <img src={d.photos[0]} onClick={()=>onView(d)} className="w-16 h-16 object-cover rounded cursor-pointer"/>}
+      </div>
+      {isAdmin && (
+        <div className="flex gap-2 mt-3 pt-3 border-t">
+          <select value={d.status} onChange={e=>onStatusChange(d.id, e.target.value)}
+            className="flex-1 px-2 py-1 border border-slate-300 rounded text-xs">
+            {STATUS_OPTIONS.map(s=><option key={s.value} value={s.value}>狀態：{s.label}</option>)}
+          </select>
+          <button onClick={()=>onEdit(d)} className="px-3 py-1 text-blue-600 hover:bg-blue-50 rounded text-xs">✎ 編輯</button>
+          <button onClick={()=>onDelete(d.id)} className="px-3 py-1 text-red-600 hover:bg-red-50 rounded text-xs">🗑 刪除</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============ 詳情 Modal ============
+function DetailModal({d, isAdmin, onClose, onStatusChange}) {
+  const sev = SEVERITY_OPTIONS.find(s=>s.value===d.severity);
+  const stat = STATUS_OPTIONS.find(s=>s.value===d.status);
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={onClose}>
+      <div className="bg-white rounded-2xl w-full max-w-lg max-h-screen overflow-y-auto" onClick={e=>e.stopPropagation()}>
+        <div className="sticky top-0 bg-white border-b p-4 flex justify-between items-center z-10">
+          <h2 className="font-bold text-lg">房號 {d.room} 缺陷詳情</h2>
+          <button onClick={onClose} className="text-2xl leading-none">×</button>
+        </div>
+        <div className="p-4 space-y-3">
+          <div className="flex gap-2 flex-wrap">
+            <span className={`px-2 py-1 rounded text-sm border ${sev.color}`}>{sev.label}</span>
+            <span className={`px-2 py-1 rounded text-sm ${stat.color}`}>{stat.label}</span>
+          </div>
+          <div><p className="text-xs text-slate-500">缺陷類型</p><p className="text-sm">{d.type}</p></div>
+          <div><p className="text-xs text-slate-500">備註</p><p className="text-sm whitespace-pre-wrap">{d.note || '無'}</p></div>
+
+          {/* 登記日期 */}
+          <div>
+            <p className="text-xs text-slate-500">📅 登記日期</p>
+            <p className="text-sm font-medium">{d.registerDate || '—'}</p>
+          </div>
+
+          {/* 修復日期 */}
+          {d.status === 'done' && d.fixedDate && (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+              <p className="text-xs text-green-600">✅ 修復日期</p>
+              <p className="text-sm font-medium text-green-700">{d.fixedDate}</p>
+            </div>
+          )}
+
+          <div><p className="text-xs text-slate-500">登記人</p><p className="text-sm">{d.createdByName}（{d.createdBy}）</p></div>
+          <div><p className="text-xs text-slate-500">建立時間</p><p className="text-sm">{formatDateTime(d.createdAt)}</p></div>
+
+          {d.photos?.length > 0 && (
+            <div>
+              <p className="text-sm text-slate-500 mb-1">相片（{d.photos.length}）</p>
+              <div className="grid grid-cols-2 gap-2">
+                {d.photos.map((p,i)=><a key={i} href={p} target="_blank" rel="noopener"><img src={p} className="w-full aspect-square object-cover rounded hover:opacity-80"/></a>)}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============ 統計報表 ============
+function StatsView({defects, defectTypes, users, onFilter}) {
+  const total = defects.length;
+  const byStatus = STATUS_OPTIONS.map(s => ({...s, count: defects.filter(d=>d.status===s.value).length}));
+  const bySeverity = SEVERITY_OPTIONS.map(s => ({...s, count: defects.filter(d=>d.severity===s.value).length}));
+
+  // 合併：類型表的名稱 + 實際工單中出現過的類型（修復名稱不匹配導致全為 0 的問題）
+  const typeSet = new Set([...defectTypes, ...defects.map(d=>d.type)]);
+  const byType = [...typeSet].map(t => ({type: t, count: defects.filter(d=>d.type===t).length})).sort((a,b)=>b.count-a.count);
+
+  const byFloor = Array.from({length:10},(_,i)=>i+3).map(f => ({floor: f, count: defects.filter(d=>d.floor===String(f)).length}));
+  const byUser = users.map(u=>({name: u.name, id: u.id, count: defects.filter(d=>d.createdBy===u.id).length})).filter(u=>u.count>0).sort((a,b)=>b.count-a.count);
+
+  return (
+    <div className="space-y-4">
+      <p className="text-xs text-slate-400">💡 點擊任意統計項目可跳轉至篩選後的列表</p>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <StatCard label="總記錄" value={total} color="bg-slate-800"/>
+        {byStatus.map(s=><StatCard key={s.value} label={s.label} value={s.count}
+          color={s.value==='pending'?'bg-red-500':s.value==='processing'?'bg-yellow-500':'bg-green-500'}
+          onClick={()=>onFilter('status', s.value)}/>)}
+      </div>
+      <div className="grid md:grid-cols-2 gap-4">
+        <StatBlock title="按嚴重程度">
+          {bySeverity.map(s=>(<BarRow key={s.value} label={s.label} count={s.count} total={total} color={s.dot}
+            onClick={()=>onFilter('severity', s.value)}/>))}
+        </StatBlock>
+        <StatBlock title="按樓層">
+          {byFloor.map(f=>(<BarRow key={f.floor} label={`${f.floor}F`} count={f.count} total={total} color="bg-slate-600"
+            onClick={()=>onFilter('floor', String(f.floor))}/>))}
+        </StatBlock>
+      </div>
+      <StatBlock title="按缺陷類型">
+        {byType.map(t=>(<BarRow key={t.type} label={t.type} count={t.count} total={total} color="bg-blue-500"
+          onClick={()=>onFilter('type', t.type)}/>))}
+      </StatBlock>
+      <StatBlock title="按登記人">
+        {byUser.length === 0 ? <p className="text-sm text-slate-400">尚無資料</p> :
+          byUser.map(u=>(<BarRow key={u.name} label={u.name} count={u.count} total={total} color="bg-purple-500"
+            onClick={()=>onFilter('search', u.name)}/>))}
+      </StatBlock>
+    </div>
+  );
+}
+
+function StatCard({label, value, color, onClick}) {
+  return (
+    <div className={`bg-white rounded-lg p-4 shadow-sm ${onClick ? 'cursor-pointer hover:shadow-md hover:scale-[1.02] transition-all' : ''}`}
+      onClick={onClick}>
+      <div className={`w-8 h-1 rounded ${color} mb-2`}></div>
+      <p className="text-xs text-slate-500">{label}</p>
+      <p className="text-2xl font-bold">{value}</p>
+    </div>
+  );
+}
+
+function StatBlock({title, children}) {
+  return (
+    <div className="bg-white rounded-lg p-4 shadow-sm">
+      <h3 className="font-bold mb-3">{title}</h3>
+      <div className="space-y-2">{children}</div>
+    </div>
+  );
+}
+
+function BarRow({label, count, total, color, onClick}) {
+  const pct = total ? (count/total)*100 : 0;
+  return (
+    <div className={onClick ? 'cursor-pointer hover:bg-slate-50 rounded px-2 py-1 -mx-2 transition-colors' : ''}
+      onClick={onClick}>
+      <div className="flex justify-between text-xs mb-0.5">
+        <span>{label}</span>
+        <span className="text-slate-500">{count} {onClick && count > 0 ? '→' : ''}</span>
+      </div>
+      <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+        <div className={`h-full ${color}`} style={{width:`${pct}%`}}></div>
+      </div>
+    </div>
+  );
+}
+
+// ============ 用戶管理 ============
+function UsersView({users, reload}) {
+  const [showAdd, setShowAdd] = useState(false);
+  const [newUser, setNewUser] = useState({id:'', name:'', role:'supervisor', password:'hskp1234'});
+
+  const handleAdd = async () => {
+    if (!newUser.id || !newUser.name) return;
+    if (users.find(u=>u.id===newUser.id)) return;
+    const { error } = await sb.from('users').insert({...newUser, active: true});
+    if (error) { console.error('新增失敗:', error); return; }
+    setNewUser({id:'', name:'', role:'supervisor', password:'hskp1234'});
+    setShowAdd(false);
+    reload();
+  };
+
+  const handleResetPwd = async (u) => {
+    if (!window.confirm('確認重設密碼為 hskp1234？')) return;
+    const { error } = await sb.from('users').update({password: 'hskp1234'}).eq('id', u.id);
+    if (error) { console.error('重設失敗:', error); return; }
+    reload();
+  };
+
+  const handleToggle = async (u) => {
+    const { error } = await sb.from('users').update({active: !u.active}).eq('id', u.id);
+    if (error) { console.error('切換失敗:', error); return; }
+    reload();
+  };
+
+  return (
+    <div className="bg-white rounded-lg shadow-sm">
+      <div className="p-4 border-b flex justify-between items-center">
+        <h3 className="font-bold">用戶管理（{users.length} 人）</h3>
+        <button onClick={()=>setShowAdd(!showAdd)} className="px-3 py-1.5 bg-slate-800 text-white rounded text-sm">+ 新增用戶</button>
+      </div>
+      {showAdd && (
+        <div className="p-4 border-b bg-slate-50 grid grid-cols-2 md:grid-cols-4 gap-2">
+          <input placeholder="員工編號" value={newUser.id} onChange={e=>setNewUser({...newUser,id:e.target.value})} className="px-2 py-1.5 border border-slate-300 rounded text-sm"/>
+          <input placeholder="姓名" value={newUser.name} onChange={e=>setNewUser({...newUser,name:e.target.value})} className="px-2 py-1.5 border border-slate-300 rounded text-sm"/>
+          <select value={newUser.role} onChange={e=>setNewUser({...newUser,role:e.target.value})} className="px-2 py-1.5 border border-slate-300 rounded text-sm">
+            <option value="supervisor">主管</option>
+            <option value="admin">管理員</option>
+          </select>
+          <button onClick={handleAdd} className="px-3 py-1.5 bg-green-600 text-white rounded text-sm">確認新增</button>
+        </div>
+      )}
+      <div className="divide-y">
+        {users.map(u=>(
+          <div key={u.id} className="p-3 flex justify-between items-center text-sm">
+            <div>
+              <p className="font-medium">{u.name} {!u.active && <span className="text-red-500 text-xs">(已停用)</span>}</p>
+              <p className="text-xs text-slate-500">{u.id} · {u.role==='admin'?'管理員':'主管'}</p>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={()=>handleResetPwd(u)} className="px-2 py-1 text-blue-600 hover:bg-blue-50 rounded text-xs">重設密碼</button>
+              <button onClick={()=>handleToggle(u)}
+                className={`px-2 py-1 rounded text-xs ${u.active?'text-red-600 hover:bg-red-50':'text-green-600 hover:bg-green-50'}`}>
+                {u.active?'停用':'啟用'}
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ============ 類型管理 ============
+function TypesView({defectTypes, reload}) {
+  const [newType, setNewType] = useState('');
+  const handleAdd = async () => {
+    if (!newType.trim()) return;
+    if (defectTypes.includes(newType.trim())) return;
+    const { error } = await sb.from('defect_types').insert({name: newType.trim()});
+    if (error) { console.error('新增失敗:', error); return; }
+    setNewType('');
+    reload();
+  };
+  const handleDelete = async (t) => {
+    if (!window.confirm(`確認刪除「${t}」？`)) return;
+    const { error } = await sb.from('defect_types').delete().eq('name', t);
+    if (error) { console.error('刪除失敗:', error); return; }
+    reload();
+  };
+  return (
+    <div className="bg-white rounded-lg shadow-sm">
+      <div className="p-4 border-b">
+        <h3 className="font-bold mb-3">缺陷類型管理（{defectTypes.length} 項）</h3>
+        <div className="flex gap-2">
+          <input value={newType} onChange={e=>setNewType(e.target.value)} onKeyDown={e=>e.key==='Enter'&&handleAdd()}
+            placeholder="新增缺陷類型" className="flex-1 px-3 py-2 border border-slate-300 rounded text-sm"/>
+          <button onClick={handleAdd} className="px-4 py-2 bg-slate-800 text-white rounded text-sm">新增</button>
+        </div>
+      </div>
+      <div className="divide-y">
+        {defectTypes.map(t=>(
+          <div key={t} className="p-3 flex justify-between items-center text-sm">
+            <span>{t}</span>
+            <button onClick={()=>handleDelete(t)}
+              className="text-red-600 hover:bg-red-50 px-2 py-1 rounded text-xs">刪除</button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

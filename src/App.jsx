@@ -20,13 +20,14 @@ const MODULES = [
   { id: 'scores', icon: 'star', label: '房務員清潔評分', color: '#8f7ac9', Page: Scores },
   // 嵌入的舊系統（與品質系統同網站、各自保留原有資料庫）
   { id: 'boh', icon: 'box', label: '後勤管理', color: '#7a6a4f', embed: true, Page: () => <Embed src="./boh/index.html" title="酒店後勤管理" /> },
+  { id: 'defect', icon: 'wrench', label: '缺陷管理', color: '#b5603a', embed: true, Page: () => <Embed src="./defect/index.html" title="房間缺陷登記" /> },
   { id: 'complaint', icon: 'chat', label: '客訴管理', color: '#c0564f', Page: Complaints },
 ]
 // 首頁三大系統卡：房間品質（內含上面各模組）／後勤管理（嵌入）／缺陷管理（待加入）
 const SYSTEMS = [
   { id: 'quality', icon: 'clipcheck', label: '房間品質', sub: '檢查、評分、報告' },
   { id: 'boh', icon: 'box', label: '後勤管理', sub: '物資、庫存、設備' },
-  { id: 'defect', icon: 'wrench', label: '缺陷管理', sub: '登記、跟進、統計', soon: true },
+  { id: 'defect', icon: 'wrench', label: '缺陷管理', sub: '登記、跟進、統計' },
 ]
 const WD = ['日', '一', '二', '三', '四', '五', '六']
 
@@ -64,7 +65,7 @@ export default function App() {
   const now = new Date()
   const cur = MODULES.find(m => m.id === tab)
   const inQuality = tab === 'quality'
-  const goBack = () => setTab(cur && cur.id !== 'boh' ? 'quality' : 'home')
+  const goBack = () => setTab(cur && !cur.embed ? 'quality' : 'home')
   const title = cur ? cur.label : inQuality ? '房間品質' : '酒店綜合管理系統'
   return (
     <div className="phone">
@@ -84,7 +85,7 @@ export default function App() {
       <main className={cur?.embed ? 'embed-main' : ''}>
         {cur ? <cur.Page key={tab} /> : inQuality ? (
           <div className="home-grid">
-            {MODULES.filter(m => m.id !== 'boh').map(m => (
+            {MODULES.filter(m => !m.embed).map(m => (
               <button className="home-item" key={m.id} onClick={() => setTab(m.id)}>
                 <span className="hi-circle" style={{ background: m.color + '26', borderColor: 'transparent' }}><Icon name={m.icon} size={33} color={m.color} width={2.2} /></span>
                 <span className="hi-label">{m.label}</span>
