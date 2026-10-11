@@ -110,7 +110,7 @@ export default function Defects({ session }) {
   )
 
   return (
-    <>
+    <div className="df-wrap">
       {err && <div className="card" style={{ borderColor: 'var(--red)' }}><p style={{ fontSize: 13, lineHeight: 1.7 }}>讀取失敗：{err}</p></div>}
 
       {full && (
@@ -235,7 +235,7 @@ export default function Defects({ session }) {
           <DefectReport data={{ defects: list, severity: SEVERITY, status: STATUS }} />
         </ReportModal>
       )}
-    </>
+    </div>
   )
 }
 

@@ -454,3 +454,6 @@ main.embed-main{position:relative;padding:0;overflow:hidden;min-height:calc(100v
 .df-kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 4px;text-align:center;cursor:pointer}
 .df-kpi b{display:block;font-size:22px}.df-kpi span{font-size:11px;color:var(--sub)}
 .df-type-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-top:1px solid var(--line);font-size:14px}
+
+.df-wrap{max-width:900px;margin:0 auto}
+@media (min-width:760px){.df-grid{grid-template-columns:repeat(4,1fr)}}
