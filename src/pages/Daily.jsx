@@ -1,138 +1,58 @@
 import { useEffect, useState } from 'react'
 import * as api from '../lib/api'
-import { metaOf } from '../lib/cats'
 import { DEFAULT_CATEGORIES } from '../data/seedData'
 import { todayStr, addDaysStr } from '../lib/dates'
 import { toast } from '../lib/toast'
-import { PhotoGrid } from '../components/Photos'
 import { ReportModal, SpeechSheet } from '../components/Reports'
 import { canExport } from '../lib/accounts'
 
 const isCore = c => (c.dept || (c.nature === '工程投訴' ? '工程其他' : '客房')) === '客房'
   && (c.nature === '工程投訴' ? '投訴' : (c.nature || '投訴')) === '投訴'
 
-// 摺疊區塊：預設收起，早會講到哪段點開哪段
-function Sec({ icon, color, title, count, defaultOpen = false, children }) {
-  const [open, setOpen] = useState(defaultOpen)
-  return (
-    <div className="dsec">
-      <div className="dsec-h" onClick={() => setOpen(!open)}>
-        <span className="ic" style={{ color }}>{icon}</span>
-        <span style={{ flex: 1 }}>{title}{count != null && <span className="cnt">（{count} 項）</span>}</span>
-        <span style={{ color: 'var(--sub)', fontWeight: 400 }}>{open ? '－' : '＋'}</span>
-      </div>
-      {open && <div className="dsec-b">{children}</div>}
-    </div>
-  )
-}
-
-// 單個重點卡（客訴或主題）
-function FocusCard({ label, complaint, topic, cats }) {
+// 早會「今日講 3 件事」卡：預設只見標題、相片、一句重點；撳開先見詳情
+function TalkCard({ n, it, open, onToggle }) {
   const [showA, setShowA] = useState(false)
-  const isC = !!complaint
-  const cat = isC ? complaint.category : topic.category
-  const m = metaOf(cats, cat)
-  const title = isC ? `客訴改善：${complaint.guest_comment}` : topic.title
-  const q = isC ? `昨日 ${complaint.room} 房的投訴是什麼？我們的正確標準是？` : topic.question
-  const a = isC ? `${complaint.guest_comment}。正確標準：${complaint.correct_standard}` : topic.answer
-  const photos = isC ? complaint.photos : topic.photos
-
+  const t = it.topic, c = it.complaint
+  const key = c ? (c.correct_standard || c.guest_comment) : t ? ((t.correct_steps || [])[0] || t.why) : ''
+  const tag = it.kind === 'complaint' ? { t: '昨日客訴', cls: 'b-red' } : it.kind === 'finding' ? { t: it.meta, cls: 'b-red' } : { t: '補位', cls: 'b-gray' }
+  const photos = (it.photos || []).slice(0, open ? 4 : 2)
+  const q = c ? `昨日 ${c.room} 房的投訴是什麼？我們的正確標準是？` : t?.question
+  const a = c ? `${c.guest_comment}。正確標準：${c.correct_standard || '—'}` : t?.answer
   return (
-    <div className="card">
-      <div className="hero" style={{ background: m.s }}>
-        <div className="hero-e" style={{ fontSize: 36 }}>{m.e}</div>
-        <div>
-          <div className="badges">
-            {label && <span className="badge" style={{ background: 'var(--ink)', color: '#fff' }}>{label}</span>}
-            <span className={`badge ${isC ? 'b-red' : 'b-teal'}`}>{isC ? '昨日客訴' : '主題輪替'}</span>
-            <span className="badge" style={{ background: '#fff', color: m.c }}>{cat}</span>
-          </div>
-          <h2 style={{ fontSize: 17, margin: '4px 0 0' }}>{title}</h2>
-        </div>
-      </div>
-
-      <p className="lead" style={{ margin: '12px 2px 2px' }}>
-        {isC
-          ? <>{complaint.date} · <b>{complaint.room} 房</b>，客人反映：「{complaint.guest_comment}」</>
-          : topic.why}
-      </p>
-      <PhotoGrid photos={photos} />
-
-      {isC ? (
-        <>
-          <Sec icon="✓" color="var(--accent)" title="正確標準與原因" defaultOpen>
-            {complaint.actual_cause && <div className="bad-item"><span className="x">✗</span>{complaint.actual_cause}</div>}
-            {complaint.correct_standard && <div className="step"><span className="n">✓</span>{complaint.correct_standard}</div>}
-            {!complaint.actual_cause && !complaint.correct_standard && <div className="check-item"><span className="dot">›</span>尚未填寫，點客訴記錄補充「實際原因／正確標準」</div>}
-          </Sec>
-          {complaint.improvement && (
-            <Sec icon="👁" color="var(--blue)" title="今日主管重點檢查">
-              <div className="check-item"><span className="dot">✓</span>{complaint.improvement}</div>
-              <div className="check-item"><span className="dot">✓</span>{complaint.room} 房今日必查並跟進</div>
-            </Sec>
+    <div className={`tk ${open ? 'open' : ''}`}>
+      <button className="tk-h" onClick={onToggle}>
+        <span className="tk-n">{n}</span>
+        <span className="tk-t"><b>{it.title}</b><span className={`badge ${tag.cls}`}>{tag.t}</span></span>
+        <span className="tk-x">{open ? '－' : '＋'}</span>
+      </button>
+      {photos.length > 0 && <div className="tk-ph">{photos.map((p, i) => <img key={i} src={p} alt="" loading="lazy" />)}</div>}
+      {key && <p className="tk-key"><span>標準</span>{key}</p>}
+      {!key && it.kind === 'finding' && <p className="tk-key" style={{ color: 'var(--sub)' }}><span style={{ background: 'var(--bg)', color: 'var(--sub)' }}>討論</span>請同事講返正確做法，主管補充</p>}
+      {open && (
+        <div className="tk-b">
+          {c && (
+            <>
+              <p className="tk-l"><b>客人反映：</b>{c.guest_comment}（{c.room} 房）</p>
+              {c.actual_cause && <p className="tk-l"><b>實際原因：</b>{c.actual_cause}</p>}
+              {c.improvement && <p className="tk-l"><b>主管重點檢查：</b>{c.improvement}</p>}
+            </>
           )}
-        </>
-      ) : (
-        <>
-          {topic.correct_steps?.length > 0 && (
-            <Sec icon="✓" color="var(--accent)" title="正確做法" count={topic.correct_steps.length} defaultOpen>
-              {topic.correct_steps.map((x, i) => <div className="step" key={i}><span className="n">{i + 1}</span>{x}</div>)}
-            </Sec>
+          {t && (
+            <>
+              {t.why && <p className="tk-l">{t.why}</p>}
+              {(t.correct_steps || []).length > 0 && <div className="tk-sec ok"><b>✓ 正確做法</b><ol>{t.correct_steps.map((x, i) => <li key={i}>{x}</li>)}</ol></div>}
+              {(t.mistakes || []).length > 0 && <div className="tk-sec no"><b>✗ 常見錯誤</b><ul>{t.mistakes.map((x, i) => <li key={i}>{x}</li>)}</ul></div>}
+              {t.supervisor_check && <p className="tk-l"><b>主管重點檢查：</b>{t.supervisor_check}</p>}
+            </>
           )}
-          {topic.mistakes?.length > 0 && (
-            <Sec icon="✗" color="var(--red)" title="常見錯誤" count={topic.mistakes.length}>
-              {topic.mistakes.map((x, i) => <div className="bad-item" key={i}><span className="x">✗</span>{x}</div>)}
-            </Sec>
+          {!t && !c && <p className="tk-l">這類問題為甚麼會發生？正確做法是什麼？請同事講一次，主管補充。</p>}
+          {q && (
+            <div className="tk-q"><b>早會提問</b>　{q}
+              {showA ? <div className="tk-a">答：{a}</div> : <button className="a-btn" onClick={() => setShowA(true)}>顯示答案</button>}
+            </div>
           )}
-          {topic.supervisor_check && (
-            <Sec icon="👁" color="var(--blue)" title="今日主管重點檢查">
-              <div className="check-item"><span className="dot">✓</span>{topic.supervisor_check}</div>
-            </Sec>
-          )}
-        </>
-      )}
-
-      {q && (
-        <Sec icon="🎤" color="var(--amber)" title="早會提問">
-          <div className="q-text" style={{ fontSize: 13.5 }}>問：{q}</div>
-          {showA
-            ? <div className="a-text" style={{ borderColor: 'var(--line)' }}><b>答：</b>{a}</div>
-            : <button className="a-btn" onClick={() => setShowA(true)}>顯示答案</button>}
-          <div className="q-hint">隨機抽問 1–2 位同事，答不出就當場講一次正確答案。</div>
-        </Sec>
-      )}
-
-      {(isC ? true : !!topic.reminder) && (
-        <div className="quote" style={{ marginTop: 12 }}>
-          {isC ? '「每一宗客訴，都是明天不再發生的開始。」' : topic.reminder}
         </div>
       )}
-    </div>
-  )
-}
-
-// 近 7 日查房摘要：最常見問題（含相片、涉及樓層）與做得好
-function Digest({ digest }) {
-  if (!digest || (!digest.top.length && !digest.good.length)) return null
-  return (
-    <div className="card">
-      <h2>近 7 日查房重點</h2>
-      {digest.top.length > 0 && <div className="dg-sec">最常見問題</div>}
-      {digest.top.map((t, i) => (
-        <div className="dg-item" key={t.name}>
-          <div className="dg-top"><span className="dg-rank">{i + 1}</span><b className="dg-name">{t.name}</b><span className="badge b-red">{t.n} 次</span></div>
-          {t.floors.length > 0 && <div className="dg-meta">涉及樓層：{t.floors.map(f => f + ' 樓').join('、')}</div>}
-          <PhotoGrid photos={t.photos} />
-        </div>
-      ))}
-      {digest.good.length > 0 && <div className="dg-sec good">⭐ 做得好（早會可以表揚）</div>}
-      {digest.good.map(t => (
-        <div className="dg-item" key={t.name}>
-          <div className="dg-top"><b className="dg-name">{t.name}</b><span className="badge b-teal">{t.n} 次</span></div>
-          {t.floors.length > 0 && <div className="dg-meta">樓層：{t.floors.map(f => f + ' 樓').join('、')}</div>}
-          <PhotoGrid photos={t.photos} />
-        </div>
-      ))}
     </div>
   )
 }
@@ -145,6 +65,7 @@ export default function Daily() {
   const [pick, setPick] = useState(false)       // 揀講稿內容
   const [sel, setSel] = useState([])
   const [tq, setTq] = useState('')
+  const [open, setOpen] = useState('')           // 展開中的講稿卡（一次只開一張）
   useEffect(() => { load() }, [])
 
   async function load() {
@@ -250,7 +171,6 @@ export default function Daily() {
   if (!focus || slots.length === 0) {
     return (
       <div className="daily-wrap">
-        <Digest digest={digest} />
       <div className="card">
         <h2>今日暫無品質重點</h2>
         <p className="src-note">主題庫還沒有內容，或原本的重點已被刪除。</p>
@@ -276,14 +196,31 @@ export default function Daily() {
   const groups = [...new Set(visible.map(c => c.group))]
   const openPick = () => { if (!canExport()) setReport(true); else setPick(true) }
 
+  const MAXT = 3
+  const talk = []
+  const seenTopic = new Set()
+  slots.filter(sl => sl.complaint).forEach(sl => { if (talk.length < MAXT) talk.push({ key: 'c' + sl.complaint.id, kind: 'complaint', title: `${sl.complaint.room} 房客訴：${(sl.complaint.guest_comment || '').slice(0, 24)}`, complaint: sl.complaint, photos: sl.complaint.photos }) })
+  digest.top.forEach(t => {
+    if (talk.length >= MAXT) return
+    const tp = allTopics.find(x => x.id === t.topic_id)
+    if (tp) seenTopic.add(tp.id)
+    talk.push({ key: 'd' + t.name, kind: 'finding', title: t.name, meta: `查房 ${t.n} 次${t.floors.length ? ' · ' + t.floors.map(f => f + '樓').join('、') : ''}`, topic: tp, photos: t.photos })
+  })
+  slots.filter(sl => sl.topic && !seenTopic.has(sl.topic.id)).forEach(sl => { if (talk.length < MAXT) { seenTopic.add(sl.topic.id); talk.push({ key: 't' + sl.topic.id, kind: 'topic', title: sl.topic.title, topic: sl.topic, photos: sl.topic.photos }) } })
   const shared = !!focus.shared_at
   return (
     <div className="daily-wrap">
-      <Digest digest={digest} />
-      {slots.map((s, i) => (
-        <FocusCard key={i} label={slots.length > 1 ? `重點${['一', '二'][i]}` : null}
-          complaint={s.complaint} topic={s.topic} cats={st.cats} />
-      ))}
+      <div className="dy-head">
+        <h2>今日講 {talk.length} 件事</h2>
+        <span>{todayStr().slice(5).replace('-', '月')}日　約 5 分鐘</span>
+      </div>
+      {talk.map((it, i) => <TalkCard key={it.key} n={i + 1} it={it} open={open === it.key} onToggle={() => setOpen(open === it.key ? '' : it.key)} />)}
+      {digest.good.length > 0 && (
+        <div className="dy-good">
+          <b>⭐ 近 7 日做得好，可以表揚</b>
+          {digest.good.map(g => <span key={g.name}>{g.name}（{g.n} 次{g.floors.length ? ' · ' + g.floors.map(f => f + '樓').join('、') : ''}）</span>)}
+        </div>
+      )}
 
       {pick && (
         <div className="modal" onClick={e => { if (e.target === e.currentTarget) setPick(false) }}>
@@ -322,12 +259,11 @@ export default function Daily() {
           : '✓ 標記已於早會分享'}
       </button>
 
-      <p className="logic-line">
-        📅 {st.hadYesterday ? '昨日有投訴 → 以客訴為重點' : '昨日無投訴 → 主題輪替'}
-        {tomorrowName ? ` · 明日已指定：${tomorrowName}` : ''}
+      <div className="dy-foot">
+        <button className="btn ghost" onClick={openPick}>📄 匯出早會講稿</button>
         <button className="linky" onClick={regen}>🔄 重新選題</button>
-        <button className="linky" onClick={openPick}>📄 匯出講稿</button>
-      </p>
+      </div>
+      <p className="dy-note">{st.hadYesterday ? '昨日有投訴，已排在最前。' : '優先講近 7 日查房常見問題，不足 3 項才用主題庫補位。'}{tomorrowName ? ` 明日已指定：${tomorrowName}` : ''}</p>
     </div>
   )
 }

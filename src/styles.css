@@ -601,3 +601,26 @@ header h1{flex:1 1 auto !important;min-width:0}
 
 .rpt-th{width:44px;height:44px;object-fit:cover;border-radius:4px;display:block}
 .rpt-t td.rpt-red{font-weight:700}
+
+/* ── 今日重點：今日講 3 件事 ── */
+.dy-head{display:flex;align-items:baseline;justify-content:space-between;margin:2px 4px 10px}
+.dy-head h2{font-size:22px;margin:0}.dy-head span{font-size:13px;color:var(--sub)}
+.tk{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px;margin-bottom:12px;box-shadow:0 1px 2px rgba(20,35,48,.04),0 6px 16px rgba(20,35,48,.05)}
+.tk.open{border-color:var(--accent)}
+.tk-h{display:flex;align-items:center;gap:12px;width:100%;background:none;border:none;font-family:inherit;color:var(--ink);text-align:left;cursor:pointer;padding:0}
+.tk-n{width:34px;height:34px;border-radius:50%;background:var(--accent);color:#fff;font-size:18px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.tk-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px;align-items:flex-start}.tk-t b{font-size:17px;line-height:1.35}
+.tk-x{font-size:22px;color:var(--sub);flex-shrink:0}
+.tk-ph{display:flex;gap:8px;margin-top:10px}.tk-ph img{width:calc(50% - 4px);aspect-ratio:4/3;object-fit:cover;border-radius:12px;background:var(--bg)}
+.tk-key{margin:10px 0 0;font-size:15px;line-height:1.55}.tk-key span{display:inline-block;background:var(--accent-soft);color:var(--accent);font-weight:800;font-size:12px;border-radius:6px;padding:1px 7px;margin-right:8px}
+.tk-b{margin-top:10px;border-top:1px dashed var(--line);padding-top:10px}
+.tk-l{font-size:14.5px;line-height:1.6;margin:6px 0}
+.tk-sec{border-radius:12px;padding:10px 12px;margin:8px 0;font-size:14.5px;line-height:1.6}
+.tk-sec.ok{background:var(--accent-soft)}.tk-sec.no{background:var(--red-soft)}
+.tk-sec ol,.tk-sec ul{margin:4px 0 0 20px;padding:0}.tk-sec li{margin:3px 0}
+.tk-q{background:var(--bg);border-radius:12px;padding:10px 12px;margin-top:8px;font-size:14.5px;line-height:1.6}
+.tk-a{margin-top:6px;color:var(--sub)}
+.dy-good{background:var(--accent-soft);border-radius:16px;padding:12px 14px;margin:4px 0 14px;font-size:14px;line-height:1.7}
+.dy-good b{display:block;margin-bottom:2px;color:var(--accent)}.dy-good span{display:block}
+.dy-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:6px 0}.dy-foot .btn{margin:0;flex:1}
+.dy-note{font-size:12px;color:var(--sub);text-align:center;margin:8px 4px 20px;line-height:1.6}
