@@ -44,6 +44,8 @@ export default function App() {
   const [session, setSessionState] = useState(() => (api.isOpen ? getSession() : null))
   const [init, setInit] = useState(null)   // 從首頁摘要跳入時的預設篩選
   const go = (t, i) => { setInit(i || null); setTab(t) }
+  const [refreshing, setRefreshing] = useState(false)  // 刷新中（轉圈）
+  const [rk, setRk] = useState(0)                        // 刷新計數：改變即重新載入目前頁面資料
   const [newVer, setNewVer] = useState(false)       // 偵測到新版本
   const [askLogout, setAskLogout] = useState(false)   // 登出前確認，避免撳錯
   const [rpt, setRpt] = useState(null)   // 嵌入模組的匯出報告 {id, data}
@@ -97,6 +99,19 @@ export default function App() {
   const locked = id => !!session && (PERMS[session.role][id] || 'none') === 'none'
   // 即使被封鎖的頁面（例如舊分頁狀態）也一律退回首頁
   if (tab !== 'home' && session && (((cur && cur.id === 'boh') && locked('boh')) || ((cur && cur.id === 'defect') && locked('defect')) || ((tab === 'quality' || (cur && !cur.embed && !cur.top)) && locked('quality')))) setTimeout(() => setTab('home'), 0)
+  const hardReload = () => { location.href = location.pathname + '?v=' + Date.now() }
+  async function doRefresh() {
+    if (refreshing) return
+    setRefreshing(true)
+    const t0 = Date.now()
+    try {
+      const r = await fetch('./version.json?t=' + Date.now(), { cache: 'no-store' })
+      if (r.ok) { const j = await r.json(); if (j.build && j.build !== __BUILD__) { hardReload(); return } }
+    } catch { /* 離線：只重新載入資料 */ }
+    setRk(k => k + 1)
+    await new Promise(r => setTimeout(r, Math.max(0, 800 - (Date.now() - t0))))
+    setRefreshing(false)
+  }
   const exportEmbed = () => {
     const w = document.querySelector('iframe.embed-frame')?.contentWindow
     const data = w && w.__getReport && w.__getReport()
@@ -113,6 +128,10 @@ export default function App() {
           {cur && <span className="hdr-ico" style={{ background: 'rgba(255,255,255,.2)' }}><Icon name={cur.icon} size={18} color="#fff" /></span>}
           <h1 style={{ flex: 1 }}>{title}</h1>
           {cur?.embed && <button className="logout" onClick={exportEmbed}>📄 匯出</button>}
+          <button className={`logout refresh ${refreshing ? 'spin' : ''}`} onClick={doRefresh} aria-label="刷新">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5" /></svg>
+            <span>{refreshing ? '更新中…' : '刷新'}</span>
+          </button>
           <button className="logout" onClick={() => setAskLogout(true)}>登出</button>
         </div>
         {tab === 'home' && (
@@ -124,7 +143,7 @@ export default function App() {
         )}
       </header>
       <main className={cur?.embed ? 'embed-main' : ''}>
-        {cur ? <cur.Page key={tab} session={session} init={init} /> : inQuality ? (
+        {cur ? <cur.Page key={tab + ':' + rk} session={session} init={init} /> : inQuality ? (
           <div className="home-grid">
             {MODULES.filter(m => !m.embed && !m.top).map(m => (
               <button className="home-item" key={m.id} onClick={() => setTab(m.id)}>
@@ -145,12 +164,12 @@ export default function App() {
                 </button>
               ))}
             </div>
-            <Home session={session} go={go} />
+            <Home key={rk} session={session} go={go} />
             <div className="ver-line">版本 {__BUILD__}</div>
           </div>
         )}
       </main>
-      {newVer && <button className="newver" onClick={() => location.reload()}>🔄 有新版本，撳此更新</button>}
+      {newVer && <button className="newver" onClick={hardReload}>🔄 有新版本，撳此更新</button>}
       {askLogout && (
         <Confirm confirmLabel="登出" text={session ? `會登出「${session.name}」，之後要重新輸入密碼先可以再用。` : '會登出目前帳號。'}
           onCancel={() => setAskLogout(false)}

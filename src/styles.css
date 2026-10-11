@@ -538,3 +538,8 @@ header.hdr-home{padding-top:calc(20px + env(safe-area-inset-top, 0px))}
 .phone{padding-bottom:env(safe-area-inset-bottom, 0px)}
 
 .newver{position:fixed;left:50%;transform:translateX(-50%);bottom:max(18px,calc(env(safe-area-inset-bottom,0px) + 10px));z-index:90;background:var(--ink);color:#fff;border:none;border-radius:999px;padding:12px 22px;font-size:14px;font-weight:700;font-family:inherit;box-shadow:0 6px 20px rgba(0,0,0,.3);cursor:pointer}
+
+.logout.refresh{display:inline-flex;align-items:center;gap:5px}
+.logout.refresh svg{transition:transform .2s}
+.logout.refresh.spin svg{animation:rfspin .8s linear infinite}
+@keyframes rfspin{to{transform:rotate(360deg)}}
