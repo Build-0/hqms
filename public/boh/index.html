@@ -1,0 +1,2441 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0e2a33">
+<title>酒店後勤系統 Hotel Back-of-House</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   酒店後勤系統 — unified design system
+   ============================================================ */
+:root {
+  --bg:#eaeef2; --surface:#ffffff; --surface-2:#f5f8fa; --surface-3:#eef2f6;
+  --ink:#1d2a35; --ink-2:#566675; --ink-3:#8a99a8; --line:#e4eaef; --line-2:#eef2f6;
+  --brand-1:#0e2a33; --brand-2:#1c4a56; --brand-3:#2b7280; --accent:#1f6f7c;
+  --ok:#1c8b4b; --ok-bg:#e6f6ec; --warn:#c1650f; --warn-bg:#fdeed7;
+  --danger:#cf463c; --danger-bg:#fbe9e7; --info:#2c72c6; --info-bg:#e9f1fb;
+  --gold:#b8842b;
+  --r:16px; --r-md:12px; --r-sm:9px; --pill:999px;
+  --sh:0 1px 2px rgba(20,35,48,.04), 0 6px 18px rgba(20,35,48,.06);
+  --sh-hi:0 10px 30px rgba(20,35,48,.12);
+  --pad:16px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Inter','Noto Sans TC',sans-serif; background:var(--bg); color:var(--ink); -webkit-font-smoothing:antialiased; }
+::selection { background:#bfe3e8; }
+
+/* ---------- Header ---------- */
+.page-header { background:linear-gradient(140deg,var(--brand-1) 0%,var(--brand-2) 55%,var(--brand-3) 100%); color:#fff; padding:26px 22px 22px; text-align:center; position:relative; z-index:140; }
+.page-header h1 { font-size:33px; font-weight:800; letter-spacing:.5px; }
+.page-header .sub { font-size:15px; opacity:.68; margin-top:6px; letter-spacing:1px; }
+/* Settings gear + dropdown (top-right) */
+.settings { position:absolute; top:16px; right:18px; z-index:200; }
+.gear-btn { width:40px; height:40px; border-radius:50%; border:1px solid rgba(255,255,255,.32); background:rgba(255,255,255,.15); color:#fff; font-size:19px; cursor:pointer; transition:.15s; display:flex; align-items:center; justify-content:center; }
+.gear-btn:hover { background:rgba(255,255,255,.28); transform:rotate(30deg); }
+.settings-menu { display:none; position:fixed; top:62px; right:16px; z-index:260; background:var(--surface); border:1px solid var(--line); border-radius:14px; box-shadow:var(--sh-hi); padding:12px; width:216px; text-align:left; }
+.settings-menu.show { display:block; }
+.set-item { display:flex; align-items:center; gap:8px; width:100%; text-align:left; padding:11px 12px; border:none; background:transparent; border-radius:10px; font-family:inherit; font-size:15px; font-weight:700; color:var(--ink); cursor:pointer; }
+.set-item:hover { background:var(--surface-2); }
+.set-item.on { color:var(--ok); }
+.set-cur { margin-left:auto; font-size:13px; font-weight:600; color:var(--ink-3); }
+.set-caret { color:var(--ink-3); font-size:16px; transition:.2s; }
+.set-item[aria-expanded="true"] .set-caret { transform:rotate(90deg); }
+.set-sub { display:none; padding:4px 8px 8px; }
+.set-sub.show { display:block; }
+.lang-toggle { display:flex; border-radius:var(--pill); overflow:hidden; background:var(--surface-2); padding:3px; }
+.lang-btn { flex:1; padding:8px 12px; font-size:14px; font-weight:700; cursor:pointer; border:none; background:transparent; color:var(--ink-3); font-family:inherit; border-radius:var(--pill); transition:.2s; }
+.lang-btn.active { background:var(--brand-2); color:#fff; }
+
+/* ---------- Module tab bar (sticky) ---------- */
+.module-bar { background:rgba(255,255,255,.92); backdrop-filter:blur(10px); border-bottom:1px solid var(--line); display:flex; justify-content:center; gap:6px; padding:10px 12px; position:sticky; top:0; z-index:110; box-shadow:0 1px 0 rgba(20,35,48,.03); flex-wrap:wrap; }
+.module-btn { padding:8px 20px; border-radius:var(--pill); border:1px solid var(--line); background:var(--surface); font-weight:700; cursor:pointer; font-family:inherit; font-size:16.5px; display:flex; align-items:center; gap:8px; color:var(--ink-2); transition:.18s; }
+.module-btn:hover { border-color:var(--accent); color:var(--accent); }
+.module-btn.active { background:linear-gradient(135deg,var(--brand-2),var(--brand-3)); color:#fff; border-color:transparent; box-shadow:0 4px 12px rgba(28,74,86,.28); }
+
+/* ---------- Search ---------- */
+.search-bar { background:var(--surface); padding:10px 16px; border-bottom:1px solid var(--line); display:flex; justify-content:center; }
+.search-wrap { position:relative; width:100%; max-width:540px; }
+.search-bar input { width:100%; padding:10px 40px 10px 16px; border:1px solid var(--line); border-radius:var(--pill); font-size:14px; font-family:inherit; background:var(--surface-2); transition:.2s; }
+.search-bar input:focus { outline:none; border-color:var(--accent); background:#fff; box-shadow:0 0 0 3px rgba(31,111,124,.12); }
+.search-clear { position:absolute; right:6px; top:50%; transform:translateY(-50%); border:none; background:var(--surface-3); color:var(--ink-3); width:26px; height:26px; border-radius:50%; cursor:pointer; font-size:13px; line-height:1; }
+.search-clear:hover { background:#e0e6ec; color:var(--ink-2); }
+
+/* ---------- Status bar ---------- */
+.status-bar { display:none; background:linear-gradient(90deg,var(--ok),#1aa055); color:#fff; text-align:center; padding:9px; font-size:13px; font-weight:600; letter-spacing:.3px; }
+.status-bar.show { display:block; }
+
+/* ---------- Layout ---------- */
+.container { max-width:1120px; margin:0 auto; padding:22px 18px 90px; }
+.category-section { margin-bottom:34px; }
+
+/* Category / group headers — colored left accent comes from inline style */
+.category-header { padding:14px 18px; border-radius:var(--r-md); margin-bottom:16px; background:var(--surface) !important; box-shadow:var(--sh); border:1px solid var(--line); border-left-width:5px; }
+.cat-title { display:flex; align-items:center; gap:12px; }
+.cat-icon { font-size:24px; width:44px; height:44px; display:flex; align-items:center; justify-content:center; background:var(--surface-2); border-radius:12px; flex:0 0 auto; }
+.cat-title h2 { font-size:18px; font-weight:800; margin-bottom:1px; color:var(--ink); }
+.cat-subtitle { font-size:12px; color:var(--ink-3); font-weight:600; }
+.summary-line { padding:12px 4px 4px; font-size:13.5px; color:var(--ink-2); font-weight:700; }
+.disabled-head { border-left-color:#a9b6c2 !important; }
+
+/* ---------- Nav pills (cleaning categories) ---------- */
+.nav-bar { display:flex; gap:8px; flex-wrap:wrap; padding:6px 2px 16px; }
+.nav-item { text-decoration:none; color:var(--ink-2); padding:7px 14px; border-radius:var(--pill); font-size:13px; font-weight:700; transition:.18s; border:1px solid var(--line); background:var(--surface); display:flex; align-items:center; gap:6px; box-shadow:0 1px 2px rgba(20,35,48,.03); }
+.nav-item:hover { background:var(--cat-color,var(--accent)); color:#fff; border-color:transparent; }
+.nav-count { background:var(--surface-3); padding:1px 8px; border-radius:var(--pill); font-size:11px; color:var(--ink-2); }
+.nav-item:hover .nav-count { background:rgba(255,255,255,.28); color:#fff; }
+
+/* ---------- Product cards (cleaning + tools) ---------- */
+.products-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:14px; }
+.product-card { background:var(--surface); border-radius:var(--r); border:1px solid var(--line); overflow:hidden; display:flex; transition:.22s; box-shadow:var(--sh); position:relative; }
+.product-card:hover { transform:translateY(-3px); box-shadow:var(--sh-hi); border-color:#d8e0e7; }
+.product-img { width:104px; min-height:120px; flex-shrink:0; display:flex; align-items:center; justify-content:center; background:var(--surface-2); border-right:1px solid var(--line-2); padding:8px; cursor:zoom-in; }
+.product-img img { max-width:100%; max-height:104px; object-fit:contain; border-radius:8px; }
+.no-img { font-size:34px; opacity:.22; }
+.product-info { flex:1; padding:13px 15px; display:flex; flex-direction:column; }
+.info-top { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; margin-bottom:8px; }
+.product-name { font-size:16px; font-weight:700; color:var(--ink); line-height:1.3; }
+.product-name-sub { font-size:12.5px; color:var(--ink-3); line-height:1.3; margin-top:2px; }
+.product-card.disabled { opacity:.62; }
+.product-card.disabled .product-img img { filter:grayscale(100%); }
+.disabled-badge { display:none; position:absolute; top:8px; left:8px; background:var(--danger); color:#fff; padding:3px 10px; border-radius:var(--pill); font-size:10px; font-weight:800; z-index:10; letter-spacing:.5px; box-shadow:0 2px 6px rgba(207,70,60,.35); }
+.product-card.disabled .disabled-badge { display:block; }
+
+/* stock badge */
+.stock-area { text-align:center; flex-shrink:0; }
+.stock-badge { display:inline-block; min-width:40px; padding:5px 11px; border-radius:12px; font-size:16px; font-weight:800; text-align:center; transition:.3s; }
+.stock-label { font-size:10px; color:var(--ink-3); margin-top:3px; font-weight:600; }
+.min-label { font-size:10px; color:var(--ink-3); margin-top:2px; font-weight:700; background:var(--surface-2); border-radius:6px; padding:1px 6px; display:inline-block; }
+.min-label.below { color:var(--danger); background:var(--danger-bg); }
+.tool-meta { display:flex; gap:7px; font-size:11.5px; color:var(--ink-2); font-weight:700; margin:8px 0 2px; flex-wrap:wrap; }
+.tool-meta span { background:var(--surface-2); padding:2px 9px; border-radius:6px; }
+.tool-meta span.low { background:var(--danger-bg); color:var(--danger); }
+.stock-loading { background:var(--surface-3); color:var(--ink-3); }
+.stock-ok { background:var(--ok-bg); color:var(--ok); }
+.stock-low { background:var(--warn-bg); color:var(--warn); }
+.stock-out { background:var(--danger-bg); color:var(--danger); }
+.stock-err { background:var(--surface-3); color:var(--ink-3); font-size:11px; }
+
+/* detail table */
+.detail-table { width:100%; border-collapse:collapse; margin-top:auto; }
+.detail-table td { padding:3.5px 0; font-size:11.5px; vertical-align:middle; }
+.dt-label { color:var(--ink-3); width:66px; font-weight:600; }
+.dt-value { color:var(--ink-2); font-weight:600; }
+.rinse-yes { background:var(--warn-bg); color:var(--warn); padding:1px 7px; border-radius:6px; font-size:10px; font-weight:700; }
+.rinse-no { background:var(--ok-bg); color:var(--ok); padding:1px 7px; border-radius:6px; font-size:10px; font-weight:700; }
+.note { margin-top:6px; font-size:10px; color:var(--danger); background:var(--danger-bg); padding:3px 7px; border-radius:6px; }
+
+/* status row / pills / action chips */
+.status-row { display:none; margin-top:9px; padding-top:9px; border-top:1px solid var(--line-2); gap:6px; align-items:center; flex-wrap:wrap; }
+.state-pill { font-size:10.5px; font-weight:800; padding:3px 9px; border-radius:var(--pill); }
+.state-on { background:var(--ok-bg); color:var(--ok); }
+.state-off { background:var(--surface-3); color:var(--ink-3); }
+.toggle-btn,.edit-btn,.del-btn { padding:4px 10px; border-radius:8px; font-size:10.5px; font-weight:700; cursor:pointer; font-family:inherit; border:1px solid; background:transparent; transition:.15s; }
+.toggle-btn.enable { border-color:var(--ok); color:var(--ok); } .toggle-btn.enable:hover{background:var(--ok-bg);}
+.toggle-btn.disable { border-color:var(--danger); color:var(--danger); } .toggle-btn.disable:hover{background:var(--danger-bg);}
+.edit-btn { border-color:var(--info); color:var(--info); } .edit-btn:hover{background:var(--info-bg);}
+.del-btn { border-color:#b3bfca; color:var(--ink-3); } .del-btn:hover{border-color:var(--danger);color:var(--danger);background:var(--danger-bg);}
+
+/* stock edit */
+.stock-edit { display:none; align-items:center; gap:6px; margin-top:9px; padding-top:9px; border-top:1px solid var(--line-2); flex-wrap:wrap; }
+.adj-btn { width:30px; height:30px; border:1px solid var(--line); border-radius:8px; background:var(--surface); font-size:17px; font-weight:700; color:var(--ink-2); cursor:pointer; display:flex; align-items:center; justify-content:center; transition:.15s; }
+.adj-btn:hover { background:var(--accent); color:#fff; border-color:var(--accent); }
+.stock-input { width:56px; height:30px; text-align:center; border:1px solid var(--line); border-radius:8px; font-size:14px; font-weight:700; font-family:inherit; }
+.stock-input:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px rgba(31,111,124,.12); }
+.save-btn { padding:5px 13px; height:30px; border:none; border-radius:8px; background:var(--ok); color:#fff; font-size:12px; font-weight:700; cursor:pointer; transition:.2s; font-family:inherit; }
+.save-btn:hover { filter:brightness(.95); } .save-btn.saving{background:var(--ink-3);cursor:wait;} .save-btn.saved{background:#22b563;} .save-btn.error{background:var(--danger);}
+
+/* ---------- Batch / expiry ---------- */
+.batch-box { margin-top:9px; padding:9px 11px; border-radius:var(--r-sm); background:var(--surface-2); border:1px solid var(--line-2); }
+.batch-title { font-size:11px; font-weight:800; color:var(--ink-3); margin-bottom:5px; letter-spacing:.3px; }
+.batch-item { display:flex; align-items:center; gap:7px; font-size:12px; padding:3px 0; }
+.exp-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.exp-ok{background:var(--ok);} .exp-soon{background:var(--warn);} .exp-past{background:var(--danger);} .exp-none{background:#c3ccd4;}
+.batch-exp { color:var(--ink-2); flex:1; font-weight:500; }
+.batch-qty { font-weight:800; color:var(--ink); min-width:24px; text-align:right; }
+.batch-mini { border:none; background:var(--surface-3); color:var(--ink-3); width:22px; height:22px; border-radius:6px; cursor:pointer; font-size:11px; line-height:1; }
+.batch-mini:hover { background:#dbe2e8; } .batch-mini.del:hover { background:var(--danger); color:#fff; }
+
+/* ---------- Report ---------- */
+.report-controls { display:flex; gap:8px; justify-content:center; padding:14px 0; flex-wrap:wrap; }
+.period-btn { padding:7px 16px; border:1px solid var(--line); background:var(--surface); border-radius:var(--pill); font-weight:700; cursor:pointer; font-family:inherit; font-size:13px; color:var(--ink-2); transition:.18s; }
+.period-btn:hover { border-color:var(--accent); color:var(--accent); }
+.period-btn.active { background:linear-gradient(135deg,var(--brand-2),var(--brand-3)); color:#fff; border-color:transparent; }
+.report-scroll { overflow-x:auto; max-width:100%; border-radius:var(--r-md); box-shadow:var(--sh); border:1px solid var(--line); }
+.report-table { width:100%; border-collapse:collapse; font-size:13px; background:var(--surface); }
+.report-table th,.report-table td { padding:9px 12px; text-align:right; border-bottom:1px solid var(--line-2); white-space:nowrap; }
+.report-table th:first-child,.report-table td:first-child { text-align:left; position:sticky; left:0; background:var(--surface); }
+.report-table thead th { background:var(--surface-2); color:var(--ink-2); font-weight:800; position:sticky; top:0; }
+.report-table thead th:first-child { z-index:1; background:var(--surface-2); }
+.report-table tr.total-row td { font-weight:800; background:var(--surface-2); border-top:2px solid var(--brand-3); }
+
+/* ---------- Empty / loading ---------- */
+.empty-state { text-align:center; padding:56px 20px; color:var(--ink-3); }
+.empty-state .ico { font-size:46px; opacity:.4; display:block; margin-bottom:12px; }
+.loading-hint { text-align:center; padding:64px 20px; color:var(--ink-3); font-size:15px; }
+.page-footer { text-align:center; padding:20px; color:var(--ink-3); font-size:12px; }
+
+/* ---------- Vacuum / Equipment cards ---------- */
+.vac-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:14px; }
+.vac-card { background:var(--surface); border-radius:var(--r); border:1px solid var(--line); overflow:hidden; box-shadow:var(--sh); transition:.22s; display:flex; }
+.vac-card:hover { transform:translateY(-3px); box-shadow:var(--sh-hi); border-color:#d8e0e7; }
+.vac-card.scrap { opacity:.6; }
+.vac-img { width:104px; min-height:120px; flex:0 0 auto; align-self:stretch; background:var(--surface-2); border-right:1px solid var(--line-2); display:flex; align-items:center; justify-content:center; overflow:hidden; padding:8px; cursor:zoom-in; }
+.vac-img img { max-width:100%; max-height:104px; object-fit:contain; border-radius:6px; }
+.vac-img .no-img { font-size:32px; }
+.vac-body { flex:1; min-width:0; display:flex; flex-direction:column; }
+.vac-head { padding:13px 15px 4px; }
+.vac-model { font-size:16px; font-weight:800; color:var(--ink); line-height:1.25; word-break:break-word; }
+.vac-brand { font-size:12.5px; color:var(--ink-3); margin-top:2px; font-weight:500; }
+.vac-badges { margin-top:8px; display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+.floor-badge { display:inline-block; background:var(--info-bg); color:var(--info); font-size:11px; font-weight:800; padding:3px 9px; border-radius:var(--pill); }
+.vac-status { font-size:11px; font-weight:800; padding:3px 10px; border-radius:var(--pill); }
+.vs-ok { background:var(--ok-bg); color:var(--ok); }
+.vs-repair { background:var(--warn-bg); color:var(--warn); }
+.vs-scrap { background:var(--surface-3); color:var(--ink-3); }
+.vac-notes { font-size:12px; color:var(--ink-2); padding:0 15px 10px; }
+.maint-box { border-top:1px solid var(--line-2); padding:11px 15px; background:var(--surface-2); }
+.maint-title { font-size:11.5px; font-weight:800; color:var(--ink-3); margin-bottom:6px; letter-spacing:.3px; }
+.maint-item { font-size:12px; color:var(--ink-2); padding:5px 0; border-bottom:1px solid var(--line-2); display:flex; justify-content:space-between; gap:8px; align-items:flex-start; }
+.maint-item:last-child { border-bottom:none; }
+.maint-date { color:var(--ink-3); white-space:nowrap; font-size:11px; font-weight:600; }
+.maint-empty { font-size:12px; color:var(--ink-3); padding:3px 0; }
+.maint-del { border:none; background:none; color:#c3ccd4; cursor:pointer; font-size:13px; line-height:1; padding:0 2px; }
+.maint-del:hover { color:var(--danger); }
+.vac-actions { display:flex; gap:6px; padding:11px 15px; flex-wrap:wrap; align-items:center; border-top:1px solid var(--line-2); }
+.mini-btn { font-size:11px; padding:5px 11px; border-radius:8px; border:1px solid var(--info); background:transparent; color:var(--info); cursor:pointer; font-family:inherit; font-weight:700; transition:.15s; }
+.mini-btn:hover { background:var(--info-bg); }
+.mini-btn.warn { border-color:var(--warn); color:var(--warn); } .mini-btn.warn:hover{background:var(--warn-bg);}
+.mini-btn.grey { border-color:#b3bfca; color:var(--ink-3); } .mini-btn.grey:hover { border-color:var(--danger); color:var(--danger); background:var(--danger-bg); }
+
+/* ---------- FABs ---------- */
+.admin-fab { position:fixed; bottom:22px; right:22px; padding:13px 22px; border:none; border-radius:var(--pill); font-size:14px; font-weight:700; cursor:pointer; z-index:200; transition:.25s; box-shadow:0 6px 20px rgba(20,35,48,.22); font-family:inherit; }
+.admin-fab.locked { background:linear-gradient(135deg,var(--brand-1),var(--brand-3)); color:#fff; }
+.admin-fab.unlocked { background:linear-gradient(135deg,var(--ok),#1aa055); color:#fff; }
+.admin-fab:hover { transform:translateY(-2px); box-shadow:0 10px 28px rgba(20,35,48,.3); }
+.add-fab { position:fixed; bottom:22px; right:22px; padding:13px 24px; border:none; border-radius:var(--pill); font-size:15px; font-weight:700; cursor:pointer; z-index:200; background:linear-gradient(135deg,var(--info),#255ea0); color:#fff; box-shadow:0 6px 20px rgba(44,114,198,.3); font-family:inherit; display:none; }
+.add-fab:hover { transform:translateY(-2px); }
+
+/* ---------- Modals ---------- */
+.modal-overlay { display:none; position:fixed; inset:0; background:rgba(15,25,33,.55); backdrop-filter:blur(3px); z-index:300; justify-content:center; align-items:center; padding:16px; }
+.modal-overlay.show { display:flex; }
+.modal-box { background:var(--surface); border-radius:20px; padding:28px; max-width:380px; width:100%; box-shadow:0 24px 70px rgba(15,25,33,.35); }
+.modal-box h3 { font-size:20px; font-weight:800; margin-bottom:5px; }
+.modal-box .modal-sub { font-size:13px; color:var(--ink-3); margin-bottom:18px; }
+.modal-box input,.modal-box select,.form-modal textarea { width:100%; padding:11px 14px; border:1px solid var(--line); border-radius:10px; font-size:15px; font-family:inherit; margin-bottom:12px; background:var(--surface-2); transition:.2s; }
+.modal-box input:focus,.modal-box select:focus,.form-modal textarea:focus { outline:none; border-color:var(--accent); background:#fff; box-shadow:0 0 0 3px rgba(31,111,124,.12); }
+.form-modal textarea { resize:vertical; min-height:64px; }
+.modal-btns { display:flex; gap:10px; }
+.modal-btns button { flex:1; padding:11px; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; font-family:inherit; transition:.2s; }
+.btn-login { background:linear-gradient(135deg,var(--brand-2),var(--brand-3)); color:#fff; }
+.btn-login:hover { filter:brightness(1.06); }
+.btn-cancel { background:var(--surface-3); color:var(--ink-2); }
+.btn-cancel:hover { background:#dfe6ec; }
+.modal-error { color:var(--danger); font-size:13px; margin-top:10px; display:none; font-weight:600; }
+.form-modal { max-width:540px; max-height:90vh; overflow-y:auto; }
+.form-modal .row2 { display:flex; gap:10px; }
+.form-modal .row2 > div { flex:1; }
+.form-modal label { display:block; font-size:12px; font-weight:700; color:var(--ink-2); margin-bottom:5px; }
+.form-modal .img-preview { width:100%; height:130px; border:2px dashed var(--line); border-radius:12px; display:flex; align-items:center; justify-content:center; margin-bottom:10px; background:var(--surface-2); overflow:hidden; }
+.form-modal .img-preview img { max-width:100%; max-height:100%; object-fit:contain; }
+.btn-remove-img { margin:0 0 12px; padding:6px 12px; border:1px solid var(--danger); background:transparent; color:var(--danger); border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; font-family:inherit; }
+.btn-remove-img:hover { background:var(--danger-bg); }
+
+/* ---------- Lightbox (large photo) ---------- */
+.lightbox { display:none; position:fixed; inset:0; background:rgba(10,16,22,.9); z-index:500; align-items:center; justify-content:center; padding:24px; cursor:zoom-out; }
+.lightbox.show { display:flex; }
+.lightbox img { max-width:96%; max-height:92%; object-fit:contain; border-radius:12px; box-shadow:0 20px 60px rgba(0,0,0,.5); }
+.lightbox .lb-close { position:absolute; top:18px; right:22px; color:#fff; font-size:30px; font-weight:300; cursor:pointer; line-height:1; opacity:.85; }
+
+/* ---------- Compact sticky nav (module tabs + filter chips + search) ---------- */
+.topnav { position:sticky; top:0; z-index:130; background:rgba(255,255,255,.96); backdrop-filter:blur(12px); box-shadow:0 2px 12px rgba(20,35,48,.07); border-bottom:1px solid var(--line); }
+.module-bar { position:relative; background:transparent; backdrop-filter:none; border-bottom:1px solid var(--line-2); box-shadow:none; padding:9px 54px 9px 12px; justify-content:center; }
+.icon-btn { position:absolute; right:12px; top:50%; transform:translateY(-50%); width:38px; height:38px; border-radius:50%; border:1px solid var(--line); background:var(--surface); font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; color:var(--ink-2); transition:.15s; }
+.icon-btn:hover { border-color:var(--accent); color:var(--accent); }
+.filter-bar { display:flex; flex-wrap:wrap; justify-content:center; gap:6px; padding:8px 12px; }
+.chip-break { flex-basis:100%; height:0; margin:0; }
+.module-btn .mi { font-size:30px; line-height:1; }
+.module-btn { padding-top:7px; padding-bottom:7px; }
+.mod-caption { padding:12px 4px 2px; font-size:13px; color:var(--ink-2); font-weight:700; }
+.mod-caption b { color:var(--ink); }
+.mod-caption .off { color:var(--ink-3); }
+.brand-tag { font-size:10.5px; font-weight:800; padding:2px 8px; border-radius:var(--pill); color:#fff; }
+.brand-tag.nil { background:#2E74C7; } .brand-tag.wet { background:#12A594; } .brand-tag.oth { background:#9aa7b2; }
+.alert-expiry { display:flex; align-items:center; gap:10px; background:var(--warn-bg); border:1px solid #f2c68a; color:#9a5410; padding:11px 14px; border-radius:12px; margin:12px 0 6px; font-size:13.5px; font-weight:700; cursor:pointer; transition:.15s; }
+.alert-expiry:hover { background:#fbe3c4; }
+.alert-expiry .ic { font-size:18px; } .alert-expiry .go { margin-left:auto; font-size:12px; opacity:.85; }
+.tab-alert { background:var(--danger); color:#fff; font-size:10px; font-weight:800; border-radius:var(--pill); padding:0 5px; margin-left:3px; min-width:16px; height:16px; line-height:16px; text-align:center; display:inline-block; }
+.acc-box { margin:0 15px 8px; padding:8px 10px; border-radius:9px; background:var(--surface-2); border:1px solid var(--line-2); }
+.acc-box.bad { background:var(--danger-bg); border-color:#f0b3ad; }
+.acc-h { font-size:11.5px; font-weight:800; color:var(--ink-2); margin-bottom:5px; }
+.acc-box.bad .acc-h { color:var(--danger); }
+.acc-item { display:inline-block; font-size:11px; font-weight:700; padding:2px 7px; border-radius:6px; margin:2px 4px 0 0; }
+.acc-item.y { background:var(--ok-bg); color:var(--ok); }
+.acc-item.n { background:#fff; color:var(--danger); border:1px solid #f0b3ad; }
+.acc-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+.acc-row input[type=checkbox] { width:20px; height:20px; flex:0 0 auto; margin:0; accent-color:var(--ok); }
+.acc-row .acc-name { flex:1; margin:0; }
+.acc-del { flex:0 0 auto; width:34px; height:38px; border:1px solid var(--line); background:var(--surface-2); border-radius:9px; color:var(--ink-3); cursor:pointer; font-size:14px; }
+.acc-del:hover { border-color:var(--danger); color:var(--danger); }
+.chip { flex:0 0 auto; padding:7px 14px; border-radius:var(--pill); font-size:14px; font-weight:700; background:var(--surface-2); border:1px solid var(--line); color:var(--ink-2); white-space:nowrap; cursor:pointer; transition:.15s; display:inline-flex; align-items:center; gap:6px; }
+.chip:hover { border-color:var(--accent); color:var(--accent); }
+.chip.on { background:linear-gradient(135deg,var(--brand-2),var(--brand-3)); color:#fff; border-color:transparent; }
+.chip .c-n { font-size:11px; font-weight:800; background:rgba(20,35,48,.07); padding:0 6px; border-radius:var(--pill); color:var(--ink-2); }
+.chip.on .c-n { background:rgba(255,255,255,.26); color:#fff; }
+.chip.warn { color:var(--warn); border-color:var(--warn-bg); background:var(--warn-bg); } .chip.warn.on { background:var(--warn); color:#fff; }
+.chip.danger { color:var(--ink-3); } .chip.danger.on { background:var(--ink-3); color:#fff; border-color:transparent; }
+.chip.report.on { background:linear-gradient(135deg,#5a3ea8,#7d5fd0); }
+.chip-sep { flex:0 0 auto; width:1px; background:var(--line); margin:4px 2px; }
+.search-row { display:none; padding:8px 12px; gap:8px; }
+.search-row.show { display:flex; }
+.search-row input { flex:1; padding:9px 15px; border:1px solid var(--accent); border-radius:var(--pill); font-size:14px; font-family:inherit; background:#fff; box-shadow:0 0 0 3px rgba(31,111,124,.1); }
+.search-row input:focus { outline:none; }
+.search-close { width:38px; flex:0 0 auto; border:1px solid var(--line); background:var(--surface-2); border-radius:50%; cursor:pointer; font-size:14px; color:var(--ink-2); }
+
+/* slim group header (when showing all, grouped) */
+.slim-head { display:flex; align-items:center; gap:8px; margin:18px 2px 10px; font-size:13px; font-weight:800; color:var(--ink-2); }
+.slim-head .bar { width:4px; height:16px; border-radius:3px; background:var(--brand-3); }
+.slim-head.repair .bar { background:var(--warn); } .slim-head.repair { color:var(--warn); }
+.slim-head.scrap .bar { background:var(--ink-3); } .slim-head.scrap { color:var(--ink-3); }
+.slim-head .n { font-weight:700; color:var(--ink-3); font-size:12px; }
+.brandlegend { display:flex; gap:14px; flex-wrap:wrap; font-size:12px; color:var(--ink-2); font-weight:700; padding:12px 2px 2px; }
+.brandlegend .b { display:inline-flex; align-items:center; gap:6px; }
+.brandlegend .d { width:11px; height:11px; border-radius:50%; }
+
+/* brand accent on vacuum cards */
+.vac-card.brand-nil { border-left:4px solid #2E74C7; }
+.vac-card.brand-wet { border-left:4px solid #12A594; }
+
+/* ---------- Responsive ---------- */
+@media (max-width:700px) {
+  .page-header h1 { font-size:27px; }
+  .page-header .sub { font-size:13px; }
+  .page-header { padding:22px 18px 18px; }
+  .products-grid,.vac-grid { grid-template-columns:1fr; }
+  .module-btn { font-size:13px; padding:8px 15px; }
+  .module-bar { gap:5px; padding:9px 10px; }
+  .container { padding:16px 12px 90px; }
+  .product-img { width:92px; }
+  .admin-fab { bottom:16px; right:14px; padding:11px 18px; font-size:13px; }
+  .add-fab { bottom:16px; right:16px; padding:11px 18px; font-size:13px; }
+  .lang-toggle { top:12px; right:12px; }
+  .lang-btn { padding:4px 11px; font-size:11px; }
+}
+
+/* ============================================================
+   Mobile-first layout (v2): slim app bar · bottom tab bar ·
+   always-visible search · one-row scrolling filter chips
+   ============================================================ */
+html { -webkit-text-size-adjust:100%; }
+body { padding-bottom:env(safe-area-inset-bottom); }
+button { -webkit-tap-highlight-color:transparent; touch-action:manipulation; }
+
+/* module bar — desktop: centered row under header */
+.module-bar { position:static; background:var(--surface); padding:10px 12px; border-bottom:1px solid var(--line-2); display:flex; justify-content:center; gap:8px; flex-wrap:nowrap; }
+.module-btn { position:relative; }
+.module-btn .ml { white-space:nowrap; }
+
+/* search field (always visible) */
+.search-row, .search-row.show { display:flex; padding:10px 12px 4px; }
+.search-field { position:relative; flex:1; max-width:640px; margin:0 auto; }
+.search-field .search-ico { position:absolute; left:13px; top:50%; transform:translateY(-50%); font-size:14px; opacity:.55; pointer-events:none; }
+.search-row input { width:100%; padding:11px 42px 11px 38px; font-size:16px; border:1px solid var(--line); background:var(--surface-2); box-shadow:none; border-radius:var(--pill); -webkit-appearance:none; appearance:none; }
+.search-row input::-webkit-search-cancel-button { display:none; }
+.search-row input:focus { border-color:var(--accent); background:#fff; box-shadow:0 0 0 3px rgba(31,111,124,.12); }
+.search-close { display:none; position:absolute; right:5px; top:50%; transform:translateY(-50%); width:32px; height:32px; border:none; background:var(--surface-3); }
+.search-row.has-q .search-close { display:block; }
+.search-row.has-q + .filter-bar { opacity:.45; }
+
+/* filter chips: ONE row, swipe sideways */
+.filter-bar { flex-wrap:nowrap; justify-content:flex-start; overflow-x:auto; overscroll-behavior-x:contain; scroll-snap-type:x proximity; -webkit-overflow-scrolling:touch; scrollbar-width:none; padding:8px 12px 10px; gap:7px; }
+.filter-bar::-webkit-scrollbar { display:none; }
+.filter-bar .chip-break { display:none; }
+.filter-bar .chip { scroll-snap-align:start; }
+@media (min-width:701px) { .filter-bar { flex-wrap:wrap; justify-content:center; overflow:visible; } }
+
+/* maintenance list: collapsed shows newest only */
+.maint-title { display:flex; align-items:center; gap:6px; }
+.maint-n { background:var(--surface-3); color:var(--ink-2); border-radius:var(--pill); padding:0 7px; font-size:11px; }
+.maint-box.collapsed .maint-item:nth-of-type(n+3) { display:none; }
+.maint-box.collapsed .maint-item { border-bottom:none; }
+.maint-more { margin-top:6px; width:100%; padding:8px; border:1px dashed var(--line); background:var(--surface); border-radius:9px; font-family:inherit; font-size:12.5px; font-weight:700; color:var(--accent); cursor:pointer; }
+
+/* no hover lift on touch screens */
+@media (hover:none) {
+  .product-card:hover, .vac-card:hover { transform:none; box-shadow:var(--sh); border-color:var(--line); }
+  .gear-btn:hover { transform:none; }
+}
+
+@media (max-width:700px) {
+  /* slim app bar */
+  .page-header { padding:calc(10px + env(safe-area-inset-top)) 64px 10px 16px; text-align:left; }
+  .page-header h1 { font-size:20px; letter-spacing:.3px; }
+  .page-header .sub { display:none; }
+  .settings { top:calc(7px + env(safe-area-inset-top)); right:12px; }
+  .gear-btn { width:38px; height:38px; font-size:18px; }
+  .settings-menu { top:calc(52px + env(safe-area-inset-top)); right:10px; width:236px; }
+  .set-item { padding:13px 12px; }
+
+  /* bottom tab bar */
+  .module-bar { position:fixed; top:auto; left:0; right:0; bottom:0; z-index:150; gap:0; padding:4px 4px calc(4px + env(safe-area-inset-bottom)); background:rgba(255,255,255,.97); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); border-top:1px solid var(--line); border-bottom:none; box-shadow:0 -4px 16px rgba(20,35,48,.06); }
+  .module-btn, .module-btn:hover { flex:1 1 0; flex-direction:column; gap:2px; padding:6px 2px 5px; border:none; border-radius:12px; background:transparent; box-shadow:none; color:var(--ink-3); font-size:11.5px; }
+  .module-btn .mi { font-size:23px; transition:transform .15s; }
+  .module-btn.active { background:var(--surface-2); color:var(--brand-2); box-shadow:none; }
+  .module-btn.active .mi { transform:scale(1.08); }
+  .module-btn .tab-alert { position:absolute; top:3px; left:calc(50% + 8px); margin:0; }
+
+  /* sticky top: search + chips only */
+  .topnav { top:0; }
+  .search-row, .search-row.show { padding:8px 12px 2px; }
+  .chip { padding:8px 14px; font-size:14px; }
+
+  .container { padding:10px 12px calc(96px + env(safe-area-inset-bottom)); }
+  .mod-caption { padding:6px 4px 2px; }
+  .alert-expiry { padding:12px 14px; font-size:14px; }
+  .slim-head { font-size:14px; margin:16px 2px 8px; }
+  .brandlegend { padding:8px 2px 0; }
+
+  /* cards: denser image column, larger readable text */
+  .product-img, .vac-img { width:84px; min-height:100px; padding:6px; }
+  .product-img img, .vac-img img { max-height:96px; }
+  .product-info { padding:12px 13px; }
+  .vac-head { padding:12px 13px 4px; }
+  .vac-notes { padding:0 13px 10px; font-size:13px; }
+  .maint-box { padding:10px 13px; }
+  .detail-table td { font-size:13px; padding:4px 0; }
+  .dt-label { width:72px; }
+  .rinse-yes, .rinse-no { font-size:12px; }
+  .vac-brand, .product-name-sub { font-size:13px; }
+  .maint-item { font-size:13px; }
+  .maint-date { font-size:12px; }
+  .floor-badge, .vac-status, .brand-tag { font-size:12px; }
+  .batch-item { font-size:13px; }
+  .acc-box { margin:0 13px 8px; }
+
+  /* admin controls: thumb-sized */
+  .mini-btn, .toggle-btn, .edit-btn, .del-btn { min-height:38px; padding:8px 13px; font-size:13px; border-radius:10px; }
+  .state-pill { font-size:12px; padding:5px 10px; }
+  .vac-actions { padding:10px 13px; gap:8px; }
+  .vac-actions .mini-btn { flex:1 1 auto; }
+  .stock-edit .mini-btn { flex:1; }
+  .adj-btn, .stock-input, .save-btn { height:38px; }
+  .adj-btn { width:38px; }
+  .batch-mini { width:30px; height:30px; font-size:13px; }
+  .maint-del { font-size:16px; padding:2px 6px; }
+
+  /* FAB sits above the tab bar */
+  .add-fab, .admin-fab { bottom:calc(74px + env(safe-area-inset-bottom)); right:14px; padding:12px 18px; font-size:14px; }
+
+  /* modals become bottom sheets */
+  .modal-overlay { align-items:flex-end; padding:0; }
+  .modal-box { max-width:none; border-radius:20px 20px 0 0; padding:22px 18px calc(18px + env(safe-area-inset-bottom)); }
+  .form-modal { max-height:88vh; }
+  .modal-box input, .modal-box select, .form-modal textarea { font-size:16px; }
+  .modal-btns button { padding:14px; font-size:15px; }
+  .form-modal .row2 { flex-direction:column; gap:0; }
+}
+/* compact alert pills (chemicals) */
+.alert-row { display:flex; gap:8px; margin:10px 0 4px; flex-wrap:wrap; }
+.alert-pill { flex:1 1 0; min-width:140px; display:flex; align-items:center; gap:6px; padding:10px 12px; border-radius:12px; font-family:inherit; font-size:13.5px; font-weight:700; cursor:pointer; text-align:left; border:1px solid; }
+.alert-pill .go { margin-left:auto; font-size:18px; line-height:1; opacity:.7; }
+.alert-pill.danger { background:var(--danger-bg); border-color:#f0b3ad; color:#a8362c; }
+.alert-pill.warn { background:var(--warn-bg); border-color:#f2c68a; color:#9a5410; }
+/* version stamp (= GitHub Pages deploy time, read from Last-Modified) */
+.app-ver { font-size:11px; opacity:.55; margin-top:4px; letter-spacing:.3px; font-variant-numeric:tabular-nums; }
+.set-ver { margin-top:6px; padding:9px 12px 2px; border-top:1px solid var(--line-2); font-size:12px; color:var(--ink-3); font-weight:600; font-variant-numeric:tabular-nums; }
+@media (max-width:700px) { .app-ver { margin-top:1px; font-size:10.5px; } }
+/* dropdown chip (floors / categories / types) */
+.sel-chip { position:relative; }
+.sel-chip select { position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; font-size:16px; -webkit-appearance:none; appearance:none; }
+
+/* Cards on phones: small square thumbnail beside the title instead of a
+   full-height photo column — details use the full card width below. */
+@media (max-width:700px) {
+  .product-card, .vac-card { display:grid; grid-template-columns:76px minmax(0,1fr); align-items:start; }
+  .product-info, .vac-body { display:contents; }
+  .product-img, .vac-img { grid-column:1; grid-row:1; width:64px; height:64px; min-height:0; margin:12px 0 0 12px; padding:3px; border:1px solid var(--line-2); border-radius:12px; align-self:start; }
+  .product-img img, .vac-img img { max-width:100%; max-height:100%; border-radius:8px; }
+  .product-img .no-img, .vac-img .no-img { font-size:26px; }
+  .product-info > .info-top { grid-column:2; grid-row:1; padding:12px 13px 4px 4px; margin:0; }
+  .vac-body > .vac-head { grid-column:2; grid-row:1; padding:12px 13px 4px 4px; }
+  .product-info > :not(.info-top), .vac-body > :not(.vac-head) { grid-column:1 / -1; }
+  .product-info > .detail-table { margin:4px 13px 0; width:calc(100% - 26px); }
+  .product-info > .batch-box { margin:9px 13px 0; }
+  .product-info > .stock-edit, .product-info > .status-row, .product-info > .tool-meta, .product-info > .note { margin-left:13px; margin-right:13px; }
+  .product-info > :last-child { margin-bottom:13px; }
+  .vac-card.brand-nil, .vac-card.brand-wet { border-left-width:4px; }
+  .vac-notes { padding:2px 13px 10px; }
+}
+@media (max-width:700px) {
+  .filter-bar { gap:6px; padding:8px 10px 10px; }
+  .chip { padding:7px 11px; font-size:13.5px; gap:4px; }
+  .chip .c-n { padding:0 5px; }
+}
+.vs-lost { background:#efe9fb; color:#6b46c1; }
+.locked-input { background:var(--surface-3) !important; color:var(--ink-3); cursor:not-allowed; }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1 data-zh="酒店後勤系統" data-en="Hotel Back-of-House">酒店後勤系統</h1>
+  <div class="sub" id="headerSub" data-zh="物料與設備管理" data-en="Supplies & Equipment">物料與設備管理</div>
+  <div class="app-ver" id="appVer"></div>
+  <div class="settings">
+    <button class="gear-btn" onclick="toggleSettings(event)" title="設定">⚙</button>
+    <div class="settings-menu" id="settingsMenu">
+      <button class="set-item" onclick="toggleLangSub(event)">🌐 <span data-zh="語言" data-en="Language">語言</span><span class="set-cur" id="langCur">中文</span><span class="set-caret">›</span></button>
+      <div class="set-sub" id="langSub">
+        <button class="lang-btn active" id="btnZh" onclick="setLang('zh')">中文</button>
+        <button class="lang-btn" id="btnEn" onclick="setLang('en')">EN</button>
+      </div>
+      <button class="set-item" id="setAdminBtn" onclick="toggleAdmin()">🔒 登入</button>
+      <button class="set-item" id="setCatBtn" onclick="openCatManagerForModule()" style="display:none">⚙ 管理分類</button>
+      <div class="set-ver" id="setVer"></div>
+    </div>
+  </div>
+</div>
+
+<nav class="module-bar" id="moduleBar">
+  <button class="module-btn active" data-m="cleaning" onclick="setModule('cleaning')"><span class="mi">🧴</span><span class="ml" data-zh="清潔劑" data-en="Chemicals">清潔劑</span></button>
+  <button class="module-btn" data-m="vacuum" onclick="setModule('vacuum')"><span class="mi">🌀</span><span class="ml" data-zh="吸塵機" data-en="Vacuums">吸塵機</span></button>
+  <button class="module-btn" data-m="tool" onclick="setModule('tool')"><span class="mi">🧹</span><span class="ml" data-zh="清潔工具" data-en="Tools">清潔工具</span></button>
+  <button class="module-btn" data-m="equipment" onclick="setModule('equipment')"><span class="mi">🧰</span><span class="ml" data-zh="設備" data-en="Equipment">設備</span></button>
+</nav>
+
+<div class="topnav">
+  <div class="search-row show" id="searchRow">
+    <div class="search-field">
+      <span class="search-ico">🔍</span>
+      <input id="searchInput" type="search" enterkeyhint="search" autocomplete="off" oninput="onSearch(this.value)" data-zh-placeholder="搜尋名稱、型號、樓層、編號…" data-en-placeholder="Search name, model, floor, S/N…" placeholder="搜尋名稱、型號、樓層、編號…">
+      <button class="search-close" id="searchClear" onclick="clearSearch()" aria-label="清除">✕</button>
+    </div>
+  </div>
+  <div class="filter-bar" id="filterBar"></div>
+</div>
+
+<div class="container" id="container">
+  <div class="loading-hint" data-zh="載入中…" data-en="Loading…">載入中…</div>
+</div>
+
+<button class="add-fab" id="addFab" onclick="openAddForModule()"><span id="addFabLabel" data-zh="＋ 新增產品" data-en="＋ Add">＋ 新增產品</span></button>
+<!-- Login modal -->
+<div class="modal-overlay" id="loginModal">
+  <div class="modal-box">
+    <h3 data-zh="🔒 管理員登入" data-en="🔒 Admin Login">🔒 管理員登入</h3>
+    <div class="modal-sub" data-zh="輸入密碼後可修改庫存與產品" data-en="Enter password to edit stock and products">輸入密碼後可修改庫存與產品</div>
+    <input type="password" id="pwdInput" data-zh-placeholder="請輸入密碼" data-en-placeholder="Enter password" placeholder="請輸入密碼" onkeydown="if(event.key==='Enter')doLogin()">
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()" data-zh="取消" data-en="Cancel">取消</button>
+      <button class="btn-login" onclick="doLogin()" data-zh="登入" data-en="Login">登入</button>
+    </div>
+    <div class="modal-error" id="modalError" data-zh="密碼錯誤，請重試" data-en="Wrong password, please try again">密碼錯誤，請重試</div>
+  </div>
+</div>
+
+<!-- Product add/edit modal -->
+<div class="modal-overlay" id="productModal">
+  <div class="modal-box form-modal">
+    <h3 id="pmTitle" data-zh="新增產品" data-en="Add product">新增產品</h3>
+    <div class="modal-sub" data-zh="填寫產品資料" data-en="Fill in product details">填寫產品資料</div>
+
+    <label data-zh="類別" data-en="Category">類別</label>
+    <select id="pfCategory"></select>
+
+    <div class="row2">
+      <div><label data-zh="名稱（中）" data-en="Name (ZH)">名稱（中）</label><input id="pfNameZh"></div>
+      <div><label data-zh="名稱（英）" data-en="Name (EN)">名稱（英）</label><input id="pfNameEn"></div>
+    </div>
+
+    <label data-zh="圖片" data-en="Image">圖片</label>
+    <div class="img-preview" id="pfImgPreview"><span class="no-img">🧴</span></div>
+    <input type="file" id="pfImgFile" accept="image/*" onchange="onPickImage(event,'pf')">
+    <button type="button" class="btn-remove-img" onclick="clearFormImage('pf')" data-zh="移除相片" data-en="Remove photo">移除相片</button>
+
+    <div class="row2">
+      <div><label data-zh="適用範圍（中）" data-en="Applicable (ZH)">適用範圍（中）</label><input id="pfAppZh"></div>
+      <div><label data-zh="適用範圍（英）" data-en="Applicable (EN)">適用範圍（英）</label><input id="pfAppEn"></div>
+    </div>
+    <div class="row2">
+      <div><label data-zh="兌水比例（中）" data-en="Dilution (ZH)">兌水比例（中）</label><input id="pfDilZh"></div>
+      <div><label data-zh="兌水比例（英）" data-en="Dilution (EN)">兌水比例（英）</label><input id="pfDilEn"></div>
+    </div>
+    <div class="row2">
+      <div>
+        <label data-zh="需要過水" data-en="Rinse">需要過水</label>
+        <select id="pfRinse">
+          <option value="no" data-zh="不需要" data-en="Not required">不需要</option>
+          <option value="yes" data-zh="需要" data-en="Required">需要</option>
+        </select>
+      </div>
+      <div><label data-zh="庫存（只可用進貨／盤點更改）" data-en="Stock (change via Receive / Count)">庫存（只可用進貨／盤點更改）</label><input type="number" id="pfStock" min="0" value="0" readonly disabled class="locked-input"></div>
+    </div>
+    <div class="row2">
+      <div><label data-zh="最低庫存（低於就提醒補貨，0=不提醒）" data-en="Min stock (alert below; 0=off)">最低庫存（低於就提醒補貨，0=不提醒）</label><input type="number" id="pfMin" min="0" value="0"></div>
+    </div>
+
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeProductForm()" data-zh="取消" data-en="Cancel">取消</button>
+      <button class="btn-login" id="pfSaveBtn" onclick="saveProductForm()" data-zh="儲存" data-en="Save">儲存</button>
+    </div>
+    <div class="modal-error" id="pfError">Error</div>
+  </div>
+</div>
+
+<!-- Vacuum add/edit modal -->
+<div class="modal-overlay" id="vacuumModal">
+  <div class="modal-box form-modal">
+    <h3 id="vmTitle" data-zh="新增吸塵機" data-en="Add vacuum">新增吸塵機</h3>
+    <div class="modal-sub" data-zh="每台獨立管理" data-en="Tracked individually">每台獨立管理</div>
+
+    <div class="row2">
+      <div><label data-zh="機號（標籤）" data-en="Label">機號（標籤）</label><input id="vfLabel"></div>
+      <div><label data-zh="序號 S/N" data-en="Serial">序號 S/N</label><input id="vfSerial"></div>
+    </div>
+    <div class="row2">
+      <div><label data-zh="型號" data-en="Model">型號</label><input id="vfModel"></div>
+      <div><label data-zh="品牌" data-en="Brand">品牌</label><input id="vfBrand"></div>
+    </div>
+    <div class="row2">
+      <div><label data-zh="樓層代號" data-en="Floor code">樓層代號</label><input id="vfFloor"></div>
+      <div>
+        <label data-zh="狀態" data-en="Status">狀態</label>
+        <select id="vfStatus">
+          <option value="正常" data-zh="正常" data-en="OK">正常</option>
+          <option value="維修中" data-zh="維修中" data-en="Repairing">維修中</option>
+          <option value="報廢" data-zh="報廢" data-en="Scrapped">報廢</option>
+          <option value="遺失" data-zh="遺失／未找到" data-en="Missing">遺失／未找到</option>
+        </select>
+      </div>
+    </div>
+
+    <label data-zh="圖片" data-en="Image">圖片</label>
+    <div class="img-preview" id="vfImgPreview"><span class="no-img">🌀</span></div>
+    <input type="file" id="vfImgFile" accept="image/*" onchange="onPickImage(event,'vf')">
+    <button type="button" class="btn-remove-img" onclick="clearFormImage('vf')" data-zh="移除相片" data-en="Remove photo">移除相片</button>
+
+    <label data-zh="備註" data-en="Notes">備註</label>
+    <textarea id="vfNotes"></textarea>
+
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeVacuumForm()" data-zh="取消" data-en="Cancel">取消</button>
+      <button class="btn-login" id="vfSaveBtn" onclick="saveVacuumForm()" data-zh="儲存" data-en="Save">儲存</button>
+    </div>
+    <div class="modal-error" id="vfError">Error</div>
+  </div>
+</div>
+
+<!-- Maintenance record modal -->
+<div class="modal-overlay" id="maintModal">
+  <div class="modal-box form-modal">
+    <h3 data-zh="新增保養記錄" data-en="Add maintenance">新增保養記錄</h3>
+    <div class="modal-sub" id="mfSub"></div>
+    <label data-zh="日期" data-en="Date">日期</label>
+    <input type="date" id="mfDate">
+    <label data-zh="做了什麼（換零件 / 清洗…）" data-en="What was done">做了什麼（換零件 / 清洗…）</label>
+    <textarea id="mfDesc"></textarea>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeMaintForm()" data-zh="取消" data-en="Cancel">取消</button>
+      <button class="btn-login" id="mfSaveBtn" onclick="saveMaintForm()" data-zh="儲存" data-en="Save">儲存</button>
+    </div>
+    <div class="modal-error" id="mfError">Error</div>
+  </div>
+</div>
+
+<!-- Tool add/edit modal -->
+<div class="modal-overlay" id="toolModal">
+  <div class="modal-box form-modal">
+    <h3 id="tmTitle" data-zh="新增工具" data-en="Add tool">新增工具</h3>
+    <div class="modal-sub" data-zh="填寫工具資料" data-en="Fill in tool details">填寫工具資料</div>
+
+    <div class="row2">
+      <div><label data-zh="名稱" data-en="Name">名稱</label><input id="tfName"></div>
+      <div>
+        <label data-zh="物品分類" data-en="Category">物品分類</label>
+        <select id="tfCategory">
+          <option value="垃圾桶" data-zh="垃圾桶" data-en="Trash bin">垃圾桶</option>
+          <option value="防滑牌" data-zh="防滑牌" data-en="Wet-floor sign">防滑牌</option>
+          <option value="洗手液" data-zh="洗手液" data-en="Hand soap">洗手液</option>
+          <option value="其他" data-zh="其他" data-en="Other" selected>其他</option>
+        </select>
+      </div>
+    </div>
+
+    <label data-zh="圖片" data-en="Image">圖片</label>
+    <div class="img-preview" id="tfImgPreview"><span class="no-img">🧹</span></div>
+    <input type="file" id="tfImgFile" accept="image/*" onchange="onPickImage(event,'tf')">
+    <button type="button" class="btn-remove-img" onclick="clearFormImage('tf')" data-zh="移除相片" data-en="Remove photo">移除相片</button>
+
+    <div class="row2">
+      <div><label data-zh="庫存量" data-en="In stock">庫存量</label><input type="number" id="tfStock" min="0" value="0"></div>
+      <div><label data-zh="正在使用中" data-en="In use">正在使用中</label><input type="number" id="tfInUse" min="0" value="0"></div>
+    </div>
+    <div class="row2">
+      <div><label data-zh="最低庫存（0=不提醒）" data-en="Min stock (0=off)">最低庫存（0=不提醒）</label><input type="number" id="tfMin" min="0" value="0"></div>
+      <div><label data-zh="備註" data-en="Notes">備註</label><input id="tfNotes"></div>
+    </div>
+
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeToolForm()" data-zh="取消" data-en="Cancel">取消</button>
+      <button class="btn-login" id="tfSaveBtn" onclick="saveToolForm()" data-zh="儲存" data-en="Save">儲存</button>
+    </div>
+    <div class="modal-error" id="tfError">Error</div>
+  </div>
+</div>
+
+<!-- Equipment add/edit modal -->
+<div class="modal-overlay" id="equipModal">
+  <div class="modal-box form-modal">
+    <h3 id="emTitle" data-zh="新增設備" data-en="Add equipment">新增設備</h3>
+    <div class="modal-sub" data-zh="每台獨立管理" data-en="Tracked individually">每台獨立管理</div>
+
+    <div class="row2">
+      <div>
+        <label data-zh="類型" data-en="Type">類型</label>
+        <input id="efType" list="equipTypes" data-zh-placeholder="保險箱 / 空氣淨化機 / 除濕機…" data-en-placeholder="Safe / Air purifier…">
+        <datalist id="equipTypes"></datalist>
+      </div>
+      <div><label data-zh="型號" data-en="Model">型號</label><input id="efModel"></div>
+    </div>
+    <div class="row2">
+      <div><label data-zh="機號（標籤）" data-en="Label">機號（標籤）</label><input id="efLabel"></div>
+      <div><label data-zh="序號 S/N" data-en="Serial">序號 S/N</label><input id="efSerial"></div>
+    </div>
+    <div class="row2">
+      <div><label data-zh="品牌" data-en="Brand">品牌</label><input id="efBrand"></div>
+      <div><label data-zh="樓層代號" data-en="Floor code">樓層代號</label><input id="efFloor"></div>
+    </div>
+    <div>
+      <label data-zh="狀態" data-en="Status">狀態</label>
+      <select id="efStatus">
+        <option value="正常" data-zh="正常" data-en="OK">正常</option>
+        <option value="維修中" data-zh="維修中" data-en="Repairing">維修中</option>
+        <option value="報廢" data-zh="報廢" data-en="Scrapped">報廢</option>
+        <option value="遺失" data-zh="遺失／未找到" data-en="Missing">遺失／未找到</option>
+      </select>
+    </div>
+
+    <label data-zh="圖片" data-en="Image">圖片</label>
+    <div class="img-preview" id="efImgPreview"><span class="no-img">🧰</span></div>
+    <input type="file" id="efImgFile" accept="image/*" onchange="onPickImage(event,'ef')">
+    <button type="button" class="btn-remove-img" onclick="clearFormImage('ef')" data-zh="移除相片" data-en="Remove photo">移除相片</button>
+
+    <label data-zh="備註" data-en="Notes">備註</label>
+    <textarea id="efNotes"></textarea>
+
+    <label style="display:flex;justify-content:space-between;align-items:center">
+      <span data-zh="配件清單（勾選=齊全）" data-en="Accessories (checked = present)">配件清單（勾選=齊全）</span>
+      <button type="button" class="mini-btn" onclick="presetFridgeAccessories()" data-zh="帶入冰箱5項" data-en="Fridge 5">帶入冰箱5項</button>
+    </label>
+    <div id="efAccList"></div>
+    <button type="button" class="btn-remove-img" style="border-color:var(--accent);color:var(--accent)" onclick="addEfAccessory()" data-zh="＋ 新增配件" data-en="+ Add part">＋ 新增配件</button>
+
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeEquipForm()" data-zh="取消" data-en="Cancel">取消</button>
+      <button class="btn-login" id="efSaveBtn" onclick="saveEquipForm()" data-zh="儲存" data-en="Save">儲存</button>
+    </div>
+    <div class="modal-error" id="efError">Error</div>
+  </div>
+</div>
+
+<!-- Receive batch (進貨) modal -->
+<div class="modal-overlay" id="receiveModal">
+  <div class="modal-box form-modal">
+    <h3 data-zh="進貨（新增批次）" data-en="Receive (new batch)">進貨（新增批次）</h3>
+    <div class="modal-sub" id="rcSub"></div>
+    <div class="row2">
+      <div><label data-zh="數量" data-en="Quantity">數量</label><input type="number" id="rcQty" min="1" value="1"></div>
+      <div><label data-zh="進貨日" data-en="Received date">進貨日</label><input type="date" id="rcReceived"></div>
+    </div>
+    <label data-zh="到期日（沒有可留空）" data-en="Expiry date (optional)">到期日（沒有可留空）</label>
+    <input type="date" id="rcExpiry">
+    <label data-zh="備註" data-en="Note">備註</label>
+    <input id="rcNote">
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeReceive()" data-zh="取消" data-en="Cancel">取消</button>
+      <button class="btn-login" id="rcSaveBtn" onclick="saveReceive()" data-zh="進貨" data-en="Receive">進貨</button>
+    </div>
+    <div class="modal-error" id="rcError">Error</div>
+  </div>
+</div>
+
+<!-- Stock count (盤點) modal -->
+<div class="modal-overlay" id="countModal">
+  <div class="modal-box form-modal">
+    <h3 data-zh="盤點" data-en="Stock count">盤點</h3>
+    <div class="modal-sub" id="ctSub"></div>
+    <div class="row2">
+      <div><label data-zh="實際剩餘總數" data-en="Actual remaining">實際剩餘總數</label><input type="number" id="ctActual" min="0"></div>
+      <div><label data-zh="盤點日期" data-en="Count date">盤點日期</label><input type="date" id="ctDate"></div>
+    </div>
+    <div class="modal-sub" id="ctHint" style="margin-bottom:12px"></div>
+    <label data-zh="備註" data-en="Note">備註</label>
+    <input id="ctNote">
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeCount()" data-zh="取消" data-en="Cancel">取消</button>
+      <button class="btn-login" id="ctSaveBtn" onclick="saveCount()" data-zh="確認盤點" data-en="Confirm">確認盤點</button>
+    </div>
+    <div class="modal-error" id="ctError">Error</div>
+  </div>
+</div>
+
+<!-- Batch edit modal -->
+<div class="modal-overlay" id="batchModal">
+  <div class="modal-box form-modal">
+    <h3 data-zh="編輯批次" data-en="Edit batch">編輯批次</h3>
+    <div class="modal-sub" data-zh="更正批次資料（不計入用量）" data-en="Correct batch (not counted as usage)">更正批次資料（不計入用量）</div>
+    <div class="row2">
+      <div><label data-zh="剩餘數量" data-en="Remaining">剩餘數量</label><input type="number" id="beQty" min="0"></div>
+      <div><label data-zh="進貨日" data-en="Received">進貨日</label><input type="date" id="beReceived"></div>
+    </div>
+    <label data-zh="到期日（沒有可留空）" data-en="Expiry (optional)">到期日（沒有可留空）</label>
+    <input type="date" id="beExpiry">
+    <label data-zh="備註" data-en="Note">備註</label>
+    <input id="beNote">
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeBatchEdit()" data-zh="取消" data-en="Cancel">取消</button>
+      <button class="btn-login" id="beSaveBtn" onclick="saveBatchEdit()" data-zh="儲存" data-en="Save">儲存</button>
+    </div>
+    <div class="modal-error" id="beError">Error</div>
+  </div>
+</div>
+
+<!-- Tool category manager -->
+<div class="modal-overlay" id="catModal">
+  <div class="modal-box form-modal">
+    <h3 id="catTitle" data-zh="管理分類" data-en="Manage categories">管理分類</h3>
+    <div class="modal-sub" data-zh="可改名、用 ↑↓ 調整順序、刪除或新增" data-en="Rename, reorder with ↑↓, add or remove">可改名、用 ↑↓ 調整順序、刪除或新增</div>
+    <div id="catList"></div>
+    <button type="button" class="btn-remove-img" style="border-color:var(--accent);color:var(--accent)" onclick="catMgrAdd()" data-zh="＋ 新增分類" data-en="+ Add category">＋ 新增分類</button>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeCatManager()" data-zh="取消" data-en="Cancel">取消</button>
+      <button class="btn-login" id="catSaveBtn" onclick="saveCatManager()" data-zh="儲存" data-en="Save">儲存</button>
+    </div>
+    <div class="modal-error" id="catError">Error</div>
+  </div>
+</div>
+
+<!-- Lightbox for large photo view -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()"><span class="lb-close">✕</span><img id="lbImg" alt=""></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// ============================================================================
+//  CONFIG — fill these in with your own Supabase project values
+//  Dashboard → Project Settings → Data API / API Keys
+// ============================================================================
+var SUPABASE_URL = "https://qxgntqtzaefapjyxaqhs.supabase.co";
+var SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF4Z250cXR6YWVmYXBqeXhhcWhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5NzM5ODQsImV4cCI6MjEwMjU0OTk4NH0.PZeJEbGlBFIE1GVCjAJZgPEw_v9R_AYc956HlJoimlg";
+
+var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ---- state ----
+var isAdmin = false;
+var currentPwd = "";
+var currentLang = "zh";
+var currentModule = "cleaning";
+var categories = [];
+var products = [];
+var vacuums = [];
+var vacMaint = [];
+var tools = [];
+var toolCategories = [];  // {id, name, sort_order} — managed list
+var equipTypesList = [];  // {id, name, sort_order} — managed equipment types
+var vacuumFloors = [];    // {id, name, sort_order} — managed vacuum floors/areas
+var equipment = [];
+var equipMaint = [];
+var batches = [];        // product_batches
+var movements = [];      // stock_movements (kind='out' used for usage report)
+var editProductId = null, editVacuumId = null, editToolId = null, editEquipmentId = null;
+var maintKind = null, maintTargetId = null;
+var batchProductId = null;   // product a receive/count/batch-edit targets
+var editBatchId = null;
+var reportPeriod = "month";  // month | quarter | year
+var moduleFilter = { cleaning: "all", vacuum: "all", tool: "all", equipment: "all" }; // active filter chip per module
+var formImages = { pf: null, vf: null, tf: null, ef: null };
+var formImagePending = { pf: null, vf: null, tf: null, ef: null };
+var searchQuery = "";
+
+var MODULE_ADD_LABEL = {
+  cleaning:  { zh: "＋ 新增產品", en: "＋ Add product" },
+  vacuum:    { zh: "＋ 新增吸塵機", en: "＋ Add vacuum" },
+  tool:      { zh: "＋ 新增工具", en: "＋ Add tool" },
+  equipment: { zh: "＋ 新增設備", en: "＋ Add equipment" },
+};
+
+// ============================================================================
+//  Load
+// ============================================================================
+// Photos are stored inline (base64) and make up ~99% of the payload, so the
+// four photo tables are fetched WITHOUT the image column; photos are then
+// fetched lazily, only for cards that scroll into view (see hydrateImages).
+var IMG_TABLE_ICON = { products: "🧴", vacuums: "🌀", tools: "🧹", equipment: "🧰" };
+async function selectNoImage(table, orders) {
+  var probe = await sb.from(table).select("*").limit(1);
+  var q;
+  if (!probe.error && probe.data && probe.data.length && "image" in probe.data[0]) {
+    var cols = Object.keys(probe.data[0]).filter(function (k) { return k !== "image"; }).join(",");
+    q = sb.from(table).select(cols);
+  } else {
+    q = sb.from(table).select("*");
+  }
+  orders.forEach(function (o) { q = q.order(o[0], o[1] || {}); });
+  var res = await q;
+  if (!res.error && res.data) res.data.forEach(function (r) { if (!("image" in r)) r._imgLazy = true; });
+  return res;
+}
+async function loadAll() {
+  var asc = { ascending: true }, desc = { ascending: false };
+  var r = await Promise.all([
+    sb.from("categories").select("*").order("sort_order"),
+    selectNoImage("products", [["sort_order"]]),
+    selectNoImage("vacuums", [["floor_code"], ["model"]]),
+    sb.from("vacuum_maintenance").select("*").order("service_date", desc),
+    selectNoImage("tools", [["sort_order"]]),
+    sb.from("tool_categories").select("*").order("sort_order"),
+    sb.from("equipment_types").select("*").order("sort_order"),
+    sb.from("vacuum_floors").select("*").order("sort_order"),
+    selectNoImage("equipment", [["type"], ["model"]]),
+    sb.from("equipment_maintenance").select("*").order("service_date", desc),
+    sb.from("product_batches").select("*").order("expiry_date", asc),
+    sb.from("stock_movements").select("*").eq("kind", "out").order("happened_on", desc)
+  ]);
+  var cats = r[0], prods = r[1];
+  if (cats.error || prods.error) {
+    document.getElementById("container").innerHTML =
+      '<div class="loading-hint">' +
+      (currentLang === "zh" ? "無法連接資料庫，請檢查設定" : "Cannot connect to database, check config") +
+      "</div>";
+    console.error(cats.error || prods.error);
+    return;
+  }
+  function ok(x) { return x.error ? [] : (x.data || []); }
+  categories = cats.data || [];
+  products = prods.data || [];
+  // newer modules — resilient: if their tables don't exist yet, treat as empty
+  vacuums = ok(r[2]); vacMaint = ok(r[3]); tools = ok(r[4]); toolCategories = ok(r[5]);
+  equipTypesList = ok(r[6]); vacuumFloors = ok(r[7]); equipment = ok(r[8]); equipMaint = ok(r[9]);
+  batches = ok(r[10]); movements = ok(r[11]);
+  render();
+}
+
+// ---- lazy photos ----
+async function reloadNoImage(t, orders) {
+  var keep = {}; tableRows(t).forEach(function (x) { if (x.image) keep[x.id] = x.image; });
+  var r = await selectNoImage(t, orders);
+  if (r.error) return null;
+  return (r.data || []).map(function (x) { if (keep[x.id]) { x.image = keep[x.id]; x._imgLazy = false; } return x; });
+}
+function tableRows(t) { return t === "products" ? products : t === "vacuums" ? vacuums : t === "tools" ? tools : equipment; }
+function cardImg(table, row, alt) {
+  if (row.image) return '<img src="' + esc(row.image) + '" alt="' + esc(alt || "") + '" loading="lazy">';
+  if (row._imgLazy) return '<span class="no-img lazy-img" data-t="' + table + '" data-id="' + row.id + '">' + IMG_TABLE_ICON[table] + "</span>";
+  return '<span class="no-img">' + IMG_TABLE_ICON[table] + "</span>";
+}
+var imgObserver = null, imgQueue = {}, imgTimer = null;
+function hydrateImages() {
+  var els = document.querySelectorAll(".lazy-img");
+  if (!els.length) return;
+  if (!("IntersectionObserver" in window)) { els.forEach(queueImg); return; }
+  if (!imgObserver) imgObserver = new IntersectionObserver(function (entries) {
+    entries.forEach(function (en) { if (en.isIntersecting) { imgObserver.unobserve(en.target); queueImg(en.target); } });
+  }, { rootMargin: "400px 0px" });
+  els.forEach(function (el) { imgObserver.observe(el); });
+}
+function queueImg(el) {
+  var t = el.getAttribute("data-t"), id = +el.getAttribute("data-id");
+  (imgQueue[t] = imgQueue[t] || {})[id] = 1;
+  clearTimeout(imgTimer); imgTimer = setTimeout(flushImgQueue, 40);
+}
+async function fetchImages(t, ids) {
+  var res = await sb.from(t).select("id,image").in("id", ids);
+  if (res.error) throw res.error;
+  var got = {};
+  (res.data || []).forEach(function (x) { got[x.id] = x.image || null; });
+  tableRows(t).forEach(function (row) { if (ids.indexOf(row.id) >= 0 && row.id in got) { row.image = got[row.id]; row._imgLazy = false; } });
+  return got;
+}
+function flushImgQueue() {
+  var q = imgQueue; imgQueue = {};
+  Object.keys(q).forEach(function (t) {
+    var ids = Object.keys(q[t]).map(Number);
+    for (var k = 0; k < ids.length; k += 12) (function (chunk) {
+      fetchImages(t, chunk).then(function (got) {
+        chunk.forEach(function (id) {
+          document.querySelectorAll('.lazy-img[data-t="' + t + '"][data-id="' + id + '"]').forEach(function (el) {
+            if (got[id]) { var im = document.createElement("img"); im.src = got[id]; el.replaceWith(im); }
+            else el.classList.remove("lazy-img");
+          });
+        });
+      }).catch(function (e) { console.error(e); });
+    })(ids.slice(k, k + 12));
+  });
+}
+// Edit forms send the photo back on save, so make sure it's loaded first —
+// otherwise saving an item whose photo hasn't loaded yet would erase it.
+async function ensureImage(t, id) {
+  var row = tableRows(t).find(function (x) { return x.id === id; });
+  if (!row || !row._imgLazy) return true;
+  try { await fetchImages(t, [id]); return !row._imgLazy; } catch (e) { return false; }
+}
+function guardForm(name, t) {
+  var orig = window[name];
+  window[name] = async function (id) {
+    if (id != null && !(await ensureImage(t, id))) {
+      alert(currentLang === "zh" ? "相片載入失敗，請稍後再試" : "Couldn't load the photo, please try again");
+      return;
+    }
+    return orig.apply(this, arguments);
+  };
+}
+
+function batchesOf(productId) {
+  return batches.filter(function (b) { return b.product_id === productId; })
+    .sort(function (a, b) {
+      var ax = a.expiry_date || "9999-12-31", bx = b.expiry_date || "9999-12-31";
+      return ax < bx ? -1 : ax > bx ? 1 : 0;
+    });
+}
+
+// ============================================================================
+//  Helpers
+// ============================================================================
+function esc(s) {
+  return (s == null ? "" : String(s)).replace(/[&<>"']/g, function (c) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+  });
+}
+function slug(cat) { return "cat-" + cat.id; }
+function natCmp(a, b) { return String(a || "").localeCompare(String(b || ""), undefined, { numeric: true, sensitivity: "base" }); }
+function stateText(status, lang) { return status === "停用" ? (lang === "zh" ? "已停用" : "Disabled") : (lang === "zh" ? "上架中" : "Live"); }
+function toggleText(status, lang) {
+  return status === "停用" ? (lang === "zh" ? "▶ 啟用" : "▶ Enable") : (lang === "zh" ? "■ 停用" : "■ Disable");
+}
+function vacStatusText(st, lang) {
+  if (lang === "en") return st === "維修中" ? "Repairing" : st === "報廢" ? "Scrapped" : st === "遺失" ? "Missing" : "OK";
+  return st === "遺失" ? "遺失／未找到" : st;
+}
+// Display dictionary: locations, equipment types and tool categories are
+// stored in one language only; show each in the language of the interface.
+var VOCAB = [
+  ["倉庫", "Warehouse"], ["化學品房", "Chemical Room"], ["器材房", "Equipment Room"], ["制服房", "Uniform Room"],
+  ["1F 行李房旁茶水間", "Near 1F Luggage Room Pantry"], ["1F 商場 Stanley Café 旁茶水間", "1F Mall Ｎear Stanley café Pantry"],
+  ["辦公室", "Office"], ["乾淨布草房", "Clean Linen Room"], ["洗衣房", "Laundry"], ["前臺（新增）", "Front Desk (new)"],
+  ["未知", "Unknown"], ["8F消防梯", "8F Fire Stairs"], ["財務部（上次保養地點）", "Finance Dept (last serviced)"],
+  ["工程部（上次檢查地點）", "Engineering Dept (last checked)"],
+  ["冰箱", "Fridge"], ["加濕機", "Humidifier"], ["嬰兒奶瓶消毒器", "Baby Bottle Sterilizer"], ["抽濕機", "Dehumidifier"],
+  ["暖奶器", "Bottle Warmer"], ["燙斗", "Iron"], ["空氣清新機", "Air Purifier"], ["臭氧機", "Ozone Machine"],
+  ["垃圾桶", "Bins"], ["防滑牌", "Wet Floor Signs"], ["洗手液器", "Soap Dispensers"], ["拖把及拖桶", "Mops & Buckets"],
+  ["掃把及地刷", "Brooms & Brushes"], ["玻璃及高空", "Glass & High Dusting"], ["百潔墊", "Scouring Pads"],
+  ["其他", "Other"], ["保養/清潔", "Service / Cleaning"], ["維修", "Repair"], ["無編號", "No ID"]
+];
+var VOCAB_ZH = {}, VOCAB_EN = {};
+VOCAB.forEach(function (p) { VOCAB_ZH[p[1].toLowerCase()] = p[0]; VOCAB_ZH[p[0]] = p[0]; VOCAB_EN[p[0]] = p[1]; VOCAB_EN[p[1].toLowerCase()] = p[1]; });
+function tr(s) {
+  if (s == null) return s;
+  var k = String(s).trim();
+  if (currentLang === "zh") return VOCAB_ZH[k] || VOCAB_ZH[k.toLowerCase()] || s;
+  return VOCAB_EN[k] || VOCAB_EN[k.toLowerCase()] || s;
+}
+function emptyState(ico, zh, en) {
+  return '<div class="empty-state"><span class="ico">' + ico + '</span><div data-zh="' + esc(zh) + '" data-en="' + esc(en) + '">' + esc(zh) + "</div></div>";
+}
+
+// ---- image pick + auto-resize (shared by all forms) ----
+function onPickImage(e, prefix) {
+  var file = e.target.files[0];
+  if (!file) return;
+  var preview = document.getElementById(prefix + "ImgPreview");
+  if (preview) preview.innerHTML = '<span class="no-img">⏳</span>';
+  formImagePending[prefix] = resizeImage(file, 1000, 0.82).then(function (dataUrl) {
+    if (dataUrl) {
+      formImages[prefix] = dataUrl;
+      if (preview) preview.innerHTML = '<img src="' + dataUrl + '">';
+    }
+  }).catch(function () {});
+}
+function resizeImage(file, maxDim, quality) {
+  return new Promise(function (resolve) {
+    var reader = new FileReader();
+    reader.onload = function () {
+      var dataUrl = reader.result;
+      var img = new Image();
+      img.onload = function () {
+        var w = img.width, h = img.height;
+        if (!w || !h) { resolve(dataUrl); return; }
+        if (w > maxDim || h > maxDim) {
+          if (w >= h) { h = Math.round(h * maxDim / w); w = maxDim; }
+          else { w = Math.round(w * maxDim / h); h = maxDim; }
+        }
+        try {
+          var canvas = document.createElement("canvas");
+          canvas.width = w; canvas.height = h;
+          canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL("image/jpeg", quality));
+        } catch (err) { resolve(dataUrl); }
+      };
+      img.onerror = function () { resolve(dataUrl); };
+      img.src = dataUrl;
+    };
+    reader.onerror = function () { resolve(null); };
+    reader.readAsDataURL(file);
+  });
+}
+async function awaitImage(prefix) {
+  if (formImagePending[prefix]) { await formImagePending[prefix]; formImagePending[prefix] = null; }
+}
+var FORM_ICON = { pf: "🧴", vf: "🌀", tf: "🧹", ef: "🧰" };
+function clearFormImage(prefix) {
+  formImages[prefix] = null;
+  formImagePending[prefix] = null;
+  var f = document.getElementById(prefix + "ImgFile"); if (f) f.value = "";
+  var p = document.getElementById(prefix + "ImgPreview"); if (p) p.innerHTML = '<span class="no-img">' + (FORM_ICON[prefix] || "🖼") + "</span>";
+}
+
+// ---- search (magnifier toggles a compact input) ----
+function onSearch(q) {
+  searchQuery = (q || "").trim().toLowerCase();
+  document.getElementById("searchRow").classList.toggle("has-q", !!searchQuery);
+  render();
+}
+function clearSearch() {
+  var si = document.getElementById("searchInput"); si.value = "";
+  onSearch(""); si.blur();
+}
+function matchQuery(fields) {
+  if (!searchQuery) return true;
+  return fields.some(function (f) { return f && String(f).toLowerCase().indexOf(searchQuery) >= 0; });
+}
+function noResult() { return emptyState("🔍", "找不到符合的項目", "No matching items"); }
+
+// ---- filter chips (sticky, per module) ----
+function setFilter(key) {
+  moduleFilter[currentModule] = key; render();
+  var t = document.querySelector(".topnav"); if (t && window.scrollY > t.offsetTop) window.scrollTo(0, t.offsetTop);
+  var on = document.querySelector("#filterBar .chip.on"); if (on && on.scrollIntoView) on.scrollIntoView({ block: "nearest", inline: "center" });
+}
+function chipHtml(key, label, count, cls) {
+  var on = moduleFilter[currentModule] === key;
+  var safe = String(key).replace(/'/g, "\\'");
+  return '<button class="chip ' + (cls || "") + (on ? " on" : "") + '" onclick="setFilter(\'' + safe + '\')">' +
+    esc(label) + (count != null ? ' <span class="c-n">' + count + "</span>" : "") + "</button>";
+}
+function floorKey(fc) { return fc && fc.trim() ? fc.trim() : (currentLang === "zh" ? "未指定" : "None"); }
+function toolCatNames() {
+  if (toolCategories.length) return toolCategories.slice().sort(function (a, b) { return a.sort_order - b.sort_order; }).map(function (c) { return c.name; });
+  return ["垃圾桶", "防滑牌", "洗手液器", "其他"];
+}
+function toolCatRank(name) { var i = toolCatNames().indexOf(name); return i < 0 ? 998 : i; }
+function toolCatCmp(a, b) { return (toolCatRank(a) - toolCatRank(b)) || natCmp(a, b); }
+function eqTypeNames() { return equipTypesList.length ? equipTypesList.slice().sort(function (a, b) { return a.sort_order - b.sort_order; }).map(function (c) { return c.name; }) : []; }
+function eqTypeCmp(a, b) { var arr = eqTypeNames(); var ia = arr.indexOf(a), ib = arr.indexOf(b); return ((ia < 0 ? 998 : ia) - (ib < 0 ? 998 : ib)) || natCmp(a, b); }
+function vacFloorNames() { return vacuumFloors.length ? vacuumFloors.slice().sort(function (a, b) { return a.sort_order - b.sort_order; }).map(function (c) { return c.name; }) : []; }
+function floorNum(k) { var mm = String(k || "").match(/^(\d+)\s*F$/i); return mm ? +mm[1] : null; }
+function vacFloorCmp(a, b) { var na = floorNum(a), nb = floorNum(b); if (na != null || nb != null) return na == null ? 1 : nb == null ? -1 : na - nb; var arr = vacFloorNames(); var ia = arr.indexOf(a), ib = arr.indexOf(b); return ((ia < 0 ? 998 : ia) - (ib < 0 ? 998 : ib)) || natCmp(a, b); }
+// Dropdown "chip": groups many options (floors, categories, types) into one
+// control so the filter row stays short. Shows the chosen option when active.
+function selectChip(prefix, label, opts) {
+  if (!opts.length) return "";
+  var cur = moduleFilter[currentModule];
+  var on = cur.indexOf(prefix) === 0;
+  var curOpt = on ? opts.filter(function (o) { return prefix + o.key === cur; })[0] : null;
+  var h = '<label class="chip sel-chip' + (on ? " on" : "") + '"><span>' + esc(curOpt ? curOpt.label : label) +
+    (curOpt ? ' <span class="c-n">' + curOpt.n + "</span>" : "") + ' ▾</span>' +
+    '<select onchange="setFilter(this.value)" aria-label="' + esc(label) + '">' +
+    '<option value="all"' + (on ? "" : " selected") + ">" + esc(label) + (currentLang === "zh" ? "：全部" : ": All") + "</option>";
+  opts.forEach(function (o) {
+    h += '<option value="' + esc(prefix + o.key) + '"' + (curOpt === o ? " selected" : "") + ">" + esc(o.label) + (currentLang === "zh" ? "（" + o.n + "）" : " (" + o.n + ")") + "</option>";
+  });
+  return h + "</select></label>";
+}
+function buildFilterChips() {
+  var m = currentModule, h = "", zh = currentLang === "zh";
+  if (m === "cleaning") {
+    var act = products.filter(function (p) { return p.status !== "停用"; });
+    var dis = products.length - act.length;
+    h += chipHtml("all", zh ? "全部" : "All", act.length);
+    h += selectChip("cat-", zh ? "分類" : "Category", categories.map(function (c) {
+      return { key: String(c.id), label: (zh ? c.name_zh : c.name_en) || c.name_zh, n: act.filter(function (p) { return p.category_id === c.id; }).length };
+    }).filter(function (o) { return o.n; }));
+    var lown = lowStockIds().length;
+    if (lown) h += chipHtml("low", zh ? "🛒 補貨" : "🛒 Restock", lown, "danger");
+    var exn = expiringProductIds().length;
+    if (exn) h += chipHtml("expiring", zh ? "⚠️ 臨期" : "⚠️ Expiring", exn, "warn");
+    h += chipHtml("report", zh ? "📊 報表" : "📊 Report", null, "report");
+    if (dis) h += chipHtml("disabled", zh ? "停用" : "Disabled", dis, "danger");
+  } else if (m === "vacuum") {
+    var vn = vacuums.filter(function (v) { return v.status !== "報廢" && v.status !== "遺失"; });
+    var vl = vacuums.filter(function (v) { return v.status === "遺失"; }).length;
+    var vr = vacuums.filter(function (v) { return v.status === "維修中"; }).length;
+    var vs = vacuums.filter(function (v) { return v.status === "報廢"; }).length;
+    h += chipHtml("all", zh ? "全部" : "All", vn.length);
+    var fl = {}; vn.forEach(function (v) { fl[floorKey(v.floor_code)] = (fl[floorKey(v.floor_code)] || 0) + 1; });
+    h += selectChip("floor-", zh ? "📍 位置" : "📍 Floor", Object.keys(fl).sort(vacFloorCmp).map(function (f) { return { key: f, label: tr(f), n: fl[f] }; }));
+    if (vr) h += chipHtml("repair", zh ? "🔧 維修中" : "🔧 Repair", vr, "warn");
+    if (vl) h += chipHtml("lost", zh ? "❓ 遺失" : "❓ Missing", vl, "danger");
+    if (vs) h += chipHtml("scrap", zh ? "⚫ 報廢" : "⚫ Scrapped", vs, "danger");
+  } else if (m === "equipment") {
+    var en = equipment.filter(function (e) { return e.status !== "報廢" && e.status !== "遺失"; });
+    var el = equipment.filter(function (e) { return e.status === "遺失"; }).length;
+    var er = equipment.filter(function (e) { return e.status === "維修中"; }).length;
+    var es = equipment.filter(function (e) { return e.status === "報廢"; }).length;
+    h += chipHtml("all", zh ? "全部" : "All", en.length);
+    var ty = {}; en.forEach(function (e) { var t = e.type || "其他"; ty[t] = (ty[t] || 0) + 1; });
+    h += selectChip("type-", zh ? "類型" : "Type", Object.keys(ty).sort(eqTypeCmp).map(function (t) { return { key: t, label: tr(t), n: ty[t] }; }));
+    if (er) h += chipHtml("repair", zh ? "🔧 維修中" : "🔧 Repair", er, "warn");
+    if (el) h += chipHtml("lost", zh ? "❓ 遺失" : "❓ Missing", el, "danger");
+    if (es) h += chipHtml("scrap", zh ? "⚫ 報廢" : "⚫ Scrapped", es, "danger");
+  } else if (m === "tool") {
+    var ta = tools.filter(function (t) { return t.status !== "停用"; });
+    var tdd = tools.length - ta.length;
+    h += chipHtml("all", zh ? "全部" : "All", ta.length);
+    var tcat = {}; ta.forEach(function (t) { var c = t.category || "其他"; tcat[c] = (tcat[c] || 0) + 1; });
+    h += selectChip("cat-", zh ? "分類" : "Category", Object.keys(tcat).sort(toolCatCmp).map(function (c) { return { key: c, label: tr(c), n: tcat[c] }; }));
+    var tlow = lowToolIds().length;
+    if (tlow) h += chipHtml("low", zh ? "🛒 補貨" : "🛒 Restock", tlow, "danger");
+    if (tdd) h += chipHtml("disabled", zh ? "停用" : "Disabled", tdd, "danger");
+  }
+  document.getElementById("filterBar").innerHTML = h;
+}
+
+// ============================================================================
+//  Render dispatch
+// ============================================================================
+function render() {
+  document.querySelectorAll(".module-btn").forEach(function (b) {
+    b.classList.toggle("active", b.getAttribute("data-m") === currentModule);
+  });
+  buildFilterChips();
+  updateExpiryTabBadge();
+  updateSettingsUI();
+  var isReport = currentModule === "cleaning" && moduleFilter.cleaning === "report";
+  var lab = MODULE_ADD_LABEL[currentModule];
+  if (lab) { var labEl = document.getElementById("addFabLabel"); labEl.setAttribute("data-zh", lab.zh); labEl.setAttribute("data-en", lab.en); }
+  document.getElementById("addFab").style.display = (isAdmin && !isReport) ? "block" : "none";
+
+  var html = "";
+  if (currentModule === "cleaning") html = renderCleaning();
+  else if (currentModule === "vacuum") html = renderVacuum();
+  else if (currentModule === "tool") html = renderTool();
+  else html = renderEquipment();
+  document.getElementById("container").innerHTML = html;
+  applyLang();
+  hydrateImages();
+}
+function setModule(m) {
+  currentModule = m;
+  searchQuery = "";
+  var si = document.getElementById("searchInput"); if (si) si.value = "";
+  document.getElementById("searchRow").classList.remove("has-q");
+  render();
+  window.scrollTo(0, 0);
+}
+function setTabBadge(module, n) {
+  var btn = document.querySelector('.module-btn[data-m="' + module + '"]');
+  if (!btn) return;
+  var badge = btn.querySelector(".tab-alert");
+  if (n) { if (!badge) { badge = document.createElement("span"); badge.className = "tab-alert"; btn.appendChild(badge); } badge.textContent = n; }
+  else if (badge) { badge.remove(); }
+}
+function updateExpiryTabBadge() {
+  var u = {}; expiringProductIds().forEach(function (i) { u[i] = 1; }); lowStockIds().forEach(function (i) { u[i] = 1; });
+  setTabBadge("cleaning", Object.keys(u).length);
+  setTabBadge("tool", lowToolIds().length);
+}
+
+function applyLang() {
+  var lang = currentLang;
+  document.getElementById("btnZh").className = "lang-btn" + (lang === "zh" ? " active" : "");
+  document.getElementById("btnEn").className = "lang-btn" + (lang === "en" ? " active" : "");
+  document.querySelectorAll("[data-" + lang + "]").forEach(function (el) {
+    var val = el.getAttribute("data-" + lang);
+    if (val !== null && el.children.length === 0) el.textContent = val;
+  });
+  document.querySelectorAll("[data-" + lang + "-placeholder]").forEach(function (el) {
+    el.placeholder = el.getAttribute("data-" + lang + "-placeholder");
+  });
+}
+function setLang(lang) { currentLang = lang; render(); }
+
+// ============================================================================
+//  Module 1 — Cleaning chemicals
+// ============================================================================
+function slimHead(label, count, cls) {
+  return '<div class="slim-head ' + (cls || "") + '"><span class="bar"></span>' + label + (count != null ? ' <span class="n">' + count + "</span>" : "") + "</div>";
+}
+function renderCleaning() {
+  if (!products.length) return emptyState("🧴", "尚無清潔劑資料", "No chemicals yet");
+  var f = moduleFilter.cleaning;
+  if (f === "report") return renderReport();
+  if (searchQuery) {
+    var hits = products.filter(function (p) { return matchQuery([p.name_zh, p.name_en, p.subname_zh, p.subname_en]); });
+    return hits.length ? '<div class="products-grid" style="margin-top:14px">' + hits.map(cleaningCard).join("") + "</div>" : noResult();
+  }
+  var exIds = expiringProductIds();
+  var lowIds = lowStockIds();
+  if (f === "expiring") {
+    var exItems = products.filter(function (p) { return exIds.indexOf(p.id) >= 0; });
+    return slimHead(currentLang === "zh" ? "⚠️ 即將到期 / 已過期（1 個月內）" : "⚠️ Expiring (≤30d)", exItems.length, "repair") +
+      '<div class="products-grid">' + exItems.map(cleaningCard).join("") + "</div>";
+  }
+  if (f === "low") {
+    var lowItems = products.filter(function (p) { return lowIds.indexOf(p.id) >= 0; });
+    return slimHead(currentLang === "zh" ? "🛒 低於最低庫存，需補貨" : "🛒 Below reorder level", lowItems.length, "scrap") +
+      '<div class="products-grid">' + lowItems.map(cleaningCard).join("") + "</div>";
+  }
+  var actN = products.filter(function (p) { return p.status !== "停用"; }).length;
+  var offN = products.length - actN;
+  var cap = '<div class="mod-caption">' + (currentLang === "zh"
+    ? "清潔劑 共 <b>" + products.length + "</b> 款　·　啟用 <b>" + actN + "</b>　·　<span class=\"off\">停用 " + offN + "</span>"
+    : "<b>" + products.length + "</b> chemicals · <b>" + actN + "</b> active · <span class=\"off\">" + offN + " off</span>") + "</div>";
+  if (lowIds.length || exIds.length) {
+    cap += '<div class="alert-row">';
+    if (lowIds.length) cap += '<button class="alert-pill danger" onclick="setFilter(\'low\')">🛒 ' +
+      (currentLang === "zh" ? "<b>" + lowIds.length + "</b> 款需補貨" : "<b>" + lowIds.length + "</b> to restock") + ' <span class="go">›</span></button>';
+    if (exIds.length) cap += '<button class="alert-pill warn" onclick="setFilter(\'expiring\')">⚠️ ' +
+      (currentLang === "zh" ? "<b>" + exIds.length + "</b> 款 1 個月內到期" : "<b>" + exIds.length + "</b> expiring ≤30d") + ' <span class="go">›</span></button>';
+    cap += "</div>";
+  }
+  if (f === "disabled") {
+    var dis = products.filter(function (p) { return p.status === "停用"; });
+    return cap + (dis.length ? '<div class="products-grid">' + dis.map(cleaningCard).join("") + "</div>" : emptyState("🚫", "沒有停用產品", "No disabled products"));
+  }
+  if (f.indexOf("cat-") === 0) {
+    var cid = +f.slice(4);
+    var items = products.filter(function (p) { return p.status !== "停用" && p.category_id === cid; });
+    return cap + '<div class="products-grid">' + items.map(cleaningCard).join("") + "</div>";
+  }
+  var body = "";
+  categories.forEach(function (c) {
+    var items = products.filter(function (p) { return p.status !== "停用" && p.category_id === c.id; });
+    if (!items.length) return;
+    body += slimHead(esc(c.icon) + " " + esc(currentLang === "zh" ? c.name_zh : c.name_en), items.length) +
+      '<div class="products-grid">' + items.map(cleaningCard).join("") + "</div>";
+  });
+  return cap + (body || emptyState("🧴", "尚無啟用產品", "No active products"));
+}
+
+function cleaningCard(p) {
+  var s = Number(p.stock);
+  var minS = Number(p.min_stock) || 0;
+  var below = minS > 0 && s < minS;
+  var stockClass = below ? "stock-out" : s > 5 ? "stock-ok" : s > 0 ? "stock-low" : "stock-out";
+  var stockLbl = below ? (currentLang === "zh" ? "需補貨" : "Restock") : (currentLang === "zh" ? "庫存" : "Stock");
+  var disabled = p.status === "停用";
+  var rinseYes = p.rinse_zh === "需要";
+  var img = cardImg("products", p, p.alt || p.name_zh);
+  var admin = isAdmin ? (
+    '<div class="stock-edit" style="display:flex;gap:6px">' +
+      '<button class="mini-btn" onclick="openReceive(' + p.id + ')" data-zh="＋ 進貨" data-en="+ Receive">＋ 進貨</button>' +
+      '<button class="mini-btn warn" onclick="openCount(' + p.id + ')" data-zh="盤點" data-en="Count">盤點</button>' +
+    "</div>" +
+    '<div class="status-row" style="display:flex">' +
+      '<span class="state-pill ' + (disabled ? "state-off" : "state-on") + '">' + stateText(p.status, currentLang) + "</span>" +
+      '<button class="toggle-btn ' + (disabled ? "enable" : "disable") + '" onclick="toggleStatus(' + p.id + ')">' + toggleText(p.status, currentLang) + "</button>" +
+      '<button class="edit-btn" onclick="openProductForm(' + p.id + ')" data-zh="編輯" data-en="Edit">編輯</button>' +
+      '<button class="del-btn" onclick="deleteProduct(' + p.id + ')" data-zh="刪除" data-en="Delete">刪除</button>' +
+    "</div>"
+  ) : "";
+  return '<div class="product-card' + (disabled ? " disabled" : "") + '" data-id="' + p.id + '">' +
+    '<div class="disabled-badge" data-zh="已停用" data-en="Disabled">已停用</div>' +
+    '<div class="product-img">' + img + "</div>" +
+    '<div class="product-info"><div class="info-top"><div>' +
+      '<div class="product-name" data-zh="' + esc(p.name_zh) + '" data-en="' + esc(p.name_en) + '">' + esc(p.name_zh) + "</div>" +
+      '<div class="product-name-sub" data-zh="' + esc(p.subname_zh) + '" data-en="' + esc(p.subname_en) + '">' + esc(p.subname_zh) + "</div>" +
+    "</div>" +
+    '<div class="stock-area"><div class="stock-badge ' + stockClass + '" id="stock-' + p.id + '">' + s + "</div>" +
+    '<div class="stock-label"' + (below ? ' style="color:var(--danger);font-weight:800"' : "") + ">" + esc(stockLbl) + "</div>" +
+    (minS > 0 ? '<div class="min-label' + (below ? " below" : "") + '">' + (currentLang === "zh" ? "最低 " : "min ") + minS + "</div>" : "") +
+    "</div></div>" +
+    '<table class="detail-table">' +
+      '<tr><td class="dt-label" data-zh="適用範圍" data-en="Applicable">適用範圍</td><td class="dt-value" data-zh="' + esc(p.applicable_zh) + '" data-en="' + esc(p.applicable_en) + '">' + esc(p.applicable_zh) + "</td></tr>" +
+      '<tr><td class="dt-label" data-zh="兌水比例" data-en="Dilution">兌水比例</td><td class="dt-value" data-zh="' + esc(p.dilution_zh) + '" data-en="' + esc(p.dilution_en) + '">' + esc(p.dilution_zh) + "</td></tr>" +
+      '<tr><td class="dt-label" data-zh="需要過水" data-en="Rinse">需要過水</td><td class="dt-value"><span class="' + (rinseYes ? "rinse-yes" : "rinse-no") + '" data-zh="' + esc(p.rinse_zh) + '" data-en="' + esc(p.rinse_en) + '">' + esc(p.rinse_zh) + "</span></td></tr>" +
+    "</table>" + batchListHtml(p) + admin +
+    "</div></div>";
+}
+
+function daysUntil(dateStr) {
+  if (!dateStr) return null;
+  var today = new Date(); today.setHours(0, 0, 0, 0);
+  var d = new Date(dateStr + "T00:00:00");
+  return Math.round((d - today) / 86400000);
+}
+// batches expiring within 30 days (incl. already expired), with stock remaining
+function isActiveProduct(id) { var p = products.find(function (x) { return x.id === id; }); return p && p.status !== "停用"; }
+// expiring batches — only for 上架中 (active) products
+function expiringProductIds() {
+  var ids = {};
+  batches.forEach(function (b) {
+    if (!b.expiry_date || Number(b.qty_remaining) <= 0) return;
+    if (!isActiveProduct(b.product_id)) return;
+    var d = daysUntil(b.expiry_date);
+    if (d !== null && d <= 30) ids[b.product_id] = 1;
+  });
+  return Object.keys(ids).map(Number);
+}
+// products at/below reorder level — only for 上架中 (active) products
+function lowStockIds() {
+  return products.filter(function (p) { var m = Number(p.min_stock) || 0; return p.status !== "停用" && m > 0 && Number(p.stock) < m; }).map(function (p) { return p.id; });
+}
+function batchListHtml(p) {
+  var list = batchesOf(p.id);
+  if (!list.length) return "";
+  var rows = list.map(function (b) {
+    var cls = "exp-none", label;
+    if (b.expiry_date) {
+      var d = daysUntil(b.expiry_date);
+      cls = d < 0 ? "exp-past" : d <= 30 ? "exp-soon" : "exp-ok";
+      label = b.expiry_date + (d < 0 ? (currentLang === "zh" ? "（已過期）" : " (expired)") : d <= 30 ? (currentLang === "zh" ? "（剩" + d + "天）" : " (" + d + "d)") : "");
+    } else {
+      label = currentLang === "zh" ? "未設效期" : "No expiry";
+    }
+    var adminBtns = isAdmin
+      ? '<button class="batch-mini" onclick="openBatchEdit(' + b.id + ')" title="編輯">✎</button><button class="batch-mini del" onclick="deleteBatch(' + b.id + ')" title="刪除">✕</button>'
+      : "";
+    return '<div class="batch-item"><span class="exp-dot ' + cls + '"></span>' +
+      '<span class="batch-exp">' + esc(label) + "</span>" +
+      '<span class="batch-qty">' + b.qty_remaining + "</span>" + adminBtns + "</div>";
+  }).join("");
+  return '<div class="batch-box"><div class="batch-title" data-zh="效期批次" data-en="Batches">效期批次</div>' + rows + "</div>";
+}
+
+function adjustStock(id, delta) {
+  var inp = document.getElementById("input-" + id);
+  var val = Number(inp.value) + delta; if (val < 0) val = 0; inp.value = val;
+}
+async function saveStock(id) {
+  var inp = document.getElementById("input-" + id);
+  var btn = document.getElementById("savebtn-" + id);
+  var n = Number(inp.value);
+  btn.textContent = "..."; btn.className = "save-btn saving";
+  var res = await sb.rpc("update_stock", { p_password: currentPwd, p_id: id, p_stock: n });
+  if (!res.error) {
+    btn.textContent = "OK!"; btn.className = "save-btn saved";
+    replaceLocal(products, res.data);
+    var b = document.getElementById("stock-" + id);
+    b.textContent = n; b.className = "stock-badge " + (n > 5 ? "stock-ok" : n > 0 ? "stock-low" : "stock-out");
+  } else {
+    btn.textContent = currentLang === "zh" ? "失敗" : "Failed"; btn.className = "save-btn error"; adminErr(res.error);
+  }
+  setTimeout(function () { btn.textContent = currentLang === "zh" ? "儲存" : "Save"; btn.className = "save-btn"; }, 1500);
+}
+async function toggleStatus(id) {
+  var p = products.find(function (x) { return x.id === id; });
+  var next = p.status === "停用" ? "啟用" : "停用";
+  var res = await sb.rpc("update_status", { p_password: currentPwd, p_id: id, p_status: next });
+  if (!res.error) { replaceLocal(products, res.data); render(); } else adminErr(res.error);
+}
+
+// ---- cleaning product form ----
+function openProductForm(id) {
+  editProductId = (id == null ? null : id);
+  fillCategorySelect();
+  document.getElementById("pfError").style.display = "none";
+  document.getElementById("pfImgFile").value = "";
+  var title = document.getElementById("pmTitle");
+  if (editProductId == null) {
+    title.setAttribute("data-zh", "新增產品"); title.setAttribute("data-en", "Add product");
+    setProductForm({ category_id: categories[0] && categories[0].id, stock: 0, rinse_zh: "不需要" });
+  } else {
+    title.setAttribute("data-zh", "編輯產品"); title.setAttribute("data-en", "Edit product");
+    setProductForm(products.find(function (x) { return x.id === editProductId; }));
+  }
+  document.getElementById("productModal").classList.add("show");
+  applyLang();
+}
+function closeProductForm() { document.getElementById("productModal").classList.remove("show"); }
+function fillCategorySelect() {
+  document.getElementById("pfCategory").innerHTML = categories.map(function (c) {
+    return '<option value="' + c.id + '">' + esc(c.icon + " " + c.name_zh) + "</option>";
+  }).join("");
+}
+function setProductForm(p) {
+  p = p || {};
+  document.getElementById("pfCategory").value = p.category_id || (categories[0] && categories[0].id) || "";
+  document.getElementById("pfNameZh").value = p.name_zh || "";
+  document.getElementById("pfNameEn").value = p.name_en || "";
+  document.getElementById("pfAppZh").value = p.applicable_zh || "";
+  document.getElementById("pfAppEn").value = p.applicable_en || "";
+  document.getElementById("pfDilZh").value = p.dilution_zh || "";
+  document.getElementById("pfDilEn").value = p.dilution_en || "";
+  document.getElementById("pfRinse").value = p.rinse_zh === "需要" ? "yes" : "no";
+  document.getElementById("pfStock").value = p.stock != null ? p.stock : 0;
+  document.getElementById("pfMin").value = p.min_stock != null ? p.min_stock : 0;
+  formImages.pf = p.image || null;
+  document.getElementById("pfImgPreview").innerHTML = formImages.pf ? '<img src="' + esc(formImages.pf) + '">' : '<span class="no-img">🧴</span>';
+}
+async function saveProductForm() {
+  var btn = document.getElementById("pfSaveBtn");
+  var errEl = document.getElementById("pfError");
+  errEl.style.display = "none";
+  var nameZh = document.getElementById("pfNameZh").value.trim();
+  if (!nameZh) { errEl.textContent = currentLang === "zh" ? "請填寫中文名稱" : "Name (ZH) required"; errEl.style.display = "block"; return; }
+  await awaitImage("pf");
+  var rinseYes = document.getElementById("pfRinse").value === "yes";
+  var payload = {
+    category_id: document.getElementById("pfCategory").value,
+    name_zh: nameZh,
+    name_en: document.getElementById("pfNameEn").value.trim(),
+    subname_zh: document.getElementById("pfNameEn").value.trim(),
+    subname_en: nameZh,
+    applicable_zh: document.getElementById("pfAppZh").value.trim(),
+    applicable_en: document.getElementById("pfAppEn").value.trim(),
+    dilution_zh: document.getElementById("pfDilZh").value.trim(),
+    dilution_en: document.getElementById("pfDilEn").value.trim(),
+    rinse_zh: rinseYes ? "需要" : "不需要",
+    rinse_en: rinseYes ? "Required" : "Not required",
+    image: formImages.pf,
+    alt: nameZh,
+    // Stock is changed only through 進貨 (receive) / 盤點 (count) so every
+    // change is recorded and the usage report stays complete.
+    stock: editProductId != null ? "" : "0",
+    min_stock: document.getElementById("pfMin").value,
+    status: "啟用",
+    sort_order: editProductId || 999,
+  };
+  if (editProductId != null) payload.id = editProductId;
+  btn.textContent = "..."; btn.disabled = true;
+  var res = await sb.rpc("upsert_product", { p_password: currentPwd, p_product: payload });
+  btn.textContent = currentLang === "zh" ? "儲存" : "Save"; btn.disabled = false;
+  if (!res.error) { upsertLocal(products, res.data); closeProductForm(); render(); }
+  else { errEl.textContent = friendlyError(res.error); errEl.style.display = "block"; }
+}
+async function deleteProduct(id) {
+  var p = products.find(function (x) { return x.id === id; });
+  if (!confirm((currentLang === "zh" ? "確定刪除「" : 'Delete "') + (p ? p.name_zh : id) + (currentLang === "zh" ? "」？此操作無法復原。" : '"?'))) return;
+  var res = await sb.rpc("delete_product", { p_password: currentPwd, p_id: id });
+  if (!res.error) { products = products.filter(function (x) { return x.id !== id; }); render(); } else adminErr(res.error);
+}
+
+// ---- batches / expiry / stock count ----
+async function reloadCleaningData() {
+  var pr = await reloadNoImage("products", [["sort_order"]]); if (pr) products = pr;
+  var bt = await sb.from("product_batches").select("*").order("expiry_date", { ascending: true }); if (!bt.error) batches = bt.data || [];
+  var mv = await sb.from("stock_movements").select("*").eq("kind", "out").order("happened_on", { ascending: false }); if (!mv.error) movements = mv.data || [];
+  render();
+}
+function openReceive(productId) {
+  batchProductId = productId;
+  var p = products.find(function (x) { return x.id === productId; });
+  document.getElementById("rcSub").textContent = p ? p.name_zh : "";
+  document.getElementById("rcError").style.display = "none";
+  document.getElementById("rcQty").value = "1";
+  document.getElementById("rcReceived").value = new Date().toISOString().slice(0, 10);
+  document.getElementById("rcExpiry").value = "";
+  document.getElementById("rcNote").value = "";
+  document.getElementById("receiveModal").classList.add("show");
+  applyLang();
+}
+function closeReceive() { document.getElementById("receiveModal").classList.remove("show"); }
+async function saveReceive() {
+  var btn = document.getElementById("rcSaveBtn"), errEl = document.getElementById("rcError");
+  errEl.style.display = "none";
+  var qty = Number(document.getElementById("rcQty").value);
+  if (!qty || qty <= 0) { errEl.textContent = currentLang === "zh" ? "數量要大於 0" : "Qty must be > 0"; errEl.style.display = "block"; return; }
+  btn.textContent = "..."; btn.disabled = true;
+  var res = await sb.rpc("receive_batch", {
+    p_password: currentPwd, p_product_id: batchProductId, p_qty: qty,
+    p_expiry: document.getElementById("rcExpiry").value || null,
+    p_received: document.getElementById("rcReceived").value || null,
+    p_note: document.getElementById("rcNote").value.trim() || null,
+  });
+  btn.textContent = currentLang === "zh" ? "進貨" : "Receive"; btn.disabled = false;
+  if (!res.error) { closeReceive(); await reloadCleaningData(); }
+  else { errEl.textContent = friendlyError(res.error); errEl.style.display = "block"; }
+}
+function openCount(productId) {
+  batchProductId = productId;
+  var p = products.find(function (x) { return x.id === productId; });
+  var cur = Number(p ? p.stock : 0);
+  document.getElementById("ctSub").textContent = p ? (p.name_zh + (currentLang === "zh" ? "　目前帳面：" + cur : "　now: " + cur)) : "";
+  document.getElementById("ctError").style.display = "none";
+  var ct = document.getElementById("ctActual");
+  ct.value = "";
+  ct.placeholder = (currentLang === "zh" ? "目前 " : "now ") + cur;
+  document.getElementById("ctDate").value = new Date().toISOString().slice(0, 10);
+  document.getElementById("ctNote").value = "";
+  ct.oninput = updateCountHint;
+  updateCountHint();
+  document.getElementById("countModal").classList.add("show");
+  applyLang();
+}
+function updateCountHint() {
+  var p = products.find(function (x) { return x.id === batchProductId; });
+  var cur = Number(p ? p.stock : 0);
+  var actual = Number(document.getElementById("ctActual").value);
+  var hint = document.getElementById("ctHint");
+  if (isNaN(actual)) { hint.textContent = ""; return; }
+  var diff = cur - actual;
+  if (diff > 0) hint.textContent = currentLang === "zh" ? "→ 記為用掉 " + diff + "（自最早到期批次扣）" : "→ usage " + diff;
+  else if (diff < 0) hint.textContent = currentLang === "zh" ? "→ 增加 " + (-diff) + "（正向調整）" : "→ +" + (-diff);
+  else hint.textContent = currentLang === "zh" ? "→ 無變化" : "→ no change";
+}
+function closeCount() { document.getElementById("countModal").classList.remove("show"); }
+async function saveCount() {
+  var btn = document.getElementById("ctSaveBtn"), errEl = document.getElementById("ctError");
+  errEl.style.display = "none";
+  var actual = Number(document.getElementById("ctActual").value);
+  if (isNaN(actual) || actual < 0) { errEl.textContent = currentLang === "zh" ? "請填有效數字" : "Invalid number"; errEl.style.display = "block"; return; }
+  btn.textContent = "..."; btn.disabled = true;
+  var res = await sb.rpc("stock_count", {
+    p_password: currentPwd, p_product_id: batchProductId, p_actual: actual,
+    p_date: document.getElementById("ctDate").value || null,
+    p_note: document.getElementById("ctNote").value.trim() || null,
+  });
+  btn.textContent = currentLang === "zh" ? "確認盤點" : "Confirm"; btn.disabled = false;
+  if (!res.error) { closeCount(); await reloadCleaningData(); }
+  else { errEl.textContent = friendlyError(res.error); errEl.style.display = "block"; }
+}
+function openBatchEdit(batchId) {
+  editBatchId = batchId;
+  var b = batches.find(function (x) { return x.id === batchId; });
+  if (!b) return;
+  document.getElementById("beError").style.display = "none";
+  document.getElementById("beQty").value = b.qty_remaining;
+  document.getElementById("beReceived").value = b.received_date || "";
+  document.getElementById("beExpiry").value = b.expiry_date || "";
+  document.getElementById("beNote").value = b.note || "";
+  document.getElementById("batchModal").classList.add("show");
+  applyLang();
+}
+function closeBatchEdit() { document.getElementById("batchModal").classList.remove("show"); }
+async function saveBatchEdit() {
+  var btn = document.getElementById("beSaveBtn"), errEl = document.getElementById("beError");
+  errEl.style.display = "none";
+  var qty = Number(document.getElementById("beQty").value);
+  if (isNaN(qty) || qty < 0) { errEl.textContent = currentLang === "zh" ? "數量無效" : "Invalid qty"; errEl.style.display = "block"; return; }
+  btn.textContent = "..."; btn.disabled = true;
+  var res = await sb.rpc("update_batch", {
+    p_password: currentPwd, p_batch_id: editBatchId, p_qty_remaining: qty,
+    p_expiry: document.getElementById("beExpiry").value || null,
+    p_received: document.getElementById("beReceived").value || null,
+    p_note: document.getElementById("beNote").value.trim() || null,
+  });
+  btn.textContent = currentLang === "zh" ? "儲存" : "Save"; btn.disabled = false;
+  if (!res.error) { closeBatchEdit(); await reloadCleaningData(); }
+  else { errEl.textContent = friendlyError(res.error); errEl.style.display = "block"; }
+}
+async function deleteBatch(batchId) {
+  if (!confirm(currentLang === "zh" ? "刪除此批次？（記為丟棄，不計入用量）" : "Delete this batch? (disposal, not usage)")) return;
+  var res = await sb.rpc("delete_batch", { p_password: currentPwd, p_batch_id: batchId });
+  if (!res.error) { await reloadCleaningData(); } else adminErr(res.error);
+}
+
+// ============================================================================
+//  Usage report (月 / 季 / 年)
+// ============================================================================
+function setReportPeriod(pd) { reportPeriod = pd; render(); }
+function renderReport() {
+  var labels = { month: { zh: "月", en: "Month" }, quarter: { zh: "季", en: "Quarter" }, year: { zh: "年", en: "Year" } };
+  var controls = '<div class="report-controls">' + ["month", "quarter", "year"].map(function (pd) {
+    return '<button class="period-btn' + (reportPeriod === pd ? " active" : "") + '" onclick="setReportPeriod(\'' + pd + '\')">' +
+      (currentLang === "zh" ? labels[pd].zh : labels[pd].en) + "</button>";
+  }).join("") + "</div>";
+  if (!movements.length) return controls + emptyState("📊", "尚無用量記錄（盤點後就會有）", "No usage yet — do a stock count first");
+
+  function keyOf(dateStr) {
+    var d = new Date(dateStr + "T00:00:00"), y = d.getFullYear();
+    if (reportPeriod === "year") return "" + y;
+    if (reportPeriod === "quarter") return y + " Q" + (Math.floor(d.getMonth() / 3) + 1);
+    return y + "-" + String(d.getMonth() + 1).padStart(2, "0");
+  }
+  var periods = {}, byProd = {};
+  movements.forEach(function (m) {
+    var k = keyOf(m.happened_on); periods[k] = 1;
+    byProd[m.product_id] = byProd[m.product_id] || {};
+    byProd[m.product_id][k] = (byProd[m.product_id][k] || 0) + m.qty;
+  });
+  var pkeys = Object.keys(periods).sort().reverse();
+  var prodIds = Object.keys(byProd).map(Number);
+  function prodName(id) { var p = products.find(function (x) { return x.id === id; }); return p ? p.name_zh : "#" + id; }
+
+  var head = "<tr><th>" + (currentLang === "zh" ? "產品" : "Product") + "</th>" +
+    pkeys.map(function (k) { return "<th>" + esc(k) + "</th>"; }).join("") +
+    "<th>" + (currentLang === "zh" ? "合計" : "Total") + "</th></tr>";
+  var rows = prodIds.map(function (id) {
+    var total = 0;
+    var tds = pkeys.map(function (k) { var q = byProd[id][k] || 0; total += q; return "<td>" + (q || "") + "</td>"; }).join("");
+    return "<tr><td>" + esc(prodName(id)) + "</td>" + tds + "<td><b>" + total + "</b></td></tr>";
+  }).join("");
+  var colTotals = {}, grand = 0;
+  pkeys.forEach(function (k) { var s = 0; prodIds.forEach(function (id) { s += byProd[id][k] || 0; }); colTotals[k] = s; grand += s; });
+  var totalRow = '<tr class="total-row"><td>' + (currentLang === "zh" ? "總計" : "Total") + "</td>" +
+    pkeys.map(function (k) { return "<td>" + colTotals[k] + "</td>"; }).join("") + "<td>" + grand + "</td></tr>";
+
+  return controls + '<div class="report-scroll"><table class="report-table"><thead>' + head + "</thead><tbody>" + rows + totalRow + "</tbody></table></div>";
+}
+
+// ============================================================================
+//  Module 2 — Vacuums
+// ============================================================================
+function brandClass(brand) {
+  var b = (brand || "").toLowerCase();
+  if (b.indexOf("wetrok") >= 0) return "brand-wet";
+  if (b.indexOf("nilfisk") >= 0) return "brand-nil";
+  return "";
+}
+function brandTag(brand) {
+  if (!brand) return "";
+  var b = brand.toLowerCase();
+  if (b.indexOf("wetrok") >= 0) return '<span class="brand-tag wet">Wetrok</span>';
+  if (b.indexOf("nilfisk") >= 0) return '<span class="brand-tag nil">Nilfisk</span>';
+  return '<span class="brand-tag oth">' + esc(brand.split(/[ (（]/)[0]) + "</span>";
+}
+function latestMaint(id, arr, key) {
+  var d = "";
+  arr.forEach(function (m) { if (m[key] === id && m.service_date > d) d = m.service_date; });
+  return d;
+}
+function brandLegend() {
+  var nil = vacuums.filter(function (v) { return brandClass(v.brand) === "brand-nil"; }).length;
+  var wet = vacuums.filter(function (v) { return brandClass(v.brand) === "brand-wet"; }).length;
+  var oth = vacuums.length - nil - wet;
+  var b = [];
+  if (nil) b.push('<span class="b"><span class="d" style="background:#2E74C7"></span>Nilfisk ' + nil + "</span>");
+  if (wet) b.push('<span class="b"><span class="d" style="background:#12A594"></span>Wetrok ' + wet + "</span>");
+  if (oth) b.push('<span class="b"><span class="d" style="background:#b3bfca"></span>' + (currentLang === "zh" ? "其他 " : "Other ") + oth + "</span>");
+  return '<div class="brandlegend">' + b.join("") + "</div>";
+}
+function byLabel(a, b) { return natCmp(a.label || a.model || a.serial, b.label || b.model || b.serial); }
+function byMaintDesc(k, arr) { return function (a, b) { return latestMaint(b.id, arr, k).localeCompare(latestMaint(a.id, arr, k)); }; }
+function renderVacuum() {
+  if (!vacuums.length) return emptyState("🌀", "尚無吸塵機，登入後可新增", "No vacuums yet");
+  var f = moduleFilter.vacuum;
+  if (searchQuery) {
+    var hits = vacuums.filter(function (v) { return matchQuery([v.model, v.brand, v.floor_code, tr(v.floor_code), v.label, v.serial]); });
+    return hits.length ? '<div class="vac-grid" style="margin-top:14px">' + hits.map(vacCard).join("") + "</div>" : noResult();
+  }
+  if (f === "repair") {
+    var rep = vacuums.filter(function (v) { return v.status === "維修中"; }).sort(byMaintDesc("vacuum_id", vacMaint));
+    return brandLegend() + slimHead(currentLang === "zh" ? "🔧 維修中（近期保養在前）" : "🔧 Repair", rep.length, "repair") + '<div class="vac-grid">' + rep.map(vacCard).join("") + "</div>";
+  }
+  if (f === "lost") {
+    var lost = vacuums.filter(function (v) { return v.status === "遺失"; }).sort(byLabel);
+    return slimHead(currentLang === "zh" ? "❓ 遺失／未找到" : "❓ Missing", lost.length, "scrap") + '<div class="vac-grid">' + lost.map(vacCard).join("") + "</div>";
+  }
+  if (f === "scrap") {
+    var scr = vacuums.filter(function (v) { return v.status === "報廢"; }).sort(byLabel);
+    return slimHead(currentLang === "zh" ? "⚫ 報廢區" : "⚫ Scrapped", scr.length, "scrap") + '<div class="vac-grid">' + scr.map(vacCard).join("") + "</div>";
+  }
+  if (f.indexOf("floor-") === 0) {
+    var fl = f.slice(6);
+    var items = vacuums.filter(function (v) { return v.status !== "報廢" && v.status !== "遺失" && floorKey(v.floor_code) === fl; }).sort(byLabel);
+    return brandLegend() + slimHead("🏢 " + esc(tr(fl)), items.length) + '<div class="vac-grid">' + items.map(vacCard).join("") + "</div>";
+  }
+  // all: 維修中 pinned first, then floor groups (正常); 報廢 excluded
+  var html = brandLegend();
+  var repAll = vacuums.filter(function (v) { return v.status === "維修中"; }).sort(byMaintDesc("vacuum_id", vacMaint));
+  if (repAll.length) html += slimHead(currentLang === "zh" ? "🔧 維修中" : "🔧 Repair", repAll.length, "repair") + '<div class="vac-grid">' + repAll.map(vacCard).join("") + "</div>";
+  var groups = {};
+  vacuums.filter(function (v) { return v.status === "正常"; }).forEach(function (v) { var k = floorKey(v.floor_code); (groups[k] = groups[k] || []).push(v); });
+  Object.keys(groups).sort(vacFloorCmp).forEach(function (k) {
+    groups[k].sort(byLabel);
+    html += slimHead("🏢 " + esc(tr(k)), groups[k].length) + '<div class="vac-grid">' + groups[k].map(vacCard).join("") + "</div>";
+  });
+  return html;
+}
+function vacCard(v) {
+  var img = cardImg("vacuums", v);
+  var st = v.status;
+  var stCls = st === "維修中" ? "vs-repair" : st === "報廢" ? "vs-scrap" : st === "遺失" ? "vs-lost" : "vs-ok";
+  var records = vacMaint.filter(function (m) { return m.vacuum_id === v.id; });
+  var maintList = records.length
+    ? records.map(function (m) {
+        return '<div class="maint-item"><span>' + esc(tr(m.description)) +
+          (isAdmin ? ' <button class="maint-del" onclick="deleteMaint(\'vacuum\',' + m.id + ')">✕</button>' : "") +
+          '</span><span class="maint-date">' + esc(m.service_date) + "</span></div>";
+      }).join("")
+    : '<div class="maint-empty" data-zh="尚無保養記錄" data-en="No records yet">尚無保養記錄</div>';
+  var admin = isAdmin ? (
+    '<div class="vac-actions">' +
+      '<button class="mini-btn warn" onclick="toggleVacuumStatus(' + v.id + ')" data-zh="切換狀態" data-en="Toggle">切換狀態</button>' +
+      '<button class="mini-btn" onclick="openMaintForm(\'vacuum\',' + v.id + ')" data-zh="＋ 保養" data-en="+ Maint">＋ 保養</button>' +
+      '<button class="mini-btn" onclick="openVacuumForm(' + v.id + ')" data-zh="編輯" data-en="Edit">編輯</button>' +
+      '<button class="mini-btn grey" onclick="deleteVacuum(' + v.id + ')" data-zh="刪除" data-en="Delete">刪除</button>' +
+    "</div>"
+  ) : "";
+  var sub = [v.label ? v.model : v.brand, v.serial ? "S/N " + v.serial : ""].filter(Boolean).join(" · ");
+  return '<div class="vac-card ' + brandClass(v.brand) + " " + (st === "報廢" || st === "遺失" ? "scrap" : "") + '">' +
+    '<div class="vac-img">' + img + "</div>" +
+    '<div class="vac-body">' +
+      '<div class="vac-head"><div class="vac-model">' + esc(v.label || v.model) + "</div>" +
+        (sub ? '<div class="vac-brand">' + esc(sub) + "</div>" : "") +
+        '<div class="vac-badges">' +
+          brandTag(v.brand) +
+          (v.floor_code ? '<span class="floor-badge">' + esc(tr(v.floor_code)) + "</span>" : "") +
+          '<span class="vac-status ' + stCls + '">' + esc(vacStatusText(st, currentLang)) + "</span>" +
+        "</div></div>" +
+      (v.notes ? '<div class="vac-notes">' + esc(v.notes) + "</div>" : "") +
+      maintBox(records.length, maintList) +
+      admin +
+    "</div></div>";
+}
+async function toggleVacuumStatus(id) {
+  var v = vacuums.find(function (x) { return x.id === id; });
+  var next = v.status === "正常" ? "維修中" : "正常";
+  var res = await sb.rpc("update_vacuum_status", { p_password: currentPwd, p_id: id, p_status: next });
+  if (!res.error) { replaceLocal(vacuums, res.data); render(); } else adminErr(res.error);
+}
+function openVacuumForm(id) {
+  editVacuumId = (id == null ? null : id);
+  document.getElementById("vfError").style.display = "none";
+  document.getElementById("vfImgFile").value = "";
+  var title = document.getElementById("vmTitle");
+  var v = editVacuumId == null ? { status: "正常" } : vacuums.find(function (x) { return x.id === editVacuumId; });
+  title.setAttribute("data-zh", editVacuumId == null ? "新增吸塵機" : "編輯吸塵機");
+  title.setAttribute("data-en", editVacuumId == null ? "Add vacuum" : "Edit vacuum");
+  document.getElementById("vfLabel").value = v.label || "";
+  document.getElementById("vfSerial").value = v.serial || "";
+  document.getElementById("vfModel").value = v.model || "";
+  document.getElementById("vfBrand").value = v.brand || "";
+  document.getElementById("vfFloor").value = v.floor_code || "";
+  document.getElementById("vfStatus").value = v.status || "正常";
+  document.getElementById("vfNotes").value = v.notes || "";
+  formImages.vf = v.image || null;
+  document.getElementById("vfImgPreview").innerHTML = formImages.vf ? '<img src="' + esc(formImages.vf) + '">' : '<span class="no-img">🌀</span>';
+  document.getElementById("vacuumModal").classList.add("show");
+  applyLang();
+}
+function closeVacuumForm() { document.getElementById("vacuumModal").classList.remove("show"); }
+async function saveVacuumForm() {
+  var btn = document.getElementById("vfSaveBtn");
+  var errEl = document.getElementById("vfError");
+  errEl.style.display = "none";
+  var model = document.getElementById("vfModel").value.trim();
+  if (!model) { errEl.textContent = currentLang === "zh" ? "請填寫型號" : "Model required"; errEl.style.display = "block"; return; }
+  await awaitImage("vf");
+  var payload = {
+    model: model,
+    brand: document.getElementById("vfBrand").value.trim(),
+    label: document.getElementById("vfLabel").value.trim(),
+    serial: document.getElementById("vfSerial").value.trim(),
+    floor_code: document.getElementById("vfFloor").value.trim(),
+    status: document.getElementById("vfStatus").value,
+    notes: document.getElementById("vfNotes").value.trim(),
+    image: formImages.vf,
+  };
+  if (editVacuumId != null) payload.id = editVacuumId;
+  btn.textContent = "..."; btn.disabled = true;
+  var res = await sb.rpc("upsert_vacuum", { p_password: currentPwd, p_vacuum: payload });
+  btn.textContent = currentLang === "zh" ? "儲存" : "Save"; btn.disabled = false;
+  if (!res.error) { upsertLocal(vacuums, res.data); closeVacuumForm(); render(); }
+  else { errEl.textContent = friendlyError(res.error); errEl.style.display = "block"; }
+}
+async function deleteVacuum(id) {
+  var v = vacuums.find(function (x) { return x.id === id; });
+  if (!confirm((currentLang === "zh" ? "確定刪除吸塵機「" : 'Delete vacuum "') + (v ? v.model : id) + (currentLang === "zh" ? "」？保養記錄也會一併刪除。" : '"? Maintenance records will also be deleted.'))) return;
+  var res = await sb.rpc("delete_vacuum", { p_password: currentPwd, p_id: id });
+  if (!res.error) {
+    vacuums = vacuums.filter(function (x) { return x.id !== id; });
+    vacMaint = vacMaint.filter(function (m) { return m.vacuum_id !== id; });
+    render();
+  } else adminErr(res.error);
+}
+
+// ---- maintenance (shared by vacuum + equipment) ----
+function openMaintForm(kind, id) {
+  maintKind = kind; maintTargetId = id;
+  var item = (kind === "vacuum" ? vacuums : equipment).find(function (x) { return x.id === id; });
+  var sub = "";
+  if (item) {
+    var head = kind === "equipment" ? (item.type + (item.model ? " · " + item.model : "")) : item.model;
+    sub = head + (item.floor_code ? " · " + item.floor_code : "");
+  }
+  document.getElementById("mfSub").textContent = sub;
+  document.getElementById("mfError").style.display = "none";
+  document.getElementById("mfDate").value = new Date().toISOString().slice(0, 10);
+  document.getElementById("mfDesc").value = "";
+  document.getElementById("maintModal").classList.add("show");
+  applyLang();
+}
+function closeMaintForm() { document.getElementById("maintModal").classList.remove("show"); }
+async function saveMaintForm() {
+  var btn = document.getElementById("mfSaveBtn");
+  var errEl = document.getElementById("mfError");
+  errEl.style.display = "none";
+  var desc = document.getElementById("mfDesc").value.trim();
+  if (!desc) { errEl.textContent = currentLang === "zh" ? "請填寫內容" : "Description required"; errEl.style.display = "block"; return; }
+  btn.textContent = "..."; btn.disabled = true;
+  var fn = maintKind === "vacuum" ? "add_vacuum_maintenance" : "add_equipment_maintenance";
+  var args = { p_password: currentPwd, p_date: document.getElementById("mfDate").value || null, p_description: desc };
+  if (maintKind === "vacuum") args.p_vacuum_id = maintTargetId; else args.p_equipment_id = maintTargetId;
+  var res = await sb.rpc(fn, args);
+  btn.textContent = currentLang === "zh" ? "儲存" : "Save"; btn.disabled = false;
+  if (!res.error) { (maintKind === "vacuum" ? vacMaint : equipMaint).unshift(res.data); closeMaintForm(); render(); }
+  else { errEl.textContent = friendlyError(res.error); errEl.style.display = "block"; }
+}
+async function deleteMaint(kind, id) {
+  var fn = kind === "vacuum" ? "delete_vacuum_maintenance" : "delete_equipment_maintenance";
+  var res = await sb.rpc(fn, { p_password: currentPwd, p_id: id });
+  if (!res.error) {
+    if (kind === "vacuum") vacMaint = vacMaint.filter(function (m) { return m.id !== id; });
+    else equipMaint = equipMaint.filter(function (m) { return m.id !== id; });
+    render();
+  } else adminErr(res.error);
+}
+
+// ============================================================================
+//  Module 3 — Tools (inventory)
+// ============================================================================
+function lowToolIds() {
+  return tools.filter(function (t) { var m = Number(t.min_stock) || 0; return t.status !== "停用" && m > 0 && Number(t.stock) < m; }).map(function (t) { return t.id; });
+}
+function toolGrid(arr) { return '<div class="products-grid">' + arr.map(toolCard).join("") + "</div>"; }
+function renderTool() {
+  if (!tools.length) return emptyState("🧹", "尚無清潔工具，登入後可新增", "No tools yet");
+  var f = moduleFilter.tool;
+  if (searchQuery) {
+    var hits = tools.filter(function (t) { return matchQuery([t.name, t.notes, t.category]); });
+    return hits.length ? '<div style="margin-top:14px">' + toolGrid(hits) + "</div>" : noResult();
+  }
+  var lowIds = lowToolIds();
+  var actN = tools.filter(function (t) { return t.status !== "停用"; }).length;
+  var offN = tools.length - actN;
+  var cap = '<div class="mod-caption">' + (currentLang === "zh"
+    ? "清潔工具 共 <b>" + tools.length + "</b> 款　·　啟用 <b>" + actN + "</b>　·　<span class=\"off\">停用 " + offN + "</span>"
+    : "<b>" + tools.length + "</b> tools · <b>" + actN + "</b> active · <span class=\"off\">" + offN + " off</span>") + "</div>";
+  if (lowIds.length) cap += '<div class="alert-row"><button class="alert-pill danger" onclick="setFilter(\'low\')">🛒 ' +
+    (currentLang === "zh" ? "<b>" + lowIds.length + "</b> 樣工具需補貨" : "<b>" + lowIds.length + "</b> tools to restock") + ' <span class="go">›</span></button></div>';
+
+  if (f === "disabled") {
+    var dis = tools.filter(function (t) { return t.status === "停用"; });
+    return cap + (dis.length ? toolGrid(dis) : emptyState("🚫", "沒有停用工具", "No disabled tools"));
+  }
+  if (f === "low") {
+    var lowItems = tools.filter(function (t) { return lowIds.indexOf(t.id) >= 0; });
+    return slimHead(currentLang === "zh" ? "🛒 低於最低庫存，需補貨" : "🛒 Below reorder", lowItems.length, "scrap") + toolGrid(lowItems);
+  }
+  if (f.indexOf("cat-") === 0) {
+    var cat = f.slice(4);
+    return cap + toolGrid(tools.filter(function (t) { return t.status !== "停用" && (t.category || "其他") === cat; }));
+  }
+  var groups = {};
+  tools.filter(function (t) { return t.status !== "停用"; }).forEach(function (t) { var c = t.category || "其他"; (groups[c] = groups[c] || []).push(t); });
+  var keys = Object.keys(groups).sort(toolCatCmp);
+  var body = "";
+  keys.forEach(function (c) { body += slimHead("🧹 " + esc(tr(c)), groups[c].length) + toolGrid(groups[c]); });
+  return cap + (body || emptyState("🧹", "尚無啟用工具", "No active tools"));
+}
+function toolCard(t) {
+  var s = Number(t.stock), inUse = Number(t.in_use) || 0, total = s + inUse;
+  var minS = Number(t.min_stock) || 0, below = minS > 0 && s < minS;
+  var stockClass = below ? "stock-out" : s > 5 ? "stock-ok" : s > 0 ? "stock-low" : "stock-out";
+  var disabled = t.status === "停用";
+  var img = cardImg("tools", t);
+  var meta = '<div class="tool-meta"><span>' + (currentLang === "zh" ? "在用 " : "in use ") + inUse + "</span>" +
+    "<span>" + (currentLang === "zh" ? "總 " : "total ") + total + "</span>" +
+    (minS > 0 ? '<span class="' + (below ? "low" : "") + '">' + (currentLang === "zh" ? "最低 " : "min ") + minS + "</span>" : "") + "</div>";
+  var admin = isAdmin ? (
+    '<div class="stock-edit" style="display:flex">' +
+      '<button class="adj-btn" onclick="adjustToolStock(' + t.id + ',-1)">-</button>' +
+      '<input type="number" class="stock-input" id="tinput-' + t.id + '" min="0" value="' + s + '">' +
+      '<button class="adj-btn" onclick="adjustToolStock(' + t.id + ',1)">+</button>' +
+      '<button class="save-btn" id="tsave-' + t.id + '" onclick="saveToolStock(' + t.id + ')" data-zh="儲存" data-en="Save">儲存</button>' +
+    "</div>" +
+    '<div class="status-row" style="display:flex">' +
+      '<span class="state-pill ' + (disabled ? "state-off" : "state-on") + '">' + stateText(t.status, currentLang) + "</span>" +
+      '<button class="toggle-btn ' + (disabled ? "enable" : "disable") + '" onclick="toggleToolStatus(' + t.id + ')">' + toggleText(t.status, currentLang) + "</button>" +
+      '<button class="edit-btn" onclick="openToolForm(' + t.id + ')" data-zh="編輯" data-en="Edit">編輯</button>' +
+      '<button class="del-btn" onclick="deleteTool(' + t.id + ')" data-zh="刪除" data-en="Delete">刪除</button>' +
+    "</div>"
+  ) : "";
+  return '<div class="product-card' + (disabled ? " disabled" : "") + '">' +
+    '<div class="disabled-badge" data-zh="已停用" data-en="Disabled">已停用</div>' +
+    '<div class="product-img">' + img + "</div>" +
+    '<div class="product-info"><div class="info-top"><div>' +
+      '<div class="product-name">' + esc(t.name) + "</div>" +
+      '<div class="product-name-sub">' + esc(tr(t.category || "其他")) + (t.notes ? " · " + esc(t.notes) : "") + "</div>" +
+    "</div>" +
+    '<div class="stock-area"><div class="stock-badge ' + stockClass + '">' + s + "</div>" +
+    '<div class="stock-label"' + (below ? ' style="color:var(--danger);font-weight:800"' : "") + ">" + (below ? (currentLang === "zh" ? "需補貨" : "Restock") : (currentLang === "zh" ? "庫存" : "Stock")) + "</div></div></div>" +
+    meta + admin +
+    "</div></div>";
+}
+function adjustToolStock(id, delta) {
+  var inp = document.getElementById("tinput-" + id);
+  var val = Number(inp.value) + delta; if (val < 0) val = 0; inp.value = val;
+}
+async function saveToolStock(id) {
+  var inp = document.getElementById("tinput-" + id);
+  var btn = document.getElementById("tsave-" + id);
+  var n = Number(inp.value);
+  btn.textContent = "..."; btn.className = "save-btn saving";
+  var res = await sb.rpc("update_tool_stock", { p_password: currentPwd, p_id: id, p_stock: n });
+  if (!res.error) { btn.textContent = "OK!"; btn.className = "save-btn saved"; replaceLocal(tools, res.data); }
+  else { btn.textContent = currentLang === "zh" ? "失敗" : "Failed"; btn.className = "save-btn error"; adminErr(res.error); }
+  setTimeout(function () { btn.textContent = currentLang === "zh" ? "儲存" : "Save"; btn.className = "save-btn"; }, 1500);
+}
+async function toggleToolStatus(id) {
+  var t = tools.find(function (x) { return x.id === id; });
+  var next = t.status === "停用" ? "啟用" : "停用";
+  var res = await sb.rpc("update_tool_status", { p_password: currentPwd, p_id: id, p_status: next });
+  if (!res.error) { replaceLocal(tools, res.data); render(); } else adminErr(res.error);
+}
+function openToolForm(id) {
+  editToolId = (id == null ? null : id);
+  document.getElementById("tfError").style.display = "none";
+  document.getElementById("tfImgFile").value = "";
+  var title = document.getElementById("tmTitle");
+  var t = editToolId == null ? { stock: 0 } : tools.find(function (x) { return x.id === editToolId; });
+  title.setAttribute("data-zh", editToolId == null ? "新增工具" : "編輯工具");
+  title.setAttribute("data-en", editToolId == null ? "Add tool" : "Edit tool");
+  document.getElementById("tfName").value = t.name || "";
+  var catSel = document.getElementById("tfCategory");
+  var cur = t.category || "其他";
+  var names = toolCatNames();
+  if (names.indexOf(cur) < 0) names = names.concat([cur]);
+  catSel.innerHTML = names.map(function (n) { return '<option value="' + esc(n) + '">' + esc(n) + "</option>"; }).join("");
+  catSel.value = cur;
+  document.getElementById("tfStock").value = t.stock != null ? t.stock : 0;
+  document.getElementById("tfInUse").value = t.in_use != null ? t.in_use : 0;
+  document.getElementById("tfMin").value = t.min_stock != null ? t.min_stock : 0;
+  document.getElementById("tfNotes").value = t.notes || "";
+  formImages.tf = t.image || null;
+  document.getElementById("tfImgPreview").innerHTML = formImages.tf ? '<img src="' + esc(formImages.tf) + '">' : '<span class="no-img">🧹</span>';
+  document.getElementById("toolModal").classList.add("show");
+  applyLang();
+}
+function closeToolForm() { document.getElementById("toolModal").classList.remove("show"); }
+async function saveToolForm() {
+  var btn = document.getElementById("tfSaveBtn");
+  var errEl = document.getElementById("tfError");
+  errEl.style.display = "none";
+  var name = document.getElementById("tfName").value.trim();
+  if (!name) { errEl.textContent = currentLang === "zh" ? "請填寫名稱" : "Name required"; errEl.style.display = "block"; return; }
+  await awaitImage("tf");
+  var payload = {
+    name: name,
+    category: document.getElementById("tfCategory").value,
+    stock: document.getElementById("tfStock").value,
+    in_use: document.getElementById("tfInUse").value,
+    min_stock: document.getElementById("tfMin").value,
+    notes: document.getElementById("tfNotes").value.trim(),
+    image: formImages.tf,
+    status: editToolId != null ? undefined : "啟用",
+  };
+  if (editToolId != null) payload.id = editToolId;
+  btn.textContent = "..."; btn.disabled = true;
+  var res = await sb.rpc("upsert_tool", { p_password: currentPwd, p_tool: payload });
+  btn.textContent = currentLang === "zh" ? "儲存" : "Save"; btn.disabled = false;
+  if (!res.error) { upsertLocal(tools, res.data); closeToolForm(); render(); }
+  else { errEl.textContent = friendlyError(res.error); errEl.style.display = "block"; }
+}
+async function deleteTool(id) {
+  var t = tools.find(function (x) { return x.id === id; });
+  if (!confirm((currentLang === "zh" ? "確定刪除工具「" : 'Delete tool "') + (t ? t.name : id) + (currentLang === "zh" ? "」？" : '"?'))) return;
+  var res = await sb.rpc("delete_tool", { p_password: currentPwd, p_id: id });
+  if (!res.error) { tools = tools.filter(function (x) { return x.id !== id; }); render(); } else adminErr(res.error);
+}
+
+// ---- category manager (tool + cleaning: rename / reorder / add / delete) ----
+var catMgr = [], catMgrMode = "tool";
+function openCatManager(mode) {
+  catMgrMode = mode || "tool";
+  var title = document.getElementById("catTitle");
+  if (catMgrMode === "cleaning") {
+    catMgr = categories.slice().sort(function (a, b) { return a.sort_order - b.sort_order; }).map(function (c) { return { id: c.id, name: c.name_zh, name_en: c.name_en, icon: c.icon }; });
+    title.setAttribute("data-zh", "管理清潔劑分類"); title.setAttribute("data-en", "Chemical categories");
+  } else if (catMgrMode === "equipment") {
+    catMgr = equipTypesList.slice().sort(function (a, b) { return a.sort_order - b.sort_order; }).map(function (c) { return { id: c.id, name: c.name }; });
+    title.setAttribute("data-zh", "管理設備類型"); title.setAttribute("data-en", "Equipment types");
+  } else if (catMgrMode === "vacuum") {
+    catMgr = vacuumFloors.slice().sort(function (a, b) { return a.sort_order - b.sort_order; }).map(function (c) { return { id: c.id, name: c.name }; });
+    title.setAttribute("data-zh", "管理樓層/區域"); title.setAttribute("data-en", "Floors / areas");
+  } else {
+    catMgr = toolCategories.length
+      ? toolCategories.slice().sort(function (a, b) { return a.sort_order - b.sort_order; }).map(function (c) { return { id: c.id, name: c.name }; })
+      : ["垃圾桶", "防滑牌", "洗手液器", "其他"].map(function (n) { return { name: n }; });
+    title.setAttribute("data-zh", "管理工具分類"); title.setAttribute("data-en", "Tool categories");
+  }
+  document.getElementById("catError").style.display = "none";
+  renderCatMgr();
+  document.getElementById("catModal").classList.add("show");
+  applyLang();
+}
+function closeCatManager() { document.getElementById("catModal").classList.remove("show"); }
+function renderCatMgr() {
+  var cleaning = catMgrMode === "cleaning";
+  document.getElementById("catList").innerHTML = catMgr.map(function (a, i) {
+    var fixed = !cleaning && a.name === "其他";
+    return '<div class="acc-row">' +
+      (cleaning ? '<input class="acc-name" style="flex:0 0 44px;text-align:center" value="' + esc(a.icon || "") + '" oninput="catMgr[' + i + '].icon=this.value" placeholder="🧹">' : "") +
+      '<input class="acc-name" value="' + esc(a.name || "") + '" oninput="catMgr[' + i + '].name=this.value"' + (fixed ? " disabled" : "") + ' data-zh-placeholder="分類名稱" data-en-placeholder="Name" placeholder="分類名稱">' +
+      '<button type="button" class="acc-del" onclick="catMgrMove(' + i + ',-1)"' + (i === 0 ? " disabled" : "") + ">↑</button>" +
+      '<button type="button" class="acc-del" onclick="catMgrMove(' + i + ',1)"' + (i === catMgr.length - 1 ? " disabled" : "") + ">↓</button>" +
+      (fixed ? "" : '<button type="button" class="acc-del" onclick="catMgrDel(' + i + ')">✕</button>') +
+      "</div>";
+  }).join("");
+}
+function catMgrAdd() { catMgr.push({ name: "", icon: "" }); renderCatMgr(); }
+function catMgrDel(i) { catMgr.splice(i, 1); renderCatMgr(); }
+function catMgrMove(i, d) { var j = i + d; if (j < 0 || j >= catMgr.length) return; var t = catMgr[i]; catMgr[i] = catMgr[j]; catMgr[j] = t; renderCatMgr(); }
+async function saveCatManager() {
+  var btn = document.getElementById("catSaveBtn"), errEl = document.getElementById("catError");
+  errEl.style.display = "none";
+  var res, names;
+  btn.textContent = "..."; btn.disabled = true;
+  if (catMgrMode === "cleaning") {
+    var ccats = catMgr.map(function (a) { return { id: a.id, name_zh: (a.name || "").trim(), name_en: a.name_en || (a.name || "").trim(), icon: (a.icon || "").trim() }; }).filter(function (a) { return a.name_zh; });
+    if (!ccats.length) { errEl.textContent = currentLang === "zh" ? "至少要一個分類" : "Need one"; errEl.style.display = "block"; btn.disabled = false; btn.textContent = currentLang === "zh" ? "儲存" : "Save"; return; }
+    names = ccats.map(function (a) { return a.name_zh; });
+    if (new Set(names).size !== names.length) { errEl.textContent = currentLang === "zh" ? "分類名稱不可重複" : "Duplicate names"; errEl.style.display = "block"; btn.disabled = false; btn.textContent = currentLang === "zh" ? "儲存" : "Save"; return; }
+    res = await sb.rpc("save_categories", { p_password: currentPwd, p_cats: ccats });
+  } else {
+    var cats = catMgr.map(function (a) { return { id: a.id, name: (a.name || "").trim() }; }).filter(function (a) { return a.name; });
+    if ((catMgrMode === "tool" || catMgrMode === "equipment") && !cats.some(function (a) { return a.name === "其他"; })) cats.push({ name: "其他" });
+    names = cats.map(function (a) { return a.name; });
+    if (new Set(names).size !== names.length) { errEl.textContent = currentLang === "zh" ? "名稱不可重複" : "Duplicate names"; errEl.style.display = "block"; btn.disabled = false; btn.textContent = currentLang === "zh" ? "儲存" : "Save"; return; }
+    var rpcName = catMgrMode === "equipment" ? "save_equipment_types" : catMgrMode === "vacuum" ? "save_vacuum_floors" : "save_tool_categories";
+    res = await sb.rpc(rpcName, { p_password: currentPwd, p_cats: cats });
+  }
+  btn.textContent = currentLang === "zh" ? "儲存" : "Save"; btn.disabled = false;
+  if (!res.error) {
+    closeCatManager();
+    if (catMgrMode === "cleaning") {
+      var cc = await sb.from("categories").select("*").order("sort_order"); if (!cc.error) categories = cc.data || [];
+      var pr = await reloadNoImage("products", [["sort_order"]]); if (pr) products = pr;
+    } else if (catMgrMode === "equipment") {
+      var ec = await sb.from("equipment_types").select("*").order("sort_order"); if (!ec.error) equipTypesList = ec.data || [];
+      var eq = await reloadNoImage("equipment", [["type"], ["model"]]); if (eq) equipment = eq;
+    } else if (catMgrMode === "vacuum") {
+      var vf2 = await sb.from("vacuum_floors").select("*").order("sort_order"); if (!vf2.error) vacuumFloors = vf2.data || [];
+      var vac2 = await reloadNoImage("vacuums", [["floor_code"], ["model"]]); if (vac2) vacuums = vac2;
+    } else {
+      var tc = await sb.from("tool_categories").select("*").order("sort_order"); if (!tc.error) toolCategories = tc.data || [];
+      var t = await reloadNoImage("tools", [["sort_order"]]); if (t) tools = t;
+    }
+    render();
+  } else { errEl.textContent = friendlyError(res.error); errEl.style.display = "block"; }
+}
+
+// ============================================================================
+//  Module 4 — Equipment (per-unit, grouped by type, with maintenance)
+// ============================================================================
+function eqKey(e) { return e.label || e.serial || e.model; }
+function renderEquipment() {
+  if (!equipment.length) return emptyState("🧰", "尚無設備，登入後可新增", "No equipment yet");
+  var f = moduleFilter.equipment;
+  if (searchQuery) {
+    var hits = equipment.filter(function (e) { return matchQuery([e.type, VOCAB_EN[e.type], e.model, e.brand, e.floor_code, tr(e.floor_code), e.label, e.serial]); });
+    return hits.length ? '<div class="vac-grid" style="margin-top:14px">' + hits.map(equipCard).join("") + "</div>" : noResult();
+  }
+  if (f === "repair") {
+    var rep = equipment.filter(function (e) { return e.status === "維修中"; }).sort(byMaintDesc("equipment_id", equipMaint));
+    return slimHead(currentLang === "zh" ? "🔧 維修中" : "🔧 Repair", rep.length, "repair") + '<div class="vac-grid">' + rep.map(equipCard).join("") + "</div>";
+  }
+  if (f === "lost") {
+    var lost = equipment.filter(function (e) { return e.status === "遺失"; }).sort(function (a, b) { return natCmp(eqKey(a), eqKey(b)); });
+    return slimHead(currentLang === "zh" ? "❓ 遺失／未找到" : "❓ Missing", lost.length, "scrap") + '<div class="vac-grid">' + lost.map(equipCard).join("") + "</div>";
+  }
+  if (f === "scrap") {
+    var scr = equipment.filter(function (e) { return e.status === "報廢"; }).sort(function (a, b) { return natCmp(eqKey(a), eqKey(b)); });
+    return slimHead(currentLang === "zh" ? "⚫ 報廢區" : "⚫ Scrapped", scr.length, "scrap") + '<div class="vac-grid">' + scr.map(equipCard).join("") + "</div>";
+  }
+  if (f.indexOf("type-") === 0) {
+    var ty = f.slice(5);
+    var items = equipment.filter(function (e) { return e.status !== "報廢" && e.status !== "遺失" && (e.type || "其他") === ty; }).sort(function (a, b) { return natCmp(eqKey(a), eqKey(b)); });
+    return slimHead("🧰 " + esc(tr(ty)), items.length) + '<div class="vac-grid">' + items.map(equipCard).join("") + "</div>";
+  }
+  // all: 維修中 first, then type groups (正常). 報廢 excluded.
+  var html = "";
+  var repAll = equipment.filter(function (e) { return e.status === "維修中"; }).sort(byMaintDesc("equipment_id", equipMaint));
+  if (repAll.length) html += slimHead(currentLang === "zh" ? "🔧 維修中" : "🔧 Repair", repAll.length, "repair") + '<div class="vac-grid">' + repAll.map(equipCard).join("") + "</div>";
+  var groups = {};
+  equipment.filter(function (e) { return e.status === "正常"; }).forEach(function (e) { var k = e.type || "其他"; (groups[k] = groups[k] || []).push(e); });
+  Object.keys(groups).sort(eqTypeCmp).forEach(function (k) {
+    groups[k].sort(function (a, b) { return natCmp(eqKey(a), eqKey(b)); });
+    html += slimHead("🧰 " + esc(tr(k)), groups[k].length) + '<div class="vac-grid">' + groups[k].map(equipCard).join("") + "</div>";
+  });
+  return html || emptyState("🧰", "尚無正常設備", "None");
+}
+function equipCard(e) {
+  var img = cardImg("equipment", e);
+  var st = e.status;
+  var stCls = st === "維修中" ? "vs-repair" : st === "報廢" ? "vs-scrap" : st === "遺失" ? "vs-lost" : "vs-ok";
+  var records = equipMaint.filter(function (m) { return m.equipment_id === e.id; });
+  var maintList = records.length
+    ? records.map(function (m) {
+        return '<div class="maint-item"><span>' + esc(tr(m.description)) +
+          (isAdmin ? ' <button class="maint-del" onclick="deleteMaint(\'equipment\',' + m.id + ')">✕</button>' : "") +
+          '</span><span class="maint-date">' + esc(m.service_date) + "</span></div>";
+      }).join("")
+    : '<div class="maint-empty" data-zh="尚無保養記錄" data-en="No records yet">尚無保養記錄</div>';
+  var admin = isAdmin ? (
+    '<div class="vac-actions">' +
+      '<button class="mini-btn warn" onclick="toggleEquipmentStatus(' + e.id + ')" data-zh="切換狀態" data-en="Toggle">切換狀態</button>' +
+      '<button class="mini-btn" onclick="openMaintForm(\'equipment\',' + e.id + ')" data-zh="＋ 保養" data-en="+ Maint">＋ 保養</button>' +
+      '<button class="mini-btn" onclick="openEquipmentForm(' + e.id + ')" data-zh="編輯" data-en="Edit">編輯</button>' +
+      '<button class="mini-btn grey" onclick="deleteEquipment(' + e.id + ')" data-zh="刪除" data-en="Delete">刪除</button>' +
+    "</div>"
+  ) : "";
+  var titleLine = e.label || (e.model && e.model.trim()) || e.serial || e.type;
+  var subBits = [];
+  // Chinese UI: asset codes like "warmer01" / "iron12" read as English, so
+  // show the Chinese type + number as the title and keep the code underneath.
+  if (currentLang === "zh" && e.type && e.label && !/[\u4e00-\u9fff]/.test(e.label)) {
+    var mnum = String(e.label).match(/^[A-Za-z]+[-_ ]?(\d+)$/);
+    subBits.push("編號 " + e.label);
+    titleLine = e.type + (mnum ? " " + mnum[1] : "");
+    if (!mnum && e.serial === e.label) e = Object.assign({}, e, { serial: null });
+  } else if (currentLang === "zh" && e.type && e.label === "無編號") {
+    titleLine = e.type + "（無編號）";
+  } else if (currentLang === "en" && e.type && e.label === "無編號") {
+    titleLine = tr(e.type) + " (No ID)";
+  }
+  if (e.serial && e.serial !== titleLine) subBits.push("S/N " + e.serial);
+  if (e.model && e.model.trim() && e.model !== titleLine) subBits.push(e.model);
+  else if (e.brand) subBits.push(e.brand);
+  return '<div class="vac-card ' + (st === "報廢" || st === "遺失" ? "scrap" : "") + '">' +
+    '<div class="vac-img">' + img + "</div>" +
+    '<div class="vac-body">' +
+      '<div class="vac-head"><div class="vac-model">' + esc(titleLine) + "</div>" +
+        (subBits.length ? '<div class="vac-brand">' + esc(subBits.join(" · ")) + "</div>" : "") +
+        '<div class="vac-badges">' +
+          (e.floor_code ? '<span class="floor-badge">' + esc(tr(e.floor_code)) + "</span>" : "") +
+          '<span class="vac-status ' + stCls + '">' + esc(vacStatusText(st, currentLang)) + "</span>" +
+        "</div></div>" +
+      accessorySummary(e) +
+      (e.notes ? '<div class="vac-notes">' + esc(e.notes) + "</div>" : "") +
+      maintBox(records.length, maintList) +
+      admin +
+    "</div></div>";
+}
+function maintBox(n, listHtml) {
+  var more = n > 1;
+  return '<div class="maint-box' + (more ? " collapsed" : "") + '"><div class="maint-title"><span data-zh="🛠 保養記錄" data-en="🛠 Maintenance">🛠 保養記錄</span>' +
+    (n ? ' <span class="maint-n">' + n + "</span>" : "") + "</div>" + listHtml +
+    (more ? '<button class="maint-more" onclick="toggleMaint(this,' + n + ')">' + (currentLang === "zh" ? "查看全部 " + n + " 條 ▾" : "Show all " + n + " ▾") + "</button>" : "") +
+    "</div>";
+}
+function toggleMaint(btn, n) {
+  var box = btn.parentNode; var c = box.classList.toggle("collapsed");
+  btn.textContent = c ? (currentLang === "zh" ? "查看全部 " + n + " 條 ▾" : "Show all " + n + " ▾") : (currentLang === "zh" ? "收起 ▴" : "Collapse ▴");
+}
+function accessorySummary(e) {
+  var a = e.accessories;
+  if (!Array.isArray(a) || !a.length) return "";
+  var ok = a.filter(function (x) { return x && x.ok; }).length;
+  var full = ok === a.length;
+  return '<div class="acc-box' + (full ? "" : " bad") + '"><div class="acc-h">🧩 ' + (currentLang === "zh" ? "配件 " : "Parts ") + ok + "/" + a.length +
+    (full ? (currentLang === "zh" ? " 齊全" : " OK") : (currentLang === "zh" ? " ⚠ 缺件" : " ⚠ missing")) + "</div>" +
+    a.map(function (x) { return '<span class="acc-item ' + (x.ok ? "y" : "n") + '">' + (x.ok ? "✓ " : "✗ ") + esc(x.name || "") + "</span>"; }).join("") + "</div>";
+}
+async function toggleEquipmentStatus(id) {
+  var e = equipment.find(function (x) { return x.id === id; });
+  var next = e.status === "正常" ? "維修中" : "正常";
+  var res = await sb.rpc("update_equipment_status", { p_password: currentPwd, p_id: id, p_status: next });
+  if (!res.error) { replaceLocal(equipment, res.data); render(); } else adminErr(res.error);
+}
+var efAccessories = [];
+function renderEfAccList() {
+  var c = document.getElementById("efAccList");
+  c.innerHTML = efAccessories.map(function (a, i) {
+    return '<div class="acc-row"><input type="checkbox" ' + (a.ok ? "checked" : "") + ' onchange="efAccessories[' + i + '].ok=this.checked">' +
+      '<input class="acc-name" value="' + esc(a.name || "") + '" oninput="efAccessories[' + i + '].name=this.value" data-zh-placeholder="配件名稱" data-en-placeholder="Part name" placeholder="配件名稱">' +
+      '<button type="button" class="acc-del" onclick="removeEfAccessory(' + i + ')">✕</button></div>';
+  }).join("");
+}
+function addEfAccessory() { efAccessories.push({ name: "", ok: true }); renderEfAccList(); }
+function removeEfAccessory(i) { efAccessories.splice(i, 1); renderEfAccList(); }
+function presetFridgeAccessories() { efAccessories = ["層架", "門邊條", "蛋架", "冷凍盒", "溫控旋鈕"].map(function (n) { return { name: n, ok: true }; }); renderEfAccList(); }
+function openEquipmentForm(id) {
+  editEquipmentId = (id == null ? null : id);
+  document.getElementById("efError").style.display = "none";
+  document.getElementById("efImgFile").value = "";
+  var typeSet = {};
+  eqTypeNames().forEach(function (t) { typeSet[t] = 1; });
+  ["冰箱", "保險箱", "空氣淨化機", "除濕機", "加濕機"].forEach(function (t) { typeSet[t] = 1; });
+  equipment.forEach(function (x) { if (x.type) typeSet[x.type] = 1; });
+  document.getElementById("equipTypes").innerHTML = Object.keys(typeSet).map(function (t) { return '<option value="' + esc(t) + '">'; }).join("");
+  var title = document.getElementById("emTitle");
+  var e = editEquipmentId == null ? { status: "正常", type: "" } : equipment.find(function (x) { return x.id === editEquipmentId; });
+  title.setAttribute("data-zh", editEquipmentId == null ? "新增設備" : "編輯設備");
+  title.setAttribute("data-en", editEquipmentId == null ? "Add equipment" : "Edit equipment");
+  document.getElementById("efType").value = e.type || "";
+  document.getElementById("efModel").value = e.model || "";
+  document.getElementById("efLabel").value = e.label || "";
+  document.getElementById("efSerial").value = e.serial || "";
+  document.getElementById("efBrand").value = e.brand || "";
+  document.getElementById("efFloor").value = e.floor_code || "";
+  document.getElementById("efStatus").value = e.status || "正常";
+  document.getElementById("efNotes").value = e.notes || "";
+  formImages.ef = e.image || null;
+  document.getElementById("efImgPreview").innerHTML = formImages.ef ? '<img src="' + esc(formImages.ef) + '">' : '<span class="no-img">🧰</span>';
+  efAccessories = Array.isArray(e.accessories) ? e.accessories.map(function (a) { return { name: a.name, ok: !!a.ok }; }) : [];
+  renderEfAccList();
+  document.getElementById("equipModal").classList.add("show");
+  applyLang();
+}
+function closeEquipForm() { document.getElementById("equipModal").classList.remove("show"); }
+async function saveEquipForm() {
+  var btn = document.getElementById("efSaveBtn");
+  var errEl = document.getElementById("efError");
+  errEl.style.display = "none";
+  var type = document.getElementById("efType").value.trim();
+  if (!type) { errEl.textContent = currentLang === "zh" ? "請填寫類型" : "Type required"; errEl.style.display = "block"; return; }
+  await awaitImage("ef");
+  var payload = {
+    type: type,
+    model: document.getElementById("efModel").value.trim(),
+    label: document.getElementById("efLabel").value.trim(),
+    serial: document.getElementById("efSerial").value.trim(),
+    brand: document.getElementById("efBrand").value.trim(),
+    floor_code: document.getElementById("efFloor").value.trim(),
+    status: document.getElementById("efStatus").value,
+    notes: document.getElementById("efNotes").value.trim(),
+    image: formImages.ef,
+    accessories: efAccessories.filter(function (a) { return (a.name || "").trim(); }).map(function (a) { return { name: a.name.trim(), ok: !!a.ok }; }),
+  };
+  if (editEquipmentId != null) payload.id = editEquipmentId;
+  btn.textContent = "..."; btn.disabled = true;
+  var res = await sb.rpc("upsert_equipment", { p_password: currentPwd, p_equipment: payload });
+  btn.textContent = currentLang === "zh" ? "儲存" : "Save"; btn.disabled = false;
+  if (!res.error) { upsertLocal(equipment, res.data); closeEquipForm(); render(); }
+  else { errEl.textContent = friendlyError(res.error); errEl.style.display = "block"; }
+}
+async function deleteEquipment(id) {
+  var e = equipment.find(function (x) { return x.id === id; });
+  if (!confirm((currentLang === "zh" ? "確定刪除設備「" : 'Delete "') + (e ? (e.type + (e.model ? " " + e.model : "")) : id) + (currentLang === "zh" ? "」？保養記錄也會一併刪除。" : '"? Maintenance records will also be deleted.'))) return;
+  var res = await sb.rpc("delete_equipment", { p_password: currentPwd, p_id: id });
+  if (!res.error) {
+    equipment = equipment.filter(function (x) { return x.id !== id; });
+    equipMaint = equipMaint.filter(function (m) { return m.equipment_id !== id; });
+    render();
+  } else adminErr(res.error);
+}
+
+// ============================================================================
+//  Admin session
+// ============================================================================
+function openAddForModule() {
+  if (currentModule === "cleaning") openProductForm();
+  else if (currentModule === "vacuum") openVacuumForm();
+  else if (currentModule === "tool") openToolForm();
+  else openEquipmentForm();
+}
+function toggleSettings(e) {
+  if (e) e.stopPropagation();
+  var m = document.getElementById("settingsMenu");
+  m.classList.toggle("show");
+  if (!m.classList.contains("show")) document.getElementById("langSub").classList.remove("show");
+}
+function toggleLangSub(e) {
+  if (e) e.stopPropagation();
+  document.getElementById("langSub").classList.toggle("show");
+}
+document.addEventListener("click", function (e) {
+  var s = document.querySelector(".settings");
+  if (s && !s.contains(e.target)) document.getElementById("settingsMenu").classList.remove("show");
+});
+function openCatManagerForModule() {
+  document.getElementById("settingsMenu").classList.remove("show");
+  openCatManager(currentModule);  // cleaning | tool | equipment
+}
+function updateSettingsUI() {
+  var lc = document.getElementById("langCur"); if (lc) lc.textContent = currentLang === "zh" ? "中文" : "EN";
+  var ab = document.getElementById("setAdminBtn");
+  if (ab) {
+    if (isAdmin) { ab.className = "set-item on"; ab.textContent = currentLang === "zh" ? "🔓 已登入（點此登出）" : "🔓 Logged in (log out)"; }
+    else { ab.className = "set-item"; ab.textContent = currentLang === "zh" ? "🔒 管理員登入" : "🔒 Admin log in"; }
+  }
+  var cb = document.getElementById("setCatBtn");
+  if (cb) {
+    var CAT_LABEL = { cleaning: "清潔劑分類", tool: "工具分類", equipment: "設備類型", vacuum: "樓層/區域" };
+    var show = isAdmin && CAT_LABEL[currentModule];
+    cb.style.display = show ? "flex" : "none";
+    if (show) cb.textContent = "⚙ " + (currentLang === "zh" ? "管理" + CAT_LABEL[currentModule] : "Manage categories");
+  }
+}
+function toggleAdmin() { document.getElementById("settingsMenu").classList.remove("show"); if (isAdmin) { logout(); return; } openLogin(); }
+function openLogin() {
+  document.getElementById("loginModal").classList.add("show");
+  document.getElementById("pwdInput").value = "";
+  var e = document.getElementById("modalError");
+  e.textContent = currentLang === "zh" ? "密碼錯誤，請重試" : "Wrong password, please try again";
+  e.style.display = "none";
+  setTimeout(function () { document.getElementById("pwdInput").focus(); }, 100);
+}
+function closeModal() { document.getElementById("loginModal").classList.remove("show"); }
+async function doLogin() {
+  var pwd = document.getElementById("pwdInput").value;
+  if (!pwd) return;
+  var loginBtn = document.querySelector("#loginModal .btn-login");
+  var errEl = document.getElementById("modalError");
+  loginBtn.textContent = "..."; loginBtn.disabled = true; errEl.style.display = "none";
+  var res = await sb.rpc("verify_password", { p_password: pwd });
+  loginBtn.textContent = currentLang === "zh" ? "登入" : "Login"; loginBtn.disabled = false;
+  if (!res.error && res.data === true) {
+    currentPwd = pwd; isAdmin = true;
+    closeModal();
+    render();
+  } else if (res.error) {
+    errEl.textContent = currentLang === "zh" ? "無法連接伺服器" : "Cannot connect to server"; errEl.style.display = "block";
+  } else {
+    errEl.textContent = currentLang === "zh" ? "密碼錯誤，請重試" : "Wrong password, please try again"; errEl.style.display = "block";
+  }
+}
+function logout() {
+  isAdmin = false; currentPwd = "";
+  render();
+}
+
+// ============================================================================
+//  Local cache helpers + errors
+// ============================================================================
+function replaceLocal(arr, row) {
+  if (!row) return;
+  var i = arr.findIndex(function (x) { return x.id === row.id; });
+  if (i >= 0) arr[i] = row;
+}
+function upsertLocal(arr, row) {
+  if (!row) return;
+  var i = arr.findIndex(function (x) { return x.id === row.id; });
+  if (i >= 0) arr[i] = row; else arr.push(row);
+}
+function friendlyError(err) {
+  var msg = (err && err.message) || "";
+  if (/wrong password/i.test(msg)) return currentLang === "zh" ? "密碼錯誤" : "Wrong password";
+  if (/not configured/i.test(msg)) return currentLang === "zh" ? "尚未設定密碼" : "Password not set";
+  return currentLang === "zh" ? "操作失敗：" + msg : "Failed: " + msg;
+}
+function adminErr(err) {
+  if (/wrong password/i.test((err && err.message) || "")) {
+    logout(); openLogin();
+    document.getElementById("modalError").textContent = currentLang === "zh" ? "密碼已失效，請重新登入" : "Session expired, please log in again";
+    document.getElementById("modalError").style.display = "block";
+  } else {
+    alert(friendlyError(err));
+  }
+}
+
+// ---- lightbox (click any card image to view large) ----
+function openLightbox(src) { document.getElementById("lbImg").src = src; document.getElementById("lightbox").classList.add("show"); }
+function closeLightbox() { document.getElementById("lightbox").classList.remove("show"); }
+document.addEventListener("click", function (e) {
+  var img = e.target.closest ? e.target.closest(".product-img img, .vac-img img") : null;
+  if (img && img.src) { e.stopPropagation(); openLightbox(img.src); }
+});
+
+guardForm("openProductForm", "products");
+guardForm("openVacuumForm", "vacuums");
+guardForm("openToolForm", "tools");
+guardForm("openEquipmentForm", "equipment");
+// Version label: GitHub Pages sends Last-Modified = deploy time of this file,
+// so every push shows its own date/time automatically (no manual bump needed).
+function showVersion() {
+  var d = new Date(document.lastModified);
+  if (isNaN(d)) return;
+  function z(n) { return (n < 10 ? "0" : "") + n; }
+  var t = d.getFullYear() + "-" + z(d.getMonth() + 1) + "-" + z(d.getDate()) + " " + z(d.getHours()) + ":" + z(d.getMinutes());
+  document.getElementById("appVer").textContent = (currentLang === "zh" ? "版本 " : "Version ") + t;
+  document.getElementById("setVer").textContent = (currentLang === "zh" ? "版本：" : "Version: ") + t;
+}
+var _applyLang = applyLang;
+applyLang = function () { _applyLang(); showVersion(); };
+showVersion();
+window.onload = loadAll;
+</script>
+</body>
+</html>

@@ -8,6 +8,7 @@ import Topics from './pages/Topics'
 import CyclicClean from './pages/CyclicClean'
 import Findings from './pages/Findings'
 import Icon from './components/Icon'
+import Embed from './components/Embed'
 import { toast } from './lib/toast'
 
 // 首頁圓形入口：之後加新模組（清潔劑、機器…）直接在這裡加一行
@@ -17,6 +18,8 @@ const MODULES = [
   { id: 'topics', icon: 'book', label: '培訓主題庫', color: '#4a6fa5', Page: Topics },
   { id: 'cyclic', icon: 'clean', label: '清潔要點', color: '#54808c', Page: CyclicClean },
   { id: 'scores', icon: 'star', label: '房務員清潔評分', color: '#8f7ac9', Page: Scores },
+  // 嵌入的舊系統（與品質系統同網站、各自保留原有資料庫）
+  { id: 'boh', icon: 'box', label: '後勤管理', color: '#7a6a4f', embed: true, Page: () => <Embed src="./boh/index.html" title="酒店後勤管理" /> },
   { id: 'complaint', icon: 'chat', label: '客訴管理', color: '#c0564f', Page: Complaints },
 ]
 const WD = ['日', '一', '二', '三', '四', '五', '六']
@@ -69,7 +72,7 @@ export default function App() {
           <span style={{ opacity: .6 }}> · 版本 {__BUILD__}</span>
         </div>
       </header>
-      <main>
+      <main className={cur?.embed ? 'embed-main' : ''}>
         {cur
           ? <cur.Page key={tab} />
           : (
