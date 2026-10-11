@@ -12,6 +12,7 @@ import Findings from './pages/Findings'
 import Icon from './components/Icon'
 import Embed from './components/Embed'
 import Gate from './components/Gate'
+import Confirm from './components/Confirm'
 import { getSession, clearSession, PERMS, ROLE_LABEL } from './lib/accounts'
 import { ReportModal, BohReport, DefectReport } from './components/Reports'
 import { todayStr } from './lib/dates'
@@ -43,6 +44,7 @@ export default function App() {
   const [session, setSessionState] = useState(() => (api.isOpen ? getSession() : null))
   const [init, setInit] = useState(null)   // 從首頁摘要跳入時的預設篩選
   const go = (t, i) => { setInit(i || null); setTab(t) }
+  const [askLogout, setAskLogout] = useState(false)   // 登出前確認，避免撳錯
   const [rpt, setRpt] = useState(null)   // 嵌入模組的匯出報告 {id, data}
 
   useEffect(() => {
@@ -95,9 +97,7 @@ export default function App() {
           {cur && <span className="hdr-ico" style={{ background: 'rgba(255,255,255,.2)' }}><Icon name={cur.icon} size={18} color="#fff" /></span>}
           <h1 style={{ flex: 1 }}>{title}</h1>
           {cur?.embed && <button className="logout" onClick={exportEmbed}>📄 匯出</button>}
-          {api.isOpen
-            ? <button className="logout" onClick={() => { clearSession(); setTab('home'); setSessionState(null) }}>登出</button>
-            : <button className="logout" onClick={async () => { await api.signOut(); setUser(null) }}>登出</button>}
+          <button className="logout" onClick={() => setAskLogout(true)}>登出</button>
         </div>
         {tab === 'home' && (
           <div className="hdr-sub">
@@ -134,6 +134,14 @@ export default function App() {
           </div>
         )}
       </main>
+      {askLogout && (
+        <Confirm confirmLabel="登出" text={session ? `會登出「${session.name}」，之後要重新輸入密碼先可以再用。` : '會登出目前帳號。'}
+          onCancel={() => setAskLogout(false)}
+          onConfirm={async () => {
+            setAskLogout(false)
+            if (api.isOpen) { clearSession(); setTab('home'); setSessionState(null) } else { await api.signOut(); setUser(null) }
+          }} />
+      )}
       {rpt && (
         <ReportModal title={rpt.id === 'boh' ? '後勤管理報告' : '缺陷管理報告'} sub={todayStr()} onClose={() => setRpt(null)}>
           {rpt.id === 'boh' ? <BohReport data={rpt.data} /> : <DefectReport data={rpt.data} />}

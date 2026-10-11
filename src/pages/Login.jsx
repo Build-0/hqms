@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import PasswordInput from '../components/PasswordInput'
 import * as api from '../lib/api'
 
 export default function Login({ onLogin }) {
@@ -34,7 +35,7 @@ export default function Login({ onLogin }) {
         </div>
         <div className="f-row">
           <label>密碼</label>
-          <input type="password" value={p} onChange={e => setP(e.target.value)} autoComplete="current-password" />
+          <PasswordInput value={p} onChange={e => setP(e.target.value)} />
         </div>
         {err && <p className="login-err">{err}</p>}
         <button className="btn" disabled={busy || !u.trim()}>{busy ? '登入中…' : '登入'}</button>

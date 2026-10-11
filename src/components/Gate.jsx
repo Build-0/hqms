@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import PasswordInput from './PasswordInput'
 import { verifyLogin, setSession } from '../lib/accounts'
 
 // 進入網站的帳號密碼頁（帳號：員工編號、完整英文名，或名字）
@@ -20,7 +21,7 @@ export default function Gate({ onOk }) {
         <div className="login-logo"><img src="./icons/icon-192.png" alt="" width="64" height="64" style={{ borderRadius: 16 }} /></div>
         <h2 style={{ textAlign: 'center' }}>酒店客房管理系統</h2>
         <div className="f-row"><label>帳號</label><input value={u} onChange={e => { setU(e.target.value); setErr('') }} autoComplete="username" autoCapitalize="none" placeholder="員工編號或英文名" autoFocus /></div>
-        <div className="f-row"><label>密碼</label><input type="password" value={p} onChange={e => { setP(e.target.value); setErr('') }} autoComplete="current-password" /></div>
+        <div className="f-row"><label>密碼</label><PasswordInput value={p} onChange={e => { setP(e.target.value); setErr('') }} /></div>
         {err && <p className="login-err">{err}</p>}
         <button className="btn" disabled={busy || !u.trim() || !p}>{busy ? '登入中…' : '登入'}</button>
       </form>
