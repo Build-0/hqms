@@ -22,6 +22,12 @@ const MODULES = [
   { id: 'boh', icon: 'box', label: '後勤管理', color: '#7a6a4f', embed: true, Page: () => <Embed src="./boh/index.html" title="酒店後勤管理" /> },
   { id: 'complaint', icon: 'chat', label: '客訴管理', color: '#c0564f', Page: Complaints },
 ]
+// 首頁三大系統卡：房間品質（內含上面各模組）／後勤管理（嵌入）／缺陷管理（待加入）
+const SYSTEMS = [
+  { id: 'quality', icon: 'clipcheck', label: '房間品質', sub: '檢查、評分、報告' },
+  { id: 'boh', icon: 'box', label: '後勤管理', sub: '物資、庫存、設備' },
+  { id: 'defect', icon: 'wrench', label: '缺陷管理', sub: '登記、跟進、統計', soon: true },
+]
 const WD = ['日', '一', '二', '三', '四', '五', '六']
 
 export default function App() {
@@ -57,13 +63,16 @@ export default function App() {
 
   const now = new Date()
   const cur = MODULES.find(m => m.id === tab)
+  const inQuality = tab === 'quality'
+  const goBack = () => setTab(cur && cur.id !== 'boh' ? 'quality' : 'home')
+  const title = cur ? cur.label : inQuality ? '房間品質' : '酒店綜合管理系統'
   return (
     <div className="phone">
       <header>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          {cur && <button className="back-btn" onClick={() => setTab('home')}>‹</button>}
+          {(cur || inQuality) && <button className="back-btn" onClick={cur ? goBack : () => setTab('home')}>‹</button>}
           {cur && <span className="hdr-ico" style={{ background: 'rgba(255,255,255,.2)' }}><Icon name={cur.icon} size={18} color="#fff" /></span>}
-          <h1 style={{ flex: 1 }}>{cur ? cur.label : '房務品質管理系統'}</h1>
+          <h1 style={{ flex: 1 }}>{title}</h1>
           {!api.isOpen && <button className="logout" onClick={async () => { await api.signOut(); setUser(null) }}>登出</button>}
         </div>
         <div className="date">
@@ -73,18 +82,35 @@ export default function App() {
         </div>
       </header>
       <main className={cur?.embed ? 'embed-main' : ''}>
-        {cur
-          ? <cur.Page key={tab} />
-          : (
-            <div className="home-grid">
-              {MODULES.map(m => (
-                <button className="home-item" key={m.id} onClick={() => setTab(m.id)}>
-                  <span className="hi-circle" style={{ background: m.color + '26', borderColor: 'transparent' }}><Icon name={m.icon} size={33} color={m.color} width={2.2} /></span>
-                  <span className="hi-label">{m.label}</span>
+        {cur ? <cur.Page key={tab} /> : inQuality ? (
+          <div className="home-grid">
+            {MODULES.filter(m => m.id !== 'boh').map(m => (
+              <button className="home-item" key={m.id} onClick={() => setTab(m.id)}>
+                <span className="hi-circle" style={{ background: m.color + '26', borderColor: 'transparent' }}><Icon name={m.icon} size={33} color={m.color} width={2.2} /></span>
+                <span className="hi-label">{m.label}</span>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="sys-home">
+            <div className="sys-hero">
+              <Icon name="hotel" size={34} color="var(--ink)" width={1.8} />
+              <h2>酒店綜合管理系統</h2>
+              <p>統一網址 · 統一入口</p>
+            </div>
+            <div className="sys-grid">
+              {SYSTEMS.map(sy => (
+                <button className={`sys-card ${sy.soon ? 'soon' : ''}`} key={sy.id}
+                  onClick={() => (sy.soon ? toast(sy.label + '即將加入') : setTab(sy.id))}>
+                  <Icon name={sy.icon} size={30} color="var(--ink)" width={1.9} />
+                  <b>{sy.label}</b>
+                  <span>{sy.sub}</span>
+                  {sy.soon && <i>即將加入</i>}
                 </button>
               ))}
             </div>
-          )}
+          </div>
+        )}
       </main>
       {msg && <div className="toast">{msg}</div>}
     </div>

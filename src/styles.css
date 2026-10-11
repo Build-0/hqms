@@ -402,3 +402,11 @@ h3{font-size:13px;color:var(--sub);font-weight:700;margin:14px 0 6px}
 
 main.embed-main{position:relative;padding:0;overflow:hidden;min-height:calc(100vh - 88px)}
 .embed-frame{position:absolute;inset:0;width:100%;height:100%;border:0;display:block;background:#fff}
+
+.sys-hero{background:var(--card);border-radius:18px;padding:22px 16px 18px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px;margin:6px 0 14px}
+.sys-hero h2{margin:4px 0 0;font-size:21px}.sys-hero p{margin:0;font-size:12.5px;color:var(--sub)}
+.sys-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.sys-card{position:relative;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 6px 14px;cursor:pointer;font-family:inherit;color:var(--ink);display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
+.sys-card b{font-size:15px}.sys-card span{font-size:11px;color:var(--sub);line-height:1.4}
+.sys-card.soon{opacity:.6}.sys-card i{font-style:normal;font-size:10px;background:var(--bg);color:var(--sub);border-radius:999px;padding:1px 8px}
+@media (min-width:760px){.sys-home{max-width:640px;margin:30px auto 0}}
