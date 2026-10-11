@@ -44,12 +44,28 @@ export default function App() {
   const [session, setSessionState] = useState(() => (api.isOpen ? getSession() : null))
   const [init, setInit] = useState(null)   // 從首頁摘要跳入時的預設篩選
   const go = (t, i) => { setInit(i || null); setTab(t) }
+  const [newVer, setNewVer] = useState(false)       // 偵測到新版本
   const [askLogout, setAskLogout] = useState(false)   // 登出前確認，避免撳錯
   const [rpt, setRpt] = useState(null)   // 嵌入模組的匯出報告 {id, data}
 
   useEffect(() => {
     api.getUser().then(setUser)
     return api.onAuthChange(setUser)
+  }, [])
+
+  useEffect(() => {
+    const check = async () => {
+      try {
+        const r = await fetch('./version.json?t=' + Date.now(), { cache: 'no-store' })
+        if (!r.ok) return
+        const j = await r.json()
+        if (j.build && j.build !== __BUILD__) setNewVer(true)
+      } catch { /* 離線或開發模式：略過 */ }
+    }
+    check()
+    const onVis = () => { if (document.visibilityState === 'visible') check() }
+    document.addEventListener('visibilitychange', onVis)
+    return () => document.removeEventListener('visibilitychange', onVis)
   }, [])
 
   useEffect(() => {
@@ -134,6 +150,7 @@ export default function App() {
           </div>
         )}
       </main>
+      {newVer && <button className="newver" onClick={() => location.reload()}>🔄 有新版本，撳此更新</button>}
       {askLogout && (
         <Confirm confirmLabel="登出" text={session ? `會登出「${session.name}」，之後要重新輸入密碼先可以再用。` : '會登出目前帳號。'}
           onCancel={() => setAskLogout(false)}

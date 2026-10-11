@@ -536,3 +536,5 @@ header{padding-top:calc(14px + env(safe-area-inset-top, 0px))}
 header.hdr-home{padding-top:calc(20px + env(safe-area-inset-top, 0px))}
 .login-wrap{padding-top:env(safe-area-inset-top, 0px);padding-bottom:env(safe-area-inset-bottom, 0px)}
 .phone{padding-bottom:env(safe-area-inset-bottom, 0px)}
+
+.newver{position:fixed;left:50%;transform:translateX(-50%);bottom:max(18px,calc(env(safe-area-inset-bottom,0px) + 10px));z-index:90;background:var(--ink);color:#fff;border:none;border-radius:999px;padding:12px 22px;font-size:14px;font-weight:700;font-family:inherit;box-shadow:0 6px 20px rgba(0,0,0,.3);cursor:pointer}
