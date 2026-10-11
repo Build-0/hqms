@@ -6,7 +6,7 @@ import { compressImage } from './image'
 const url = import.meta.env.VITE_SUPABASE_URL
 const key = import.meta.env.VITE_SUPABASE_ANON_KEY
 export const isLocal = !url || !key
-// 開放模式：連 Supabase 但跳過登入（設計期用；資料庫端須先執行 supabase/open-mode.sql）
+// 員工帳號模式：用員工編號＋密碼登入 Supabase（資料庫端按角色把關，見 supabase/secure-lock.sql）
 export const isOpen = !isLocal && import.meta.env.VITE_OPEN_MODE === '1'
 const sb = isLocal ? null : createClient(url, key)
 
@@ -40,8 +40,20 @@ export async function signIn(username, password) {
 }
 export async function signOut() {
   if (isLocal) return local.signOut()
-  if (isOpen) return
   await sb.auth.signOut()
+}
+// 站內員工帳號（員工編號 → <編號>@hqms.local）：真正登入 Supabase，資料庫按角色把關
+export async function signInStaff(empId, password) {
+  const { error } = await sb.auth.signInWithPassword({ email: `${empId}@hqms.local`, password })
+  if (error) throw new Error('帳號或密碼不正確')
+}
+export async function hasAuth() {
+  const { data } = await sb.auth.getSession()
+  return !!data.session
+}
+export function onSignedOut(cb) {
+  const { data } = sb.auth.onAuthStateChange(e => { if (e === 'SIGNED_OUT') cb() })
+  return () => data.subscription.unsubscribe()
 }
 
 // ── categories ──

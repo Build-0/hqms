@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import PasswordInput from './PasswordInput'
-import { verifyLogin, setSession } from '../lib/accounts'
+import { findAccount, setSession } from '../lib/accounts'
+import * as api from '../lib/api'
 
 // 進入網站的帳號密碼頁（帳號：員工編號、完整英文名，或名字）
 export default function Gate({ onOk, big, onBig }) {
@@ -11,9 +12,11 @@ export default function Gate({ onOk, big, onBig }) {
   async function submit(e) {
     e.preventDefault()
     setBusy(true)
-    const acc = await verifyLogin(u, p)
+    const acc = findAccount(u)
+    let ok = false
+    if (acc) { try { await api.signInStaff(acc.key, p); ok = true } catch { ok = false } }
     setBusy(false)
-    if (acc) { setSession(acc); onOk(acc) } else setErr('帳號或密碼不正確')
+    if (ok) { setSession(acc); onOk(acc) } else setErr('帳號或密碼不正確')
   }
   return (
     <div className="phone login-wrap">

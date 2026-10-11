@@ -54,6 +54,12 @@ export default function App() {
   const [newVer, setNewVer] = useState(false)       // 偵測到新版本
   const [askLogout, setAskLogout] = useState(false)   // 登出前確認，避免撳錯
 
+  // 員工帳號：登入狀態失效（過期／被登出）就回登入頁
+  useEffect(() => {
+    if (!api.isOpen) return
+    api.hasAuth().then(ok => { if (!ok) { clearSession(); setSessionState(null) } })
+    return api.onSignedOut(() => { clearSession(); setSessionState(null) })
+  }, [])
   useEffect(() => {
     api.getUser().then(setUser)
     return api.onAuthChange(setUser)
@@ -191,7 +197,7 @@ export default function App() {
           onCancel={() => setAskLogout(false)}
           onConfirm={async () => {
             setAskLogout(false)
-            if (api.isOpen) { clearSession(); setTab('home'); setSessionState(null) } else { await api.signOut(); setUser(null) }
+            if (api.isOpen) { await api.signOut(); clearSession(); setTab('home'); setSessionState(null) } else { await api.signOut(); setUser(null) }
           }} />
       )}
       {msg && <div className="toast">{msg}</div>}
