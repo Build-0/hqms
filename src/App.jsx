@@ -16,21 +16,21 @@ import { toast } from './lib/toast'
 
 // 首頁圓形入口：之後加新模組（清潔劑、機器…）直接在這裡加一行
 const MODULES = [
-  { id: 'findings', icon: 'camera', label: '查房記錄', color: '#d07a2c', Page: Findings },
-  { id: 'daily', icon: 'focus', label: '今日重點', color: '#1f7a6d', Page: Daily },
-  { id: 'topics', icon: 'book', label: '培訓主題庫', color: '#4a6fa5', Page: Topics },
-  { id: 'cyclic', icon: 'clean', label: '清潔要點', color: '#54808c', Page: CyclicClean },
-  { id: 'scores', icon: 'star', label: '房務員清潔評分', color: '#8f7ac9', Page: Scores },
+  { id: 'findings', sub: '拍照記錄問題與表揚', icon: 'camera', label: '查房記錄', color: '#d07a2c', Page: Findings },
+  { id: 'daily', sub: '早會題目與正確標準', icon: 'focus', label: '今日重點', color: '#1f7a6d', Page: Daily },
+  { id: 'topics', sub: '分類教材與早會提問', icon: 'book', label: '培訓主題庫', color: '#4a6fa5', Page: Topics },
+  { id: 'cyclic', sub: '每日、循環、深度清潔', icon: 'clean', label: '清潔要點', color: '#54808c', Page: CyclicClean },
+  { id: 'scores', sub: '七項評分與報告', icon: 'star', label: '房務員清潔評分', color: '#8f7ac9', Page: Scores },
   // 嵌入的舊系統（與品質系統同網站、各自保留原有資料庫）
   { id: 'boh', icon: 'box', label: '後勤管理', color: '#7a6a4f', embed: true, Page: () => <Embed src="./boh/index.html" title="酒店後勤管理" /> },
   { id: 'defect', icon: 'wrench', label: '缺陷管理', color: '#b5603a', embed: true, Page: () => <Embed src="./defect/index.html" title="房間缺陷登記" /> },
-  { id: 'complaint', icon: 'chat', label: '客訴管理', color: '#c0564f', Page: Complaints },
+  { id: 'complaint', sub: '記錄、統計與月報', icon: 'chat', label: '客訴管理', color: '#c0564f', Page: Complaints },
 ]
 // 首頁三大系統卡：房間品質（內含上面各模組）／後勤管理（嵌入）／缺陷管理（待加入）
 const SYSTEMS = [
-  { id: 'quality', icon: 'clipcheck', label: '房間品質', sub: '檢查、評分、報告' },
-  { id: 'boh', icon: 'box', label: '後勤管理', sub: '物資、庫存、設備' },
-  { id: 'defect', icon: 'wrench', label: '缺陷管理', sub: '登記、跟進、統計' },
+  { id: 'quality', icon: 'clipcheck', label: '房間品質', sub: '查房、評分、客訴、培訓', color: '#1f7a6d' },
+  { id: 'boh', icon: 'box', label: '後勤管理', sub: '清潔劑、吸塵機、工具、設備', color: '#4a6fa5' },
+  { id: 'defect', icon: 'wrench', label: '缺陷管理', sub: '房間缺陷登記、跟進與統計', color: '#c0564f' },
 ]
 const WD = ['日', '一', '二', '三', '四', '五', '六']
 
@@ -99,32 +99,24 @@ export default function App() {
       </header>
       <main className={cur?.embed ? 'embed-main' : ''}>
         {cur ? <cur.Page key={tab} /> : inQuality ? (
-          <div className="home-grid">
+          <div className="mod-grid">
             {MODULES.filter(m => !m.embed).map(m => (
-              <button className="home-item" key={m.id} onClick={() => setTab(m.id)}>
-                <span className="hi-circle" style={{ background: m.color + '26', borderColor: 'transparent' }}><Icon name={m.icon} size={33} color={m.color} width={2.2} /></span>
-                <span className="hi-label">{m.label}</span>
+              <button className="mod-card" key={m.id} onClick={() => setTab(m.id)}>
+                <span className="mod-ico" style={{ background: m.color + '1f' }}><Icon name={m.icon} size={26} color={m.color} width={2.1} /></span>
+                <b>{m.label}</b>
+                <span>{m.sub}</span>
               </button>
             ))}
           </div>
         ) : (
-          <div className="sys-home">
-            <div className="sys-hero">
-              <Icon name="hotel" size={34} color="var(--ink)" width={1.8} />
-              <h2>酒店客房管理系統</h2>
-              <p>統一網址 · 統一入口</p>
-            </div>
-            <div className="sys-grid">
-              {SYSTEMS.map(sy => (
-                <button className={`sys-card ${sy.soon ? 'soon' : ''}`} key={sy.id}
-                  onClick={() => (sy.soon ? toast(sy.label + '即將加入') : setTab(sy.id))}>
-                  <Icon name={sy.icon} size={30} color="var(--ink)" width={1.9} />
-                  <b>{sy.label}</b>
-                  <span>{sy.sub}</span>
-                  {sy.soon && <i>即將加入</i>}
-                </button>
-              ))}
-            </div>
+          <div className="sys-list">
+            {SYSTEMS.map(sy => (
+              <button className="sys-row" key={sy.id} onClick={() => setTab(sy.id)}>
+                <span className="sys-ico" style={{ background: sy.color + '1f' }}><Icon name={sy.icon} size={30} color={sy.color} width={2} /></span>
+                <span className="sys-txt"><b>{sy.label}</b><span>{sy.sub}</span></span>
+                <span className="sys-go">›</span>
+              </button>
+            ))}
           </div>
         )}
       </main>
