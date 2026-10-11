@@ -9,6 +9,8 @@ import CyclicClean from './pages/CyclicClean'
 import Findings from './pages/Findings'
 import Icon from './components/Icon'
 import Embed from './components/Embed'
+import { ReportModal, BohReport, DefectReport } from './components/Reports'
+import { todayStr } from './lib/dates'
 import { toast } from './lib/toast'
 
 // 首頁圓形入口：之後加新模組（清潔劑、機器…）直接在這裡加一行
@@ -35,6 +37,7 @@ export default function App() {
   const [user, setUser] = useState(undefined) // undefined = 載入中
   const [tab, setTab] = useState('home')
   const [msg, setMsg] = useState('')
+  const [rpt, setRpt] = useState(null)   // 嵌入模組的匯出報告 {id, data}
 
   useEffect(() => {
     api.getUser().then(setUser)
@@ -65,6 +68,12 @@ export default function App() {
   const now = new Date()
   const cur = MODULES.find(m => m.id === tab)
   const inQuality = tab === 'quality'
+  const exportEmbed = () => {
+    const w = document.querySelector('iframe.embed-frame')?.contentWindow
+    const data = w && w.__getReport && w.__getReport()
+    if (!data) { toast(cur.id === 'defect' ? '請先登入缺陷系統，並等資料載入完成' : '資料尚未載入完成，請稍後再試'); return }
+    setRpt({ id: cur.id, data })
+  }
   const goBack = () => setTab(cur && !cur.embed ? 'quality' : 'home')
   const title = cur ? cur.label : inQuality ? '房間品質' : '酒店綜合管理系統'
   return (
@@ -74,6 +83,7 @@ export default function App() {
           {(cur || inQuality) && <button className="back-btn" onClick={cur ? goBack : () => setTab('home')}>‹</button>}
           {cur && <span className="hdr-ico" style={{ background: 'rgba(255,255,255,.2)' }}><Icon name={cur.icon} size={18} color="#fff" /></span>}
           <h1 style={{ flex: 1 }}>{title}</h1>
+          {cur?.embed && <button className="logout" onClick={exportEmbed}>📄 匯出</button>}
           {!api.isOpen && <button className="logout" onClick={async () => { await api.signOut(); setUser(null) }}>登出</button>}
         </div>
         <div className="date">
@@ -113,6 +123,11 @@ export default function App() {
           </div>
         )}
       </main>
+      {rpt && (
+        <ReportModal title={rpt.id === 'boh' ? '後勤管理報告' : '缺陷管理報告'} sub={todayStr()} onClose={() => setRpt(null)}>
+          {rpt.id === 'boh' ? <BohReport data={rpt.data} /> : <DefectReport data={rpt.data} />}
+        </ReportModal>
+      )}
       {msg && <div className="toast">{msg}</div>}
     </div>
   )

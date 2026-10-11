@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { todayStr } from '../lib/dates'
 
@@ -220,6 +221,89 @@ export function FindingsReport({ data, withPhotos, onTogglePhotos }) {
             <div><b>{r.name}</b>{r.room ? <span className="rpt-mut"> · {r.room} 房</span> : ''} <span className="rpt-mut">· {r.date.slice(5)}</span></div>
             <div style={{ color: r.kind === 'good' ? '#1b8a5a' : '#c62828', fontWeight: 700 }}>{r.kind === 'good' ? '⭐ 做得好：' : '⚠ 問題：'}{r.tags}</div>
             {r.note && <div className="rpt-mut">{r.note}</div>}
+          </div>
+        </div>
+      ))}
+    </>
+  )
+}
+
+const obj2rows = (o, extra) => Object.entries(o || {}).map(([k, n]) => ({ k, n, ...(extra || {}) })).sort((a, b) => b.n - a.n)
+
+// ── 後勤管理 ──
+export function BohReport({ data }) {
+  const { products, low, expiring, vacuums, equipment, tools } = data
+  const abn = (o, ok) => Object.entries(o || {}).filter(([k]) => k !== ok).reduce((n, [, v]) => n + v, 0)
+  const eqStatuses = [...new Set(Object.values(equipment.byType).flatMap(o => Object.keys(o)))]
+  return (
+    <>
+      <div className="rpt-kpis">
+        <div className="rpt-k"><b>{products.active}</b><small>清潔劑（上架）</small></div>
+        <div className="rpt-k"><b style={{ color: low.length ? '#c62828' : undefined }}>{low.length}</b><small>需補貨</small></div>
+        <div className="rpt-k"><b style={{ color: expiring.length ? '#e69500' : undefined }}>{expiring.length}</b><small>30 日內到期</small></div>
+        <div className="rpt-k"><b>{abn(vacuums.byStatus, '正常') + abn(equipment.byStatus, '正常')}</b><small>非正常機器</small></div>
+      </div>
+      <Sub>需補貨清潔劑</Sub>
+      {low.length === 0 ? <Empty>沒有需補貨項目</Empty> : (
+        <table className="rpt-t"><thead><tr><th>清潔劑</th><th>現有</th><th>最低</th></tr></thead>
+          <tbody>{low.map((p, i) => <tr key={i}><td>{p.name}</td><td className="rpt-red">{p.stock}</td><td>{p.min}</td></tr>)}</tbody></table>
+      )}
+      <Sub>臨期／已過期批次（30 日內）</Sub>
+      {expiring.length === 0 ? <Empty>沒有臨期批次</Empty> : (
+        <table className="rpt-t"><thead><tr><th>清潔劑</th><th>到期日</th><th>剩餘</th><th>狀態</th></tr></thead>
+          <tbody>{expiring.map((b, i) => <tr key={i}><td>{b.name}</td><td className="rpt-nw">{b.expiry}</td><td>{b.qty}</td><td className={b.days < 0 ? 'rpt-red' : ''}>{b.days < 0 ? '已過期' : '剩 ' + b.days + ' 天'}</td></tr>)}</tbody></table>
+      )}
+      <div className="rpt-two">
+        <div><Sub>吸塵機 · 共 {vacuums.total} 台</Sub>
+          <Bars rows={obj2rows(vacuums.byStatus)} color="#1f7a6d" />
+          <Sub>吸塵機位置分佈</Sub>
+          <Bars rows={obj2rows(vacuums.byFloor).slice(0, 12)} />
+        </div>
+        <div><Sub>設備 · 共 {equipment.total} 台</Sub>
+          <table className="rpt-t"><thead><tr><th>類型</th>{eqStatuses.map(s => <th key={s}>{s}</th>)}</tr></thead>
+            <tbody>{Object.entries(equipment.byType).sort((a, b) => Object.values(b[1]).reduce((x, y) => x + y, 0) - Object.values(a[1]).reduce((x, y) => x + y, 0)).map(([t, o]) => <tr key={t}><td>{t}</td>{eqStatuses.map(s => <td key={s} className={s !== '正常' && o[s] ? 'rpt-red' : ''}>{o[s] || '—'}</td>)}</tr>)}</tbody></table>
+        </div>
+      </div>
+      <Sub>清潔工具 · 共 {tools.total} 項</Sub>
+      <table className="rpt-t"><thead><tr><th>分類</th><th>項數</th><th>庫存合計</th></tr></thead>
+        <tbody>{Object.entries(tools.byCat).sort((a, b) => b[1].items - a[1].items).map(([c, o]) => <tr key={c}><td>{c}</td><td>{o.items}</td><td>{o.stock}</td></tr>)}</tbody></table>
+    </>
+  )
+}
+
+// ── 缺陷管理 ──
+export function DefectReport({ data }) {
+  const { defects, severity, status } = data
+  const [withPhotos, setWithPhotos] = useState(true)
+  const lab = (arr, v) => (arr.find(x => x.value === v) || {}).label || v || '—'
+  const count = st => defects.filter(d => d.status === st).length
+  const open = defects.filter(d => d.status !== 'done')
+  const sevRank = { high: 0, medium: 1, low: 2 }
+  const list = open.slice().sort((a, b) => (sevRank[a.severity] ?? 3) - (sevRank[b.severity] ?? 3) || String(a.register_date || a.created_at).localeCompare(String(b.register_date || b.created_at))).slice(0, 150)
+  const byType = {}, byFloor = {}
+  for (const d of open) { byType[d.type || '（未填）'] = (byType[d.type || '（未填）'] || 0) + 1; byFloor[d.floor ? d.floor + ' 樓' : '（未填）'] = (byFloor[d.floor ? d.floor + ' 樓' : '（未填）'] || 0) + 1 }
+  const sevColor = { high: '#c62828', medium: '#e69500', low: '#2f6fba' }
+  return (
+    <>
+      <div className="rpt-kpis">
+        <div className="rpt-k"><b>{defects.length}</b><small>全部記錄</small></div>
+        <div className="rpt-k"><b style={{ color: '#c62828' }}>{count('pending')}</b><small>待處理</small></div>
+        <div className="rpt-k"><b style={{ color: '#e69500' }}>{count('processing')}</b><small>處理中</small></div>
+        <div className="rpt-k"><b style={{ color: '#1b8a5a' }}>{count('done')}</b><small>已修復</small></div>
+      </div>
+      <div className="rpt-two">
+        <div><Sub>未完成 · 缺陷類型</Sub><Bars rows={obj2rows(byType).slice(0, 10)} color="#c62828" /></div>
+        <div><Sub>未完成 · 樓層分佈</Sub><Bars rows={obj2rows(byFloor).slice(0, 12)} /></div>
+      </div>
+      <Sub>未完成明細（嚴重程度高至低，最多 150 筆；共 {open.length} 筆）</Sub>
+      <label className="rpt-noprint rpt-check"><input type="checkbox" checked={withPhotos} onChange={e => setWithPhotos(e.target.checked)} /> 附上相片</label>
+      {list.length === 0 ? <Empty>沒有未完成缺陷</Empty> : list.map((d, i) => (
+        <div className="rpt-fd" key={i}>
+          {withPhotos && Array.isArray(d.photos) && d.photos.length > 0 && <div className="rpt-fd-ph">{d.photos.slice(0, 2).map((p, k) => <img key={k} src={p} alt="" />)}</div>}
+          <div className="rpt-fd-tx">
+            <div><b>{d.room}</b> <span className="rpt-mut">· {d.register_date || (d.created_at || '').slice(0, 10)}</span> <span className="rpt-tag" style={{ background: sevColor[d.severity] || '#6b7785' }}>{lab(severity, d.severity)}</span> <span className="rpt-mut">{lab(status, d.status)}</span></div>
+            <div style={{ fontWeight: 700 }}>{d.type}</div>
+            {d.note && <div className="rpt-mut">{d.note}</div>}
           </div>
         </div>
       ))}

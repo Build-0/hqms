@@ -475,6 +475,15 @@ button { -webkit-tap-highlight-color:transparent; touch-action:manipulation; }
 .vs-lost { background:#efe9fb; color:#6b46c1; }
 .locked-input { background:var(--surface-3) !important; color:var(--ink-3); cursor:not-allowed; }
 </style>
+<style id="unify">
+/* 與品質系統一致：同一套綠色主色、淺灰底；標題由外層顯示，這裡只留設定齒輪 */
+:root { --bg:#f4f6f8; --brand-1:#175e55; --brand-2:#1f7a6d; --brand-3:#2b8f80; --accent:#1f7a6d; }
+body { background:#f4f6f8 !important; }
+.page-header { background:#fff !important; color:var(--ink) !important; padding:6px 12px !important; min-height:0 !important; display:flex; justify-content:flex-end; align-items:center; box-shadow:none !important; border-bottom:1px solid var(--line); }
+.page-header h1, .page-header .sub, .page-header .app-ver { display:none !important; }
+.page-header .settings { position:static !important; }
+.gear-btn { background:#eef1f4 !important; color:#566675 !important; }
+</style>
 </head>
 <body>
 
@@ -2436,6 +2445,32 @@ var _applyLang = applyLang;
 applyLang = function () { _applyLang(); showVersion(); };
 showVersion();
 window.onload = loadAll;
+</script>
+<script>
+/* 供外層「匯出 PDF」讀取目前資料 */
+window.__getReport = function () {
+  var nm = function (id) { var p = products.find(function (x) { return x.id === id; }); return p ? p.name_zh : '—'; };
+  var cnt = function (arr, key) { var o = {}; arr.forEach(function (x) { var k = x[key] || '（未填）'; o[k] = (o[k] || 0) + 1; }); return o; };
+  var low = lowStockIds().map(function (id) { var p = products.find(function (x) { return x.id === id; }); return { name: p.name_zh, stock: p.stock, min: p.min_stock }; });
+  var expiring = [];
+  batches.forEach(function (b) {
+    if (!b.expiry_date || Number(b.qty_remaining) <= 0 || !isActiveProduct(b.product_id)) return;
+    var d = daysUntil(b.expiry_date);
+    if (d !== null && d <= 30) expiring.push({ name: nm(b.product_id), expiry: b.expiry_date, qty: b.qty_remaining, days: d });
+  });
+  expiring.sort(function (a, b) { return a.days - b.days; });
+  var eqTypes = {};
+  equipment.forEach(function (e) { var t = e.type || '（未填）'; (eqTypes[t] = eqTypes[t] || {}); eqTypes[t][e.status] = (eqTypes[t][e.status] || 0) + 1; });
+  var toolCat = {};
+  tools.forEach(function (t) { var c = t.category || '（未分類）'; var o = (toolCat[c] = toolCat[c] || { items: 0, stock: 0 }); o.items++; o.stock += Number(t.stock) || 0; });
+  return {
+    products: { active: products.filter(function (p) { return p.status !== '停用'; }).length, total: products.length },
+    low: low, expiring: expiring,
+    vacuums: { total: vacuums.length, byStatus: cnt(vacuums, 'status'), byFloor: cnt(vacuums, 'floor_code') },
+    equipment: { total: equipment.length, byStatus: cnt(equipment, 'status'), byType: eqTypes },
+    tools: { total: tools.length, byCat: toolCat }
+  };
+};
 </script>
 </body>
 </html>

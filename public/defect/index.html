@@ -23,6 +23,13 @@
 <style>
   body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Microsoft JhengHei", sans-serif; }
 </style>
+<style id="unify">
+/* 與品質系統一致：綠色主色、淺灰底；系統名稱由外層標題顯示 */
+.bg-slate-800 { background-color:#1f7a6d !important; }
+.hover\:bg-slate-700:hover { background-color:#17635a !important; }
+.bg-slate-50 { background-color:#f4f6f8 !important; }
+h1.font-bold.text-lg { display:none !important; }
+</style>
 </head>
 <body>
 <div id="root"></div>
@@ -194,6 +201,8 @@ function App() {
   };
 
   useEffect(() => { loadAll(); }, []);
+  // 供外層「匯出 PDF」讀取目前資料
+  useEffect(() => { window.__getReport = () => ({ defects, defectTypes, severity: SEVERITY_OPTIONS, status: STATUS_OPTIONS }); });
 
   const resetForm = () => setForm({ floor: '3', roomNum: '01', type: '', severity: 'medium', note: '', photos: [], registerDate: today(), fixedDate: '' });
 
