@@ -3,7 +3,7 @@ import PasswordInput from './PasswordInput'
 import { verifyLogin, setSession } from '../lib/accounts'
 
 // 進入網站的帳號密碼頁（帳號：員工編號、完整英文名，或名字）
-export default function Gate({ onOk }) {
+export default function Gate({ onOk, big, onBig }) {
   const [u, setU] = useState('')
   const [p, setP] = useState('')
   const [err, setErr] = useState('')
@@ -17,6 +17,7 @@ export default function Gate({ onOk }) {
   }
   return (
     <div className="phone login-wrap">
+      <button type="button" className="gate-big" onClick={onBig}>{big ? '標準字' : '大字'}</button>
       <form className="card login-card" onSubmit={submit}>
         <div className="login-logo"><img src="./icons/icon-192.png" alt="" width="64" height="64" style={{ borderRadius: 16 }} /></div>
         <h2 style={{ textAlign: 'center' }}>酒店客房管理系統</h2>

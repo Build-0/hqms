@@ -44,6 +44,12 @@ export default function App() {
   const [session, setSessionState] = useState(() => (api.isOpen ? getSession() : null))
   const [init, setInit] = useState(null)   // 從首頁摘要跳入時的預設篩選
   const go = (t, i) => { setInit(i || null); setTab(t) }
+  // 大字版：長者或視力較弱的同事可以放大整個介面，記住選擇
+  const [big, setBig] = useState(() => { try { return localStorage.getItem('hotel_big') === '1' } catch { return false } })
+  useEffect(() => {
+    document.documentElement.classList.toggle('big', big)
+    try { localStorage.setItem('hotel_big', big ? '1' : '0') } catch { /* 無法儲存時照常使用 */ }
+  }, [big])
   const [refreshing, setRefreshing] = useState(false)  // 刷新中（轉圈）
   const [rk, setRk] = useState(0)                        // 刷新計數：改變即重新載入目前頁面資料
   const [newVer, setNewVer] = useState(false)       // 偵測到新版本
@@ -88,7 +94,7 @@ export default function App() {
     return () => window.removeEventListener('unhandledrejection', fn)
   }, [])
 
-  if (api.isOpen && !session) return <Gate onOk={setSessionState} />
+  if (api.isOpen && !session) return <Gate onOk={setSessionState} big={big} onBig={() => setBig(b => !b)} />
   api.setReadOnly(!!session && PERMS[session.role].quality !== 'edit')
   if (user === undefined) return null
   if (!user) return <Login onLogin={setUser} />
@@ -128,11 +134,14 @@ export default function App() {
           {cur && <span className="hdr-ico" style={{ background: 'rgba(255,255,255,.2)' }}><Icon name={cur.icon} size={18} color="#fff" /></span>}
           <h1 style={{ flex: 1 }}>{title}</h1>
           {cur?.embed && <button className="logout" onClick={exportEmbed}>📄 匯出</button>}
+          <div className="hdr-acts">
+          <button className="logout big-btn" onClick={() => setBig(b => !b)} aria-label="切換大字版">{big ? '標準字' : '大字'}</button>
           <button className={`logout refresh ${refreshing ? 'spin' : ''}`} onClick={doRefresh} aria-label="刷新">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5" /></svg>
             <span>{refreshing ? '更新中…' : '刷新'}</span>
           </button>
           <button className="logout" onClick={() => setAskLogout(true)}>登出</button>
+          </div>
         </div>
         {tab === 'home' && (
           <div className="hdr-sub">

@@ -5,7 +5,8 @@ import { DEFAULT_CATEGORIES } from '../data/seedData'
 import { todayStr, addDaysStr } from '../lib/dates'
 import { toast } from '../lib/toast'
 import { PhotoGrid } from '../components/Photos'
-import { ReportModal, DailyReport } from '../components/Reports'
+import { ReportModal, SpeechSheet } from '../components/Reports'
+import { canExport } from '../lib/accounts'
 
 const isCore = c => (c.dept || (c.nature === '工程投訴' ? '工程其他' : '客房')) === '客房'
   && (c.nature === '工程投訴' ? '投訴' : (c.nature || '投訴')) === '投訴'
@@ -140,7 +141,10 @@ export default function Daily() {
   const [st, setSt] = useState(null)
 
   const [err, setErr] = useState('')
-  const [report, setReport] = useState(false)
+  const [report, setReport] = useState(false)   // 顯示講稿
+  const [pick, setPick] = useState(false)       // 揀講稿內容
+  const [sel, setSel] = useState([])
+  const [tq, setTq] = useState('')
   useEffect(() => { load() }, [])
 
   async function load() {
@@ -223,7 +227,7 @@ export default function Daily() {
         ? `客訴案例（${complaints.find(c => c.id === tf.complaint_id)?.room ?? '?'} 房）`
         : topics.find(t => t.id === tf.topic_id)?.title
     }
-    setSt({ focus, s1, s2, cats, tomorrowName, hadYesterday: ycs.length > 0, digest })
+    setSt({ focus, s1, s2, cats, tomorrowName, hadYesterday: ycs.length > 0, digest, topics })
   }
 
   async function share() {
@@ -240,6 +244,7 @@ export default function Daily() {
   if (err && !st) return <div className="card"><p className="src-note">讀取失敗：{err}</p><button className="btn" onClick={load}>重試</button></div>
   if (!st) return <div className="note">載入中…</div>
   const { focus, s1, s2, tomorrowName, digest } = st
+  const allTopics = st.topics || []
   const slots = [s1, s2].filter(s => s && (s.complaint || s.topic))
 
   if (!focus || slots.length === 0) {
@@ -255,6 +260,22 @@ export default function Daily() {
     )
   }
 
+  const cands = []
+  slots.forEach((sl, i) => {
+    if (sl.complaint) cands.push({ key: 'f' + i, group: '今日重點', kind: 'complaint', source: '昨日客訴', title: `昨日客訴 · ${sl.complaint.room} 房`, complaint: sl.complaint, photos: sl.complaint.photos })
+    else if (sl.topic) cands.push({ key: 'f' + i, group: '今日重點', kind: 'topic', source: sl.topic.category, title: sl.topic.title, topic: sl.topic, photos: sl.topic.photos })
+  })
+  digest.top.forEach(t => cands.push({ key: 'd:' + t.name, group: '近 7 日查房常見問題', kind: 'finding', source: '查房記錄', title: t.name, meta: `近 7 日 ${t.n} 次${t.floors.length ? ' · 涉及樓層：' + t.floors.map(f => f + ' 樓').join('、') : ''}`, topic: allTopics.find(x => x.id === t.topic_id), photos: t.photos }))
+  digest.good.forEach(t => cands.push({ key: 'g:' + t.name, group: '近 7 日做得好', kind: 'good', source: '做得好', title: t.name, meta: `近 7 日 ${t.n} 次`, photos: t.photos }))
+  allTopics.forEach(t => cands.push({ key: 't:' + t.id, group: '主題庫 · ' + t.category, kind: 'topic', source: t.category, title: t.title, topic: t, photos: t.photos }))
+  const picked = sel.map(k => cands.find(c => c.key === k)).filter(Boolean)
+  const MAXI = 3
+  const toggle = k => setSel(a => (a.includes(k) ? a.filter(x => x !== k) : a.length >= MAXI ? a : [...a, k]))
+  const tqs = tq.trim().toLowerCase()
+  const visible = cands.filter(c => !c.key.startsWith('t:') || !tqs || (c.title + c.source).toLowerCase().includes(tqs))
+  const groups = [...new Set(visible.map(c => c.group))]
+  const openPick = () => { if (!canExport()) setReport(true); else setPick(true) }
+
   const shared = !!focus.shared_at
   return (
     <div className="daily-wrap">
@@ -264,9 +285,35 @@ export default function Daily() {
           complaint={s.complaint} topic={s.topic} cats={st.cats} />
       ))}
 
+      {pick && (
+        <div className="modal" onClick={e => { if (e.target === e.currentTarget) setPick(false) }}>
+          <div className="sheet">
+            <h2>匯出早會講稿</h2>
+            <p className="src-note">揀最多 {MAXI} 項（已揀 {sel.length}/{MAXI}），列印成一張紙。有相片的會一齊印出，早會沒有特別事項時，可以照住這張紙講。</p>
+            <input className="search-inp" placeholder="🔍 搜尋主題庫" value={tq} onChange={e => setTq(e.target.value)} />
+            {groups.map(g => (
+              <div key={g}>
+                <div className="sp-grp">{g}</div>
+                {visible.filter(c => c.group === g).map(c => {
+                  const on = sel.includes(c.key), full = !on && sel.length >= MAXI
+                  return (
+                    <label key={c.key} className={`sp-opt ${on ? 'on' : ''} ${full ? 'dim' : ''}`}>
+                      <input type="checkbox" checked={on} disabled={full} onChange={() => toggle(c.key)} />
+                      <span className="sp-t">{c.title}{c.meta && <small>{c.meta}</small>}</span>
+                      {c.photos?.length > 0 && <span className="sp-ph">📷{c.photos.length}</span>}
+                    </label>
+                  )
+                })}
+              </div>
+            ))}
+            <button className="btn" disabled={sel.length === 0} onClick={() => { setPick(false); setReport(true) }}>預覽並匯出（{sel.length} 項）</button>
+            <button className="btn ghost" onClick={() => setPick(false)}>取消</button>
+          </div>
+        </div>
+      )}
       {report && (
-        <ReportModal title="今日早會品質重點" sub={todayStr()} onClose={() => setReport(false)}>
-          <DailyReport slots={slots} />
+        <ReportModal title="早會講稿" sub={todayStr()} onClose={() => setReport(false)}>
+          <SpeechSheet items={picked} />
         </ReportModal>
       )}
       <button className={`done-btn ${shared ? 'done' : ''}`} onClick={shared ? undefined : share}>
@@ -279,7 +326,7 @@ export default function Daily() {
         📅 {st.hadYesterday ? '昨日有投訴 → 以客訴為重點' : '昨日無投訴 → 主題輪替'}
         {tomorrowName ? ` · 明日已指定：${tomorrowName}` : ''}
         <button className="linky" onClick={regen}>🔄 重新選題</button>
-        <button className="linky" onClick={() => setReport(true)}>📄 匯出</button>
+        <button className="linky" onClick={openPick}>📄 匯出講稿</button>
       </p>
     </div>
   )

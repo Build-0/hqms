@@ -324,3 +324,48 @@ export function DefectReport({ data }) {
     </>
   )
 }
+
+// ── 早會講稿：管理員揀最多 3 項，列印成一張紙，早會沒有特別事項時照住講 ──
+export function SpeechSheet({ items }) {
+  const list = (a, tag) => (a && a.length ? <ol className="rpt-sl">{a.map((x, i) => <li key={i}>{x}</li>)}</ol> : null)
+  const bul = a => (a && a.length ? <ul className="rpt-sl">{a.map((x, i) => <li key={i}>{x}</li>)}</ul> : null)
+  return (
+    <div className="rpt-big">
+      {items.length === 0 && <Empty>未有揀選內容</Empty>}
+      {items.map((it, idx) => {
+        const t = it.topic, c = it.complaint
+        const photos = (it.photos || []).slice(0, 3)
+        return (
+          <div className="rpt-keep rpt-sp" key={idx}>
+            <div className="rpt-sp-h"><span className="rpt-sp-n">{idx + 1}</span><b>{it.title}</b><span className="rpt-sp-tag">{it.source}</span></div>
+            {it.meta && <p className="rpt-mut">{it.meta}</p>}
+            {photos.length > 0 && <div className="rpt-ph3">{photos.map((p, k) => <img key={k} src={p} alt="" />)}</div>}
+            {c && (
+              <div className="rpt-two">
+                <div className="rpt-box"><h4>客人反映／實際原因</h4><p>{c.guest_comment}</p>{c.actual_cause && <p className="rpt-red">{c.actual_cause}</p>}</div>
+                <div className="rpt-box"><h4>✓ 正確標準</h4><p>{c.correct_standard || '—'}</p>{c.improvement && <p><b>改善：</b>{c.improvement}</p>}</div>
+              </div>
+            )}
+            {t && (
+              <>
+                {t.why && <p>{t.why}</p>}
+                <div className="rpt-two">
+                  <div className="rpt-box"><h4>✓ 正確做法</h4>{list(t.correct_steps) || <p>—</p>}</div>
+                  <div className="rpt-box"><h4>✗ 常見錯誤</h4>{bul(t.mistakes) || <p>—</p>}</div>
+                </div>
+                {t.supervisor_check && <p><b>主管重點檢查：</b>{t.supervisor_check}</p>}
+                {t.question && <div className="rpt-q"><b>早會提問</b>　{t.question}{t.answer && <><br /><span className="rpt-mut">答：{t.answer}</span></>}</div>}
+              </>
+            )}
+            {!t && !c && it.kind === 'finding' && (
+              <div className="rpt-q"><b>討論</b>　這類問題為甚麼會發生？正確做法是什麼？請同事講一次，主管補充。</div>
+            )}
+            {!t && !c && it.kind === 'good' && (
+              <div className="rpt-q"><b>表揚</b>　請做得好的同事分享做法，其他同事學習。</div>
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
