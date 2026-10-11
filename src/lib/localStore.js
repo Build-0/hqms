@@ -241,3 +241,18 @@ export function addFindings(list) {
 export function deleteFinding(id) {
   set(K.findings, get(K.findings, []).filter(r => r.id !== id))
 }
+
+// ── defects（房間缺陷登記）──
+const DEFAULT_DEFECT_TYPES = ['1.全身鏡氧化', '2.屏風裂', '3.牆紙發霉', '4.霉味無法去除', '5.大床梳化甩皮', '6.地毯污漬無法去除', '7.床頭板爛', '8.三樓磁磚黑漬無法去除', '9.電視刮花', '10.其他']
+export function listDefects() { return get('hqms_defects', []).slice().sort((a, b) => (b.created_at || '').localeCompare(a.created_at || '')) }
+export function addDefect(row) {
+  const r = { id: Date.now(), created_at: new Date().toISOString(), updated_at: new Date().toISOString(), fixed_date: null, ...row }
+  set('hqms_defects', [r, ...get('hqms_defects', [])]); return r
+}
+export function updateDefect(id, patch) {
+  const rows = get('hqms_defects', []).map(r => (r.id === id ? { ...r, ...patch } : r)); set('hqms_defects', rows); return rows.find(r => r.id === id)
+}
+export function deleteDefect(id) { set('hqms_defects', get('hqms_defects', []).filter(r => r.id !== id)) }
+export function listDefectTypes() { return get('hqms_defect_types', DEFAULT_DEFECT_TYPES).map((name, i) => ({ id: i + 1, name })) }
+export function addDefectType(name) { set('hqms_defect_types', [...get('hqms_defect_types', DEFAULT_DEFECT_TYPES), name]) }
+export function deleteDefectType(name) { set('hqms_defect_types', get('hqms_defect_types', DEFAULT_DEFECT_TYPES).filter(t => t !== name)) }

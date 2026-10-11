@@ -367,3 +367,44 @@ export async function deleteFinding(id) {
   const { error } = await sb.from('findings').delete().eq('id', id)
   throwIf(error)
 }
+
+// ── defects（房間缺陷登記）──
+export async function listDefects() {
+  if (isLocal) return local.listDefects()
+  const { data, error } = await sb.from('defect_records').select('*').order('created_at', { ascending: false }).limit(5000)
+  throwIf(error)
+  return data
+}
+export async function addDefect(row) {
+  if (isLocal) return local.addDefect(row)
+  const { data, error } = await sb.from('defect_records').insert(row).select().single()
+  throwIf(error)
+  return data
+}
+export async function updateDefect(id, patch) {
+  if (isLocal) return local.updateDefect(id, patch)
+  const { data, error } = await sb.from('defect_records').update(patch).eq('id', id).select().single()
+  throwIf(error)
+  return data
+}
+export async function deleteDefect(id) {
+  if (isLocal) return local.deleteDefect(id)
+  const { error } = await sb.from('defect_records').delete().eq('id', id)
+  throwIf(error)
+}
+export async function listDefectTypes() {
+  if (isLocal) return local.listDefectTypes()
+  const { data, error } = await sb.from('defect_types').select('*').order('id')
+  throwIf(error)
+  return data
+}
+export async function addDefectType(name) {
+  if (isLocal) return local.addDefectType(name)
+  const { error } = await sb.from('defect_types').insert({ name })
+  throwIf(error)
+}
+export async function deleteDefectType(name) {
+  if (isLocal) return local.deleteDefectType(name)
+  const { error } = await sb.from('defect_types').delete().eq('name', name)
+  throwIf(error)
+}

@@ -6,6 +6,7 @@ import Complaints from './pages/Complaints'
 import Scores from './pages/Scores'
 import Topics from './pages/Topics'
 import CyclicClean from './pages/CyclicClean'
+import Defects from './pages/Defects'
 import Findings from './pages/Findings'
 import Icon from './components/Icon'
 import Embed from './components/Embed'
@@ -24,7 +25,7 @@ const MODULES = [
   { id: 'scores', sub: '七項評分與報告', icon: 'star', label: '房務員清潔評分', color: '#8f7ac9', Page: Scores },
   // 嵌入的舊系統（與品質系統同網站、各自保留原有資料庫）
   { id: 'boh', icon: 'box', label: '後勤管理', color: '#7a6a4f', embed: true, Page: ({ session }) => <Embed src={`./boh/index.html?edit=${session && PERMS[session.role].boh !== 'edit' ? 0 : 1}`} title="酒店後勤管理" /> },
-  { id: 'defect', icon: 'wrench', label: '缺陷管理', color: '#b5603a', embed: true, Page: ({ session }) => <Embed src={`./defect/index.html?role=${session && PERMS[session.role].defect === 'edit' ? 'admin' : session ? 'supervisor' : 'admin'}&uid=${encodeURIComponent(session ? (session.id || session.name) : 'admin')}&uname=${encodeURIComponent(session ? session.name : '管理員')}`} title="房間缺陷登記" /> },
+  { id: 'defect', icon: 'wrench', label: '缺陷管理', color: '#b5603a', top: true, Page: Defects },
   { id: 'complaint', sub: '記錄、統計與月報', icon: 'chat', label: '客訴管理', color: '#c0564f', Page: Complaints },
 ]
 // 首頁三大系統卡：房間品質（內含上面各模組）／後勤管理（嵌入）／缺陷管理（待加入）
@@ -75,17 +76,17 @@ export default function App() {
   const inQuality = tab === 'quality'
   const locked = id => !!session && (PERMS[session.role][id] || 'none') === 'none'
   // 即使被封鎖的頁面（例如舊分頁狀態）也一律退回首頁
-  if (tab !== 'home' && session && (((cur && cur.id === 'boh') && locked('boh')) || ((cur && cur.id === 'defect') && locked('defect')) || ((tab === 'quality' || (cur && !cur.embed)) && locked('quality')))) setTimeout(() => setTab('home'), 0)
+  if (tab !== 'home' && session && (((cur && cur.id === 'boh') && locked('boh')) || ((cur && cur.id === 'defect') && locked('defect')) || ((tab === 'quality' || (cur && !cur.embed && !cur.top)) && locked('quality')))) setTimeout(() => setTab('home'), 0)
   const exportEmbed = () => {
     const w = document.querySelector('iframe.embed-frame')?.contentWindow
     const data = w && w.__getReport && w.__getReport()
     if (!data) { toast(cur.id === 'defect' ? '請先登入缺陷系統，並等資料載入完成' : '資料尚未載入完成，請稍後再試'); return }
     setRpt({ id: cur.id, data })
   }
-  const goBack = () => setTab(cur && !cur.embed ? 'quality' : 'home')
+  const goBack = () => setTab(cur && !cur.embed && !cur.top ? 'quality' : 'home')
   const title = cur ? cur.label : inQuality ? '房間品質' : '酒店客房管理系統'
   return (
-    <div className={`phone ${session && PERMS[session.role].quality !== 'edit' && (inQuality || (cur && !cur.embed)) ? 'ro' : ''}`}>
+    <div className={`phone ${session && PERMS[session.role].quality !== 'edit' && (inQuality || (cur && !cur.embed && !cur.top)) ? 'ro' : ''}`}>
       <header>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           {(cur || inQuality) && <button className="back-btn" onClick={cur ? goBack : () => setTab('home')}>‹</button>}
@@ -105,7 +106,7 @@ export default function App() {
       <main className={cur?.embed ? 'embed-main' : ''}>
         {cur ? <cur.Page key={tab} session={session} /> : inQuality ? (
           <div className="home-grid">
-            {MODULES.filter(m => !m.embed).map(m => (
+            {MODULES.filter(m => !m.embed && !m.top).map(m => (
               <button className="home-item" key={m.id} onClick={() => setTab(m.id)}>
                 <span className="hi-circle" style={{ background: m.color + '26', borderColor: 'transparent' }}><Icon name={m.icon} size={33} color={m.color} width={2.2} /></span>
                 <span className="hi-label">{m.label}</span>
