@@ -10,6 +10,10 @@ export const isLocal = !url || !key
 export const isOpen = !isLocal && import.meta.env.VITE_OPEN_MODE === '1'
 const sb = isLocal ? null : createClient(url, key)
 
+let readOnly = false
+export const setReadOnly = v => { readOnly = !!v }
+const guard = () => { if (readOnly) throw new Error('目前帳號只可查看，不能修改') }
+
 function throwIf(error) { if (error) throw new Error(error.message) }
 
 // ── auth ──
@@ -48,6 +52,7 @@ export async function listCategories() {
   return data
 }
 export async function addCategory(c) {
+  guard()
   if (isLocal) return local.addCategory(c)
   const { data, error } = await sb.from('categories').insert(c).select().single()
   throwIf(error)
@@ -55,6 +60,7 @@ export async function addCategory(c) {
 }
 // 改名時同步更新既有主題與客訴的分類文字
 export async function updateCategory(id, patch, oldName) {
+  guard()
   if (isLocal) return local.updateCategory(id, patch, oldName)
   const { data, error } = await sb.from('categories').update(patch).eq('id', id).select().single()
   throwIf(error)
@@ -65,6 +71,7 @@ export async function updateCategory(id, patch, oldName) {
   return data
 }
 export async function deleteCategory(id, name) {
+  guard()
   if (isLocal) return local.deleteCategory(id, name)
   const [t, c] = await Promise.all([
     sb.from('topics').select('id').eq('category', name).limit(1),
@@ -83,18 +90,21 @@ export async function listAttendants() {
   return data
 }
 export async function addAttendant(a) {
+  guard()
   if (isLocal) return local.addAttendant(a)
   const { data, error } = await sb.from('attendants').insert(a).select().single()
   throwIf(error)
   return data
 }
 export async function updateAttendant(id, patch) {
+  guard()
   if (isLocal) return local.updateAttendant(id, patch)
   const { data, error } = await sb.from('attendants').update(patch).eq('id', id).select().single()
   throwIf(error)
   return data
 }
 export async function deleteAttendant(id) {
+  guard()
   if (isLocal) return local.deleteAttendant(id)
   const { data: s } = await sb.from('scores').select('id').eq('attendant_id', id).limit(1)
   if (s?.length) throw new Error('此房務員已有評分記錄，請改用「停用」')
@@ -111,18 +121,21 @@ export async function listScores() {
   return data
 }
 export async function addScore(s) {
+  guard()
   if (isLocal) return local.addScore(s)
   const { data, error } = await sb.from('scores').insert(s).select().single()
   throwIf(error)
   return data
 }
 export async function updateScore(id, patch) {
+  guard()
   if (isLocal) return local.updateScore(id, patch)
   const { data, error } = await sb.from('scores').update(patch).eq('id', id).select().single()
   throwIf(error)
   return data
 }
 export async function deleteScore(id) {
+  guard()
   if (isLocal) return local.deleteScore(id)
   const { error } = await sb.from('scores').delete().eq('id', id)
   throwIf(error)
@@ -131,6 +144,7 @@ export async function deleteScore(id) {
 // ── photos ──
 // 壓縮後上傳；示範模式直接回傳 dataURL 存進記錄，正式模式上傳 Storage 回傳公開網址
 export async function uploadPhoto(file) {
+  guard()
   const { blob, dataUrl } = await compressImage(file)
   if (isLocal) return dataUrl
   const isGif = file.type === 'image/gif'
@@ -149,18 +163,21 @@ export async function listComplaints() {
   return data
 }
 export async function addComplaint(c) {
+  guard()
   if (isLocal) return local.addComplaint(c)
   const { data, error } = await sb.from('complaints').insert(c).select().single()
   throwIf(error)
   return data
 }
 export async function updateComplaint(id, patch) {
+  guard()
   if (isLocal) return local.updateComplaint(id, patch)
   const { data, error } = await sb.from('complaints').update(patch).eq('id', id).select().single()
   throwIf(error)
   return data
 }
 export async function deleteComplaint(id) {
+  guard()
   if (isLocal) return local.deleteComplaint(id)
   const { error } = await sb.from('complaints').delete().eq('id', id)
   throwIf(error)
@@ -174,23 +191,27 @@ export async function listTopics() {
   return data
 }
 export async function addTopic(t) {
+  guard()
   if (isLocal) return local.addTopic(t)
   const { data, error } = await sb.from('topics').insert(t).select().single()
   throwIf(error)
   return data
 }
 export async function updateTopic(id, patch) {
+  guard()
   if (isLocal) return local.updateTopic(id, patch)
   const { data, error } = await sb.from('topics').update(patch).eq('id', id).select().single()
   throwIf(error)
   return data
 }
 export async function deleteTopic(id) {
+  guard()
   if (isLocal) return local.deleteTopic(id)
   const { error } = await sb.from('topics').delete().eq('id', id)
   throwIf(error)
 }
 export async function importSeedTopics(rows) {
+  guard()
   if (isLocal) return local.importSeedTopics(rows)
   const { error } = await sb.from('topics').insert(rows)
   throwIf(error)
@@ -204,23 +225,27 @@ export async function listTraining() {
   return data
 }
 export async function addTraining(t) {
+  guard()
   if (isLocal) return local.addTraining(t)
   const { data, error } = await sb.from('training_sections').insert(t).select().single()
   throwIf(error)
   return data
 }
 export async function updateTraining(id, patch) {
+  guard()
   if (isLocal) return local.updateTraining(id, patch)
   const { data, error } = await sb.from('training_sections').update(patch).eq('id', id).select().single()
   throwIf(error)
   return data
 }
 export async function deleteTraining(id) {
+  guard()
   if (isLocal) return local.deleteTraining(id)
   const { error } = await sb.from('training_sections').delete().eq('id', id)
   throwIf(error)
 }
 export async function importSeedTraining(rows) {
+  guard()
   if (isLocal) return local.importSeedTraining(rows)
   const { error } = await sb.from('training_sections').insert(rows)
   throwIf(error)
@@ -234,23 +259,27 @@ export async function listCleaning() {
   return data
 }
 export async function addCleaning(c) {
+  guard()
   if (isLocal) return local.addCleaning(c)
   const { data, error } = await sb.from('cleaning_items').insert(c).select().single()
   throwIf(error)
   return data
 }
 export async function updateCleaning(id, patch) {
+  guard()
   if (isLocal) return local.updateCleaning(id, patch)
   const { data, error } = await sb.from('cleaning_items').update(patch).eq('id', id).select().single()
   throwIf(error)
   return data
 }
 export async function deleteCleaning(id) {
+  guard()
   if (isLocal) return local.deleteCleaning(id)
   const { error } = await sb.from('cleaning_items').delete().eq('id', id)
   throwIf(error)
 }
 export async function importSeedCleaning(rows) {
+  guard()
   if (isLocal) return local.importSeedCleaning(rows)
   const { error } = await sb.from('cleaning_items').insert(rows)
   throwIf(error)
@@ -276,11 +305,13 @@ export async function patchFocus(date, patch) {
   return data
 }
 export async function clearFocus(date) {
+  guard()
   if (isLocal) return local.clearFocus(date)
   const { error } = await sb.from('daily_focus').delete().eq('focus_date', date)
   throwIf(error)
 }
 export async function markShared(date) {
+  guard()
   if (isLocal) return local.markShared(date)
   const { data, error } = await sb.from('daily_focus')
     .update({ shared_at: new Date().toISOString() }).eq('focus_date', date).select().single()
@@ -296,18 +327,21 @@ export async function listFindingTags() {
   return data
 }
 export async function addFindingTag(t) {
+  guard()
   if (isLocal) return local.addFindingTag(t)
   const { data, error } = await sb.from('finding_tags').insert(t).select().single()
   throwIf(error)
   return data
 }
 export async function updateFindingTag(id, patch) {
+  guard()
   if (isLocal) return local.updateFindingTag(id, patch)
   const { data, error } = await sb.from('finding_tags').update(patch).eq('id', id).select().single()
   throwIf(error)
   return data
 }
 export async function deleteFindingTag(id) {
+  guard()
   if (isLocal) return local.deleteFindingTag(id)
   const { error } = await sb.from('finding_tags').delete().eq('id', id)
   throwIf(error)
@@ -321,12 +355,14 @@ export async function listFindings(sinceDate) {
   return data
 }
 export async function addFindings(rows) {
+  guard()
   if (isLocal) return local.addFindings(rows)
   const { data, error } = await sb.from('findings').insert(rows).select()
   throwIf(error)
   return data
 }
 export async function deleteFinding(id) {
+  guard()
   if (isLocal) return local.deleteFinding(id)
   const { error } = await sb.from('findings').delete().eq('id', id)
   throwIf(error)

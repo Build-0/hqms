@@ -426,3 +426,7 @@ main.embed-main{position:relative;padding:0;overflow:hidden;min-height:calc(100v
 .mod-card b{font-size:15.5px}.mod-card span:last-child{font-size:11.5px;color:var(--sub);line-height:1.45}
 @media (min-width:760px){.sys-list{max-width:560px;margin:30px auto 0}.mod-grid{grid-template-columns:repeat(3,1fr);max-width:720px;margin:30px auto 0}}
 .sys-home{padding-top:14px}
+
+/* 唯讀帳號：隱藏品質系統的新增、編輯入口（真正的阻擋在 api.js） */
+.phone.ro .fab, .phone.ro .row-ico, .phone.ro .add-topic { display:none !important; }
+.phone.ro .fd-big, .phone.ro .fd-good, .phone.ro .fd-issue { display:none !important; }

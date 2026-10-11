@@ -853,7 +853,7 @@ var SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ---- state ----
-var isAdmin = true; /* 開放模式：不需管理密碼 */
+var isAdmin = new URLSearchParams(location.search).get('edit') !== '0'; /* 由外層帳號權限決定 */
 var currentPwd = "";
 var currentLang = "zh";
 var currentModule = "cleaning";

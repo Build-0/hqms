@@ -9,7 +9,8 @@ import CyclicClean from './pages/CyclicClean'
 import Findings from './pages/Findings'
 import Icon from './components/Icon'
 import Embed from './components/Embed'
-import Gate, { gatePassed, gateLogout } from './components/Gate'
+import Gate from './components/Gate'
+import { getSession, clearSession, PERMS, ROLE_LABEL } from './lib/accounts'
 import { ReportModal, BohReport, DefectReport } from './components/Reports'
 import { todayStr } from './lib/dates'
 import { toast } from './lib/toast'
@@ -22,8 +23,8 @@ const MODULES = [
   { id: 'cyclic', sub: '每日、循環、深度清潔', icon: 'clean', label: '清潔要點', color: '#54808c', Page: CyclicClean },
   { id: 'scores', sub: '七項評分與報告', icon: 'star', label: '房務員清潔評分', color: '#8f7ac9', Page: Scores },
   // 嵌入的舊系統（與品質系統同網站、各自保留原有資料庫）
-  { id: 'boh', icon: 'box', label: '後勤管理', color: '#7a6a4f', embed: true, Page: () => <Embed src="./boh/index.html" title="酒店後勤管理" /> },
-  { id: 'defect', icon: 'wrench', label: '缺陷管理', color: '#b5603a', embed: true, Page: () => <Embed src="./defect/index.html" title="房間缺陷登記" /> },
+  { id: 'boh', icon: 'box', label: '後勤管理', color: '#7a6a4f', embed: true, Page: ({ session }) => <Embed src={`./boh/index.html?edit=${session && PERMS[session.role].boh !== 'edit' ? 0 : 1}`} title="酒店後勤管理" /> },
+  { id: 'defect', icon: 'wrench', label: '缺陷管理', color: '#b5603a', embed: true, Page: ({ session }) => <Embed src={`./defect/index.html?role=${session && PERMS[session.role].defect === 'edit' ? 'admin' : session ? 'supervisor' : 'admin'}&uid=${encodeURIComponent(session ? (session.id || session.name) : 'admin')}&uname=${encodeURIComponent(session ? session.name : '管理員')}`} title="房間缺陷登記" /> },
   { id: 'complaint', sub: '記錄、統計與月報', icon: 'chat', label: '客訴管理', color: '#c0564f', Page: Complaints },
 ]
 // 首頁三大系統卡：房間品質（內含上面各模組）／後勤管理（嵌入）／缺陷管理（待加入）
@@ -38,7 +39,7 @@ export default function App() {
   const [user, setUser] = useState(undefined) // undefined = 載入中
   const [tab, setTab] = useState('home')
   const [msg, setMsg] = useState('')
-  const [gateOk, setGateOk] = useState(() => !api.isOpen || gatePassed())
+  const [session, setSessionState] = useState(() => (api.isOpen ? getSession() : null))
   const [rpt, setRpt] = useState(null)   // 嵌入模組的匯出報告 {id, data}
 
   useEffect(() => {
@@ -64,7 +65,8 @@ export default function App() {
     return () => window.removeEventListener('unhandledrejection', fn)
   }, [])
 
-  if (!gateOk) return <Gate onOk={() => setGateOk(true)} />
+  if (api.isOpen && !session) return <Gate onOk={setSessionState} />
+  api.setReadOnly(!!session && PERMS[session.role].quality !== 'edit')
   if (user === undefined) return null
   if (!user) return <Login onLogin={setUser} />
 
@@ -80,7 +82,7 @@ export default function App() {
   const goBack = () => setTab(cur && !cur.embed ? 'quality' : 'home')
   const title = cur ? cur.label : inQuality ? '房間品質' : '酒店客房管理系統'
   return (
-    <div className="phone">
+    <div className={`phone ${session && PERMS[session.role].quality !== 'edit' && (inQuality || (cur && !cur.embed)) ? 'ro' : ''}`}>
       <header>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           {(cur || inQuality) && <button className="back-btn" onClick={cur ? goBack : () => setTab('home')}>‹</button>}
@@ -88,17 +90,17 @@ export default function App() {
           <h1 style={{ flex: 1 }}>{title}</h1>
           {cur?.embed && <button className="logout" onClick={exportEmbed}>📄 匯出</button>}
           {api.isOpen
-            ? <button className="logout" onClick={() => { gateLogout(); setTab('home'); setGateOk(false) }}>登出</button>
+            ? <button className="logout" onClick={() => { clearSession(); setTab('home'); setSessionState(null) }}>登出</button>
             : <button className="logout" onClick={async () => { await api.signOut(); setUser(null) }}>登出</button>}
         </div>
         <div className="date">
           {now.getFullYear()}年{now.getMonth() + 1}月{now.getDate()}日（星期{WD[now.getDay()]}）
-          {api.isLocal && ' · 示範模式'}{api.isOpen && ' · 開放模式'}
+          {api.isLocal && ' · 示範模式'}{session && ` · ${session.name}（${ROLE_LABEL[session.role]}）`}
           <span style={{ opacity: .6 }}> · 版本 {__BUILD__}</span>
         </div>
       </header>
       <main className={cur?.embed ? 'embed-main' : ''}>
-        {cur ? <cur.Page key={tab} /> : inQuality ? (
+        {cur ? <cur.Page key={tab} session={session} /> : inQuality ? (
           <div className="home-grid">
             {MODULES.filter(m => !m.embed).map(m => (
               <button className="home-item" key={m.id} onClick={() => setTab(m.id)}>

@@ -146,7 +146,7 @@ function App() {
   // 登入狀態 — 利用 localStorage 保持登入（重新整理不用重登）
   const [currentUser, setCurrentUser] = useState(() => {
     try {
-      return { id: '101428', name: 'Benny Liang', role: 'admin', active: true }; // 已由外層帳號登入，不再需要自己的登入
+      const q = new URLSearchParams(location.search); return { id: q.get('uid') || '', name: q.get('uname') || '', role: q.get('role') === 'admin' ? 'admin' : 'supervisor', active: true }; // 帳號與權限由外層登入決定
     } catch { return null; }
   });
 
@@ -865,21 +865,21 @@ function BarRow({label, count, total, color, onClick}) {
 // ============ 用戶管理 ============
 function UsersView({users, reload}) {
   const [showAdd, setShowAdd] = useState(false);
-  const [newUser, setNewUser] = useState({id:'', name:'', role:'supervisor', password:'hskp1234'});
+  const [newUser, setNewUser] = useState({id:'', name:'', role:'supervisor', password:''});
 
   const handleAdd = async () => {
     if (!newUser.id || !newUser.name) return;
     if (users.find(u=>u.id===newUser.id)) return;
     const { error } = await sb.from('defect_users').insert({...newUser, active: true});
     if (error) { console.error('新增失敗:', error); return; }
-    setNewUser({id:'', name:'', role:'supervisor', password:'hskp1234'});
+    setNewUser({id:'', name:'', role:'supervisor', password:''});
     setShowAdd(false);
     reload();
   };
 
   const handleResetPwd = async (u) => {
-    if (!window.confirm('確認重設密碼為 hskp1234？')) return;
-    const { error } = await sb.from('defect_users').update({password: 'hskp1234'}).eq('id', u.id);
+    if (!window.confirm('確認重設密碼？')) return;
+    const { error } = await sb.from('defect_users').update({password: ''}).eq('id', u.id);
     if (error) { console.error('重設失敗:', error); return; }
     reload();
   };
