@@ -530,3 +530,9 @@ input,select,textarea{max-width:100%;min-width:0}
 input[type="date"],input[type="time"],input[type="month"]{-webkit-appearance:none;appearance:none;width:100%;min-width:0;max-width:100%;display:block;line-height:1.2}
 input[type="date"]::-webkit-date-and-time-value{text-align:left}
 .sheet,.card,.c-item{max-width:100%}
+
+/* ── 加入主畫面（全螢幕）時避開手機頂部狀態列（時間、電量）與底部橫條 ── */
+header{padding-top:calc(14px + env(safe-area-inset-top, 0px))}
+header.hdr-home{padding-top:calc(20px + env(safe-area-inset-top, 0px))}
+.login-wrap{padding-top:env(safe-area-inset-top, 0px);padding-bottom:env(safe-area-inset-bottom, 0px)}
+.phone{padding-bottom:env(safe-area-inset-bottom, 0px)}
