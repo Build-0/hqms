@@ -457,3 +457,25 @@ main.embed-main{position:relative;padding:0;overflow:hidden;min-height:calc(100v
 
 .df-wrap{max-width:900px;margin:0 auto}
 @media (min-width:760px){.df-grid{grid-template-columns:repeat(4,1fr)}}
+
+/* 後勤管理（原生） */
+.bh-thumb{border-radius:12px;background:var(--bg);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;font-size:28px}
+.bh-thumb img{width:100%;height:100%;object-fit:cover}
+.bh-item{display:flex;gap:12px;padding:10px;align-items:flex-start;cursor:pointer}
+.bh-main{flex:1;min-width:0}
+.bh-name{font-weight:700;font-size:15px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.bh-sub{font-size:12.5px;color:var(--sub);margin-top:3px;display:flex;gap:6px;flex-wrap:wrap}
+.bh-note{font-size:12px;color:var(--sub);margin-top:3px}
+.bh-grp{font-weight:800;font-size:13.5px;margin:14px 4px 6px;padding-left:8px;border-left:4px solid var(--accent);display:flex;gap:8px;align-items:center}
+.bh-grp span{color:var(--sub);font-weight:500}
+.bh-row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.bh-row3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.bh-stock{text-align:center;min-width:58px}.bh-sn{font-size:22px;font-weight:800;color:var(--accent)}.bh-sn.low{color:var(--red)}.bh-sl{font-size:11px;color:var(--sub)}
+.bh-info{padding:0 12px 8px;font-size:13px}.bh-info div{display:flex;justify-content:space-between;gap:10px;padding:3px 0}.bh-info span{color:var(--sub)}
+.bh-batches{margin:0 12px 10px;background:var(--bg);border-radius:10px;padding:8px 10px}
+.bh-bt{font-size:11.5px;color:var(--sub);margin-bottom:4px}.bh-b{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:13px}
+.bh-dot{width:9px;height:9px;border-radius:50%;background:#c3ccd4;display:inline-block}.bh-dot.ok{background:#1b8a5a}.bh-dot.soon{background:#e69500}.bh-dot.past{background:#c62828}
+.bh-acts{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:0 12px 12px}.bh-acts .btn{margin:0;padding:9px 0;font-size:13px}
+.bh-acc{display:flex;gap:8px;align-items:center;padding:4px 0;font-size:14px}
+.bh-maint{display:flex;gap:8px;padding:5px 0;font-size:13px;border-top:1px solid var(--line);align-items:flex-start}.bh-md{color:var(--sub);flex:0 0 86px}
+.bh-card .bh-item{padding-bottom:6px}

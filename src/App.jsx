@@ -7,6 +7,7 @@ import Scores from './pages/Scores'
 import Topics from './pages/Topics'
 import CyclicClean from './pages/CyclicClean'
 import Defects from './pages/Defects'
+import Boh from './pages/Boh'
 import Findings from './pages/Findings'
 import Icon from './components/Icon'
 import Embed from './components/Embed'
@@ -24,7 +25,7 @@ const MODULES = [
   { id: 'cyclic', sub: '每日、循環、深度清潔', icon: 'clean', label: '清潔要點', color: '#54808c', Page: CyclicClean },
   { id: 'scores', sub: '七項評分與報告', icon: 'star', label: '房務員清潔評分', color: '#8f7ac9', Page: Scores },
   // 嵌入的舊系統（與品質系統同網站、各自保留原有資料庫）
-  { id: 'boh', icon: 'box', label: '後勤管理', color: '#7a6a4f', embed: true, Page: ({ session }) => <Embed src={`./boh/index.html?edit=${session && PERMS[session.role].boh !== 'edit' ? 0 : 1}`} title="酒店後勤管理" /> },
+  { id: 'boh', icon: 'box', label: '後勤管理', color: '#7a6a4f', top: true, Page: Boh },
   { id: 'defect', icon: 'wrench', label: '缺陷管理', color: '#b5603a', top: true, Page: Defects },
   { id: 'complaint', sub: '記錄、統計與月報', icon: 'chat', label: '客訴管理', color: '#c0564f', Page: Complaints },
 ]

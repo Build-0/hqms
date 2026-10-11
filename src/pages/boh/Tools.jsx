@@ -1,0 +1,117 @@
+import { useMemo, useState } from 'react'
+import * as api from '../../lib/api'
+import { toast } from '../../lib/toast'
+import Confirm from '../../components/Confirm'
+import { Thumb, ImageField, useImages, setCachedImage, ListManager, num } from './shared'
+
+const EMPTY = { name: '', category: '', stock: 0, in_use: 0, min_stock: 0, status: '啟用', notes: '', image: '' }
+
+export default function Tools({ d, edit, reload }) {
+  const [q, setQ] = useState('')
+  const [fk, setFk] = useState('all')
+  const [form, setForm] = useState(null)
+  const [orig, setOrig] = useState('')
+  const [del, setDel] = useState(null)
+  const [mgr, setMgr] = useState(false)
+  const tools = d.tools
+  const img = useImages('tools', tools.map(t => t.id))
+  const low = t => t.status !== '停用' && num(t.min_stock) > 0 && num(t.stock) < num(t.min_stock)
+  const lowN = tools.filter(low).length, offN = tools.filter(t => t.status === '停用').length
+
+  const shown = useMemo(() => tools.filter(t => {
+    if (fk === 'low' && !low(t)) return false
+    if (fk === 'off' && t.status !== '停用') return false
+    if (fk === 'on' && t.status === '停用') return false
+    if (!['all', 'low', 'off', 'on'].includes(fk) && t.category !== fk) return false
+    const s = q.trim().toLowerCase()
+    return !s || [t.name, t.category, t.notes].join(' ').toLowerCase().includes(s)
+  }), [tools, q, fk])
+
+  const catNames = [...d.toolCats.map(c => c.name), ...new Set(tools.map(t => t.category).filter(c => c && !d.toolCats.some(x => x.name === c)))]
+  const groups = catNames.map(c => ({ c, items: shown.filter(t => t.category === c) })).filter(g => g.items.length)
+  const noCat = shown.filter(t => !t.category || !catNames.includes(t.category))
+  if (noCat.length) groups.push({ c: '（未分類）', items: noCat })
+
+  function open(t) {
+    const image = t ? img(t.id) || '' : ''
+    setOrig(image)
+    setForm(t ? { ...t, image } : { ...EMPTY, category: d.toolCats[0]?.name || '' })
+  }
+  async function save() {
+    if (!form.name.trim()) { toast('請填工具名稱'); return }
+    const row = { name: form.name.trim(), category: form.category, stock: num(form.stock), in_use: num(form.in_use), min_stock: num(form.min_stock), status: form.status, notes: form.notes || '' }
+    try {
+      if (form.image !== orig) row.image = form.image || null
+      if (form.id) { await api.dbUpdate('tools', form.id, row); if (form.image !== orig) setCachedImage('tools', form.id, form.image) }
+      else { const r = await api.dbInsert('tools', { ...row, sort_order: tools.length + 1, image: form.image || null }); setCachedImage('tools', r.id, form.image) }
+      toast('已儲存'); setForm(null); reload()
+    } catch (ex) { toast('儲存失敗：' + ex.message) }
+  }
+  async function remove(t) {
+    try { await api.dbDelete('tools', t.id); toast('已刪除'); setDel(null); setForm(null); reload() } catch (ex) { toast('刪除失敗：' + ex.message) }
+  }
+
+  const chip = (k, t) => <button key={k} className={`chip ${fk === k ? 'on' : ''}`} onClick={() => setFk(k)}>{t}</button>
+  return (
+    <>
+      <input className="search-inp" placeholder="🔍 搜尋工具名稱、分類" value={q} onChange={e => setQ(e.target.value)} />
+      <div className="chips">
+        {chip('all', `全部 ${tools.length}`)}
+        {lowN > 0 && chip('low', `🛒 需補貨 ${lowN}`)}
+        {offN > 0 && chip('off', `停用 ${offN}`)}
+        {d.toolCats.map(c => chip(c.name, c.name))}
+      </div>
+      {edit && <div style={{ textAlign: 'right', margin: '0 4px 6px' }}><button className="linky" onClick={() => setMgr(true)}>⚙ 管理分類</button></div>}
+      {groups.length === 0 && <div className="note">沒有符合的工具</div>}
+      {groups.map(g => (
+        <div key={g.c}>
+          <div className="bh-grp">{g.c}<span>{g.items.length}</span></div>
+          {g.items.map(t => (
+            <div className="c-item bh-item" key={t.id} onClick={() => edit && open(t)} style={t.status === '停用' ? { opacity: .55 } : undefined}>
+              <Thumb src={img(t.id)} fallback="🧹" />
+              <div className="bh-main">
+                <div className="bh-name">{t.name}{t.status === '停用' && <span className="badge b-gray">停用</span>}</div>
+                <div className="bh-sub">
+                  <span className={`badge ${low(t) ? 'b-red' : 'b-teal'}`}>庫存 {t.stock}{num(t.min_stock) > 0 ? ` / 最低 ${t.min_stock}` : ''}</span>
+                  {num(t.in_use) > 0 && <span className="badge b-gray">在用 {t.in_use}</span>}
+                </div>
+                {t.notes && <div className="bh-note">{t.notes}</div>}
+              </div>
+            </div>
+          ))}
+        </div>
+      ))}
+      {edit && <button className="fab" onClick={() => open(null)}>＋</button>}
+
+      {form && (
+        <div className="modal" onClick={e => { if (e.target === e.currentTarget) setForm(null) }}>
+          <div className="sheet">
+            <h2>{form.id ? '編輯工具' : '新增工具'}</h2>
+            <div className="f-row"><label>名稱 *</label><input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></div>
+            <div className="f-row"><label>分類</label>
+              <select className="df-sel" value={form.category || ''} onChange={e => setForm({ ...form, category: e.target.value })}>
+                <option value="">（未分類）</option>{catNames.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            <div className="bh-row3">
+              <div className="f-row"><label>庫存</label><input type="number" inputMode="numeric" value={form.stock} onChange={e => setForm({ ...form, stock: e.target.value })} /></div>
+              <div className="f-row"><label>在用</label><input type="number" inputMode="numeric" value={form.in_use} onChange={e => setForm({ ...form, in_use: e.target.value })} /></div>
+              <div className="f-row"><label>最低庫存</label><input type="number" inputMode="numeric" value={form.min_stock} onChange={e => setForm({ ...form, min_stock: e.target.value })} /></div>
+            </div>
+            <div className="f-row"><label>狀態</label>
+              <select className="df-sel" value={form.status} onChange={e => setForm({ ...form, status: e.target.value })}><option>啟用</option><option>停用</option></select>
+            </div>
+            <div className="f-row"><label>備註</label><input value={form.notes || ''} onChange={e => setForm({ ...form, notes: e.target.value })} /></div>
+            <ImageField value={form.image} onChange={v => setForm({ ...form, image: v })} fallback="🧹" />
+            <button className="btn" onClick={save}>儲存</button>
+            {form.id && <button className="btn danger" onClick={() => setDel(form)}>刪除</button>}
+            <button className="btn ghost" onClick={() => setForm(null)}>取消</button>
+          </div>
+        </div>
+      )}
+      {del && <Confirm text={`會刪除工具「${del.name}」。`} onConfirm={() => remove(del)} onCancel={() => setDel(null)} />}
+      {mgr && <ListManager title="工具分類" table="tool_categories" rows={d.toolCats} onClose={() => setMgr(false)} onChanged={reload}
+        usedBy={async (a, b) => { for (const t of tools.filter(x => x.category === a)) await api.dbUpdate('tools', t.id, { category: b }) }} />}
+    </>
+  )
+}

@@ -408,3 +408,43 @@ export async function deleteDefectType(name) {
   const { error } = await sb.from('defect_types').delete().eq('name', name)
   throwIf(error)
 }
+
+// ── 後勤管理用的通用資料存取（表格操作 + RPC）──
+const needDb = () => { if (!sb) throw new Error('示範模式不支援後勤資料，請在正式網站使用') }
+export async function dbSelect(table, { cols = '*', order = 'id', asc = true, eq } = {}) {
+  needDb()
+  let q = sb.from(table).select(cols)
+  if (eq) for (const [k, v] of Object.entries(eq)) q = q.eq(k, v)
+  const { data, error } = await q.order(order, { ascending: asc }).limit(5000)
+  throwIf(error)
+  return data
+}
+export async function dbSelectIn(table, cols, ids) {
+  needDb()
+  const { data, error } = await sb.from(table).select(cols).in('id', ids)
+  throwIf(error)
+  return data
+}
+export async function dbInsert(table, row) {
+  needDb()
+  const { data, error } = await sb.from(table).insert(row).select().single()
+  throwIf(error)
+  return data
+}
+export async function dbUpdate(table, id, patch) {
+  needDb()
+  const { data, error } = await sb.from(table).update(patch).eq('id', id).select().single()
+  throwIf(error)
+  return data
+}
+export async function dbDelete(table, id) {
+  needDb()
+  const { error } = await sb.from(table).delete().eq('id', id)
+  throwIf(error)
+}
+export async function dbRpc(fn, args) {
+  needDb()
+  const { data, error } = await sb.rpc(fn, { p_password: '', ...args })
+  throwIf(error)
+  return data
+}
