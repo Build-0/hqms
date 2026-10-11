@@ -484,6 +484,9 @@ body { background:#f4f6f8 !important; }
 .page-header .settings { position:static !important; }
 .gear-btn { background:#eef1f4 !important; color:#566675 !important; }
 </style>
+<style id="unify2">#setAdminBtn, #loginModal { display:none !important; }
+.module-btn .mi-svg { width:28px; height:28px; display:block; margin:0 auto; color:var(--ink-2); }
+.module-btn.active .mi-svg { color:var(--accent); }</style>
 </head>
 <body>
 
@@ -507,10 +510,10 @@ body { background:#f4f6f8 !important; }
 </div>
 
 <nav class="module-bar" id="moduleBar">
-  <button class="module-btn active" data-m="cleaning" onclick="setModule('cleaning')"><span class="mi">🧴</span><span class="ml" data-zh="清潔劑" data-en="Chemicals">清潔劑</span></button>
-  <button class="module-btn" data-m="vacuum" onclick="setModule('vacuum')"><span class="mi">🌀</span><span class="ml" data-zh="吸塵機" data-en="Vacuums">吸塵機</span></button>
-  <button class="module-btn" data-m="tool" onclick="setModule('tool')"><span class="mi">🧹</span><span class="ml" data-zh="清潔工具" data-en="Tools">清潔工具</span></button>
-  <button class="module-btn" data-m="equipment" onclick="setModule('equipment')"><span class="mi">🧰</span><span class="ml" data-zh="設備" data-en="Equipment">設備</span></button>
+  <button class="module-btn active" data-m="cleaning" onclick="setModule('cleaning')"><span class="mi"><svg class="mi-svg" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.4c3.6 4.1 6 6.9 6 10.1a6 6 0 0 1-12 0c0-3.2 2.4-6 6-10.1z"/><path d="M9.4 13.2a2.6 2.6 0 0 0 2.6 2.6"/></svg></span><span class="ml" data-zh="清潔劑" data-en="Chemicals">清潔劑</span></button>
+  <button class="module-btn" data-m="vacuum" onclick="setModule('vacuum')"><span class="mi"><svg class="mi-svg" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="7.5"/><circle cx="12" cy="12" r="3"/><path d="M12 1.6V4M12 20v2.4M1.6 12H4M20 12h2.4"/></svg></span><span class="ml" data-zh="吸塵機" data-en="Vacuums">吸塵機</span></button>
+  <button class="module-btn" data-m="tool" onclick="setModule('tool')"><span class="mi"><svg class="mi-svg" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></span><span class="ml" data-zh="清潔工具" data-en="Tools">清潔工具</span></button>
+  <button class="module-btn" data-m="equipment" onclick="setModule('equipment')"><span class="mi"><svg class="mi-svg" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 7.8 12 3.5l8.5 4.3v8.4L12 20.5l-8.5-4.3z"/><path d="M3.5 7.8 12 12l8.5-4.2M12 12v8.5"/></svg></span><span class="ml" data-zh="設備" data-en="Equipment">設備</span></button>
 </nav>
 
 <div class="topnav">
@@ -840,7 +843,7 @@ var SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ---- state ----
-var isAdmin = false;
+var isAdmin = true; /* 開放模式：不需管理密碼 */
 var currentPwd = "";
 var currentLang = "zh";
 var currentModule = "cleaning";

@@ -134,8 +134,7 @@ function App() {
   // 登入狀態 — 利用 localStorage 保持登入（重新整理不用重登）
   const [currentUser, setCurrentUser] = useState(() => {
     try {
-      const saved = localStorage.getItem('defect_current_user');
-      return saved ? JSON.parse(saved) : null;
+      return { id: '101428', name: 'Benny Liang', role: 'admin', active: true }; // 已由外層帳號登入，不再需要自己的登入
     } catch { return null; }
   });
 
@@ -467,16 +466,13 @@ function App() {
             <h1 className="font-bold text-lg">房間缺陷登記系統</h1>
             <p className="text-xs text-slate-300">{currentUser.name}（{currentUser.id}）{isAdmin && ' · 管理員'}</p>
           </div>
-          <button onClick={() => setCurrentUser(null)} className="text-sm hover:bg-slate-700 px-3 py-1.5 rounded">
-            登出 ⏏
-          </button>
+
         </div>
         <div className="max-w-6xl mx-auto px-4 flex gap-1 overflow-x-auto">
-          <TabBtn active={activeTab==='list'} onClick={()=>setActiveTab('list')}>📋 缺陷列表</TabBtn>
-          <TabBtn active={activeTab==='add'} onClick={openNewDefectModal}>➕ 新增登記</TabBtn>
-          {isAdmin && <TabBtn active={activeTab==='stats'} onClick={()=>setActiveTab('stats')}>📊 統計報表</TabBtn>}
-          {isAdmin && <TabBtn active={activeTab==='users'} onClick={()=>setActiveTab('users')}>👥 用戶管理</TabBtn>}
-          {isAdmin && <TabBtn active={activeTab==='types'} onClick={()=>setActiveTab('types')}>⚙️ 類型設定</TabBtn>}
+          <TabBtn active={activeTab==='list'} onClick={()=>setActiveTab('list')}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" style={{display:'inline',verticalAlign:'-3px',marginRight:5}}><rect x="5" y="4.5" width="14" height="16" rx="2"/><path d="M9.5 4.5V3.4h5v1.1M9 13l2.2 2.2L15.2 11"/></svg>缺陷列表</TabBtn>
+          <TabBtn active={activeTab==='add'} onClick={openNewDefectModal}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" style={{display:'inline',verticalAlign:'-3px',marginRight:5}}><path d="M12 5v14M5 12h14"/></svg>新增登記</TabBtn>
+          {isAdmin && <TabBtn active={activeTab==='stats'} onClick={()=>setActiveTab('stats')}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" style={{display:'inline',verticalAlign:'-3px',marginRight:5}}><path d="M5 20V10M12 20V4M19 20v-7"/></svg>統計報表</TabBtn>}
+          {isAdmin && <TabBtn active={activeTab==='types'} onClick={()=>setActiveTab('types')}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" style={{display:'inline',verticalAlign:'-3px',marginRight:5}}><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>類型設定</TabBtn>}
         </div>
       </div>
 

@@ -38,7 +38,7 @@ for (const d of defects) {
         const buf = Buffer.from(await g.arrayBuffer())
         const up = await fetch(`${NEW.url}/storage/v1/object/defect-photos/${path}`, { method: 'POST', headers: { ...H(NEW), 'Content-Type': g.headers.get('content-type') || 'image/jpeg', 'x-upsert': 'true' }, body: buf })
         if (!up.ok) throw new Error('up ' + up.status + ' ' + (await up.text()).slice(0, 80))
-        np.push(`${NEW.url}/storage/v1/object/public/defect-photos/${path}`); moved++
+        np.push(`${NEW.url}/storage/v1/object/public/defect-photos/${path}`); moved++; if (moved % 25 === 0) console.log("photos moved", moved)
       } catch (e) { failed++; np.push(u); if (failed < 4) console.log('photo fail', e.message) }
     } else np.push(u)
   }

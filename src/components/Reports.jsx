@@ -17,7 +17,7 @@ export function ReportModal({ title, sub, onClose, children }) {
         <div className="rpt-print">
           <div className="rpt-hd"><b>{title}</b><span>{sub}</span></div>
           {children}
-          <div className="rpt-ft"><span>HQMS 房務品質管理系統</span><span>匯出時間 {stamp}</span></div>
+          <div className="rpt-ft"><span>酒店客房管理系統</span><span>匯出時間 {stamp}</span></div>
         </div>
       </div>
     </div>,

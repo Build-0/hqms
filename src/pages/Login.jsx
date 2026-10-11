@@ -24,7 +24,7 @@ export default function Login({ onLogin }) {
     <div className="phone login-wrap">
       <form className="card login-card" onSubmit={submit}>
         <div className="login-logo">🏨</div>
-        <h2 style={{ textAlign: 'center' }}>房務品質管理系統</h2>
+        <h2 style={{ textAlign: 'center' }}>酒店客房管理系統</h2>
         {api.isLocal && (
           <p className="login-hint">示範模式（未連接資料庫）<br />輸入任意帳號即可進入，資料只存在此瀏覽器</p>
         )}

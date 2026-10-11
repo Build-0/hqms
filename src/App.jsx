@@ -9,6 +9,7 @@ import CyclicClean from './pages/CyclicClean'
 import Findings from './pages/Findings'
 import Icon from './components/Icon'
 import Embed from './components/Embed'
+import Gate, { gatePassed, gateLogout } from './components/Gate'
 import { ReportModal, BohReport, DefectReport } from './components/Reports'
 import { todayStr } from './lib/dates'
 import { toast } from './lib/toast'
@@ -37,6 +38,7 @@ export default function App() {
   const [user, setUser] = useState(undefined) // undefined = 載入中
   const [tab, setTab] = useState('home')
   const [msg, setMsg] = useState('')
+  const [gateOk, setGateOk] = useState(() => !api.isOpen || gatePassed())
   const [rpt, setRpt] = useState(null)   // 嵌入模組的匯出報告 {id, data}
 
   useEffect(() => {
@@ -62,6 +64,7 @@ export default function App() {
     return () => window.removeEventListener('unhandledrejection', fn)
   }, [])
 
+  if (!gateOk) return <Gate onOk={() => setGateOk(true)} />
   if (user === undefined) return null
   if (!user) return <Login onLogin={setUser} />
 
@@ -75,7 +78,7 @@ export default function App() {
     setRpt({ id: cur.id, data })
   }
   const goBack = () => setTab(cur && !cur.embed ? 'quality' : 'home')
-  const title = cur ? cur.label : inQuality ? '房間品質' : '酒店綜合管理系統'
+  const title = cur ? cur.label : inQuality ? '房間品質' : '酒店客房管理系統'
   return (
     <div className="phone">
       <header>
@@ -84,7 +87,9 @@ export default function App() {
           {cur && <span className="hdr-ico" style={{ background: 'rgba(255,255,255,.2)' }}><Icon name={cur.icon} size={18} color="#fff" /></span>}
           <h1 style={{ flex: 1 }}>{title}</h1>
           {cur?.embed && <button className="logout" onClick={exportEmbed}>📄 匯出</button>}
-          {!api.isOpen && <button className="logout" onClick={async () => { await api.signOut(); setUser(null) }}>登出</button>}
+          {api.isOpen
+            ? <button className="logout" onClick={() => { gateLogout(); setTab('home'); setGateOk(false) }}>登出</button>
+            : <button className="logout" onClick={async () => { await api.signOut(); setUser(null) }}>登出</button>}
         </div>
         <div className="date">
           {now.getFullYear()}年{now.getMonth() + 1}月{now.getDate()}日（星期{WD[now.getDay()]}）
@@ -106,7 +111,7 @@ export default function App() {
           <div className="sys-home">
             <div className="sys-hero">
               <Icon name="hotel" size={34} color="var(--ink)" width={1.8} />
-              <h2>酒店綜合管理系統</h2>
+              <h2>酒店客房管理系統</h2>
               <p>統一網址 · 統一入口</p>
             </div>
             <div className="sys-grid">
