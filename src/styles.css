@@ -517,3 +517,16 @@ header.hdr-home h1{font-size:25px;font-weight:800;letter-spacing:.5px}
 .pw-wrap input{padding-right:46px !important;width:100%}
 .pw-eye{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:40px;height:40px;border:none;background:none;color:var(--sub);display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:50%}
 .pw-eye:active{background:var(--accent-soft)}
+
+/* ── 手機防放大／防超出畫面 ──
+   iPhone 在輸入框字體小於 16px 時，一撳入去就會自動放大且不會縮回，所以手機上一律 16px。
+   日期等欄位在 iOS 有固有闊度，限制為不超過所在格子。 */
+html,body{max-width:100%;overflow-x:hidden;-webkit-text-size-adjust:100%}
+@media (max-width:900px){
+  input,select,textarea{font-size:16px !important}
+}
+.f-row,.f-row>*{min-width:0}
+input,select,textarea{max-width:100%;min-width:0}
+input[type="date"],input[type="time"],input[type="month"]{-webkit-appearance:none;appearance:none;width:100%;min-width:0;max-width:100%;display:block;line-height:1.2}
+input[type="date"]::-webkit-date-and-time-value{text-align:left}
+.sheet,.card,.c-item{max-width:100%}
