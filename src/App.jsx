@@ -3,7 +3,6 @@ import * as api from './lib/api'
 import Login from './pages/Login'
 import Daily from './pages/Daily'
 import Complaints from './pages/Complaints'
-import Scores from './pages/Scores'
 import Topics from './pages/Topics'
 import CyclicClean from './pages/CyclicClean'
 import Defects from './pages/Defects'
@@ -19,11 +18,10 @@ import { toast } from './lib/toast'
 
 // 首頁圓形入口：之後加新模組（清潔劑、機器…）直接在這裡加一行
 const MODULES = [
-  { id: 'findings', sub: '拍照記錄問題與表揚', icon: 'camera', label: '查房記錄', color: '#d07a2c', Page: Findings },
+  { id: 'findings', sub: '問題、表揚與人員表現', icon: 'camera', label: '查房記錄', color: '#d07a2c', Page: Findings },
   { id: 'daily', sub: '早會題目與正確標準', icon: 'focus', label: '今日重點', color: '#1f7a6d', Page: Daily },
   { id: 'topics', sub: '分類教材與早會提問', icon: 'book', label: '培訓主題庫', color: '#4a6fa5', Page: Topics },
   { id: 'cyclic', sub: '每日、循環、深度清潔', icon: 'clean', label: '清潔要點', color: '#54808c', Page: CyclicClean },
-  { id: 'scores', sub: '七項評分與報告', icon: 'star', label: '房務員清潔評分', color: '#8f7ac9', Page: Scores },
   // 嵌入的舊系統（與品質系統同網站、各自保留原有資料庫）
   { id: 'boh', icon: 'box', label: '後勤管理', color: '#7a6a4f', top: true, Page: Boh },
   { id: 'defect', icon: 'wrench', label: '缺陷管理', color: '#b5603a', top: true, Page: Defects },

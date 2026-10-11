@@ -5,6 +5,8 @@ import { todayStr, addDaysStr } from '../lib/dates'
 import { toast } from '../lib/toast'
 import { PhotoGrid, PhotoField } from '../components/Photos'
 import Confirm from '../components/Confirm'
+import Perf from './Perf'
+import StaffModal from '../components/Staff'
 import { ReportModal, FindingsReport } from '../components/Reports'
 
 // 查房快速記錄：拍照 → 房號 → 選房務員 → 選問題標籤。全程不用打字。
@@ -40,6 +42,8 @@ export default function Findings() {
   const [err, setErr] = useState('')
   const [form, setForm] = useState(null)
   const [saving, setSaving] = useState(false)
+  const [mode, setMode] = useState('rec')          // rec 記錄／perf 人員表現
+  const [staff, setStaff] = useState(false)
   const [view, setView] = useState(null)        // 檢視中的一次記錄（batch）
   const [mgr, setMgr] = useState(false)         // 標籤管理
   const [confirmDel, setConfirmDel] = useState(null)
@@ -182,6 +186,15 @@ export default function Findings() {
         <button className="logout" style={{ color: 'var(--sub)', background: '#eef1f4' }} onClick={() => setMgr(true)}>⚙ 標籤管理（{activeTags.length}）</button>
       </div>
 
+      <div className="chips" style={{ marginBottom: 4 }}>
+        <button className={`chip ${mode === 'rec' ? 'on' : ''}`} onClick={() => setMode('rec')}>記錄</button>
+        <button className={`chip ${mode === 'perf' ? 'on' : ''}`} onClick={() => setMode('perf')}>人員表現</button>
+        <button className="chip" onClick={() => setStaff(true)}>👥 人員名單</button>
+      </div>
+      {mode === 'perf' && <Perf rows={rows} tagById={tagById} atts={atts} onStaff={() => setStaff(true)} edit />}
+      {staff && <StaffModal attendants={atts} onClose={() => setStaff(false)} reload={load} />}
+      {mode === 'rec' && (
+        <>
       {repeats.length > 0 && (
         <div className="card" style={{ borderColor: 'var(--red)' }}>
           <h2 style={{ color: 'var(--red)' }}>⚠ 重複出現<span style={{ fontSize: 11, color: 'var(--sub)', fontWeight: 400 }}>（{REPEAT_DAYS} 日內同一問題 ≥{REPEAT_MIN} 次）</span></h2>
@@ -213,6 +226,9 @@ export default function Findings() {
           </div>
         </div>
       ))}
+
+        </>
+      )}
 
       {/* ── 記錄表單 ── */}
       {form && (

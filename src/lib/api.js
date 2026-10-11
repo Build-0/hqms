@@ -108,6 +108,8 @@ export async function deleteAttendant(id) {
   if (isLocal) return local.deleteAttendant(id)
   const { data: s } = await sb.from('scores').select('id').eq('attendant_id', id).limit(1)
   if (s?.length) throw new Error('此房務員已有評分記錄，請改用「停用」')
+  const { data: fd } = await sb.from('findings').select('id').eq('attendant_id', id).limit(1)
+  if (fd?.length) throw new Error('此房務員已有查房記錄，請改用「停用」')
   const { error } = await sb.from('attendants').delete().eq('id', id)
   throwIf(error)
 }

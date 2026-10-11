@@ -43,7 +43,7 @@ export function ScoresReport({ data }) {
   const { ratedN, totalN, max, levels, dimWeak, follow } = data
   return (
     <>
-      <p className="rpt-mut">已評 {ratedN} / {totalN} 人 · 滿分 {max}</p>
+      <p className="rpt-mut">近 30 日有記錄 {ratedN} / {totalN} 人 · 滿分 {max}</p>
       <Sub>分數分布</Sub>
       <div className="rpt-kpis">
         {levels.map(l => (
