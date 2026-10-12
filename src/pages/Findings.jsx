@@ -45,6 +45,7 @@ export default function Findings() {
   const [saving, setSaving] = useState(false)
   const [mode, setMode] = useState('rec')          // rec 記錄／perf 人員表現
   const [staff, setStaff] = useState(false)
+  const [choose, setChoose] = useState(false)     // 右下「＋」→ 揀記錄問題／做得好
   const [view, setView] = useState(null)        // 檢視中的一次記錄（batch）
   const [mgr, setMgr] = useState(false)         // 標籤管理
   const [confirmDel, setConfirmDel] = useState(null)
@@ -183,15 +184,22 @@ export default function Findings() {
         <ToolBtn onClick={() => setMgr(true)}>⚙ 標籤（{activeTags.length}）</ToolBtn>
         <ExportBtn onClick={() => setReport(true)} />
       </ToolBar>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-        <button className="btn fd-big fd-issue" onClick={() => newForm(undefined, 'issue')}>⚠ 記錄問題</button>
-        <button className="btn fd-big fd-good" onClick={() => newForm(undefined, 'good')}>⭐ 做得好</button>
-      </div>
       <div className="chips" style={{ margin: '12px 0 4px' }}>
         <button className={`chip ${mode === 'rec' ? 'on' : ''}`} onClick={() => setMode('rec')}>記錄</button>
         <button className={`chip ${mode === 'perf' ? 'on' : ''}`} onClick={() => setMode('perf')}>人員表現</button>
       </div>
       {mode === 'perf' && <Perf rows={rows} tagById={tagById} atts={atts} onStaff={() => setStaff(true)} edit />}
+      <button className="fab" onClick={() => setChoose(true)}>＋</button>
+      {choose && (
+        <div className="modal" onClick={e => { if (e.target === e.currentTarget) setChoose(false) }}>
+          <div className="sheet">
+            <h2>新增查房記錄</h2>
+            <button className="btn fd-big fd-issue" onClick={() => { setChoose(false); newForm(undefined, 'issue') }}>⚠ 記錄問題</button>
+            <button className="btn fd-big fd-good" style={{ marginTop: 10 }} onClick={() => { setChoose(false); newForm(undefined, 'good') }}>⭐ 做得好</button>
+            <button className="btn ghost" onClick={() => setChoose(false)}>取消</button>
+          </div>
+        </div>
+      )}
       {staff && <StaffModal attendants={atts} onClose={() => setStaff(false)} reload={load} />}
       {mode === 'rec' && (
         <>
