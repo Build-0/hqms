@@ -10,6 +10,11 @@ export const PERMS = {
   supervisor: { quality: 'none', findings: 'add', boh: 'none', defect: 'register' },   // 查房記錄：可查看與新增，不能刪改
 }
 
+// 樓層主管負責的樓層（員工編號 → 樓層）。未設定的主管，首頁改為顯示「自己登記過」的缺陷。
+export const SUP_FLOORS = {
+  // 例：'100266': ['5', '6'],
+}
+
 export const ACCOUNTS = [
   { key: '101428', id: '101428', name: 'Benny Liang', role: 'admin' },
   { key: '100663', id: '100663', name: 'Winnie Weng', role: 'admin' },
