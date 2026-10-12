@@ -139,8 +139,6 @@ export default function Defects({ session, init }) {
                 <option value="date-desc">日期 新→舊</option><option value="date-asc">日期 舊→新</option>
                 <option value="room-asc">房號 低→高</option><option value="room-desc">房號 高→低</option>
               </select>
-              <button className="linky" onClick={load}>🔄 重新載入</button>
-              {full && shown.length > 0 && <button className="linky" onClick={exportCsv}>⬇ CSV</button>}
             </div>
           </div>
 
@@ -235,6 +233,7 @@ export default function Defects({ session, init }) {
 
       {report && (
         <ReportModal title="缺陷管理報告" sub={`${filterText} · ${todayStr()}`} onClose={() => setReport(false)}>
+          {shown.length > 0 && <button className="tb-btn rpt-noprint" style={{ marginBottom: 10 }} onClick={exportCsv}>⬇ 下載 CSV（Excel 用）</button>}
           <DefectReport data={{ rows: shown, filterText, severity: SEVERITY, status: STATUS }} />
         </ReportModal>
       )}

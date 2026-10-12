@@ -4,6 +4,7 @@ import * as api from '../lib/api'
 import { todayStr } from '../lib/dates'
 import { PERMS } from '../lib/accounts'
 import { ReportModal, ListReport } from '../components/Reports'
+import Icon from '../components/Icon'
 import Chemicals from './boh/Chemicals'
 import Machines from './boh/Machines'
 import Tools from './boh/Tools'
@@ -16,12 +17,12 @@ const COLS = {
   tools: 'id,name,stock,status,notes,sort_order,category,in_use,min_stock',
   equipment: 'id,type,model,brand,floor_code,status,notes,sort_order,label,serial,accessories',
 }
-const TABS = [['chem', '清潔劑'], ['vac', '吸塵機'], ['tool', '清潔工具'], ['eq', '設備']]
+const TABS = [['chem', '清潔劑', 'drop', '#2f8f9d'], ['vac', '吸塵機', 'clean', '#54808c'], ['tool', '清潔工具', 'wrench', '#b5603a'], ['eq', '設備', 'gear', '#7a6a4f']]
 const EMPTY = { products: [], batches: [], cats: [], vacuums: [], vacMaint: [], floors: [], tools: [], toolCats: [], equipment: [], equipMaint: [], types: [] }
 
 export default function Boh({ session, init }) {
   const edit = !session || PERMS[session.role].boh === 'edit'
-  const [tab, setTab] = useState('chem')
+  const [tab, setTab] = useState(init ? 'chem' : null)   // null ＝ 圓形入口選單；從首頁摘要跳入（補貨／臨期）直接開清潔劑
   const [d, setD] = useState(null)
   const [err, setErr] = useState('')
   const [report, setReport] = useState(null)   // 目前篩選結果的報告資料
@@ -46,10 +47,19 @@ export default function Boh({ session, init }) {
   return (
     <div className="df-wrap">
       {err && <div className="card" style={{ borderColor: 'var(--red)' }}><p style={{ fontSize: 13, lineHeight: 1.7 }}>讀取失敗：{err}</p></div>}
-      <div className="chips wrap" style={{ marginBottom: 6 }}>
-        {TABS.map(([k, t]) => <button key={k} className={`chip ${tab === k ? 'on' : ''}`} onClick={() => setTab(k)}>{t}</button>)}
-      </div>
-      <ToolBar><ExportBtn onClick={() => setReport((reg.current && reg.current()) || { title: '', filterText: '', cols: [], groups: [] })} /></ToolBar>
+      {!tab && (
+        <div className="home-grid sub-grid">
+          {TABS.map(([k, t, ic, co]) => (
+            <button className="home-item" key={k} onClick={() => setTab(k)}>
+              <span className="hi-circle sm" style={{ background: co + '26', borderColor: 'transparent' }}><Icon name={ic} size={28} color={co} width={2.2} /></span>
+              <span className="hi-label">{t}</span>
+              <span className="hi-sub">{{ chem: d.products.length, vac: d.vacuums.length, tool: d.tools.length, eq: d.equipment.length }[k]} 項</span>
+            </button>
+          ))}
+        </div>
+      )}
+      {tab && <button className="linky" style={{ fontSize: 13.5, margin: '0 0 8px', padding: 0 }} onClick={() => setTab(null)}>‹ 後勤管理</button>}
+      {tab && <ToolBar label={TABS.find(x => x[0] === tab)[1]}><ExportBtn onClick={() => setReport((reg.current && reg.current()) || { title: '', filterText: '', cols: [], groups: [] })} /></ToolBar>}
       {!edit && <p className="note" style={{ textAlign: 'left', margin: '0 4px 6px' }}>目前帳號只可查看</p>}
       {tab === 'chem' && <Chemicals d={d} edit={edit} reload={load} init={init} reg={reg} />}
       {tab === 'vac' && <Machines kind="vacuum" d={d} edit={edit} reload={load} reg={reg} />}
