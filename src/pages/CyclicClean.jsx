@@ -234,12 +234,6 @@ export default function CyclicClean() {
         {!err && items.length === 0 && (
           <button className="add-topic" onClick={importSeed}>⬇ 匯入預設項目</button>
         )}
-        <button className="add-topic" style={{ marginTop: 14 }} onClick={() => setReport(true)}>📄 匯出清潔要點 PDF 報告</button>
-        {report && (
-          <ReportModal title="清潔要點" sub={todayStr()} onClose={() => setReport(false)}>
-            <CleanExport items={items} />
-          </ReportModal>
-        )}
         {todayTasks.length > 0 && (
           <div className="quote" style={{ marginTop: 14 }}>
             📅 今日（{todayD} 日）循環加強：{todayTasks.map(t => t.text).join('、')}
