@@ -1,3 +1,4 @@
+import { ToolBar, ToolBtn, ExportBtn } from '../components/ui'
 import { useEffect, useMemo, useState } from 'react'
 import * as api from '../lib/api'
 import { todayStr } from '../lib/dates'
@@ -118,9 +119,9 @@ export default function Defects({ session, init }) {
       {full && (
         <div className="chips" style={{ marginBottom: 6 }}>
           {[['list', '缺陷列表'], ['stats', '統計'], ['types', '類型設定']].map(([k, t]) => <button key={k} className={`chip ${tab === k ? 'on' : ''}`} onClick={() => setTab(k)}>{t}</button>)}
-          <button className="chip" onClick={() => setReport(true)}>📄 匯出</button>
         </div>
       )}
+      {full && <ToolBar><ExportBtn onClick={() => setReport(true)} /></ToolBar>}
 
       {tab === 'list' && (
         <>

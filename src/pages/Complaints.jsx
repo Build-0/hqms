@@ -1,3 +1,4 @@
+import { ToolBar, ToolBtn, ExportBtn } from '../components/ui'
 import { useEffect, useState } from 'react'
 import * as api from '../lib/api'
 import { DEFAULT_CATEGORIES, NATURES, DEPTS } from '../data/seedData'
@@ -365,7 +366,7 @@ export default function Complaints() {
             </span>
             {allScope && !searching && <button className="linky" style={{ fontSize: 12 }} onClick={() => { setAllScope(false); setCatF('全部'); setFloorF('全部') }}>↩ 回到{monthLabel}</button>}
           </h2>
-          <button className="linky" style={{ fontSize: 13, margin: '0 4px 8px' }} onClick={() => setReport(true)}>📄 匯出目前篩選結果（{shown.length} 單）</button>
+          <ToolBar label={`${shown.length} 單`}><ExportBtn onClick={() => setReport(true)} /></ToolBar>
           <input className="search-inp" placeholder="🔍 搜尋房號或內容（跨全部月份）" value={q} onChange={e => setQ(e.target.value)} />
           <div className="chips">
             {['全部', ...DEPTS].map(d => (

@@ -1,3 +1,4 @@
+import { ToolBar, ToolBtn, ExportBtn } from '../components/ui'
 import { useMemo, useState } from 'react'
 import { addDaysStr, todayStr } from '../lib/dates'
 import { computePerf, LEVELS, PERF_DAYS, SCORE_DIMS, SCORE_MAX } from '../lib/perf'
@@ -46,9 +47,9 @@ export default function Perf({ rows, tagById, atts, onStaff, edit }) {
       <div className="card">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
           <h2 style={{ margin: 0 }}>近 {PERF_DAYS} 日表現<span style={{ fontSize: 11, color: 'var(--sub)', fontWeight: 400 }}>（{rated.length}/{people.length} 人有記錄 · 滿分 {SCORE_MAX}）</span></h2>
-          <div style={{ display: 'flex', gap: 6 }}>
-            <button className="logout" style={{ color: 'var(--sub)', background: '#eef1f4' }} onClick={() => setReport(true)}>📄 匯出</button>
-            {edit && <button className="logout" style={{ color: 'var(--sub)', background: '#eef1f4' }} onClick={onStaff}>👥 名單</button>}
+          <div className="tb-acts">
+            {edit && <ToolBtn onClick={onStaff}>👥 名單</ToolBtn>}
+            <ExportBtn onClick={() => setReport(true)} />
           </div>
         </div>
         {LEVELS.map(l => (

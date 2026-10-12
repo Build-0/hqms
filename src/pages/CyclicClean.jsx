@@ -1,3 +1,4 @@
+import { ToolBar, ToolBtn, ExportBtn } from '../components/ui'
 import { useState, useEffect } from 'react'
 import * as api from '../lib/api'
 import { CLEANING_SEED } from '../data/seedData'
@@ -255,8 +256,8 @@ export default function CyclicClean() {
       <div className="card">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
           <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 7 }}><Icon name={sec.icon} size={18} color={sec.color} /> {sec.title}</h2>
-          <span><button className="linky" style={{ fontSize: 13 }} onClick={() => setReport(true)}>📄 匯出</button><button className="linky" style={{ fontSize: 13 }}
-            onClick={() => setForm({ section: sub, day: sub === 'cycle' ? String(todayD) : null, grp: sub === 'daily' ? '抹塵' : '', area: sub === 'daily' ? '房間' : '', text: '', wrong: '', photos: [], photos_wrong: [] })}>＋ 新增</button></span>
+          <span className="tb-acts"><ExportBtn onClick={() => setReport(true)} /><ToolBtn primary
+            onClick={() => setForm({ section: sub, day: sub === 'cycle' ? String(todayD) : null, grp: sub === 'daily' ? '抹塵' : '', area: sub === 'daily' ? '房間' : '', text: '', wrong: '', photos: [], photos_wrong: [] })}>＋ 新增</ToolBtn></span>
         </div>
         {sec.hint && <p className="src-note">{sec.hint}</p>}
         {report && (

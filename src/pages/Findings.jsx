@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import * as api from '../lib/api'
+import { ToolBar, ToolBtn, ExportBtn } from '../components/ui'
 import { SCORE_DIMS, COMMON_FINDING_TAGS } from '../data/seedData'
 import { todayStr, addDaysStr } from '../lib/dates'
 import { toast } from '../lib/toast'
@@ -181,10 +182,10 @@ export default function Findings() {
         <button className="btn fd-big fd-issue" onClick={() => newForm(undefined, 'issue')}>⚠ 記錄問題</button>
         <button className="btn fd-big fd-good" onClick={() => newForm(undefined, 'good')}>⭐ 做得好</button>
       </div>
-      <div style={{ display: 'flex', justifyContent: 'flex-end', margin: '6px 2px 10px' }}>
-        <button className="logout" style={{ color: 'var(--sub)', background: '#eef1f4', marginRight: 6 }} onClick={() => setReport(true)}>📄 匯出</button>
-        <button className="logout" style={{ color: 'var(--sub)', background: '#eef1f4' }} onClick={() => setMgr(true)}>⚙ 標籤管理（{activeTags.length}）</button>
-      </div>
+      <ToolBar>
+        <ToolBtn onClick={() => setMgr(true)}>⚙ 標籤管理（{activeTags.length}）</ToolBtn>
+        <ExportBtn onClick={() => setReport(true)} />
+      </ToolBar>
 
       <div className="chips" style={{ marginBottom: 4 }}>
         <button className={`chip ${mode === 'rec' ? 'on' : ''}`} onClick={() => setMode('rec')}>記錄</button>

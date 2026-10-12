@@ -1,3 +1,4 @@
+import { ToolBar, ToolBtn, ExportBtn } from '../components/ui'
 import { useEffect, useRef, useState } from 'react'
 import * as api from '../lib/api'
 import { todayStr } from '../lib/dates'
@@ -47,8 +48,8 @@ export default function Boh({ session, init }) {
       {err && <div className="card" style={{ borderColor: 'var(--red)' }}><p style={{ fontSize: 13, lineHeight: 1.7 }}>讀取失敗：{err}</p></div>}
       <div className="chips wrap" style={{ marginBottom: 6 }}>
         {TABS.map(([k, t]) => <button key={k} className={`chip ${tab === k ? 'on' : ''}`} onClick={() => setTab(k)}>{t}</button>)}
-        <button className="chip" onClick={() => setReport((reg.current && reg.current()) || { title: '', filterText: '', cols: [], groups: [] })}>📄 匯出</button>
       </div>
+      <ToolBar><ExportBtn onClick={() => setReport((reg.current && reg.current()) || { title: '', filterText: '', cols: [], groups: [] })} /></ToolBar>
       {!edit && <p className="note" style={{ textAlign: 'left', margin: '0 4px 6px' }}>目前帳號只可查看</p>}
       {tab === 'chem' && <Chemicals d={d} edit={edit} reload={load} init={init} reg={reg} />}
       {tab === 'vac' && <Machines kind="vacuum" d={d} edit={edit} reload={load} reg={reg} />}

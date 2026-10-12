@@ -1,3 +1,4 @@
+import { ToolBar, ToolBtn, ExportBtn } from '../components/ui'
 import { useEffect, useState } from 'react'
 import * as api from '../lib/api'
 import { DEFAULT_CATEGORIES } from '../data/seedData'
@@ -15,8 +16,8 @@ function TalkCard({ n, it, open, onToggle }) {
   const key = c ? (c.correct_standard || c.guest_comment) : t ? ((t.correct_steps || [])[0] || t.why) : ''
   const tag = it.kind === 'complaint' ? { t: '昨日客訴', cls: 'b-red' } : it.kind === 'finding' ? { t: it.meta, cls: 'b-red' } : it.kind === 'good' ? { t: it.meta || '做得好', cls: 'b-teal' } : it.auto ? { t: '補位', cls: 'b-gray' } : { t: it.source || '主題庫', cls: 'b-gray' }
   const okP = t ? (t.photos || []) : [], noP = t ? (t.photos_wrong || []) : []
-  const photos = it.kind === 'topic' && (okP.length || noP.length) ? [] : (it.photos || []).slice(0, open ? 4 : 2)
-  const dual = it.kind === 'topic' && (okP.length || noP.length)
+  const photos = it.kind === 'topic' && (okP.length > 0 || noP.length > 0) ? [] : (it.photos || []).slice(0, open ? 4 : 2)
+  const dual = it.kind === 'topic' && (okP.length > 0 || noP.length > 0)
   return (
     <div className={`tk ${open ? 'open' : ''}`}>
       <button className="tk-h" onClick={onToggle}>
@@ -220,7 +221,10 @@ export default function Daily() {
         <h2>今日講 {talk.length} 件事</h2>
         <span>{todayStr().slice(5).replace('-', '月')}日　約 5 分鐘</span>
       </div>
-      <div className="dy-sub"><span>{customKeys ? '✎ 已自選今日內容' : '系統自動選題'}</span><button className="linky" onClick={() => openPick('edit')}>✎ 自選內容</button></div>
+      <ToolBar label={customKeys ? '已自選今日內容' : '系統自動選題'}>
+        <ToolBtn onClick={() => openPick('edit')}>✎ 自選內容</ToolBtn>
+        <ExportBtn onClick={() => openPick('export')} />
+      </ToolBar>
       {talk.map((it, i) => <TalkCard key={it.key} n={i + 1} it={it} open={open === it.key} onToggle={() => setOpen(open === it.key ? '' : it.key)} />)}
       {digest.good.length > 0 && (
         <div className="dy-good">
@@ -268,9 +272,6 @@ export default function Daily() {
           : '✓ 標記已於早會分享'}
       </button>
 
-      <div className="dy-foot">
-        <button className="btn" onClick={() => openPick('export')}>📄 匯出早會講稿</button>
-      </div>
       <p className="dy-note">{customKeys ? '目前是你自選的內容，可按上面「自選內容」修改。' : st.hadYesterday ? '系統自動選題：昨日有投訴，已排在最前。' : '系統自動選題：優先近 7 日查房常見問題，不足 3 項才用主題庫補位。'}{tomorrowName ? ` 明日已指定：${tomorrowName}` : ''}</p>
     </div>
   )

@@ -1,3 +1,4 @@
+import { ToolBar, ToolBtn, ExportBtn } from '../components/ui'
 import { useEffect, useState } from 'react'
 import * as api from '../lib/api'
 import { DEFAULT_CATEGORIES, seedTopics } from '../data/seedData'
@@ -162,10 +163,10 @@ export default function Topics() {
 
   return (
     <>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0 4px 6px' }}>
-        <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--sub)' }}>共 {topics.length} 個主題</span>
-        <span><button className="linky" style={{ fontSize: 13 }} onClick={() => setReport(true)}>📄 匯出</button><button className="linky" style={{ fontSize: 13 }} onClick={() => setMgr(true)}>⚙️ 編輯分類</button></span>
-      </div>
+      <ToolBar label={`共 ${topics.length} 個主題`}>
+        <ToolBtn onClick={() => setMgr(true)}>⚙ 編輯分類</ToolBtn>
+        <ExportBtn onClick={() => setReport(true)} />
+      </ToolBar>
       {topics.length === 0 && (
         <button className="add-topic" style={{ marginBottom: 8 }} onClick={importSeed}>⬇ 匯入 {seedTopics.length} 個預設主題</button>
       )}
