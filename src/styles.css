@@ -775,3 +775,6 @@ body{overflow-x:clip}
 
 .sq-name{min-height:0 !important}
 .df-grid4 .df-sel{padding:9px 6px}
+/* 後勤相片：完整顯示（不再裁切成正方形），留白用淡灰底 */
+.bh-thumb img{object-fit:contain !important;background:#f1f4f6}
+.sq-card .bh-thumb{width:56px !important;height:56px !important}
