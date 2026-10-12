@@ -734,6 +734,6 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent) 
 @media (min-width:900px){.cx-vw,.cx-scope-m{display:none}}
 
 /* 凍結篩選列：捲動清單時，搜尋與篩選一直貼住標題列下方 */
-.fstk{position:sticky;top:var(--hdr-h,0px);z-index:8;background:var(--bg);margin:0 -2px 6px;padding:6px 2px 2px;box-shadow:0 6px 8px -8px rgba(20,35,48,.28)}
+.fstk{position:sticky;top:calc(72px + env(safe-area-inset-top,0px));z-index:8;background:var(--bg);margin:0 -2px 6px;padding:6px 2px 2px;box-shadow:0 6px 8px -8px rgba(20,35,48,.28)}
 .fstk .srch-row{margin-bottom:6px}
 .fstk .chips,.fstk .df-grid{margin-bottom:4px !important}

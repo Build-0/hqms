@@ -390,6 +390,7 @@ export default function Complaints() {
             </span>
             {allScope && !searching && <button className="linky" style={{ fontSize: 12 }} onClick={() => { setAllScope(false); setCatF('全部'); setFloorF('全部') }}>↩ 回到{monthLabel}</button>}
           </h2>
+          <div className="fstk">
           <input className="search-inp" placeholder="🔍 搜尋房號或內容（跨全部月份）" value={q} onChange={e => setQ(e.target.value)} />
           <div className="chips">
             {['全部', ...DEPTS].map(d => (
@@ -401,6 +402,7 @@ export default function Complaints() {
             {hasSource && ['wechat', '其它'].map(s => (
               <button key={s} className={`chip ${srcF === s ? 'on' : ''}`} onClick={() => setSrcF(srcF === s ? '全部' : s)}>{s === 'wechat' ? '💬 wechat' : '📋 其它來源'}</button>
             ))}
+          </div>
           </div>
           <div className="chips">
             <button className={`chip ${catF === '全部' ? 'on' : ''}`} onClick={() => setCatF('全部')}>全部分類</button>

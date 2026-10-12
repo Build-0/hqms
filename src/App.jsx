@@ -60,15 +60,6 @@ export default function App() {
     api.hasAuth().then(ok => { if (!ok) { clearSession(); setSessionState(null) } })
     return api.onSignedOut(() => { clearSession(); setSessionState(null) })
   }, [])
-  // 量度頂部標題列高度，供各頁「凍結篩選列」貼住標題列下方
-  useEffect(() => {
-    const h = document.querySelector('header')
-    if (!h) return
-    const set = () => document.documentElement.style.setProperty('--hdr-h', h.offsetHeight + 'px')
-    set()
-    const ro = new ResizeObserver(set); ro.observe(h)
-    return () => ro.disconnect()
-  }, [tab, big, session, user])
   useEffect(() => {
     api.getUser().then(setUser)
     return api.onAuthChange(setUser)
