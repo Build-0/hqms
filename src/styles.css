@@ -740,3 +740,11 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent) 
 /* 橫向溢出：html 負責裁切，body 用 clip（不會變成捲動容器，否則凍結列／sticky 會失效） */
 html{overflow-x:hidden}
 body{overflow-x:clip}
+
+/* 後勤：返回／匯出列一併凍結；篩選掣改小正方形 */
+.tb.stk{position:sticky;top:calc(72px + env(safe-area-inset-top,0px));z-index:9;background:var(--bg);margin:0 -2px;padding:6px 2px;box-sizing:border-box;height:50px}
+.df-wrap .fstk{top:calc(72px + env(safe-area-inset-top,0px) + 50px)}
+.chip.sq{width:62px;height:58px;padding:4px 2px;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;flex-shrink:0;line-height:1.1}
+.chip.sq b{font-size:19px;font-weight:800}
+.chip.sq small{font-size:11.5px;font-weight:600;white-space:nowrap;max-width:58px;overflow:hidden;text-overflow:ellipsis}
+.chip.sq.on b,.chip.sq.on small{color:#fff}

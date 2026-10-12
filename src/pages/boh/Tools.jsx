@@ -1,3 +1,4 @@
+import { SqChip } from '../../components/ui'
 import { useMemo, useState } from 'react'
 import * as api from '../../lib/api'
 import { toast } from '../../lib/toast'
@@ -60,7 +61,7 @@ export default function Tools({ d, edit, reload, reg }) {
       rows: g.items.map(t => ({ photo: img(t.id), cells: [t.name, t.stock, num(t.in_use) || 0, num(t.min_stock) || '—', t.status], cls: ['', low(t) ? 'rpt-red' : '', '', '', ''] })),
     })),
   })
-  const chip = (k, t) => <button key={k} className={`chip ${fk === k ? 'on' : ''}`} onClick={() => setFk(k)}>{t}</button>
+  const chip = (k, t) => <SqChip key={k} on={fk === k} onClick={() => setFk(k)} label={t} />
   return (
     <>
       <div className="fstk">

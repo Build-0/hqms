@@ -1,3 +1,4 @@
+import { SqChip } from '../../components/ui'
 import { useEffect, useMemo, useState } from 'react'
 import * as api from '../../lib/api'
 import { toast } from '../../lib/toast'
@@ -90,7 +91,7 @@ export default function Chemicals({ d, edit, reload, init, reg }) {
       }),
     })),
   })
-  const chip = (k, t) => <button key={k} className={`chip ${fk === k ? 'on' : ''}`} onClick={() => setFk(k)}>{t}</button>
+  const chip = (k, t) => <SqChip key={k} on={fk === k} onClick={() => setFk(k)} label={t} />
   return (
     <>
       {sub === 'report' && <button className="linky" style={{ fontSize: 13.5, margin: '0 0 8px', padding: 0 }} onClick={() => setSub('list')}>‹ 返回產品</button>}

@@ -58,7 +58,7 @@ export default function Boh({ session, init }) {
           ))}
         </div>
       )}
-      {tab && <ToolBar label={<button className="linky" style={{ fontSize: 14.5, fontWeight: 700, padding: 0 }} onClick={() => setTab(null)}>‹ {TABS.find(x => x[0] === tab)[1]}</button>}><ExportBtn onClick={() => setReport((reg.current && reg.current()) || { title: '', filterText: '', cols: [], groups: [] })} /></ToolBar>}
+      {tab && <ToolBar sticky label={<button className="linky" style={{ fontSize: 14.5, fontWeight: 700, padding: 0 }} onClick={() => setTab(null)}>‹ {TABS.find(x => x[0] === tab)[1]}</button>}><ExportBtn onClick={() => setReport((reg.current && reg.current()) || { title: '', filterText: '', cols: [], groups: [] })} /></ToolBar>}
       {!edit && <p className="note" style={{ textAlign: 'left', margin: '0 4px 6px' }}>目前帳號只可查看</p>}
       {tab === 'chem' && <Chemicals d={d} edit={edit} reload={load} init={init} reg={reg} />}
       {tab === 'vac' && <Machines kind="vacuum" d={d} edit={edit} reload={load} reg={reg} />}

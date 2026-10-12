@@ -116,7 +116,7 @@ export default function Machines({ kind, d, edit, reload, reg }) {
               <div className="bh-main">
                 <div className="bh-name">{title(x)}<span className={`badge ${STATUS_CLS[x.status] || 'b-gray'}`}>{x.status}</span></div>
                 <div className="bh-sub">{sub(x) || ' '}</div>
-                {x.serial && <div className="bh-note">S/N {x.serial}</div>}
+                {x.serial && <div className="bh-note">序號 {x.serial}</div>}
                 {!isVac && x.floor_code && <div className="bh-note">📍 {x.floor_code}</div>}
               </div>
             </div>
