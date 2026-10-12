@@ -244,7 +244,7 @@ export default function Complaints() {
           </ReportModal>
         )
       })()}
-      <ToolBar label={`${shown.length} 單`}><ExportBtn onClick={() => setReport(true)} /></ToolBar>
+      <ToolBar label={`共 ${shown.length} 單`}><ExportBtn onClick={() => setReport(true)} /></ToolBar>
       <div className={`cx-grid ${panelOpen ? '' : 'closed'}`} style={{ '--panelw': `${pwPx}px` }}>
         {panelOpen && <div>
           <div className="month-nav">
@@ -258,7 +258,7 @@ export default function Complaints() {
               <div className="card dept-card" key={g.d}>
                 <div className="dc-head">
                   {g.d === '客房' ? '🛏️ 客房' : '🔧 工程與其他'}
-                  <span className="dc-total">共 {g.total} 單</span>
+                  <span className="dc-total">{g.total}</span>
                 </div>
                 <div className="dc-stats">
                   <div><b className={g.y ? 'warn' : ''}>{g.y}</b><span>昨日投訴</span></div>
