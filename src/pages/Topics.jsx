@@ -10,15 +10,15 @@ import { ReportModal, TopicsReport } from '../components/Reports'
 
 // 匯出：先揀分類（可全選），再匯出
 function TopicsExport({ groups }) {
-  const [pick, setPick] = useState(groups.map(g => g.name))
-  const all = pick.length === groups.length
-  const toggle = n => setPick(p => (p.includes(n) ? p.filter(x => x !== n) : [...p, n]))
-  const sel = groups.filter(g => pick.includes(g.name))
+  const [pick, setPick] = useState([])   // 空 ＝ 全部；點分類＝只匯出該分類，可再加選其他
+  const all = pick.length === 0
+  const toggle = n => setPick(p => { const q = p.includes(n) ? p.filter(x => x !== n) : [...p, n]; return q.length === groups.length ? [] : q })
+  const sel = all ? groups : groups.filter(g => pick.includes(g.name))
   return (
     <>
       <div className="chips wrap rpt-noprint">
-        <button className={`chip ${all ? 'on' : ''}`} onClick={() => setPick(all ? [] : groups.map(g => g.name))}>全部 {groups.reduce((n, g) => n + g.items.length, 0)}</button>
-        {groups.map(g => <button key={g.name} className={`chip ${pick.includes(g.name) ? 'on' : ''}`} onClick={() => toggle(g.name)}>{g.name} {g.items.length}</button>)}
+        <button className={`chip ${all ? 'on' : ''}`} onClick={() => setPick([])}>全部 {groups.reduce((n, g) => n + g.items.length, 0)}</button>
+        {groups.map(g => <button key={g.name} className={`chip ${!all && pick.includes(g.name) ? 'on' : ''}`} onClick={() => toggle(g.name)}>{g.name} {g.items.length}</button>)}
       </div>
       <TopicsReport total={sel.reduce((n, g) => n + g.items.length, 0)} groups={sel} />
     </>

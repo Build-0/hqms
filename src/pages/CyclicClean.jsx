@@ -10,9 +10,10 @@ import { ReportModal, ListReport } from '../components/Reports'
 
 // 匯出：先揀要匯出的分區，再按需要附上相片（與其他模組匯出一致）
 function CleanExport({ items, initial }) {
-  const [pick, setPick] = useState(initial ? [initial] : SECTIONS.map(x => x.key))
-  const toggle = k => setPick(p => (p.includes(k) ? p.filter(x => x !== k) : [...p, k]))
-  const groups = SECTIONS.filter(x => pick.includes(x.key)).map(x => {
+  const [pick, setPick] = useState(initial ? [initial] : [])   // 空 ＝ 全部；點分區＝只匯出該分區，可再加選
+  const all = pick.length === 0
+  const toggle = k => setPick(p => { const q = p.includes(k) ? p.filter(x => x !== k) : [...p, k]; return q.length === SECTIONS.length ? [] : q })
+  const groups = SECTIONS.filter(x => all || pick.includes(x.key)).map(x => {
     let rows = items.filter(i => i.section === x.key)
     if (x.key === 'cycle') rows = rows.slice().sort((a, b) => (a.day ?? 0) - (b.day ?? 0))
     return {
@@ -26,9 +27,10 @@ function CleanExport({ items, initial }) {
   return (
     <>
       <div className="chips wrap rpt-noprint">
-        {SECTIONS.map(x => <button key={x.key} className={`chip ${pick.includes(x.key) ? 'on' : ''}`} onClick={() => toggle(x.key)}>{x.title}</button>)}
+        <button className={`chip ${all ? 'on' : ''}`} onClick={() => setPick([])}>全部</button>
+        {SECTIONS.map(x => <button key={x.key} className={`chip ${!all && pick.includes(x.key) ? 'on' : ''}`} onClick={() => toggle(x.key)}>{x.title}</button>)}
       </div>
-      <ListReport data={{ filterText: SECTIONS.filter(x => pick.includes(x.key)).map(x => x.title).join('、') || '未選擇', cols: ['項目', '類別／日期', '常見錯誤'], groups }} />
+      <ListReport data={{ filterText: all ? '全部' : groups.map(x => x.title).join('、'), cols: ['項目', '類別／日期', '常見錯誤'], groups }} />
     </>
   )
 }
