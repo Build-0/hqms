@@ -119,8 +119,6 @@ export function ComplaintsReport({ data }) {
 export function DailyReport({ slots }) {
   return slots.map((s, i) => {
     const c = s.complaint, t = s.topic
-    const q = c ? `昨日 ${c.room} 房的投訴是什麼？我們的正確標準是？` : t.question
-    const a = c ? `${c.guest_comment}。正確標準：${c.correct_standard || '—'}` : t.answer
     return (
       <div className="rpt-keep" key={i}>
         <Sub>{slots.length > 1 ? `重點${['一', '二'][i]} · ` : ''}{c ? `昨日客訴 · ${c.room} 房` : `主題輪替 · ${t.category}`}</Sub>
@@ -139,8 +137,7 @@ export function DailyReport({ slots }) {
             </div>
           </>
         )}
-        {(c ? c.improvement : t.supervisor_check) && <p><b>主管重點檢查：</b>{c ? c.improvement : t.supervisor_check}</p>}
-        {q && <div className="rpt-q"><b>早會提問</b><br />問：{q}<br /><span className="rpt-mut">答：{a}</span></div>}
+        {c && c.improvement && <p><b>主管重點檢查：</b>{c.improvement}</p>}
       </div>
     )
   })
@@ -355,8 +352,6 @@ export function SpeechSheet({ items }) {
                   <div className="rpt-box"><h4>✓ 正確做法</h4>{list(t.correct_steps) || <p>—</p>}</div>
                   <div className="rpt-box"><h4>✗ 常見錯誤</h4>{bul(t.mistakes) || <p>—</p>}</div>
                 </div>
-                {t.supervisor_check && <p><b>主管重點檢查：</b>{t.supervisor_check}</p>}
-                {t.question && <div className="rpt-q"><b>早會提問</b>　{t.question}{t.answer && <><br /><span className="rpt-mut">答：{t.answer}</span></>}</div>}
               </>
             )}
             {!t && !c && it.kind === 'finding' && (

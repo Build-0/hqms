@@ -323,7 +323,6 @@ export default function Findings() {
                     <>
                       <div className="fd-std-t">📘 {tp.title}</div>
                       {(tp.correct_steps || []).length > 0 && <ol className="fd-steps">{tp.correct_steps.map((s, i) => <li key={i}>{s}</li>)}</ol>}
-                      {tp.question && <div className="fd-q">❓ {tp.question}</div>}
                     </>
                   ) : it.tag === OTHER_TAG && !it.tag_id ? <div className="fd-std-none">其他問題 · 見上面補充</div> : <div className="fd-std-none">未連結主題 · 可在「⚙ 問題標籤」連結主題庫，之後會顯示正確做法</div>}
                 </div>

@@ -20,7 +20,7 @@ import { toast } from './lib/toast'
 const MODULES = [
   { id: 'findings', sub: '問題、表揚與人員表現', icon: 'camera', label: '查房記錄', color: '#d07a2c', Page: Findings },
   { id: 'daily', sub: '早會題目與正確標準', icon: 'focus', label: '今日重點', color: '#1f7a6d', Page: Daily },
-  { id: 'topics', sub: '分類教材與早會提問', icon: 'book', label: '培訓主題庫', color: '#4a6fa5', Page: Topics },
+  { id: 'topics', sub: '分類教材與正確做法', icon: 'book', label: '培訓主題庫', color: '#4a6fa5', Page: Topics },
   { id: 'cyclic', sub: '每日、循環、深度清潔', icon: 'clean', label: '清潔要點', color: '#54808c', Page: CyclicClean },
   // 嵌入的舊系統（與品質系統同網站、各自保留原有資料庫）
   { id: 'boh', icon: 'box', label: '後勤管理', color: '#7a6a4f', top: true, Page: Boh },

@@ -157,7 +157,6 @@ export default function Topics() {
               <div className="t-ico" style={{ background: mm.s }}>{mm.e}</div>
               <div className="t-mid">
                 <div className="tt">{t.title}</div>
-                {t.question && <div className="q-prev">🎤 {t.question}</div>}
               </div>
               <span className="arrow">›</span>
             </div>
@@ -197,25 +196,7 @@ export default function Topics() {
                   </div>
                 )}
               </div>
-              {view.supervisor_check && (
-                <div className="panel checkp">
-                  <div className="p-title">👁 主管重點檢查</div>
-                  <div className="check-item"><span className="dot">✓</span>{view.supervisor_check}</div>
-                </div>
-              )}
               {view.reminder && <div className="quote">{view.reminder}</div>}
-              {view.question && (
-                <div className="qa">
-                  <div className="q-emoji">🎤</div>
-                  <div style={{ flex: 1 }}>
-                    <div className="q-label">早會提問</div>
-                    <div className="q-text">問：{view.question}</div>
-                    {showA
-                      ? <div className="a-text"><b>答：</b>{view.answer || '（未設定）'}</div>
-                      : <button className="a-btn" onClick={() => setShowA(true)}>顯示答案</button>}
-                  </div>
-                </div>
-              )}
             </div>
             <button className="btn" style={{ marginTop: 16 }} onClick={() => setTomorrow(view)}>📌 設為明日早會重點</button>
             <div className="f-row" style={{ marginTop: 10, marginBottom: 6 }}>
@@ -246,10 +227,7 @@ export default function Topics() {
             {F('為什麼重要', 'why', 'textarea')}
             {F('正確做法（每行一項）', '_ok', 'textarea', { style: { height: 80 } })}
             {F('常見錯誤（每行一項）', '_bad', 'textarea')}
-            {F('主管重點檢查', 'supervisor_check')}
             {F('一句提醒', 'reminder')}
-            {F('早會提問', 'question', 'input', { placeholder: '用來抽問同事、加強記憶' })}
-            {F('提問答案', 'answer')}
             <PhotoField label="示範相片（正確做法，可放 GIF 動作示範）" photos={form.photos} onChange={p => setForm({ ...form, photos: p })} max={4} />
             <button className="btn" onClick={save}>儲存主題</button>
             <button className="btn ghost" onClick={() => setForm(null)}>取消</button>

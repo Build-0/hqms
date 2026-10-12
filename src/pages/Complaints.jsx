@@ -542,7 +542,7 @@ export default function Complaints() {
           <div className="sheet center">
             <h2 style={{ marginBottom: 6 }}>已儲存 ✓</h2>
             <p style={{ fontSize: 13.5, color: 'var(--sub)', lineHeight: 1.6, marginBottom: 14 }}>
-              要把這宗客訴設為<b style={{ color: 'var(--ink)' }}>明日早會的品質重點</b>嗎？系統會自動產生重點卡及早會提問。
+              要把這宗客訴設為<b style={{ color: 'var(--ink)' }}>明日早會的品質重點</b>嗎？系統會自動產生重點卡。
             </p>
             <button className="btn" onClick={() => askDone(true)}>設為明日重點</button>
             <button className="btn ghost" onClick={() => askDone(false)}>先不用</button>

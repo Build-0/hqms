@@ -11,13 +11,10 @@ const isCore = c => (c.dept || (c.nature === '工程投訴' ? '工程其他' : '
 
 // 早會「今日講 3 件事」卡：預設只見標題、相片、一句重點；撳開先見詳情
 function TalkCard({ n, it, open, onToggle }) {
-  const [showA, setShowA] = useState(false)
   const t = it.topic, c = it.complaint
   const key = c ? (c.correct_standard || c.guest_comment) : t ? ((t.correct_steps || [])[0] || t.why) : ''
   const tag = it.kind === 'complaint' ? { t: '昨日客訴', cls: 'b-red' } : it.kind === 'finding' ? { t: it.meta, cls: 'b-red' } : it.kind === 'good' ? { t: it.meta || '做得好', cls: 'b-teal' } : it.auto ? { t: '補位', cls: 'b-gray' } : { t: it.source || '主題庫', cls: 'b-gray' }
   const photos = (it.photos || []).slice(0, open ? 4 : 2)
-  const q = c ? `昨日 ${c.room} 房的投訴是什麼？我們的正確標準是？` : t?.question
-  const a = c ? `${c.guest_comment}。正確標準：${c.correct_standard || '—'}` : t?.answer
   return (
     <div className={`tk ${open ? 'open' : ''}`}>
       <button className="tk-h" onClick={onToggle}>
@@ -42,16 +39,10 @@ function TalkCard({ n, it, open, onToggle }) {
               {t.why && <p className="tk-l">{t.why}</p>}
               {(t.correct_steps || []).length > 0 && <div className="tk-sec ok"><b>✓ 正確做法</b><ol>{t.correct_steps.map((x, i) => <li key={i}>{x}</li>)}</ol></div>}
               {(t.mistakes || []).length > 0 && <div className="tk-sec no"><b>✗ 常見錯誤</b><ul>{t.mistakes.map((x, i) => <li key={i}>{x}</li>)}</ul></div>}
-              {t.supervisor_check && <p className="tk-l"><b>主管重點檢查：</b>{t.supervisor_check}</p>}
             </>
           )}
           {!t && !c && it.kind === 'good' && <p className="tk-l">請做得好的同事分享做法，其他同事學習。</p>}
           {!t && !c && it.kind !== 'good' && <p className="tk-l">這類問題為甚麼會發生？正確做法是什麼？請同事講一次，主管補充。</p>}
-          {q && (
-            <div className="tk-q"><b>早會提問</b>　{q}
-              {showA ? <div className="tk-a">答：{a}</div> : <button className="a-btn" onClick={() => setShowA(true)}>顯示答案</button>}
-            </div>
-          )}
         </div>
       )}
     </div>
