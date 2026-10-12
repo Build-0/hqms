@@ -107,7 +107,7 @@ export default function Findings({ session }) {
     setForm({
       kind, confirmedAtt: keep?.confirmedAtt ?? '',
       date: todayStr(), room: '', attendant_id: keep?.attendant_id ?? (kind === 'issue' ? '' : lsGet(LS_ATT)), tag_ids: [],
-      photos: [], note: '', inspector: keep?.inspector ?? lsGet(LS_INSP),
+      photos: [], note: '', inspector: keep?.inspector ?? (session ? session.name : lsGet(LS_INSP)),   // 預設為目前登入者
     })
   }
   // 選人：「有問題」入口，如果該同事之前已有記錄就先彈出提示，確認後才繼續
@@ -282,7 +282,7 @@ export default function Findings({ session }) {
               ))}
             </div>
             <div className="f-row"><label>補充（已選問題可留空 · 可用鍵盤🎤語音輸入）</label><input value={form.note} onChange={e => setForm({ ...form, note: e.target.value })} placeholder="例：浴缸邊" /></div>
-            <div className="f-row"><label>抽查人</label><input value={form.inspector} onChange={e => setForm({ ...form, inspector: e.target.value })} placeholder="例：Benny" /></div>
+            <div className="f-row"><label>抽查人</label><input value={form.inspector} onChange={e => setForm({ ...form, inspector: e.target.value })} placeholder="抽查人姓名" /></div>
             <button className="btn" disabled={saving || !form.attendant_id || (!form.tag_ids.length && !form.note.trim())} onClick={() => save(true)}>{saving ? '儲存中…' : '儲存，記下一間'}</button>
             <button className="btn ghost" disabled={saving} onClick={() => save(false)} style={{ color: 'var(--accent)', fontWeight: 700 }}>儲存並關閉</button>
             <button className="btn ghost" onClick={() => setForm(null)}>取消</button>
