@@ -767,3 +767,8 @@ body{overflow-x:clip}
 .df-grid4{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
 .df-grid4 .df-sel{padding:9px 6px;font-size:13px}
 .fstk .search-inp{margin-bottom:6px}
+/* 方形卡片：相片縮小、不裁切文字（內容較多時卡片稍為加高，仍保持方形為主） */
+.sq-card{overflow:visible;padding:8px 4px;gap:4px}
+.sq-card .bh-thumb{width:50px !important;height:50px !important;font-size:24px}
+.sq-name{font-size:12.5px;min-height:2.6em;display:-webkit-box;align-items:center}
+.sq-n{font-size:17px}.sq-n small{font-size:10.5px}
