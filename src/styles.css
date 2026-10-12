@@ -644,3 +644,10 @@ header h1{flex:1 1 auto !important;min-width:0}
 .t-item .tt{font-size:12.5px;font-weight:700;line-height:1.35;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .t-item .arrow{display:none}
 @media (min-width:600px){.t-grid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr))}}
+
+/* 今日重點：正確／錯誤相片左右對照 */
+.tk-two{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.tk-two>div{border-radius:12px;padding:6px;display:flex;flex-direction:column;gap:5px}
+.tk-two .ok{background:#effaf3;border:1px solid #d3eadd}.tk-two .no{background:var(--red-soft);border:1px solid #eed3ce}
+.tk-two b{font-size:12px}.tk-two .ok b{color:var(--accent)}.tk-two .no b{color:var(--red)}
+.tk-two img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:8px;background:var(--bg)}

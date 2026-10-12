@@ -14,7 +14,9 @@ function TalkCard({ n, it, open, onToggle }) {
   const t = it.topic, c = it.complaint
   const key = c ? (c.correct_standard || c.guest_comment) : t ? ((t.correct_steps || [])[0] || t.why) : ''
   const tag = it.kind === 'complaint' ? { t: '昨日客訴', cls: 'b-red' } : it.kind === 'finding' ? { t: it.meta, cls: 'b-red' } : it.kind === 'good' ? { t: it.meta || '做得好', cls: 'b-teal' } : it.auto ? { t: '補位', cls: 'b-gray' } : { t: it.source || '主題庫', cls: 'b-gray' }
-  const photos = (it.photos || []).slice(0, open ? 4 : 2)
+  const okP = t ? (t.photos || []) : [], noP = t ? (t.photos_wrong || []) : []
+  const photos = it.kind === 'topic' && (okP.length || noP.length) ? [] : (it.photos || []).slice(0, open ? 4 : 2)
+  const dual = it.kind === 'topic' && (okP.length || noP.length)
   return (
     <div className={`tk ${open ? 'open' : ''}`}>
       <button className="tk-h" onClick={onToggle}>
@@ -22,6 +24,12 @@ function TalkCard({ n, it, open, onToggle }) {
         <span className="tk-t"><b>{it.title}</b><span className={`badge ${tag.cls}`}>{tag.t}</span></span>
         <span className="tk-x">{open ? '－' : '＋'}</span>
       </button>
+      {dual && (
+        <div className="tk-two">
+          <div className="ok"><b>✓ 正確</b>{(open ? okP.slice(0, 4) : okP.slice(0, 1)).map((p, i) => <img key={i} src={p} alt="" loading="lazy" />)}</div>
+          <div className="no"><b>✗ 錯誤</b>{(open ? noP.slice(0, 4) : noP.slice(0, 1)).map((p, i) => <img key={i} src={p} alt="" loading="lazy" />)}</div>
+        </div>
+      )}
       {photos.length > 0 && <div className="tk-ph">{photos.map((p, i) => <img key={i} src={p} alt="" loading="lazy" />)}</div>}
       {key && <p className="tk-key"><span>標準</span>{key}</p>}
       {!key && it.kind === 'finding' && <p className="tk-key" style={{ color: 'var(--sub)' }}><span style={{ background: 'var(--bg)', color: 'var(--sub)' }}>討論</span>請同事說出正確做法，主管補充</p>}

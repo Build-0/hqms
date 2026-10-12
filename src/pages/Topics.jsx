@@ -34,7 +34,7 @@ const ICONS = [
   ['遙控', '📺'], ['退房', '🧳'], ['衛生', '🧼'], ['清潔流程', '📋'], ['安全', '🦺'], ['新員工', '🎓'], ['地毯', '🟫'], ['氣味', '🌫️'],
 ]
 const topicIcon = (t, fallback) => (ICONS.find(([k]) => t.title.includes(k)) || [])[1] || fallback
-const EMPTY = { category: '', title: '', why: '', correct_steps: [], mistakes: [], supervisor_check: '', reminder: '', question: '', answer: '', photos: [] }
+const EMPTY = { category: '', title: '', why: '', correct_steps: [], mistakes: [], supervisor_check: '', reminder: '', question: '', answer: '', photos: [], photos_wrong: [] }
 
 export default function Topics() {
   const [topics, setTopics] = useState(null)
@@ -64,6 +64,7 @@ export default function Topics() {
 
   if (err && (!topics || !cats)) return <div className="card"><p className="src-note">讀取失敗：{err}</p><button className="btn" onClick={load}>重試</button></div>
   if (!topics || !cats) return <div className="note">載入中…</div>
+  const hasWrong = topics.some(t => 'photos_wrong' in t)
   const canEditCats = !!cats[0]?.id
   const topicCats = cats.filter(k => k.for_topics !== false) // 主題庫用的分類（可與客訴不同）
   const inCat = cat ? topics.filter(t => t.category === cat) : topics
@@ -89,6 +90,7 @@ export default function Topics() {
       question: f.question.trim(),
       answer: f.answer.trim(),
       photos: f.photos || [],
+      ...((hasWrong || (f.photos_wrong || []).length) ? { photos_wrong: f.photos_wrong || [] } : {}),   // 欄位未建立前不送出，避免儲存失敗
     }
     if (f.id) {
       await api.updateTopic(f.id, payload)
@@ -204,7 +206,7 @@ export default function Topics() {
             <h2 style={{ fontSize: 17 }}>{view.title}</h2>
             <div className="sec">
               {view.why && <p className="lead" style={{ marginTop: 4 }}>{view.why}</p>}
-              <PhotoGrid photos={view.photos} />
+              {(view.photos || []).length > 0 && <><div className="p-title" style={{ margin: '4px 0', color: 'var(--accent)' }}>✓ 正確做法相片</div><PhotoGrid photos={view.photos} /></>}
               <div className="okbad">
                 {view.correct_steps?.length > 0 && (
                   <div className="panel good">
@@ -219,6 +221,7 @@ export default function Topics() {
                   </div>
                 )}
               </div>
+              {(view.photos_wrong || []).length > 0 && <><div className="p-title" style={{ margin: '10px 0 4px', color: 'var(--red)' }}>✗ 錯誤做法相片</div><PhotoGrid photos={view.photos_wrong} /></>}
               {view.reminder && <div className="quote">{view.reminder}</div>}
             </div>
             <button className="btn" style={{ marginTop: 16 }} onClick={() => setTomorrow(view)}>📌 設為明日早會重點</button>
@@ -251,7 +254,8 @@ export default function Topics() {
             {F('正確做法（每行一項）', '_ok', 'textarea', { style: { height: 80 } })}
             {F('常見錯誤（每行一項）', '_bad', 'textarea')}
             {F('一句提醒', 'reminder')}
-            <PhotoField label="示範相片（正確做法，可放 GIF 動作示範）" photos={form.photos} onChange={p => setForm({ ...form, photos: p })} max={4} />
+            <PhotoField label="✓ 正確做法相片（可放 GIF 動作示範）" photos={form.photos} onChange={p => setForm({ ...form, photos: p })} max={4} />
+            <PhotoField label="✗ 錯誤做法相片" photos={form.photos_wrong} onChange={p => setForm({ ...form, photos_wrong: p })} max={4} />
             <button className="btn" onClick={save}>儲存主題</button>
             <button className="btn ghost" onClick={() => setForm(null)}>取消</button>
           </div>
