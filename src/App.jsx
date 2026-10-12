@@ -106,9 +106,13 @@ export default function App() {
   const now = new Date()
   const cur = MODULES.find(m => m.id === tab)
   const inQuality = tab === 'quality'
-  const locked = id => !!session && (PERMS[session.role][id] || 'none') === 'none'
+  // 房間品質：有「品質」權限或「查房記錄」權限（樓層主管）都可進入；樓層主管進去只見查房記錄
+  const locked = id => !!session && (id === 'quality' ? (PERMS[session.role].quality || 'none') === 'none' && (PERMS[session.role].findings || 'none') === 'none' : (PERMS[session.role][id] || 'none') === 'none')
+  const qFull = !session || PERMS[session.role].quality === 'edit'
   // 即使被封鎖的頁面（例如舊分頁狀態）也一律退回首頁
   if (tab !== 'home' && session && (((cur && cur.id === 'boh') && locked('boh')) || ((cur && cur.id === 'defect') && locked('defect')) || ((tab === 'quality' || (cur && !cur.embed && !cur.top)) && locked('quality')))) setTimeout(() => setTab('home'), 0)
+  // 只有查房記錄權限（樓層主管）的帳號：其他品質模組一律退回首頁
+  if (session && !qFull && cur && !cur.embed && !cur.top && cur.id !== 'findings') setTimeout(() => setTab('home'), 0)
   const hardReload = () => { location.href = location.pathname + '?v=' + Date.now() }
   async function doRefresh() {
     if (refreshing) return
@@ -125,7 +129,7 @@ export default function App() {
   const goBack = () => setTab(cur && !cur.embed && !cur.top ? 'quality' : 'home')
   const title = cur ? cur.label : inQuality ? '房間品質' : '酒店客房管理系統'
   return (
-    <div className={`phone ${session && PERMS[session.role].quality !== 'edit' && (inQuality || (cur && !cur.embed && !cur.top)) ? 'ro' : ''}`}>
+    <div className={`phone ${session && PERMS[session.role].quality !== 'edit' && (inQuality || (cur && !cur.embed && !cur.top)) && !(cur && cur.id === 'findings' && PERMS[session.role].findings === 'add') ? 'ro' : ''}`}>
       <header className={tab === 'home' ? 'hdr-home' : ''}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           {(cur || inQuality) && <button className="back-btn" onClick={cur ? goBack : () => setTab('home')}>‹</button>}
@@ -144,7 +148,7 @@ export default function App() {
       <main className={cur?.embed ? 'embed-main' : ''}>
         {cur ? <cur.Page key={tab + ':' + rk} session={session} init={init} /> : inQuality ? (
           <div className="home-grid">
-            {MODULES.filter(m => !m.embed && !m.top).map(m => (
+            {MODULES.filter(m => !m.embed && !m.top && (qFull || m.id === 'findings')).map(m => (
               <button className="home-item" key={m.id} onClick={() => setTab(m.id)}>
                 <span className="hi-circle" style={{ background: m.color + '26', borderColor: 'transparent' }}><Icon name={m.icon} size={33} color={m.color} width={2.2} /></span>
                 <span className="hi-label">{m.label}</span>

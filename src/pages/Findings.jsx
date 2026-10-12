@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import * as api from '../lib/api'
 import { ToolBar, ToolBtn, ExportBtn } from '../components/ui'
-import { SCORE_DIMS, COMMON_FINDING_TAGS } from '../data/seedData'
+import { PERMS } from '../lib/accounts'
+import { SCORE_DIMS } from '../data/seedData'
 import { todayStr, addDaysStr } from '../lib/dates'
 import { toast } from '../lib/toast'
 import { PhotoGrid, PhotoField } from '../components/Photos'
@@ -35,7 +36,8 @@ const kindOf = f => (String(f.batch || '').startsWith('good-') ? 'good' : 'issue
 const REPEAT_DAYS = 30
 const REPEAT_MIN = 2
 
-export default function Findings() {
+export default function Findings({ session }) {
+  const full = !session || PERMS[session.role].findings === 'edit'   // 樓層主管：只可查看與新增
   const [atts, setAtts] = useState([])
   const [tags, setTags] = useState([])
   const [topics, setTopics] = useState([])
@@ -157,12 +159,10 @@ export default function Findings() {
 
   const issueTags = activeTags.filter(t => t.dim !== GOOD_DIM)
   const goodTags = activeTags.filter(t => t.dim === GOOD_DIM)
-  const common = COMMON_FINDING_TAGS.map(n => issueTags.find(t => t.name === n)).filter(Boolean)
-  const commonIds = new Set(common.map(t => t.id))
-  const tagsByDim = [
-    ...(common.length ? [{ d: '⭐ 常用問題', list: common }] : []),
-    ...[...SCORE_DIMS, '其他'].map(d => ({ d, list: issueTags.filter(t => !commonIds.has(t.id) && (SCORE_DIMS.includes(t.dim) ? t.dim : '其他') === d) })).filter(g => g.list.length),
-  ]
+  // 問題標籤按做房次序排列：鋪床 → 抹塵 → 吸塵 → 浴室及杯具 → 玻璃鏡面 → 擺放 → 做房車 → 其他（每條只出現一次）
+  const DIM_ORDER = ['鋪床', '抹塵', '吸塵', '清潔器皿', '玻璃及鏡面', '物品整齊度', '做房車整潔度', '其他']
+  const DIM_LABEL = { 清潔器皿: '浴室及杯具', 物品整齊度: '物品擺放' }
+  const tagsByDim = DIM_ORDER.map(d => ({ d: DIM_LABEL[d] || d, list: issueTags.filter(t => (SCORE_DIMS.includes(t.dim) ? t.dim : '其他') === d) })).filter(g => g.list.length)
   const groups = form?.kind === 'good' ? (goodTags.length ? [{ d: '⭐ 做得好', list: goodTags }] : []) : tagsByDim
 
   // 報告資料（跟住目前篩選）
@@ -179,15 +179,15 @@ export default function Findings() {
         </div>
       )}
 
-      <ToolBar label="查房記錄">
+      {full && <ToolBar label="查房記錄">
         <ToolBtn onClick={() => setStaff(true)}>👥 名單</ToolBtn>
         <ToolBtn onClick={() => setMgr(true)}>⚙ 標籤（{activeTags.length}）</ToolBtn>
         <ExportBtn onClick={() => setReport(true)} />
-      </ToolBar>
-      <div className="chips" style={{ margin: '12px 0 4px' }}>
+      </ToolBar>}
+      {full && <div className="chips" style={{ margin: '12px 0 4px' }}>
         <button className={`chip ${mode === 'rec' ? 'on' : ''}`} onClick={() => setMode('rec')}>記錄</button>
         <button className={`chip ${mode === 'perf' ? 'on' : ''}`} onClick={() => setMode('perf')}>人員表現</button>
-      </div>
+      </div>}
       {mode === 'perf' && <Perf rows={rows} tagById={tagById} atts={atts} onStaff={() => setStaff(true)} edit />}
       <button className="fab" onClick={() => setChoose(true)}>＋</button>
       {choose && (
@@ -203,7 +203,7 @@ export default function Findings() {
       {staff && <StaffModal attendants={atts} onClose={() => setStaff(false)} reload={load} />}
       {mode === 'rec' && (
         <>
-      {repeats.length > 0 && (
+      {full && repeats.length > 0 && (
         <div className="card" style={{ borderColor: 'var(--red)' }}>
           <h2 style={{ color: 'var(--red)' }}>⚠ 重複出現<span style={{ fontSize: 11, color: 'var(--sub)', fontWeight: 400 }}>（{REPEAT_DAYS} 日內同一問題 ≥{REPEAT_MIN} 次）</span></h2>
           {repeats.slice(0, 12).map(r => (
@@ -336,7 +336,7 @@ export default function Findings() {
                 </div>
               )
             })}
-            <button className="btn danger" style={{ marginTop: 14 }} onClick={() => setConfirmDel(view)}>刪除這次記錄</button>
+            {full && <button className="btn danger" style={{ marginTop: 14 }} onClick={() => setConfirmDel(view)}>刪除這次記錄</button>}
             <button className="btn ghost" onClick={() => setView(null)}>關閉</button>
           </div>
         </div>

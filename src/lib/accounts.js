@@ -4,10 +4,10 @@ export const ROLE_LABEL = { admin: '管理員', store: '倉管員', clerk: '文�
 
 // 各系統權限：edit 可編輯／register 只可登記（缺陷）／none 封鎖（顯示為灰色，點擊不能進入）
 export const PERMS = {
-  admin: { quality: 'edit', boh: 'edit', defect: 'edit' },
-  store: { quality: 'none', boh: 'edit', defect: 'edit' },
-  clerk: { quality: 'none', boh: 'none', defect: 'edit' },
-  supervisor: { quality: 'none', boh: 'none', defect: 'register' },
+  admin: { quality: 'edit', findings: 'edit', boh: 'edit', defect: 'edit' },
+  store: { quality: 'none', findings: 'none', boh: 'edit', defect: 'edit' },
+  clerk: { quality: 'none', findings: 'none', boh: 'none', defect: 'edit' },
+  supervisor: { quality: 'none', findings: 'add', boh: 'none', defect: 'register' },   // 查房記錄：可查看與新增，不能刪改
 }
 
 export const ACCOUNTS = [

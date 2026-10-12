@@ -369,7 +369,7 @@ export async function listFindings(sinceDate) {
   return data
 }
 export async function addFindings(rows) {
-  guard()
+  // 樓層主管也可新增查房記錄：不套用唯讀檢查，權限由資料庫把關
   if (isLocal) return local.addFindings(rows)
   const { data, error } = await sb.from('findings').insert(rows).select()
   throwIf(error)
