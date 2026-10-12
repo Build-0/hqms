@@ -268,7 +268,7 @@ export default function Findings({ session }) {
               </select>
             </div>
             <div className="f-row">
-              <label>{form.kind === 'good' ? '④ 做得好的地方（可多選 · 沒有適合的請在下面「補充」填寫）' : '④ 問題（可多選 · 沒有適合的可以不選，在下面「補充」填寫）'}</label>
+              <label>{form.kind === 'good' ? '④ 做得好的地方（可多選）' : '④ 問題（可多選）'}</label>
               {groups.map(g => (
                 <div key={g.d} className="fd-dim">
                   <div className="fd-dim-h">{g.d}</div>
@@ -282,7 +282,7 @@ export default function Findings({ session }) {
                 </div>
               ))}
             </div>
-            <div className="f-row"><label>補充（已選問題可留空 · 可用鍵盤🎤語音輸入）</label><input value={form.note} onChange={e => setForm({ ...form, note: e.target.value })} placeholder="例：浴缸邊" /></div>
+            <div className="f-row"><label>補充（沒有適合的標籤就寫這裡 · 可語音輸入）</label><input value={form.note} onChange={e => setForm({ ...form, note: e.target.value })} placeholder="例：浴缸邊" /></div>
             <div className="f-row"><label>抽查人</label><input value={form.inspector} onChange={e => setForm({ ...form, inspector: e.target.value })} placeholder="抽查人姓名" /></div>
             <button className="btn" disabled={saving || !form.attendant_id || (!form.tag_ids.length && !form.note.trim())} onClick={() => save(true)}>{saving ? '儲存中…' : '儲存，記下一間'}</button>
             <button className="btn ghost" disabled={saving} onClick={() => save(false)} style={{ color: 'var(--accent)', fontWeight: 700 }}>儲存並關閉</button>
