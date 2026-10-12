@@ -69,7 +69,6 @@ export default function Topics() {
       toast('已儲存修改')
     } else {
       await api.addTopic(payload)
-      setCat(payload.category)
       toast('已新增主題')
     }
     setForm(null); setView(null)
@@ -136,18 +135,9 @@ export default function Topics() {
   return (
     <>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '0 4px 6px' }}>
-        <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--sub)' }}>分類 · 共 {topics.length} 個主題</span>
+        <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--sub)' }}>共 {topics.length} 個主題</span>
         <span><button className="linky" style={{ fontSize: 13 }} onClick={() => setReport(true)}>📄 匯出</button><button className="linky" style={{ fontSize: 13 }} onClick={() => setMgr(true)}>⚙️ 編輯分類</button></span>
       </div>
-      <div className="chips wrap">
-        <button className={`chip ${cat === '' ? 'on' : ''}`} onClick={() => setCat('')}>全部<span style={{ opacity: .6 }}> {topics.length}</span></button>
-        {topicCats.filter(k => k.name === cat || topics.some(t => t.category === k.name)).map(k => (
-          <button key={k.name} className={`chip ${k.name === cat ? 'on' : ''}`} onClick={() => setCat(k.name)}>
-            {k.emoji} {k.name}<span style={{ opacity: .6 }}> {topics.filter(t => t.category === k.name).length}</span>
-          </button>
-        ))}
-      </div>
-
       {topics.length === 0 && (
         <button className="add-topic" style={{ marginBottom: 8 }} onClick={importSeed}>⬇ 匯入 {seedTopics.length} 個預設主題</button>
       )}
