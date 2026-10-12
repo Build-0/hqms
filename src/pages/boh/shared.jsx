@@ -87,7 +87,7 @@ export function ListManager({ title, table, rows, onClose, onChanged, usedBy }) 
         {rows.map(r => (
           <div key={r.id} style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
             <input className="df-sel" defaultValue={r.name} onBlur={e => rename(r, e.target.value)} />
-            <button className="logout" style={{ color: 'var(--red)', background: 'var(--red-soft)', flexShrink: 0 }} onClick={() => del(r)}>✕</button>
+            <button className="mini danger" onClick={() => del(r)}>✕</button>
           </div>
         ))}
         <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>

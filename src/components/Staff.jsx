@@ -45,8 +45,8 @@ export default function StaffModal({ attendants, onClose, reload }) {
             <input className="st-fl" defaultValue={a.floor || ''} placeholder="樓層" onBlur={e => e.target.value.trim() !== (a.floor || '') && patch(a, { floor: e.target.value.trim() }, '已更新樓層')} />
             <input className="st-nm" defaultValue={a.name || ''} placeholder="英文名" onBlur={e => e.target.value.trim() !== (a.name || '') && e.target.value.trim() && patch(a, { name: e.target.value.trim() }, '已改名')} />
             <input className="st-nm" defaultValue={a.name_cn || ''} placeholder="中文名" onBlur={e => e.target.value.trim() !== (a.name_cn || '') && patch(a, { name_cn: e.target.value.trim() }, '已改名')} />
-            <button className="logout" style={{ flexShrink: 0, color: a.active ? 'var(--sub)' : 'var(--accent)', background: '#eef1f4' }} onClick={() => patch(a, { active: !a.active })}>{a.active ? '停用' : '啟用'}</button>
-            <button className="logout" style={{ color: 'var(--red)', background: 'var(--red-soft)', flexShrink: 0 }} onClick={() => del(a)}>✕</button>
+            <button className="mini" onClick={() => patch(a, { active: !a.active })}>{a.active ? '停用' : '啟用'}</button>
+            <button className="mini danger" onClick={() => del(a)}>✕</button>
           </div>
         ))}
         <button className="btn ghost" onClick={onClose}>完成</button>

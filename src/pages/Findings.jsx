@@ -408,8 +408,8 @@ function TagManager({ tags, topics, onClose, onChanged }) {
                 <button className="mv-btn" onClick={() => move(t, 1)} aria-label="下移">▼</button>
               </span>
               <input className="fd-inp" defaultValue={t.name} onBlur={e => { const v = e.target.value.trim(); if (v && v !== t.name) patch(t, { name: v }) }} />
-              <button className="logout" style={{ color: 'var(--sub)', background: '#eef1f4', flexShrink: 0 }} onClick={() => patch(t, { active: t.active === false })}>{t.active === false ? '啟用' : '停用'}</button>
-              <button className="logout" style={{ color: 'var(--red)', background: 'var(--red-soft)', flexShrink: 0 }} onClick={() => setConfirmDel(t)}>✕</button>
+              <button className="mini" onClick={() => patch(t, { active: t.active === false })}>{t.active === false ? '啟用' : '停用'}</button>
+              <button className="mini danger" onClick={() => setConfirmDel(t)}>✕</button>
             </div>
             {tab === 'issue' && <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
               <select className="fd-inp" style={{ flex: '0 0 38%' }} value={SCORE_DIMS.includes(t.dim) ? t.dim : ''} onChange={e => patch(t, { dim: e.target.value })}>
@@ -431,7 +431,7 @@ function TagManager({ tags, topics, onClose, onChanged }) {
               {SCORE_DIMS.map(d => <option key={d} value={d}>{d}</option>)}
               <option value="">其他</option>
             </select>}
-            <button className="logout" style={{ color: '#fff', background: 'var(--accent)', flexShrink: 0, padding: '8px 16px' }} onClick={add}>＋ 新增</button>
+            <button className="mini pri" onClick={add}>＋ 新增</button>
           </div>
         </div>
         <button className="btn ghost" onClick={onClose}>完成</button>

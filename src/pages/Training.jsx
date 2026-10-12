@@ -98,7 +98,7 @@ export default function Training() {
             <div className="acc-h" onClick={() => setOpen(open === t.id ? null : t.id)}>
               <span className="acc-e">{t.emoji}</span>
               <span className="acc-t">{t.title}<br /><span className="acc-n">{(t.steps || []).length} 個要點{t.photos?.length ? ` · 📷${t.photos.length}` : ''}</span></span>
-              <button className="logout" style={{ color: 'var(--sub)', background: '#eef1f4' }}
+              <button className="mini"
                 onClick={e => { e.stopPropagation(); openEdit(t) }}>✏️</button>
               <span style={{ color: 'var(--sub)' }}>{open === t.id ? '－' : '＋'}</span>
             </div>

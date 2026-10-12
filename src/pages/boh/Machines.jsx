@@ -195,7 +195,7 @@ export default function Machines({ kind, d, edit, reload, reg }) {
                 {(form.accessories || []).map((a, i) => (
                   <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
                     <input className="df-sel" value={a.name} onChange={e => setForm({ ...form, accessories: form.accessories.map((x, k) => (k === i ? { ...x, name: e.target.value } : x)) })} />
-                    <button className="logout" style={{ color: 'var(--red)', background: 'var(--red-soft)' }} onClick={() => setForm({ ...form, accessories: form.accessories.filter((_, k) => k !== i) })}>✕</button>
+                    <button className="mini danger" onClick={() => setForm({ ...form, accessories: form.accessories.filter((_, k) => k !== i) })}>✕</button>
                   </div>
                 ))}
                 <button className="linky" onClick={() => setForm({ ...form, accessories: [...(form.accessories || []), { name: '', ok: true }] })}>＋ 新增配件</button>

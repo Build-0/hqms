@@ -169,8 +169,8 @@ export default function Defects({ session, init }) {
                     <select className="df-sel sm" value={d.status} onChange={e => setStatus(d, e.target.value)}>
                       {STATUS.map(s => <option key={s.value} value={s.value}>狀態：{s.label}</option>)}
                     </select>
-                    <button className="linky" onClick={() => openEdit(d)}>✎ 編輯</button>
-                    <button className="linky" style={{ color: 'var(--red)' }} onClick={() => setConfirmDel(d)}>🗑 刪除</button>
+                    <button className="mini" onClick={() => openEdit(d)}>✎ 編輯</button>
+                    <button className="mini danger" onClick={() => setConfirmDel(d)}>🗑 刪除</button>
                   </div>
                 )}
               </div>
@@ -295,7 +295,7 @@ function Types({ types, reload }) {
       <h2>缺陷類型（{types.length}）</h2>
       <p className="src-note">刪除類型不會影響已登記的記錄，只是之後登記時不能再選擇。</p>
       {types.map(t => (
-        <div className="df-type-row" key={t}><span>{t}</span><button className="logout" style={{ color: 'var(--red)', background: 'var(--red-soft)' }} onClick={() => setDel(t)}>✕</button></div>
+        <div className="df-type-row" key={t}><span>{t}</span><button className="mini danger" onClick={() => setDel(t)}>✕</button></div>
       ))}
       <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
         <input className="search-inp" style={{ margin: 0 }} placeholder="新增類型，例：11.牆身破損" value={name} onChange={e => setName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') add() }} />

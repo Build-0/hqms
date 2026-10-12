@@ -721,3 +721,9 @@ header h1{flex:1 1 auto !important;min-width:0}
 .login-card .btn{margin-top:14px;padding:15px}
 .gate-big{font-size:14px !important;padding:8px 16px !important;min-height:0 !important;right:16px;box-shadow:var(--shadow-card)}
 input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent) !important;box-shadow:0 0 0 3px var(--accent-soft)}
+
+/* 清單列內的小掣：全站統一（次要／主要／刪除） */
+.mini{height:36px;min-width:44px;padding:0 13px;border-radius:10px;border:none;background:#eef1f4;color:var(--sub);font:600 13.5px/1 inherit;font-family:inherit;cursor:pointer;flex-shrink:0;white-space:nowrap}
+.mini.danger{background:var(--red-soft);color:var(--red)}
+.mini.pri{background:var(--accent);color:#fff}
+.mini:active{opacity:.7}

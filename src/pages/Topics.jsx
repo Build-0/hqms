@@ -276,7 +276,7 @@ export default function Topics() {
                 <span style={{ flex: 1, fontSize: 14, fontWeight: 600 }}>{k.name}</span>
                 <span style={{ fontSize: 11.5, color: 'var(--sub)' }}>{topics.filter(t => t.category === k.name).length} 主題</span>
                 {canEditCats && (
-                  <button className="logout" style={{ color: 'var(--sub)', background: '#eef1f4' }}
+                  <button className="mini"
                     onClick={() => setCatForm({ ...k, _old: k.name })}>✏️</button>
                 )}
               </div>

@@ -259,7 +259,7 @@ function CatManager({ d, onClose, reload }) {
           <div key={c.id} style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
             <input className="df-sel" style={{ flex: '0 0 56px', textAlign: 'center' }} defaultValue={c.icon} onBlur={e => e.target.value !== c.icon && upd(c, { icon: e.target.value })} />
             <input className="df-sel" defaultValue={c.name_zh} onBlur={e => e.target.value.trim() && e.target.value !== c.name_zh && upd(c, { name_zh: e.target.value.trim(), name_en: e.target.value.trim() })} />
-            <button className="logout" style={{ color: 'var(--red)', background: 'var(--red-soft)', flexShrink: 0 }} onClick={() => rm(c)}>✕</button>
+            <button className="mini danger" onClick={() => rm(c)}>✕</button>
           </div>
         ))}
         <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
