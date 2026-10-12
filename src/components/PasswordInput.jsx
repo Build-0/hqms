@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-// 密碼欄：右邊有眼睛掣，按住或點一下可以睇返自己打咗乜，檢查有冇打錯
+// 密碼欄：右邊有眼睛掣，按住或點一下可以查看自己輸入的內容，檢查有沒有輸入錯誤
 export default function PasswordInput({ value, onChange, autoComplete = 'current-password', ...rest }) {
   const [show, setShow] = useState(false)
   return (

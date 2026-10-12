@@ -52,7 +52,7 @@ export default function App() {
   const [refreshing, setRefreshing] = useState(false)  // 刷新中（轉圈）
   const [rk, setRk] = useState(0)                        // 刷新計數：改變即重新載入目前頁面資料
   const [newVer, setNewVer] = useState(false)       // 偵測到新版本
-  const [askLogout, setAskLogout] = useState(false)   // 登出前確認，避免撳錯
+  const [askLogout, setAskLogout] = useState(false)   // 登出前確認，避免點錯
 
   // 員工帳號：登入狀態失效（過期／被登出）就回登入頁
   useEffect(() => {
@@ -168,7 +168,7 @@ export default function App() {
           </div>
         )}
       </main>
-      {newVer && <button className="newver" onClick={hardReload}>🔄 有新版本，撳此更新</button>}
+      {newVer && <button className="newver" onClick={hardReload}>🔄 有新版本，點此更新</button>}
       {settings && (
         <div className="modal" onClick={e => { if (e.target === e.currentTarget) setSettings(false) }}>
           <div className="sheet st-sheet">

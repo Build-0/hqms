@@ -285,7 +285,7 @@ function Types({ types, reload }) {
   return (
     <div className="card">
       <h2>缺陷類型（{types.length}）</h2>
-      <p className="src-note">刪除類型不會影響已登記的記錄，只是之後登記時揀唔到。</p>
+      <p className="src-note">刪除類型不會影響已登記的記錄，只是之後登記時不能再選擇。</p>
       {types.map(t => (
         <div className="df-type-row" key={t}><span>{t}</span><button className="logout" style={{ color: 'var(--red)', background: 'var(--red-soft)' }} onClick={() => setDel(t)}>✕</button></div>
       ))}

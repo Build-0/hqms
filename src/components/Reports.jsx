@@ -173,27 +173,29 @@ export function TopicsReport({ groups, total }) {
 
 // ── 清潔要點 ──
 export function CleaningReport({ data }) {
-  const { daily, spot, cycle, deep } = data
+  const { daily, spot, cycle, deep, only } = data
+  const show = k => !only || only === k
+  const ph = r => [...(r.photos || []).slice(0, 2).map(p => ['✓', p]), ...(r.photos_wrong || []).slice(0, 2).map(p => ['✗', p])]
   const tbl = (rows, withWrong) => (
     <table className="rpt-t">
-      <thead><tr><th style={{ width: '22%' }}>類別</th><th>項目</th>{withWrong && <th style={{ width: '34%' }}>常見錯誤</th>}</tr></thead>
+      <thead><tr><th style={{ width: '22%' }}>類別</th><th>項目</th>{withWrong && <th style={{ width: '26%' }}>常見錯誤</th>}<th style={{ width: '24%' }}>相片</th></tr></thead>
       <tbody>
-        {rows.map((r, i) => <tr key={i}><td>{[r.grp, r.area].filter(Boolean).join(' · ') || '—'}</td><td>{r.text}</td>{withWrong && <td>{r.wrong || '—'}</td>}</tr>)}
+        {rows.map((r, i) => <tr key={i}><td>{[r.grp, r.area].filter(Boolean).join(' · ') || '—'}</td><td>{r.text}</td>{withWrong && <td>{r.wrong || '—'}</td>}<td><div style={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>{ph(r).map(([m, p], k) => <span key={k} style={{ position: 'relative' }}><img className="rpt-th" src={p} alt="" /><small style={{ position: 'absolute', left: 1, top: 0, fontSize: 10, fontWeight: 800, color: m === '✓' ? '#1b8a5a' : '#c62828' }}>{m}</small></span>)}</div></td></tr>)}
       </tbody>
     </table>
   )
   return (
     <>
-      <Sub>每日清潔 · {daily.length} 項</Sub>{daily.length ? tbl(daily, true) : <Empty />}
-      <Sub>常見錯誤／衛生點 · {spot.length} 項</Sub>{spot.length ? tbl(spot, true) : <Empty />}
-      <Sub>循環清潔（每月排程）· {cycle.length} 項</Sub>
+      {show('daily') && <><Sub>每日清潔 · {daily.length} 項</Sub>{daily.length ? tbl(daily, true) : <Empty />}</>}
+      {show('spot') && <><Sub>常見錯誤／衛生點 · {spot.length} 項</Sub>{spot.length ? tbl(spot, true) : <Empty />}</>}
+      {show('cycle') && <><Sub>循環清潔（每月排程）· {cycle.length} 項</Sub>
       {cycle.length ? (
         <table className="rpt-t">
           <thead><tr><th style={{ width: '16%' }}>日期</th><th>項目</th></tr></thead>
           <tbody>{cycle.map((r, i) => <tr key={i}><td className="rpt-nw">{r.day ? `每月 ${r.day} 號` : '不定期'}</td><td>{r.text}</td></tr>)}</tbody>
         </table>
-      ) : <Empty />}
-      <Sub>深度清潔 · {deep.length} 項</Sub>{deep.length ? tbl(deep, false) : <Empty />}
+      ) : <Empty />}</>}
+      {show('deep') && <><Sub>深度清潔 · {deep.length} 項</Sub>{deep.length ? tbl(deep, false) : <Empty />}</>}
     </>
   )
 }
@@ -324,13 +326,13 @@ export function DefectReport({ data }) {
   )
 }
 
-// ── 早會講稿：管理員揀最多 3 項，列印成一張紙，早會沒有特別事項時照住講 ──
+// ── 早會講稿：管理員揀最多 3 項，列印成一張紙，早會沒有特別事項時照著講 ──
 export function SpeechSheet({ items }) {
   const list = (a, tag) => (a && a.length ? <ol className="rpt-sl">{a.map((x, i) => <li key={i}>{x}</li>)}</ol> : null)
   const bul = a => (a && a.length ? <ul className="rpt-sl">{a.map((x, i) => <li key={i}>{x}</li>)}</ul> : null)
   return (
     <div className="rpt-big">
-      {items.length === 0 && <Empty>未有揀選內容</Empty>}
+      {items.length === 0 && <Empty>尚未選擇內容</Empty>}
       {items.map((it, idx) => {
         const t = it.topic, c = it.complaint
         const photos = (it.photos || []).slice(0, 3)

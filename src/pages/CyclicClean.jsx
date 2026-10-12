@@ -234,10 +234,15 @@ export default function CyclicClean() {
       <div className="card">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
           <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 7 }}><Icon name={sec.icon} size={18} color={sec.color} /> {sec.title}</h2>
-          <button className="linky" style={{ fontSize: 13 }}
-            onClick={() => setForm({ section: sub, day: sub === 'cycle' ? String(todayD) : null, grp: sub === 'daily' ? '抹塵' : '', area: sub === 'daily' ? '房間' : '', text: '', wrong: '', photos: [], photos_wrong: [] })}>＋ 新增</button>
+          <span><button className="linky" style={{ fontSize: 13 }} onClick={() => setReport(true)}>📄 匯出</button><button className="linky" style={{ fontSize: 13 }}
+            onClick={() => setForm({ section: sub, day: sub === 'cycle' ? String(todayD) : null, grp: sub === 'daily' ? '抹塵' : '', area: sub === 'daily' ? '房間' : '', text: '', wrong: '', photos: [], photos_wrong: [] })}>＋ 新增</button></span>
         </div>
         {sec.hint && <p className="src-note">{sec.hint}</p>}
+        {report && (
+          <ReportModal title={`清潔要點 · ${sec.title}`} sub={todayStr()} onClose={() => setReport(false)}>
+            <CleaningReport data={{ daily: [], spot: [], cycle: [], deep: [], [sub]: rows, only: sub }} />
+          </ReportModal>
+        )}
 
         {sub === 'cycle' && (
           <>

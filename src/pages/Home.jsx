@@ -76,7 +76,7 @@ export default function Home({ session, go }) {
         <button className="hm-wide" onClick={() => go('findings')}>
           <span className="hm-lab">近 7 日最常見問題</span>
           <b>{d.top.name}</b>
-          <span className="hm-sub">共 {d.top.n} 次，撳入去睇查房記錄</span>
+          <span className="hm-sub">共 {d.top.n} 次，點進去查看查房記錄</span>
         </button>
       )}
     </div>

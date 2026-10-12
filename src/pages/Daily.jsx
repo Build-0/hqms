@@ -9,7 +9,7 @@ import { canExport } from '../lib/accounts'
 const isCore = c => (c.dept || (c.nature === '工程投訴' ? '工程其他' : '客房')) === '客房'
   && (c.nature === '工程投訴' ? '投訴' : (c.nature || '投訴')) === '投訴'
 
-// 早會「今日講 3 件事」卡：預設只見標題、相片、一句重點；撳開先見詳情
+// 早會「今日講 3 件事」卡：預設只見標題、相片、一句重點；點開才見詳情
 function TalkCard({ n, it, open, onToggle }) {
   const t = it.topic, c = it.complaint
   const key = c ? (c.correct_standard || c.guest_comment) : t ? ((t.correct_steps || [])[0] || t.why) : ''
@@ -24,7 +24,7 @@ function TalkCard({ n, it, open, onToggle }) {
       </button>
       {photos.length > 0 && <div className="tk-ph">{photos.map((p, i) => <img key={i} src={p} alt="" loading="lazy" />)}</div>}
       {key && <p className="tk-key"><span>標準</span>{key}</p>}
-      {!key && it.kind === 'finding' && <p className="tk-key" style={{ color: 'var(--sub)' }}><span style={{ background: 'var(--bg)', color: 'var(--sub)' }}>討論</span>請同事講返正確做法，主管補充</p>}
+      {!key && it.kind === 'finding' && <p className="tk-key" style={{ color: 'var(--sub)' }}><span style={{ background: 'var(--bg)', color: 'var(--sub)' }}>討論</span>請同事說出正確做法，主管補充</p>}
       {open && (
         <div className="tk-b">
           {c && (
@@ -70,7 +70,7 @@ export default function Daily() {
     const [complaints, topics, kk] = await Promise.all([api.listComplaints(), api.listTopics(), api.listCategories()])
     const cats = kk?.length ? kk : DEFAULT_CATEGORIES
     const ycs = complaints.filter(c => c.date === yesterday && isCore(c))
-    const pool = topics.filter(t => t.category !== 'SOP')   // SOP 是獨立嘅標準文件，不參與自動選題（仍可手動自選）
+    const pool = topics.filter(t => t.category !== 'SOP')   // SOP 是獨立的標準文件，不參與自動選題（仍可手動自選）
     const pick = n => (pool.length ? pool[(Math.floor(Date.parse(today + 'T00:00:00Z') / 86400000) + n) % pool.length] : null)
 
     // 近 7 日查房記錄 → 最常見問題、做得好（今日重點的主要來源）
@@ -188,7 +188,7 @@ export default function Daily() {
   cands.filter(c => c.kind === 'finding').forEach(c => autoKeys.length < MAXT && autoKeys.push(c.key))
   const usedTopics = new Set(cands.filter(c => autoKeys.includes(c.key) && c.topic).map(c => c.topic.id))
   slots.filter(sl => sl.topic && !usedTopics.has(sl.topic.id)).forEach(sl => { if (autoKeys.length < MAXT) autoKeys.push('t:' + sl.topic.id) })
-  // 自選：存喺今日記錄的 source2 欄（'custom:' + JSON），所有裝置睇到同一份
+  // 自選：存在今日記錄的 source2 欄（'custom:' + JSON），所有裝置看到同一份
   let customKeys = null
   if (typeof focus.source2 === 'string' && focus.source2.startsWith('custom:')) { try { customKeys = JSON.parse(focus.source2.slice(7)) } catch { customKeys = null } }
   const todayKeys = (customKeys || autoKeys).filter(k => byKey(k)).slice(0, MAXT)
@@ -200,7 +200,7 @@ export default function Daily() {
   const groups = [...new Set(visible.map(c => c.group))]
   const openPick = mode => {
     if (mode === 'export' && !canExport()) { setReport(true); return }
-    setSel(todayKeys); setTq(''); setPick(mode)   // 預設就是畫面上今日講嗰幾項
+    setSel(todayKeys); setTq(''); setPick(mode)   // 預設就是畫面上今日講的幾項
   }
   async function saveCustom() {
     try { await api.patchFocus(todayStr(), { source2: 'custom:' + JSON.stringify(sel) }); setPick(null); toast('已更新今日內容'); load() } catch (ex) { toast('儲存失敗：' + ex.message) }
@@ -212,7 +212,7 @@ export default function Daily() {
         <h2>今日講 {talk.length} 件事</h2>
         <span>{todayStr().slice(5).replace('-', '月')}日　約 5 分鐘</span>
       </div>
-      <div className="dy-sub"><span>{customKeys ? '✎ 已自選今日內容' : '系統自動揀選'}</span><button className="linky" onClick={() => openPick('edit')}>✎ 自選內容</button></div>
+      <div className="dy-sub"><span>{customKeys ? '✎ 已自選今日內容' : '系統自動選題'}</span><button className="linky" onClick={() => openPick('edit')}>✎ 自選內容</button></div>
       {talk.map((it, i) => <TalkCard key={it.key} n={i + 1} it={it} open={open === it.key} onToggle={() => setOpen(open === it.key ? '' : it.key)} />)}
       {digest.good.length > 0 && (
         <div className="dy-good">
@@ -224,8 +224,8 @@ export default function Daily() {
       {pick && (
         <div className="modal" onClick={e => { if (e.target === e.currentTarget) setPick(null) }}>
           <div className="sheet">
-            <h2>{pick === 'edit' ? '自選今日講嘅內容' : '匯出早會講稿'}</h2>
-            <p className="src-note">{pick === 'edit' ? `揀最多 ${MAXT} 項（已揀 ${sel.length}/${MAXT}），今日早會就講呢幾樣，所有裝置都會見到。` : `預設係畫面上今日講嘅 ${MAXT} 項，可以改（已揀 ${sel.length}/${MAXT}）。有相片會一齊印出。`}</p>
+            <h2>{pick === 'edit' ? '自選今日要講的內容' : '匯出早會講稿'}</h2>
+            <p className="src-note">{pick === 'edit' ? `最多選 ${MAXT} 項（已選 ${sel.length}/${MAXT}），今日早會就講這幾項，所有裝置都會看到。` : `預設是畫面上今日要講的 ${MAXT} 項，可以修改（已選 ${sel.length}/${MAXT}）。有相片會一併印出。`}</p>
             <input className="search-inp" placeholder="🔍 搜尋主題庫" value={tq} onChange={e => setTq(e.target.value)} />
             {groups.map(g => (
               <div key={g}>
@@ -243,7 +243,7 @@ export default function Daily() {
               </div>
             ))}
             {pick === 'edit'
-              ? <button className="btn" disabled={sel.length === 0} onClick={saveCustom}>確定，今日改講呢 {sel.length} 項</button>
+              ? <button className="btn" disabled={sel.length === 0} onClick={saveCustom}>確定，今日改講這 {sel.length} 項</button>
               : <button className="btn" disabled={sel.length === 0} onClick={() => { setPick(null); setReport(true) }}>預覽並匯出（{sel.length} 項）</button>}
             <button className="btn ghost" onClick={() => setPick(null)}>取消</button>
           </div>
@@ -264,7 +264,7 @@ export default function Daily() {
         <button className="btn ghost" onClick={() => openPick('export')}>📄 匯出早會講稿</button>
         <button className="linky" onClick={regen}>↺ 恢復自動選題</button>
       </div>
-      <p className="dy-note">{customKeys ? '目前係你自選嘅內容；「恢復自動選題」會改返由系統揀。' : st.hadYesterday ? '系統自動揀：昨日有投訴，已排在最前。' : '系統自動揀：優先近 7 日查房常見問題，不足 3 項先用主題庫補位。'}{tomorrowName ? ` 明日已指定：${tomorrowName}` : ''}</p>
+      <p className="dy-note">{customKeys ? '目前是你自選的內容；「恢復自動選題」會改回由系統選題。' : st.hadYesterday ? '系統自動選題：昨日有投訴，已排在最前。' : '系統自動選題：優先近 7 日查房常見問題，不足 3 項才用主題庫補位。'}{tomorrowName ? ` 明日已指定：${tomorrowName}` : ''}</p>
     </div>
   )
 }

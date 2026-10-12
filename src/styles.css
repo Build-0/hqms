@@ -519,7 +519,7 @@ header.hdr-home h1{font-size:25px;font-weight:800;letter-spacing:.5px}
 .pw-eye:active{background:var(--accent-soft)}
 
 /* ── 手機防放大／防超出畫面 ──
-   iPhone 在輸入框字體小於 16px 時，一撳入去就會自動放大且不會縮回，所以手機上一律 16px。
+   iPhone 在輸入框字體小於 16px 時，一點進去就會自動放大且不會縮回，所以手機上一律 16px。
    日期等欄位在 iOS 有固有闊度，限制為不超過所在格子。 */
 html,body{max-width:100%;overflow-x:hidden;-webkit-text-size-adjust:100%}
 @media (max-width:900px){
@@ -560,7 +560,7 @@ html.big .phone,html.big #root{min-height:calc(100vh / var(--zf))}
 html.big .sheet{max-height:calc(88vh / var(--zf))}
 @media (min-width:760px){html.big .sheet{max-height:calc(86vh / var(--zf))}}
 html.big .lightbox img{max-height:calc(88vh / var(--zf));max-width:calc(92vw / var(--zf))}
-/* 標題列：標題至少保留可讀闊度，掣組放不下就換行 */
+/* 標題列：標題至少保留可讀闊度，按鈕組放不下就換行 */
 header>div:first-child{flex-wrap:wrap;row-gap:8px}
 header h1{flex:1 1 6em !important;min-width:5.5em}
 .hdr-acts{display:flex;gap:6px;align-items:center;margin-left:auto;flex-shrink:0}
@@ -635,3 +635,12 @@ header h1{flex:1 1 auto !important;min-width:0}
 .da-sides .da-duo{gap:5px}
 .da-sides .da-ph{aspect-ratio:1/1;border-radius:7px}
 .da-sides .da-duo .da-ph.empty{grid-column:1/-1;flex-direction:column;text-align:center;line-height:1.5}
+
+/* 培訓主題庫：正方形卡片，一行兩張 */
+.t-grid{grid-template-columns:1fr 1fr;gap:10px}
+.t-item{flex-direction:column;justify-content:center;text-align:center;aspect-ratio:1/1;padding:12px 10px;gap:10px;position:relative}
+.t-item .t-ico{width:52px;height:52px;font-size:27px;border-radius:14px}
+.t-item .t-mid{flex:0 0 auto;width:100%}
+.t-item .tt{font-size:14.5px;font-weight:700;line-height:1.4;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.t-item .arrow{display:none}
+@media (min-width:600px){.t-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}}
