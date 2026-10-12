@@ -44,7 +44,7 @@ export default function Complaints() {
   const [natureF, setNatureF] = useState('全部')
   const [catF, setCatF] = useState('全部')
   const [floorF, setFloorF] = useState('全部')
-  const [allScope, setAllScope] = useState(false) // true=列表顯示全部月份（點累計排行時）
+  const [allScope, setAllScope] = useState(true) // true=列表顯示全部月份（預設全部；切換月份或按「回到本月」才只看該月）
   const [srcF, setSrcF] = useState('全部')
   const [sortF, setSortF] = useState('最新')
   const [q, setQ] = useState('')
