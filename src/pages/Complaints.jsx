@@ -237,7 +237,7 @@ export default function Complaints() {
               inv: core.length, ab: shown.filter(c => natOf(c) === '濫訴').length, eng: shown.filter(c => deptOf(c) === '工程其他').length, total: shown.length,
               rank: (() => { const o = {}; for (const c of core) for (const k of catsOf(c)) o[k] = (o[k] || 0) + 1; return Object.entries(o).map(([cat, n]) => ({ cat, n })).sort((x, y) => y.n - x.n).slice(0, 12) })(),
               floorRank: (() => { const o = {}; for (const c of core) { const f = floorOf(c.room); const key = f === null ? '無房號' : `${f}`; o[key] = (o[key] || 0) + 1 } return Object.entries(o).sort((x, y) => y[1] - x[1]).slice(0, 12) })(),
-              rows: shown.slice().sort((x, y) => y.date.localeCompare(x.date)).map(c => ({ date: c.date, room: c.room, category: c.category, tag: natOf(c) === '濫訴' ? '濫訴' : deptOf(c) === '工程其他' ? '工程' : '', guest_comment: c.guest_comment, improvement: c.improvement })),
+              rows: shown.slice().sort((x, y) => y.date.localeCompare(x.date)).map(c => ({ photos: c.photos, date: c.date, room: c.room, category: c.category, tag: natOf(c) === '濫訴' ? '濫訴' : deptOf(c) === '工程其他' ? '工程' : '', guest_comment: c.guest_comment, improvement: c.improvement })),
             }} />
           </ReportModal>
         )

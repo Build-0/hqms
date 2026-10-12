@@ -89,6 +89,8 @@ export function ScoresReport({ data }) {
 // ── 客訴月報 ──
 export function ComplaintsReport({ data }) {
   const { inv, ab, eng, total, rank, floorRank, rows } = data
+  const [withPhotos, setWithPhotos] = useState(true)
+  const hasPhoto = rows.some(c => (c.photos || []).length)
   return (
     <>
       <p className="rpt-mut">客房投訴 {inv} 單 · 濫訴 {ab} 單 · 工程與其他 {eng} 單 · 合計 {total} 單</p>
@@ -97,6 +99,7 @@ export function ComplaintsReport({ data }) {
         <div><Sub>樓層分佈（客房投訴）</Sub>{floorRank.length ? <Bars rows={floorRank.map(([f, n]) => ({ k: f === '無房號' ? f : `${f} 樓`, n }))} /> : <Empty />}</div>
       </div>
       <Sub>客訴明細</Sub>
+      {hasPhoto && <label className="rpt-noprint rpt-check"><input type="checkbox" checked={withPhotos} onChange={e => setWithPhotos(e.target.checked)} /> 附上相片</label>}
       {rows.length === 0 ? <Empty>本月沒有記錄</Empty> : (
         <table className="rpt-t">
           <thead><tr><th>日期</th><th>房號</th><th>分類</th><th>客人反映</th><th>改善措施</th></tr></thead>
@@ -105,7 +108,7 @@ export function ComplaintsReport({ data }) {
               <tr key={i}>
                 <td className="rpt-nw">{c.date.slice(5)}</td><td className="rpt-nw">{c.room}</td>
                 <td>{c.category}{c.tag ? <span className="rpt-mut"> · {c.tag}</span> : ''}</td>
-                <td>{c.guest_comment}</td><td>{c.improvement || '—'}</td>
+                <td>{c.guest_comment}{withPhotos && (c.photos || []).length > 0 && <div className="rpt-fd-ph">{c.photos.slice(0, 3).map((p, k) => <img key={k} src={p} alt="" />)}</div>}</td><td>{c.improvement || '—'}</td>
               </tr>
             ))}
           </tbody>
@@ -338,7 +341,8 @@ export function SpeechSheet({ items }) {
       {items.length === 0 && <Empty>尚未選擇內容</Empty>}
       {items.map((it, idx) => {
         const t = it.topic, c = it.complaint
-        const photos = (it.photos || []).slice(0, 3)
+        const okP = t ? (t.photos || []).slice(0, 2) : [], noP = t ? (t.photos_wrong || []).slice(0, 2) : []
+        const photos = it.kind === 'topic' && (okP.length || noP.length) ? [] : (it.photos || []).slice(0, 3)
         return (
           <div className="rpt-keep rpt-sp" key={idx}>
             <div className="rpt-sp-h"><span className="rpt-sp-n">{idx + 1}</span><b>{it.title}</b><span className="rpt-sp-tag">{it.source}</span></div>
@@ -354,8 +358,8 @@ export function SpeechSheet({ items }) {
               <>
                 {t.why && <p>{t.why}</p>}
                 <div className="rpt-two">
-                  <div className="rpt-box"><h4>✓ 正確做法</h4>{list(t.correct_steps) || <p>—</p>}</div>
-                  <div className="rpt-box"><h4>✗ 常見錯誤</h4>{bul(t.mistakes) || <p>—</p>}</div>
+                  <div className="rpt-box"><h4>✓ 正確做法</h4>{list(t.correct_steps) || <p>—</p>}{okP.length > 0 && <div className="rpt-ph3">{okP.map((p, k) => <img key={k} src={p} alt="" />)}</div>}</div>
+                  <div className="rpt-box"><h4>✗ 常見錯誤</h4>{bul(t.mistakes) || <p>—</p>}{noP.length > 0 && <div className="rpt-ph3">{noP.map((p, k) => <img key={k} src={p} alt="" />)}</div>}</div>
                 </div>
               </>
             )}
