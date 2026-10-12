@@ -262,9 +262,8 @@ export default function Daily() {
 
       <div className="dy-foot">
         <button className="btn" onClick={() => openPick('export')}>📄 匯出早會講稿</button>
-        <button className="linky" onClick={regen}>↺ 恢復自動選題</button>
       </div>
-      <p className="dy-note">{customKeys ? '目前是你自選的內容；「恢復自動選題」會改回由系統選題。' : st.hadYesterday ? '系統自動選題：昨日有投訴，已排在最前。' : '系統自動選題：優先近 7 日查房常見問題，不足 3 項才用主題庫補位。'}{tomorrowName ? ` 明日已指定：${tomorrowName}` : ''}</p>
+      <p className="dy-note">{customKeys ? '目前是你自選的內容，可按上面「自選內容」修改。' : st.hadYesterday ? '系統自動選題：昨日有投訴，已排在最前。' : '系統自動選題：優先近 7 日查房常見問題，不足 3 項才用主題庫補位。'}{tomorrowName ? ` 明日已指定：${tomorrowName}` : ''}</p>
     </div>
   )
 }
