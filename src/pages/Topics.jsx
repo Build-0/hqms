@@ -8,6 +8,15 @@ import { PhotoGrid, PhotoField } from '../components/Photos'
 import Confirm from '../components/Confirm'
 import { ReportModal, TopicsReport } from '../components/Reports'
 
+// 依題目名稱配一個意思相近的圖示；配不到就用分類圖示
+const ICONS = [
+  ['床單', '🛏️'], ['鋪床', '🛏️'], ['排水', '🚿'], ['毛髮', '🚿'], ['馬桶', '🚽'], ['浴巾', '🧺'], ['布草', '🧺'],
+  ['沐浴', '🧴'], ['貴重', '💎'], ['L&F', '🎒'], ['Lost', '🎒'], ['遺留', '🎒'], ['化學', '🧪'], ['濕滑', '⚠️'],
+  ['走火', '🚪'], ['DND', '🔕'], ['敲門', '🚪'], ['禮儀', '🙂'], ['服務', '🙂'], ['VIP', '⭐'], ['Stayover', '🛎️'],
+  ['吧桶', '🪣'], ['吸塵', '🧹'], ['工作車', '🛒'], ['工作間', '🗄️'], ['鏡', '🪞'], ['玻璃', '🪟'], ['杯', '🥛'],
+  ['遙控', '📺'], ['退房', '🧳'], ['衛生', '🧼'], ['清潔流程', '📋'], ['安全', '🦺'], ['新員工', '🎓'], ['地毯', '🟫'], ['氣味', '🌫️'],
+]
+const topicIcon = (t, fallback) => (ICONS.find(([k]) => t.title.includes(k)) || [])[1] || fallback
 const EMPTY = { category: '', title: '', why: '', correct_steps: [], mistakes: [], supervisor_check: '', reminder: '', question: '', answer: '', photos: [] }
 
 export default function Topics() {
@@ -149,7 +158,7 @@ export default function Topics() {
               const mm = m(t.category)
               return (
                 <div className="t-item" key={t.id} onClick={() => { setView(t); setShowA(false) }}>
-                  <div className="t-ico" style={{ background: mm.s }}>{mm.e}</div>
+                  <div className="t-ico" style={{ background: mm.s }}>{topicIcon(t, mm.e)}</div>
                   <div className="t-mid">
                     <div className="tt">{t.title}</div>
                   </div>
