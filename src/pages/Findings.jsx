@@ -154,7 +154,8 @@ export default function Findings({ session }) {
   const suggested = form ? activeAtts.filter(a => fl != null && floorOfAtt(a) === fl)
     .sort((x, y) => String(x.floor).localeCompare(String(y.floor))) : []
   const lastAtt = form && attById[lsGet(LS_ATT)]
-  const quick = form ? [...(lastAtt && lastAtt.active && !suggested.includes(lastAtt) ? [lastAtt] : []), ...suggested] : []
+  // 已輸入房號並認得樓層時，只顯示該樓層房務員；未有房號才補上「上次用過」的人
+  const quick = form ? [...(fl == null && lastAtt && lastAtt.active && !suggested.includes(lastAtt) ? [lastAtt] : []), ...suggested] : []
   if (form && form.attendant_id && attById[form.attendant_id] && !quick.includes(attById[form.attendant_id])) quick.unshift(attById[form.attendant_id])
 
   const issueTags = activeTags.filter(t => t.dim !== GOOD_DIM)
