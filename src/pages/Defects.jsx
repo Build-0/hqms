@@ -34,7 +34,7 @@ export default function Defects({ session, init }) {
   const [types, setTypes] = useState([])
   const [err, setErr] = useState('')
   const [tab, setTab] = useState(init ? 'list' : null)   // null ＝ 圓形入口選單（只有可編輯帳號；只可登記的帳號直接是列表）
-  const [f, setF] = useState({ search: '', floor: '', status: init?.status || '', severity: '', type: '' })
+  const [f, setF] = useState({ search: '', floor: init?.floor || '', status: init?.status || '', severity: '', type: init?.type || '' })
   const [sortBy, setSortBy] = useState('date-desc')
   const [form, setForm] = useState(null)       // 新增／編輯表單
   const [view, setView] = useState(null)

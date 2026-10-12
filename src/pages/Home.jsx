@@ -27,8 +27,11 @@ export default function Home({ session, go }) {
           r.processing = rows.filter(x => x.status === 'processing').length
           if (session && session.role === 'supervisor') {
             r.floors = fl && fl.length ? fl : null
-            r.mineOpen = rows.filter(x => x.status !== 'done')
-              .sort((a, b) => String(a.register_date || a.created_at).localeCompare(String(b.register_date || b.created_at)))
+            const open = rows.filter(x => x.status !== 'done')
+            r.mineOpenN = open.length
+            const by = {}
+            open.forEach(x => { const k = String(x.type || '其他').replace(/^\d+\.\s*/, ''); const o = (by[k] = by[k] || { type: x.type, name: k, n: 0, high: 0 }); o.n++; if (x.severity === 'high') o.high++ })
+            r.byType = Object.values(by).sort((a, b) => b.n - a.n)
             r.new7 = rows.filter(x => String(x.register_date || x.created_at).slice(0, 10) >= addDaysStr(-6)).length
           }
         }
@@ -86,31 +89,25 @@ export default function Home({ session, go }) {
     <div className="hm">
       <h2 className="hm-h">今日概覽</h2>
       <div className="hm-grid">{tiles}</div>
-      {isSup && d.mineOpen && (
+      {isSup && d.byType && (
         <div className="hm-mine">
           <div className="hm-mine-h"><b>{d.floors ? `歡迎，${d.floors.join('、')} 樓主管` : '歡迎，樓層主管'}</b><span>缺陷總覽</span></div>
           <div className="hm-mine-n">
-            <button onClick={() => go('defect', { status: 'pending' })}><b style={{ color: d.pending ? '#c62828' : undefined }}>{d.pending}</b><span>待處理</span></button>
-            <button onClick={() => go('defect', { status: 'processing' })}><b style={{ color: d.processing ? '#e69500' : undefined }}>{d.processing}</b><span>處理中</span></button>
-            <button onClick={() => go('defect')}><b>{d.new7}</b><span>近 7 日新增</span></button>
+            <button onClick={() => go('defect', { status: 'pending', floor: d.floors && d.floors.length === 1 ? d.floors[0] : '' })}><b style={{ color: d.pending ? '#c62828' : undefined }}>{d.pending}</b><span>待處理</span></button>
+            <button onClick={() => go('defect', { status: 'processing', floor: d.floors && d.floors.length === 1 ? d.floors[0] : '' })}><b style={{ color: d.processing ? '#e69500' : undefined }}>{d.processing}</b><span>處理中</span></button>
+            <button onClick={() => go('defect', { floor: d.floors && d.floors.length === 1 ? d.floors[0] : '' })}><b>{d.new7}</b><span>近 7 日新增</span></button>
           </div>
-          {d.mineOpen.length === 0 && <p className="hm-mine-empty">目前沒有未處理的缺陷 👍</p>}
-          {d.mineOpen.slice(0, 5).map(x => (
-            <button className="hm-row" key={x.id} onClick={() => go('defect', { status: x.status })}>
-              <b>{x.room}</b><span className="hm-row-t">{x.type}</span>
-              <span className={`badge ${(SEV[x.severity] || [])[1] || 'b-gray'}`}>{(SEV[x.severity] || [x.severity])[0]}</span>
-              <span className="hm-row-d">{ago(x)} 日</span>
+          {d.byType.length === 0 && <p className="hm-mine-empty">目前沒有未處理的缺陷 👍</p>}
+          {d.byType.length > 0 && <div className="hm-ty-h">按缺陷類型</div>}
+          {d.byType.slice(0, 6).map(t => (
+            <button className="hm-ty" key={t.name} onClick={() => go('defect', { type: t.type, floor: d.floors && d.floors.length === 1 ? d.floors[0] : '' })}>
+              <span className="hm-ty-n">{t.name}</span>
+              <span className="hm-ty-bar"><i style={{ width: Math.max(8, Math.round(t.n / d.byType[0].n * 100)) + '%' }} /></span>
+              <b>{t.n}</b>
             </button>
           ))}
-          {d.mineOpen.length > 5 && <button className="linky" style={{ fontSize: 13, margin: '6px 0 0' }} onClick={() => go('defect')}>查看全部 {d.mineOpen.length} 筆 ›</button>}
+          {d.byType.length > 6 && <button className="linky" style={{ fontSize: 13, margin: '6px 0 0' }} onClick={() => go('defect')}>另有 {d.byType.length - 6} 種類型 ›</button>}
         </div>
-      )}
-      {perm.quality !== 'none' && d.top && (
-        <button className="hm-wide" onClick={() => go('findings')}>
-          <span className="hm-lab">近 7 日最常見問題</span>
-          <b>{d.top.name}</b>
-          <span className="hm-sub">共 {d.top.n} 次，點進去查看查房記錄</span>
-        </button>
       )}
     </div>
   )

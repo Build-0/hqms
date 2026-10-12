@@ -703,3 +703,9 @@ header h1{flex:1 1 auto !important;min-width:0}
 .hm-mine-empty{font-size:13px;color:var(--sub);text-align:center;margin:8px 0 2px}
 .hm-row{width:100%;display:flex;align-items:center;gap:8px;background:none;border:none;border-top:1px solid var(--line);padding:10px 2px;font-family:inherit;color:var(--ink);cursor:pointer;text-align:left}
 .hm-row b{font-size:16px;min-width:40px}.hm-row-t{flex:1;min-width:0;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.hm-row-d{font-size:12px;color:var(--sub);min-width:34px;text-align:right}
+
+.hm-ty-h{font-size:12px;color:var(--sub);font-weight:700;margin:6px 2px 2px}
+.hm-ty{width:100%;display:flex;align-items:center;gap:10px;background:none;border:none;border-top:1px solid var(--line);padding:11px 2px;font-family:inherit;color:var(--ink);cursor:pointer;text-align:left}
+.hm-ty-n{flex:0 0 38%;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hm-ty-bar{flex:1;height:8px;background:var(--bg);border-radius:99px;overflow:hidden}.hm-ty-bar i{display:block;height:100%;background:var(--accent);border-radius:99px}
+.hm-ty b{font-size:16px;min-width:26px;text-align:right}
