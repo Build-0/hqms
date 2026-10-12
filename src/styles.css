@@ -659,3 +659,10 @@ header h1{flex:1 1 auto !important;min-width:0}
 .tb-btn{height:36px;padding:0 14px;border-radius:999px;border:1.5px solid var(--accent);background:var(--card);color:var(--accent);font:700 13.5px/1 inherit;font-family:inherit;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:4px}
 .tb-btn.pri{background:var(--accent);color:#fff}
 .tb-btn:active{opacity:.75}
+
+/* ══ 統一設計規格（第 2 輪）：卡片 16px、內層區塊／輸入框 12px、同一款陰影；浮動「＋」不再遮住內容 ══ */
+:root{--r-card:16px;--r-inner:12px;--shadow-card:0 1px 2px rgba(20,35,48,.04),0 4px 12px rgba(20,35,48,.05)}
+.card,.c-item,.t-item,.da-card,.cl-card2,.tk,.hm-tile,.hm-wide,.sys-card,.sys-row,.mod-card,.df-kpi,.dy-good,.da-prio{border-radius:var(--r-card)}
+.card,.c-item,.t-item,.da-card,.cl-card2,.hm-tile,.hm-wide,.sys-card,.sys-row,.mod-card,.df-kpi{box-shadow:var(--shadow-card)}
+.panel,.qa,.da-block,.cl-row,.logi-box,.daily-banner,.sp-opt,.tk-sec,.tk-q,.fd-mgr-row,.search-inp,.f-row input,.f-row select,.f-row textarea,.df-sel,.fd-inp,.st-fl,.st-nm,.btn{border-radius:var(--r-inner)}
+.phone{padding-bottom:calc(92px + env(safe-area-inset-bottom, 0px))}
