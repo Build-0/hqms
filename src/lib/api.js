@@ -158,7 +158,7 @@ export async function deleteScore(id) {
 // ── photos ──
 // 壓縮後上傳；示範模式直接回傳 dataURL 存進記錄，正式模式上傳 Storage 回傳公開網址
 export async function uploadPhoto(file) {
-  guard()
+  // 不在此用唯讀檢查：缺陷登記（主管、文員、倉管）也要上傳相片，權限由資料庫把關
   const { blob, dataUrl } = await compressImage(file)
   if (isLocal) return dataUrl
   const isGif = file.type === 'image/gif'
