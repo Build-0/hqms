@@ -636,11 +636,11 @@ header h1{flex:1 1 auto !important;min-width:0}
 .da-sides .da-ph{aspect-ratio:1/1;border-radius:7px}
 .da-sides .da-duo .da-ph.empty{grid-column:1/-1;flex-direction:column;text-align:center;line-height:1.5}
 
-/* 培訓主題庫：迷你正方形卡片，一行四張，四周留白少 */
-.t-grid{grid-template-columns:repeat(4,1fr);gap:6px}
-.t-item{flex-direction:column;justify-content:center;text-align:center;aspect-ratio:1/1;padding:4px 3px;gap:3px;border-radius:12px}
-.t-item .t-ico{width:30px;height:30px;font-size:17px;border-radius:9px}
+/* 培訓主題庫：正方形卡片，一行三張，圖示放大填滿留白 */
+.t-grid{grid-template-columns:repeat(3,1fr);gap:8px}
+.t-item{flex-direction:column;justify-content:center;text-align:center;aspect-ratio:1/1;padding:8px 6px;gap:6px}
+.t-item .t-ico{width:54px;height:54px;font-size:32px;border-radius:15px}
 .t-item .t-mid{flex:0 0 auto;width:100%}
-.t-item .tt{font-size:11px;font-weight:700;line-height:1.25;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;word-break:break-all}
+.t-item .tt{font-size:12.5px;font-weight:700;line-height:1.35;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .t-item .arrow{display:none}
-@media (min-width:600px){.t-grid{grid-template-columns:repeat(auto-fill,minmax(96px,1fr))}}
+@media (min-width:600px){.t-grid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr))}}
