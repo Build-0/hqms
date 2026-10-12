@@ -521,7 +521,7 @@ header.hdr-home h1{font-size:25px;font-weight:800;letter-spacing:.5px}
 /* ── 手機防放大／防超出畫面 ──
    iPhone 在輸入框字體小於 16px 時，一點進去就會自動放大且不會縮回，所以手機上一律 16px。
    日期等欄位在 iOS 有固有闊度，限制為不超過所在格子。 */
-html,body{max-width:100%;overflow-x:hidden;-webkit-text-size-adjust:100%}
+html,body{max-width:100%;-webkit-text-size-adjust:100%}
 @media (max-width:900px){
   input,select,textarea{font-size:16px !important}
 }
@@ -737,3 +737,6 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent) 
 .fstk{position:sticky;top:calc(72px + env(safe-area-inset-top,0px));z-index:8;background:var(--bg);margin:0 -2px 6px;padding:6px 2px 2px;box-shadow:0 6px 8px -8px rgba(20,35,48,.28)}
 .fstk .srch-row{margin-bottom:6px}
 .fstk .chips,.fstk .df-grid{margin-bottom:4px !important}
+/* 橫向溢出：html 負責裁切，body 用 clip（不會變成捲動容器，否則凍結列／sticky 會失效） */
+html{overflow-x:hidden}
+body{overflow-x:clip}
