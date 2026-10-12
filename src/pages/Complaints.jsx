@@ -230,7 +230,7 @@ export default function Complaints() {
   return (
     <>
       {report && (() => {
-        const scope = searching ? '搜尋全部月份' : allScope ? '全部月份' : monthLabel
+        const scope = searching ? '搜尋全部月份' : allScope ? '全部' : monthLabel
         const fText = [scope, deptF !== '全部' && DEPT_LABEL(deptF), natureF !== '全部' && natureF, srcF !== '全部' && srcF, catF !== '全部' && catF, floorF !== '全部' && (floorF === '無房號' ? floorF : `${floorF} 樓`), searching && `搜尋「${q.trim()}」`].filter(Boolean).join(' · ')
         const core = shown.filter(c => deptOf(c) === '客房' && natOf(c) === '投訴')
         return (
@@ -248,12 +248,12 @@ export default function Complaints() {
       <div className={`cx-grid ${panelOpen ? '' : 'closed'}`} style={{ '--panelw': `${pwPx}px` }}>
         {panelOpen && <div>
           <div className="seg" style={{ margin: '0 0 8px' }}>
-            <button className={allScope ? 'on' : ''} onClick={() => { setAllScope(true); setFloorF('全部'); setCatF('全部') }}>全部月份</button>
+            <button className={allScope ? 'on' : ''} onClick={() => { setAllScope(true); setFloorF('全部'); setCatF('全部') }}>全部</button>
             <button className={!allScope ? 'on' : ''} onClick={() => { setAllScope(false); setFloorF('全部') }}>按月份</button>
           </div>
           <div className="month-nav">
             <button style={allScope ? { visibility: 'hidden' } : undefined} onClick={() => { setYm(shiftYm(ym, -1)); setFloorF('全部'); setAllScope(false) }}>‹</button>
-            <span className="m-label">{allScope ? '全部月份' : monthLabel}</span>
+            <span className="m-label">{allScope ? '全部' : monthLabel}</span>
             <button style={allScope ? { visibility: 'hidden' } : undefined} onClick={() => { setYm(shiftYm(ym, 1)); setFloorF('全部'); setAllScope(false) }}>›</button>
             <button className="panel-w-btn" title="收起統計欄" onClick={togglePanel}>«</button>
           </div>
@@ -271,7 +271,7 @@ export default function Complaints() {
                 </div>
               </div>
             ))}
-            <div className="dept-sum">📊 {allScope ? '全部月份' : monthLabel}合計 <b>{cardRows.length}</b> 單</div>
+            <div className="dept-sum">📊 {allScope ? '全部' : monthLabel}合計 <b>{cardRows.length}</b> 單</div>
           </div>
 
           <div className="cx-cards">
@@ -292,7 +292,7 @@ export default function Complaints() {
             )}
 
             <div className="card">
-              <h2>累計分類排行<span style={{ fontSize: 11, color: 'var(--sub)', fontWeight: 400 }}>（全部月份）</span></h2>
+              <h2>累計分類排行<span style={{ fontSize: 11, color: 'var(--sub)', fontWeight: 400 }}>（全部）</span></h2>
               <p style={{ fontSize: 12.5, lineHeight: 1.8, marginBottom: 8 }}>
                 全部 <b style={{ fontSize: 15 }}>{list.length}</b> 單 ·
                 客房投訴 <b>{allCore.length}</b> ·
@@ -326,7 +326,7 @@ export default function Complaints() {
 
             {cumFloorRank.length > 0 && (
               <div className="card">
-                <h2>累計樓層分佈<span style={{ fontSize: 11, color: 'var(--sub)', fontWeight: 400 }}>（全部月份）</span></h2>
+                <h2>累計樓層分佈<span style={{ fontSize: 11, color: 'var(--sub)', fontWeight: 400 }}>（全部）</span></h2>
                 {cumFloorRank.map(([f, n]) => (
                   <div className={`bar-row click ${floorF === f ? 'sel' : ''}`} key={f} onClick={() => { const on = floorF !== f; setFloorF(on ? f : '全部'); setAllScope(on) }}>
                     <span className="name">{f === '無房號' ? f : `${f} 樓`}</span>
@@ -345,7 +345,7 @@ export default function Complaints() {
             ].filter(x => x.r.rows.length > 0).map(x => (
               <div className="card" key={x.key}>
                 <h2>{x.title}<span style={{ fontSize: 11, color: 'var(--sub)', fontWeight: 400 }}>
-                  （{x.cum ? '全部月份' : '只計客房投訴'}{x.r.total > x.r.rows.length ? `，前${x.r.rows.length}／共${x.r.total}人` : `，共${x.r.total}人`}）
+                  （{x.cum ? '全部' : '只計客房投訴'}{x.r.total > x.r.rows.length ? `，前${x.r.rows.length}／共${x.r.total}人` : `，共${x.r.total}人`}）
                 </span></h2>
                 {x.r.rows.map(([name, n]) => (
                   <div className="bar-row click" key={name} onClick={() => setQ(q === name ? '' : name)}>
@@ -368,7 +368,7 @@ export default function Complaints() {
           <h2 style={{ margin: '2px 4px 8px' }}>
             客訴記錄
             <span style={{ fontSize: 11.5, color: 'var(--sub)', fontWeight: 400 }}>
-              （{searching ? '搜尋全部月份' : allScope ? '全部月份' : monthLabel} · {shown.length} 筆）
+              （{searching ? '搜尋全部月份' : allScope ? '全部' : monthLabel} · {shown.length} 筆）
             </span>
             {allScope && !searching && <button className="linky" style={{ fontSize: 12 }} onClick={() => { setAllScope(false); setCatF('全部'); setFloorF('全部') }}>↩ 回到{monthLabel}</button>}
           </h2>
