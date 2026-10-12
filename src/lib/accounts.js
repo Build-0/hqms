@@ -12,7 +12,16 @@ export const PERMS = {
 
 // 樓層主管負責的樓層（員工編號 → 樓層）。未設定的主管，首頁改為顯示「自己登記過」的缺陷。
 export const SUP_FLOORS = {
-  // 例：'100266': ['5', '6'],
+  '100266': ['3'],   // Irene Lin
+  '101488': ['4'],   // Candy Huang
+  '100276': ['5'],   // Cici Li
+  '101170': ['6'],   // Gigi Zeng
+  '100662': ['7'],   // Annie Feng
+  '100667': ['8'],   // Bobo Zhang
+  '100668': ['9'],   // Rose Zhang
+  '100658': ['10'],  // Linda Wu
+  '100262': ['11'],  // Jenny Nip
+  '100224': ['12'],  // Cindy Ngan
 }
 
 export const ACCOUNTS = [
