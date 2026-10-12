@@ -93,13 +93,14 @@ export default function Chemicals({ d, edit, reload, init, reg }) {
   const chip = (k, t) => <button key={k} className={`chip ${fk === k ? 'on' : ''}`} onClick={() => setFk(k)}>{t}</button>
   return (
     <>
-      <div className="chips" style={{ marginBottom: 4 }}>
-        <button className={`chip ${sub === 'list' ? 'on' : ''}`} onClick={() => setSub('list')}>產品</button>
-        <button className={`chip ${sub === 'report' ? 'on' : ''}`} onClick={() => setSub('report')}>📊 用量報表</button>
-      </div>
+      {sub === 'report' && <button className="linky" style={{ fontSize: 13.5, margin: '0 0 8px', padding: 0 }} onClick={() => setSub('list')}>‹ 返回產品</button>}
       {sub === 'report' ? <UsageReport d={d} /> : (
         <>
-          <input className="search-inp" placeholder="🔍 搜尋名稱、適用範圍" value={q} onChange={e => setQ(e.target.value)} />
+          <div className="srch-row">
+            <input className="search-inp" placeholder="🔍 搜尋名稱、適用範圍" value={q} onChange={e => setQ(e.target.value)} />
+            <button className="tb-btn sq" title="用量報表" onClick={() => setSub('report')}>📊</button>
+            {edit && <button className="tb-btn sq" title="管理分類" onClick={() => setCm(true)}>⚙</button>}
+          </div>
           <div className="chips">
             {chip('all', `全部 ${d.products.filter(active).length}`)}
             {lowN > 0 && chip('low', `🛒 補貨 ${lowN}`)}
@@ -107,7 +108,6 @@ export default function Chemicals({ d, edit, reload, init, reg }) {
             {offN > 0 && chip('off', `停用 ${offN}`)}
             {d.cats.map(c => chip(String(c.id), `${c.icon || ''} ${c.name_zh}`))}
           </div>
-          {edit && <div style={{ textAlign: 'right', margin: '0 4px 6px' }}><button className="linky" onClick={() => setCm(true)}>⚙ 管理分類</button></div>}
           {groups.length === 0 && <div className="note">沒有符合的產品</div>}
           {groups.map(g => (
             <div key={g.c.id}>

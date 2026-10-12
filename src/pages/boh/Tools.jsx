@@ -63,14 +63,16 @@ export default function Tools({ d, edit, reload, reg }) {
   const chip = (k, t) => <button key={k} className={`chip ${fk === k ? 'on' : ''}`} onClick={() => setFk(k)}>{t}</button>
   return (
     <>
-      <input className="search-inp" placeholder="🔍 搜尋工具名稱、分類" value={q} onChange={e => setQ(e.target.value)} />
+      <div className="srch-row">
+        <input className="search-inp" placeholder="🔍 搜尋工具名稱、分類" value={q} onChange={e => setQ(e.target.value)} />
+        {edit && <button className="tb-btn sq" title="管理分類" onClick={() => setMgr(true)}>⚙</button>}
+      </div>
       <div className="chips">
         {chip('all', `全部 ${tools.length}`)}
         {lowN > 0 && chip('low', `🛒 需補貨 ${lowN}`)}
         {offN > 0 && chip('off', `停用 ${offN}`)}
         {d.toolCats.map(c => chip(c.name, c.name))}
       </div>
-      {edit && <div style={{ textAlign: 'right', margin: '0 4px 6px' }}><button className="linky" onClick={() => setMgr(true)}>⚙ 管理分類</button></div>}
       {groups.length === 0 && <div className="note">沒有符合的工具</div>}
       {groups.map(g => (
         <div key={g.c}>

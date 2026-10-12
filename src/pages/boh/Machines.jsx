@@ -90,16 +90,20 @@ export default function Machines({ kind, d, edit, reload, reg }) {
   const chip = (on, set, t, k) => <button key={k} className={`chip ${on ? 'on' : ''}`} onClick={set}>{t}</button>
   return (
     <>
+      <div className="srch-row">
       <input className="search-inp" placeholder={isVac ? '🔍 搜尋機號、型號、序號、位置' : '🔍 搜尋類型、機號、型號、位置'} value={q} onChange={e => setQ(e.target.value)} />
-      <div className="chips">
-        {chip(!st, () => setSt(''), `全部 ${C.items.length}`, 'all')}
-        {C.statuses.map(s => countBy(s) > 0 && chip(st === s, () => setSt(st === s ? '' : s), `${s} ${countBy(s)}`, s))}
+        {edit && <button className="tb-btn sq" title={'管理' + (isVac ? '位置' : '類型')} onClick={() => setMgr(true)}>⚙</button>}
       </div>
-      <div className="chips">
-        {chip(!grp, () => setGrp(''), isVac ? '所有位置' : '所有類型', 'g-all')}
-        {allGroups.map(g => chip(grp === g, () => setGrp(grp === g ? '' : g), g, g))}
+      <div className="df-grid" style={{ marginBottom: 8 }}>
+        <select className="df-sel" value={st} onChange={e => setSt(e.target.value)}>
+          <option value="">{`全部狀態 ${C.items.length}`}</option>
+          {C.statuses.map(x => countBy(x) > 0 && <option key={x} value={x}>{`${x} ${countBy(x)}`}</option>)}
+        </select>
+        <select className="df-sel" value={grp} onChange={e => setGrp(e.target.value)}>
+          <option value="">{isVac ? '所有位置' : '所有類型'}</option>
+          {allGroups.map(g => <option key={g} value={g}>{g}</option>)}
+        </select>
       </div>
-      {edit && <div style={{ textAlign: 'right', margin: '0 4px 6px' }}><button className="linky" onClick={() => setMgr(true)}>⚙ 管理{isVac ? '位置' : '類型'}</button></div>}
       {groups.length === 0 && <div className="note">沒有符合的{C.name}</div>}
       {groups.map(g => (
         <div key={g.g}>

@@ -671,3 +671,8 @@ header h1{flex:1 1 auto !important;min-width:0}
 .sys-card{padding:26px 6px 22px;gap:10px;min-height:172px;justify-content:center}
 .sys-card b{font-size:17.5px}
 .sys-card span{font-size:12px}
+
+/* 後勤：搜尋列與管理掣同一行，減少頁頂層數 */
+.srch-row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.srch-row .search-inp{margin-bottom:0;flex:1;min-width:0}
+.srch-row .tb-btn.sq{width:46px;height:46px;padding:0;justify-content:center;font-size:19px;border-radius:12px}
