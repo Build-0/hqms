@@ -666,3 +666,8 @@ header h1{flex:1 1 auto !important;min-width:0}
 .card,.c-item,.t-item,.da-card,.cl-card2,.hm-tile,.hm-wide,.sys-card,.sys-row,.mod-card,.df-kpi{box-shadow:var(--shadow-card)}
 .panel,.qa,.da-block,.cl-row,.logi-box,.daily-banner,.sp-opt,.tk-sec,.tk-q,.fd-mgr-row,.search-inp,.f-row input,.f-row select,.f-row textarea,.df-sel,.fd-inp,.st-fl,.st-nm,.btn{border-radius:var(--r-inner)}
 .phone{padding-bottom:calc(92px + env(safe-area-inset-bottom, 0px))}
+
+/* 首頁三大模組卡：放大 */
+.sys-card{padding:26px 6px 22px;gap:10px;min-height:172px;justify-content:center}
+.sys-card b{font-size:17.5px}
+.sys-card span{font-size:12px}

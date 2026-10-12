@@ -156,7 +156,7 @@ export default function App() {
             <div className="sys-grid">
               {SYSTEMS.map(sy => (
                 <button className={`sys-card ${locked(sy.id) ? 'locked' : ''}`} key={sy.id} onClick={() => (locked(sy.id) ? toast('此帳號沒有權限進入「' + sy.label + '」') : go(sy.id))}>
-                  <Icon name={sy.icon} size={30} color="var(--ink)" width={1.9} />
+                  <Icon name={sy.icon} size={46} color="var(--ink)" width={1.8} />
                   <b>{sy.label}</b>
                   <span>{sy.sub}</span>
                   {locked(sy.id) && <i>🔒 無權限</i>}
