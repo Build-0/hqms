@@ -145,9 +145,12 @@ export function DailyReport({ slots }) {
 
 // ── 培訓主題庫 ──
 export function TopicsReport({ groups, total }) {
+  const [withPhotos, setWithPhotos] = useState(true)
+  const hasPhoto = groups.some(g => g.items.some(t => (t.photos || []).length))
   return (
     <>
       <p className="rpt-mut">共 {total} 個主題 · {groups.length} 個分類</p>
+      {hasPhoto && <label className="rpt-noprint rpt-check"><input type="checkbox" checked={withPhotos} onChange={e => setWithPhotos(e.target.checked)} /> 附上相片</label>}
       {groups.map(g => (
         <div key={g.name}>
           <Sub>{g.name} · {g.items.length} 個主題</Sub>
@@ -157,7 +160,7 @@ export function TopicsReport({ groups, total }) {
               <tbody>
                 {g.items.map(t => (
                   <tr key={t.id}>
-                    <td><b>{t.title}</b></td>
+                    <td><b>{t.title}</b>{withPhotos && (t.photos || []).length > 0 && <div className="rpt-fd-ph">{t.photos.slice(0, 2).map((p, k) => <img key={k} src={p} alt="" />)}</div>}</td>
                     <td>{(t.correct_steps || []).length ? t.correct_steps.map((x, i) => <div key={i}>{i + 1}. {x}</div>) : '—'}</td>
                     <td>{(t.mistakes || []).length ? t.mistakes.map((x, i) => <div key={i}>• {x}</div>) : '—'}</td>
                   </tr>

@@ -6,7 +6,32 @@ import { toast } from '../lib/toast'
 import Confirm from '../components/Confirm'
 import { PhotoGrid, PhotoField } from '../components/Photos'
 import Icon from '../components/Icon'
-import { ReportModal, CleaningReport } from '../components/Reports'
+import { ReportModal, ListReport } from '../components/Reports'
+
+// 匯出：先揀要匯出的分區，再按需要附上相片（與其他模組匯出一致）
+function CleanExport({ items, initial }) {
+  const [pick, setPick] = useState(initial ? [initial] : SECTIONS.map(x => x.key))
+  const toggle = k => setPick(p => (p.includes(k) ? p.filter(x => x !== k) : [...p, k]))
+  const groups = SECTIONS.filter(x => pick.includes(x.key)).map(x => {
+    let rows = items.filter(i => i.section === x.key)
+    if (x.key === 'cycle') rows = rows.slice().sort((a, b) => (a.day ?? 0) - (b.day ?? 0))
+    return {
+      name: x.title,
+      rows: rows.map(r => ({
+        photo: (r.photos || [])[0] || (r.photos_wrong || [])[0] || '',
+        cells: [r.text, x.key === 'cycle' ? (r.day ? `每月 ${r.day} 號` : '不定期') : ([r.grp, r.area].filter(Boolean).join(' · ') || '—'), r.wrong || '—'],
+      })),
+    }
+  })
+  return (
+    <>
+      <div className="chips wrap rpt-noprint">
+        {SECTIONS.map(x => <button key={x.key} className={`chip ${pick.includes(x.key) ? 'on' : ''}`} onClick={() => toggle(x.key)}>{x.title}</button>)}
+      </div>
+      <ListReport data={{ filterText: SECTIONS.filter(x => pick.includes(x.key)).map(x => x.title).join('、') || '未選擇', cols: ['項目', '類別／日期', '常見錯誤'], groups }} />
+    </>
+  )
+}
 
 const SECTIONS = [
   { key: 'daily', icon: 'sun', title: '每日清潔', sub: '每天的習慣', color: '#1f7a6d' },
@@ -210,7 +235,7 @@ export default function CyclicClean() {
         <button className="add-topic" style={{ marginTop: 14 }} onClick={() => setReport(true)}>📄 匯出清潔要點 PDF 報告</button>
         {report && (
           <ReportModal title="清潔要點" sub={todayStr()} onClose={() => setReport(false)}>
-            <CleaningReport data={{ daily: bySection('daily'), spot: bySection('spot'), cycle, deep: bySection('deep') }} />
+            <CleanExport items={items} />
           </ReportModal>
         )}
         {todayTasks.length > 0 && (
@@ -240,7 +265,7 @@ export default function CyclicClean() {
         {sec.hint && <p className="src-note">{sec.hint}</p>}
         {report && (
           <ReportModal title={`清潔要點 · ${sec.title}`} sub={todayStr()} onClose={() => setReport(false)}>
-            <CleaningReport data={{ daily: [], spot: [], cycle: [], deep: [], [sub]: rows, only: sub }} />
+            <CleanExport items={items} initial={sub} />
           </ReportModal>
         )}
 
