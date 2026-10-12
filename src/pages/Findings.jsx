@@ -178,19 +178,18 @@ export default function Findings() {
         </div>
       )}
 
+      <ToolBar label="查房記錄">
+        <ToolBtn onClick={() => setStaff(true)}>👥 名單</ToolBtn>
+        <ToolBtn onClick={() => setMgr(true)}>⚙ 標籤（{activeTags.length}）</ToolBtn>
+        <ExportBtn onClick={() => setReport(true)} />
+      </ToolBar>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
         <button className="btn fd-big fd-issue" onClick={() => newForm(undefined, 'issue')}>⚠ 記錄問題</button>
         <button className="btn fd-big fd-good" onClick={() => newForm(undefined, 'good')}>⭐ 做得好</button>
       </div>
-      <ToolBar>
-        <ToolBtn onClick={() => setMgr(true)}>⚙ 標籤管理（{activeTags.length}）</ToolBtn>
-        <ExportBtn onClick={() => setReport(true)} />
-      </ToolBar>
-
-      <div className="chips" style={{ marginBottom: 4 }}>
+      <div className="chips" style={{ margin: '12px 0 4px' }}>
         <button className={`chip ${mode === 'rec' ? 'on' : ''}`} onClick={() => setMode('rec')}>記錄</button>
         <button className={`chip ${mode === 'perf' ? 'on' : ''}`} onClick={() => setMode('perf')}>人員表現</button>
-        <button className="chip" onClick={() => setStaff(true)}>👥 人員名單</button>
       </div>
       {mode === 'perf' && <Perf rows={rows} tagById={tagById} atts={atts} onStaff={() => setStaff(true)} edit />}
       {staff && <StaffModal attendants={atts} onClose={() => setStaff(false)} reload={load} />}
@@ -209,7 +208,7 @@ export default function Findings() {
         </div>
       )}
 
-      <div className="chips">
+      <div className="chips wrap">
         {[1, 7, 30, 90].map(d => <button key={d} className={`chip ${range === d ? 'on' : ''}`} onClick={() => setRange(d)}>{d === 1 ? '今日' : `${d} 日`}</button>)}
         {['全部', '有問題', '做得好'].map(k => <button key={k} className={`chip ${kindF === k ? 'on' : ''}`} onClick={() => setKindF(k)}>{k === '有問題' ? '⚠ 有問題' : k === '做得好' ? '⭐ 做得好' : '全部類型'}</button>)}
         {who && <button className="chip on" onClick={() => setWho('')}>{shortName(attById[who])} ✕</button>}

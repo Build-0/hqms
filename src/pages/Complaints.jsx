@@ -243,6 +243,7 @@ export default function Complaints() {
           </ReportModal>
         )
       })()}
+      <ToolBar label={`${shown.length} 單`}><ExportBtn onClick={() => setReport(true)} /></ToolBar>
       <div className={`cx-grid ${panelOpen ? '' : 'closed'}`} style={{ '--panelw': `${pwPx}px` }}>
         {panelOpen && <div>
           <div className="month-nav">
@@ -366,7 +367,6 @@ export default function Complaints() {
             </span>
             {allScope && !searching && <button className="linky" style={{ fontSize: 12 }} onClick={() => { setAllScope(false); setCatF('全部'); setFloorF('全部') }}>↩ 回到{monthLabel}</button>}
           </h2>
-          <ToolBar label={`${shown.length} 單`}><ExportBtn onClick={() => setReport(true)} /></ToolBar>
           <input className="search-inp" placeholder="🔍 搜尋房號或內容（跨全部月份）" value={q} onChange={e => setQ(e.target.value)} />
           <div className="chips">
             {['全部', ...DEPTS].map(d => (
