@@ -247,10 +247,14 @@ export default function Complaints() {
       <ToolBar label={`共 ${shown.length} 單`}><ExportBtn onClick={() => setReport(true)} /></ToolBar>
       <div className={`cx-grid ${panelOpen ? '' : 'closed'}`} style={{ '--panelw': `${pwPx}px` }}>
         {panelOpen && <div>
+          <div className="seg" style={{ margin: '0 0 8px' }}>
+            <button className={allScope ? 'on' : ''} onClick={() => { setAllScope(true); setFloorF('全部'); setCatF('全部') }}>全部月份</button>
+            <button className={!allScope ? 'on' : ''} onClick={() => { setAllScope(false); setFloorF('全部') }}>按月份</button>
+          </div>
           <div className="month-nav">
-            <button onClick={() => { setYm(shiftYm(ym, -1)); setFloorF('全部'); setAllScope(false) }}>‹</button>
+            <button style={allScope ? { visibility: 'hidden' } : undefined} onClick={() => { setYm(shiftYm(ym, -1)); setFloorF('全部'); setAllScope(false) }}>‹</button>
             <span className="m-label">{allScope ? '全部月份' : monthLabel}</span>
-            <button onClick={() => { setYm(shiftYm(ym, 1)); setFloorF('全部'); setAllScope(false) }}>›</button>
+            <button style={allScope ? { visibility: 'hidden' } : undefined} onClick={() => { setYm(shiftYm(ym, 1)); setFloorF('全部'); setAllScope(false) }}>›</button>
             <button className="panel-w-btn" title="收起統計欄" onClick={togglePanel}>«</button>
           </div>
           <div className="dept-wrap">
