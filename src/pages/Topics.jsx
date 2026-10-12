@@ -31,7 +31,7 @@ export default function Topics() {
       setTopics(t)
       const kk = k?.length ? k : DEFAULT_CATEGORIES
       setCats(kk)
-      setCat(prev => (prev && kk.some(x => x.name === prev) ? prev : kk[0]?.name || ''))
+      setCat(prev => (prev && kk.some(x => x.name === prev) ? prev : ''))   // '' ＝ 全部（按分類分組顯示）
       setErr('')
     } catch (ex) { setErr(ex.message) }
   }
@@ -40,7 +40,8 @@ export default function Topics() {
   if (!topics || !cats) return <div className="note">載入中…</div>
   const canEditCats = !!cats[0]?.id
   const topicCats = cats.filter(k => k.for_topics !== false) // 主題庫用的分類（可與客訴不同）
-  const inCat = topics.filter(t => t.category === cat)
+  const inCat = cat ? topics.filter(t => t.category === cat) : topics
+  const groups = topicCats.map(k => ({ name: k.name, items: inCat.filter(t => t.category === k.name) })).filter(g => g.items.length)
   const m = name => metaOf(cats, name)
 
   async function importSeed() {
@@ -52,7 +53,7 @@ export default function Topics() {
   async function save() {
     const f = form
     const payload = {
-      category: f.category || cat,
+      category: f.category || cat || topicCats[0]?.name || '',
       title: f.title.trim() || '（未命名主題）',
       why: f.why.trim(),
       correct_steps: f._ok.split('\n').map(s => s.trim()).filter(Boolean),
@@ -91,7 +92,7 @@ export default function Topics() {
   function openEdit(t) {
     setForm(t
       ? { ...t, _ok: (t.correct_steps || []).join('\n'), _bad: (t.mistakes || []).join('\n') }
-      : { ...EMPTY, category: cat, _ok: '', _bad: '' })
+      : { ...EMPTY, category: cat || topicCats[0]?.name || '', _ok: '', _bad: '' })
     setView(null)
   }
 
@@ -139,7 +140,8 @@ export default function Topics() {
         <span><button className="linky" style={{ fontSize: 13 }} onClick={() => setReport(true)}>📄 匯出</button><button className="linky" style={{ fontSize: 13 }} onClick={() => setMgr(true)}>⚙️ 編輯分類</button></span>
       </div>
       <div className="chips wrap">
-        {topicCats.map(k => (
+        <button className={`chip ${cat === '' ? 'on' : ''}`} onClick={() => setCat('')}>全部<span style={{ opacity: .6 }}> {topics.length}</span></button>
+        {topicCats.filter(k => k.name === cat || topics.some(t => t.category === k.name)).map(k => (
           <button key={k.name} className={`chip ${k.name === cat ? 'on' : ''}`} onClick={() => setCat(k.name)}>
             {k.emoji} {k.name}<span style={{ opacity: .6 }}> {topics.filter(t => t.category === k.name).length}</span>
           </button>
@@ -149,26 +151,31 @@ export default function Topics() {
       {topics.length === 0 && (
         <button className="add-topic" style={{ marginBottom: 8 }} onClick={importSeed}>⬇ 匯入 {seedTopics.length} 個預設主題</button>
       )}
-      <div className="t-grid">
-        {inCat.map(t => {
-          const mm = m(t.category)
-          return (
-            <div className="t-item" key={t.id} onClick={() => { setView(t); setShowA(false) }}>
-              <div className="t-ico" style={{ background: mm.s }}>{mm.e}</div>
-              <div className="t-mid">
-                <div className="tt">{t.title}</div>
-              </div>
-              <span className="arrow">›</span>
-            </div>
-          )
-        })}
-      </div>
+      {groups.map(g => (
+        <div key={g.name}>
+          <div className="bh-grp">{m(g.name).e} {g.name}<span>{g.items.length}</span></div>
+          <div className="t-grid">
+            {g.items.map(t => {
+              const mm = m(t.category)
+              return (
+                <div className="t-item" key={t.id} onClick={() => { setView(t); setShowA(false) }}>
+                  <div className="t-ico" style={{ background: mm.s }}>{mm.e}</div>
+                  <div className="t-mid">
+                    <div className="tt">{t.title}</div>
+                  </div>
+                  <span className="arrow">›</span>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      ))}
       <div className="note">主題持續累積，形成酒店專屬品質知識庫 · 按右下 ＋ 新增</div>
       <button className="fab" onClick={() => openEdit(null)}>＋</button>
 
       {report && (
-        <ReportModal title={`培訓主題庫 · ${cat}`} sub={`分類：${cat} · 共 ${inCat.length} 個主題`} onClose={() => setReport(false)}>
-          <TopicsReport total={inCat.length} groups={[{ name: cat, items: inCat }]} />
+        <ReportModal title={`培訓主題庫 · ${cat || '全部'}`} sub={`分類：${cat || '全部'} · 共 ${inCat.length} 個主題`} onClose={() => setReport(false)}>
+          <TopicsReport total={inCat.length} groups={groups} />
         </ReportModal>
       )}
       {view && (
