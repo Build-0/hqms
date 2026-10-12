@@ -243,7 +243,7 @@ export default function Findings({ session }) {
       {/* ── 記錄表單 ── */}
       {form && (
         <div className="modal" onClick={e => { if (e.target === e.currentTarget) setForm(null) }}>
-          <div className="sheet">
+          <div className="sheet fd-form">
             <h2>{form.kind === 'good' ? '⭐ 表揚做得好' : '記錄問題'}</h2>
             <PhotoField label="① 拍照" photos={form.photos} onChange={p => setForm({ ...form, photos: p })} max={4} />
             <div style={{ display: 'flex', gap: 10 }}>
@@ -261,8 +261,8 @@ export default function Findings({ session }) {
                   ))}
                 </div>
               )}
-              <select value={form.attendant_id} onChange={e => pickAtt(e.target.value)}>
-                <option value="">{quick.length ? '其他房務員…' : '請選擇'}</option>
+              <select value={quick.some(a => a.id === form.attendant_id) ? '' : form.attendant_id} onChange={e => e.target.value && pickAtt(e.target.value)}>
+                <option value="">{quick.length ? '＋ 選其他樓層房務員…' : '請選擇房務員'}</option>
                 {activeAtts.slice().sort((x, y) => String(x.floor).localeCompare(String(y.floor), undefined, { numeric: true })).map(a => <option key={a.id} value={a.id}>{a.floor && a.floor !== '-' ? `${a.floor} · ` : ''}{nameOf(a)}</option>)}
               </select>
             </div>

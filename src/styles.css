@@ -684,3 +684,12 @@ header h1{flex:1 1 auto !important;min-width:0}
 .seg{display:flex;background:#e7ecef;border-radius:12px;padding:3px;gap:3px}
 .seg button{flex:1;border:none;background:transparent;border-radius:9px;padding:10px 6px;font:700 14.5px/1 inherit;font-family:inherit;color:var(--sub);cursor:pointer}
 .seg button.on{background:var(--card);color:var(--accent);box-shadow:0 1px 3px rgba(20,35,48,.12)}
+
+/* 記錄表單：步驟標題與分組層級要一眼分清 */
+.fd-form .f-row>label{font-size:16px;font-weight:800;color:var(--ink);margin:6px 0 8px}
+.fd-form .f-row>label small,.fd-form .f-row>label span{font-size:12.5px}
+.fd-form .fd-dim{margin-bottom:10px}
+.fd-form .fd-dim-h{font-size:14px;font-weight:800;color:var(--accent);margin:12px 2px 6px;padding-left:8px;border-left:4px solid var(--accent)}
+.fd-form .fd-chip{font-size:15px;min-height:44px;padding:10px 14px}
+.fd-form .chip{font-size:15px}
+.fd-form .f-row select{font-size:15px}
