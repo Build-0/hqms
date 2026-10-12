@@ -8,6 +8,23 @@ import { PhotoGrid, PhotoField } from '../components/Photos'
 import Confirm from '../components/Confirm'
 import { ReportModal, TopicsReport } from '../components/Reports'
 
+// 匯出：先揀分類（可全選），再匯出
+function TopicsExport({ groups }) {
+  const [pick, setPick] = useState(groups.map(g => g.name))
+  const all = pick.length === groups.length
+  const toggle = n => setPick(p => (p.includes(n) ? p.filter(x => x !== n) : [...p, n]))
+  const sel = groups.filter(g => pick.includes(g.name))
+  return (
+    <>
+      <div className="chips wrap rpt-noprint">
+        <button className={`chip ${all ? 'on' : ''}`} onClick={() => setPick(all ? [] : groups.map(g => g.name))}>全部 {groups.reduce((n, g) => n + g.items.length, 0)}</button>
+        {groups.map(g => <button key={g.name} className={`chip ${pick.includes(g.name) ? 'on' : ''}`} onClick={() => toggle(g.name)}>{g.name} {g.items.length}</button>)}
+      </div>
+      <TopicsReport total={sel.reduce((n, g) => n + g.items.length, 0)} groups={sel} />
+    </>
+  )
+}
+
 // 依題目名稱配一個意思相近的圖示；配不到就用分類圖示
 const ICONS = [
   ['床單', '🛏️'], ['鋪床', '🛏️'], ['排水', '🚿'], ['毛髮', '🚿'], ['馬桶', '🚽'], ['浴巾', '🧺'], ['布草', '🧺'],
@@ -173,8 +190,8 @@ export default function Topics() {
       <button className="fab" onClick={() => openEdit(null)}>＋</button>
 
       {report && (
-        <ReportModal title={`培訓主題庫 · ${cat || '全部'}`} sub={`分類：${cat || '全部'} · 共 ${inCat.length} 個主題`} onClose={() => setReport(false)}>
-          <TopicsReport total={inCat.length} groups={groups} />
+        <ReportModal title="培訓主題庫" sub={`共 ${inCat.length} 個主題`} onClose={() => setReport(false)}>
+          <TopicsExport groups={groups} />
         </ReportModal>
       )}
       {view && (
