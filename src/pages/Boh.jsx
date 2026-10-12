@@ -48,10 +48,10 @@ export default function Boh({ session, init }) {
     <div className="df-wrap">
       {err && <div className="card" style={{ borderColor: 'var(--red)' }}><p style={{ fontSize: 13, lineHeight: 1.7 }}>讀取失敗：{err}</p></div>}
       {!tab && (
-        <div className="home-grid sub-grid">
+        <div className="home-grid">
           {TABS.map(([k, t, ic, co]) => (
             <button className="home-item" key={k} onClick={() => setTab(k)}>
-              <span className="hi-circle sm" style={{ background: co + '26', borderColor: 'transparent' }}><Icon name={ic} size={28} color={co} width={2.2} /></span>
+              <span className="hi-circle" style={{ background: co + '26', borderColor: 'transparent' }}><Icon name={ic} size={33} color={co} width={2.2} /></span>
               <span className="hi-label">{t}</span>
               <span className="hi-sub">{{ chem: d.products.length, vac: d.vacuums.length, tool: d.tools.length, eq: d.equipment.length }[k]} 項</span>
             </button>

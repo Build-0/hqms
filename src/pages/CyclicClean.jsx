@@ -223,10 +223,10 @@ export default function CyclicClean() {
             </p>
           </div>
         )}
-        <div className="home-grid sub-grid">
+        <div className="home-grid">
           {SECTIONS.map(s => (
             <button className="home-item" key={s.key} onClick={() => setSub(s.key)}>
-              <span className="hi-circle sm" style={{ background: s.color + '26', borderColor: 'transparent' }}><Icon name={s.icon} size={28} color={s.color} width={2.2} /></span>
+              <span className="hi-circle" style={{ background: s.color + '26', borderColor: 'transparent' }}><Icon name={s.icon} size={33} color={s.color} width={2.2} /></span>
               <span className="hi-label">{s.title}</span>
               <span className="hi-sub">{s.sub} · {bySection(s.key).length} 項</span>
             </button>
