@@ -772,3 +772,6 @@ body{overflow-x:clip}
 .sq-card .bh-thumb{width:50px !important;height:50px !important;font-size:24px}
 .sq-name{font-size:12.5px;min-height:2.6em;display:-webkit-box;align-items:center}
 .sq-n{font-size:17px}.sq-n small{font-size:10.5px}
+
+.sq-name{min-height:0 !important}
+.df-grid4 .df-sel{padding:9px 6px}

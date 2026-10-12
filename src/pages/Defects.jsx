@@ -137,10 +137,10 @@ export default function Defects({ session, init }) {
           <div className="fstk">
             <input className="search-inp" placeholder="🔍 搜尋房號、備註、登記人" value={f.search} onChange={e => setF({ ...f, search: e.target.value })} />
             <div className="df-grid df-grid4">
-              {sel('floor', '所有樓層', FLOORS.map(x => ({ v: x, t: `${x} 樓` })))}
-              {sel('status', '所有狀態', STATUS.map(s => ({ v: s.value, t: s.label })))}
-              {sel('severity', '所有程度', SEVERITY.map(s => ({ v: s.value, t: s.label })))}
-              {sel('type', '所有類型', types.map(t => ({ v: t, t })))}
+              {sel('floor', '樓層', FLOORS.map(x => ({ v: x, t: `${x} 樓` })))}
+              {sel('status', '狀態', STATUS.map(s => ({ v: s.value, t: s.label })))}
+              {sel('severity', '程度', SEVERITY.map(s => ({ v: s.value, t: s.label })))}
+              {sel('type', '類型', types.map(t => ({ v: t, t })))}
             </div>
           </div>
           <div className="card" style={{ padding: 10 }}>
