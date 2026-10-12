@@ -88,7 +88,7 @@ export default function Home({ session, go }) {
       <div className="hm-grid">{tiles}</div>
       {isSup && d.mineOpen && (
         <div className="hm-mine">
-          <div className="hm-mine-h"><b>{d.floors ? `我負責 ${d.floors.join('、')} 樓` : '我登記的缺陷'}</b><span>缺陷總覽</span></div>
+          <div className="hm-mine-h"><b>{d.floors ? `歡迎，${d.floors.join('、')} 樓主管` : '歡迎，樓層主管'}</b><span>缺陷總覽</span></div>
           <div className="hm-mine-n">
             <button onClick={() => go('defect', { status: 'pending' })}><b style={{ color: d.pending ? '#c62828' : undefined }}>{d.pending}</b><span>待處理</span></button>
             <button onClick={() => go('defect', { status: 'processing' })}><b style={{ color: d.processing ? '#e69500' : undefined }}>{d.processing}</b><span>處理中</span></button>
