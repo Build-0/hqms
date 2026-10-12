@@ -70,7 +70,8 @@ export default function Daily() {
     const [complaints, topics, kk] = await Promise.all([api.listComplaints(), api.listTopics(), api.listCategories()])
     const cats = kk?.length ? kk : DEFAULT_CATEGORIES
     const ycs = complaints.filter(c => c.date === yesterday && isCore(c))
-    const pick = n => (topics.length ? topics[(Math.floor(Date.parse(today + 'T00:00:00Z') / 86400000) + n) % topics.length] : null)
+    const pool = topics.filter(t => t.category !== 'SOP')   // SOP 是獨立嘅標準文件，不參與自動選題（仍可手動自選）
+    const pick = n => (pool.length ? pool[(Math.floor(Date.parse(today + 'T00:00:00Z') / 86400000) + n) % pool.length] : null)
 
     // 近 7 日查房記錄 → 最常見問題、做得好（今日重點的主要來源）
     const digest = { top: [], good: [], topTopicIds: [] }
