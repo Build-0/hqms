@@ -199,7 +199,7 @@ export default function Daily() {
   const visible = cands.filter(c => !c.key.startsWith('t:') || !tqs || (c.title + c.source).toLowerCase().includes(tqs))
   const groups = [...new Set(visible.map(c => c.group))]
   const openPick = mode => {
-    if (mode === 'export' && !canExport()) { setReport(true); return }
+    if (mode === 'export') { if (canExport()) setSel(todayKeys); setReport(true); return }   // 匯出直接用畫面上今日講的幾項，不用重新揀
     setSel(todayKeys); setTq(''); setPick(mode)   // 預設就是畫面上今日講的幾項
   }
   async function saveCustom() {
@@ -261,7 +261,7 @@ export default function Daily() {
       </button>
 
       <div className="dy-foot">
-        <button className="btn ghost" onClick={() => openPick('export')}>📄 匯出早會講稿</button>
+        <button className="btn" onClick={() => openPick('export')}>📄 匯出早會講稿</button>
         <button className="linky" onClick={regen}>↺ 恢復自動選題</button>
       </div>
       <p className="dy-note">{customKeys ? '目前是你自選的內容；「恢復自動選題」會改回由系統選題。' : st.hadYesterday ? '系統自動選題：昨日有投訴，已排在最前。' : '系統自動選題：優先近 7 日查房常見問題，不足 3 項才用主題庫補位。'}{tomorrowName ? ` 明日已指定：${tomorrowName}` : ''}</p>
