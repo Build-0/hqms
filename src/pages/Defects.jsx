@@ -121,7 +121,7 @@ export default function Defects({ session, init }) {
           {[['list', '缺陷列表'], ['stats', '統計'], ['types', '類型設定']].map(([k, t]) => <button key={k} className={`chip ${tab === k ? 'on' : ''}`} onClick={() => setTab(k)}>{t}</button>)}
         </div>
       )}
-      {full && <ToolBar><ExportBtn onClick={() => setReport(true)} /></ToolBar>}
+      {full && <ToolBar label={tab === 'list' ? `共 ${shown.length} 筆` : tab === 'stats' ? '統計' : '類型設定'}><ExportBtn onClick={() => setReport(true)} /></ToolBar>}
 
       {tab === 'list' && (
         <>
@@ -134,7 +134,7 @@ export default function Defects({ session, init }) {
               {sel('type', '所有類型', types.map(t => ({ v: t, t })))}
             </div>
             <div className="df-bar">
-              <span>共 <b>{shown.length}</b> 筆</span>
+              <span style={{ color: 'var(--sub)', fontSize: 12.5 }}>排序</span>
               <select className="df-sel sm" value={sortBy} onChange={e => setSortBy(e.target.value)}>
                 <option value="date-desc">日期 新→舊</option><option value="date-asc">日期 舊→新</option>
                 <option value="room-asc">房號 低→高</option><option value="room-desc">房號 高→低</option>
