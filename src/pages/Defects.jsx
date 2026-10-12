@@ -7,6 +7,7 @@ import { PhotoGrid, PhotoField } from '../components/Photos'
 import Confirm from '../components/Confirm'
 import { ReportModal, DefectReport } from '../components/Reports'
 import { PERMS, canExport, EXPORT_MSG } from '../lib/accounts'
+import Icon from '../components/Icon'
 
 // 房間缺陷登記（原「房間缺陷登記系統」改寫為原生模組）
 const SEVERITY = [
@@ -32,7 +33,7 @@ export default function Defects({ session, init }) {
   const [list, setList] = useState(null)
   const [types, setTypes] = useState([])
   const [err, setErr] = useState('')
-  const [tab, setTab] = useState('list')
+  const [tab, setTab] = useState(init ? 'list' : null)   // null ＝ 圓形入口選單（只有可編輯帳號；只可登記的帳號直接是列表）
   const [f, setF] = useState({ search: '', floor: '', status: init?.status || '', severity: '', type: '' })
   const [sortBy, setSortBy] = useState('date-desc')
   const [form, setForm] = useState(null)       // 新增／編輯表單
@@ -116,14 +117,21 @@ export default function Defects({ session, init }) {
     <div className="df-wrap">
       {err && <div className="card" style={{ borderColor: 'var(--red)' }}><p style={{ fontSize: 13, lineHeight: 1.7 }}>讀取失敗：{err}</p></div>}
 
-      {full && (
-        <div className="chips" style={{ marginBottom: 6 }}>
-          {[['list', '缺陷列表'], ['stats', '統計'], ['types', '類型設定']].map(([k, t]) => <button key={k} className={`chip ${tab === k ? 'on' : ''}`} onClick={() => setTab(k)}>{t}</button>)}
+      {full && !tab && (
+        <div className="home-grid">
+          {[['list', '缺陷列表', 'wrench', '#c0564f', `${list.length} 筆`], ['stats', '統計', 'search', '#4a6fa5', '分類、樓層'], ['types', '類型設定', 'gear', '#7a6a4f', `${types.length} 種`]].map(([k, t, ic, co, sb]) => (
+            <button className="home-item" key={k} onClick={() => setTab(k)}>
+              <span className="hi-circle" style={{ background: co + '26', borderColor: 'transparent' }}><Icon name={ic} size={33} color={co} width={2.2} /></span>
+              <span className="hi-label">{t}</span>
+              <span className="hi-sub">{sb}</span>
+            </button>
+          ))}
         </div>
       )}
-      {full && <ToolBar label={tab === 'list' ? `共 ${shown.length} 筆` : tab === 'stats' ? '統計' : '類型設定'}><ExportBtn onClick={() => setReport(true)} /></ToolBar>}
+      {full && tab && <button className="linky" style={{ fontSize: 13.5, margin: '0 0 8px', padding: 0 }} onClick={() => setTab(null)}>‹ 缺陷管理</button>}
+      {full && tab && <ToolBar label={tab === 'list' ? `共 ${shown.length} 筆` : tab === 'stats' ? '統計' : '類型設定'}><ExportBtn onClick={() => setReport(true)} /></ToolBar>}
 
-      {tab === 'list' && (
+      {(full ? tab === 'list' : true) && (
         <>
           <div className="card" style={{ padding: 12 }}>
             <input className="search-inp" placeholder="🔍 搜尋房號、備註、登記人" value={f.search} onChange={e => setF({ ...f, search: e.target.value })} />
