@@ -29,6 +29,8 @@ export default function Home({ session, go }) {
             r.floors = fl && fl.length ? fl : null
             const open = rows.filter(x => x.status !== 'done')
             r.mineOpenN = open.length
+            const days = x => Math.round((new Date(todayStr() + 'T00:00:00') - new Date(String(x.register_date || x.created_at).slice(0, 10) + 'T00:00:00')) / 86400000)
+            r.aged = { m3: open.filter(x => days(x) >= 90).length, m6: open.filter(x => days(x) >= 180).length, y1: open.filter(x => days(x) >= 365).length }
             const by = {}
             open.forEach(x => { const k = String(x.type || '其他').replace(/^\d+\.\s*/, ''); const o = (by[k] = by[k] || { type: x.type, name: k, n: 0, high: 0 }); o.n++; if (x.severity === 'high') o.high++ })
             r.byType = Object.values(by).sort((a, b) => b.n - a.n)
@@ -97,6 +99,14 @@ export default function Home({ session, go }) {
             <button onClick={() => go('defect', { status: 'processing', floor: d.floors && d.floors.length === 1 ? d.floors[0] : '' })}><b style={{ color: d.processing ? '#e69500' : undefined }}>{d.processing}</b><span>處理中</span></button>
             <button onClick={() => go('defect', { floor: d.floors && d.floors.length === 1 ? d.floors[0] : '' })}><b>{d.new7}</b><span>近 7 日新增</span></button>
           </div>
+          {d.aged && d.aged.m3 > 0 && (
+            <div className="hm-aged">
+              <span>未完成已拖延</span>
+              <b className="a3">≥ 3 個月 {d.aged.m3}</b>
+              <b className="a6">≥ 半年 {d.aged.m6}</b>
+              <b className="a12">≥ 1 年 {d.aged.y1}</b>
+            </div>
+          )}
           {d.byType.length === 0 && <p className="hm-mine-empty">目前沒有未處理的缺陷 👍</p>}
           {d.byType.length > 0 && <div className="hm-ty-h">按缺陷類型</div>}
           {d.byType.slice(0, 6).map(t => (
