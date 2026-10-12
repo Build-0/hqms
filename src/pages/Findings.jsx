@@ -160,8 +160,6 @@ export default function Findings({ session }) {
   const issueTags = activeTags.filter(t => t.dim !== GOOD_DIM)
   const goodTags = activeTags.filter(t => t.dim === GOOD_DIM)
   // 問題標籤按做房次序排列：鋪床 → 抹塵 → 吸塵 → 浴室及杯具 → 玻璃鏡面 → 擺放 → 做房車 → 其他（每條只出現一次）
-  const DIM_ORDER = ['鋪床', '抹塵', '吸塵', '清潔器皿', '玻璃及鏡面', '物品整齊度', '做房車整潔度', '其他']
-  const DIM_LABEL = { 清潔器皿: '浴室及杯具', 物品整齊度: '物品擺放' }
   const tagsByDim = DIM_ORDER.map(d => ({ d: DIM_LABEL[d] || d, list: issueTags.filter(t => (SCORE_DIMS.includes(t.dim) ? t.dim : '其他') === d) })).filter(g => g.list.length)
   const groups = form?.kind === 'good' ? (goodTags.length ? [{ d: '⭐ 做得好', list: goodTags }] : []) : tagsByDim
 
@@ -348,6 +346,12 @@ export default function Findings({ session }) {
   )
 }
 
+// 問題標籤的組別次序（做房流程）與顯示名稱；記錄表單與標籤管理共用
+const DIM_ORDER = ['鋪床', '抹塵', '吸塵', '清潔器皿', '玻璃及鏡面', '物品整齊度', '做房車整潔度', '其他']
+const DIM_LABEL = { 清潔器皿: '浴室及杯具', 物品整齊度: '物品擺放' }
+const dimKey = t => (SCORE_DIMS.includes(t.dim) ? t.dim : '其他')
+const dimIdx = t => DIM_ORDER.indexOf(dimKey(t))
+
 function TagManager({ tags, topics, onClose, onChanged }) {
   const [tab, setTab] = useState('issue')   // issue=問題標籤 / good=做得好標籤
   const [adding, setAdding] = useState({ name: '', dim: SCORE_DIMS[0] })
@@ -363,6 +367,19 @@ function TagManager({ tags, topics, onClose, onChanged }) {
     try { await api.addFindingTag({ name, dim: tab === 'good' ? GOOD_DIM : adding.dim, sort_order: tags.length + 1 }) } catch (ex) { toast('新增失敗：' + ex.message); return }
     setAdding({ name: '', dim: adding.dim }); toast('已新增'); onChanged()
   }
+  // 目前分頁的標籤次序：問題標籤先按組別，再按排序；做得好標籤按排序
+  const rows = tags.filter(t => (t.dim === GOOD_DIM) === (tab === 'good'))
+    .sort((a, b) => (tab === 'issue' ? dimIdx(a) - dimIdx(b) : 0) || (a.sort_order || 0) - (b.sort_order || 0))
+  // 上下移動：只在同一組內對調，然後把整個分頁重新編號（10、20、30…）
+  async function move(t, dir) {
+    const i = rows.findIndex(x => x.id === t.id), j = i + dir
+    if (j < 0 || j >= rows.length || (tab === 'issue' && dimIdx(rows[j]) !== dimIdx(t))) return
+    const arr = rows.slice();[arr[i], arr[j]] = [arr[j], arr[i]]
+    try {
+      await Promise.all(arr.map((x, k) => ((x.sort_order || 0) === (k + 1) * 10 ? null : api.updateFindingTag(x.id, { sort_order: (k + 1) * 10 }))))
+      onChanged()
+    } catch (ex) { toast('調整失敗：' + ex.message) }
+  }
   async function del(t) {
     try { await api.deleteFindingTag(t.id) } catch (ex) { toast('刪除失敗：' + ex.message); return }
     setConfirmDel(null); toast('已刪除'); onChanged()
@@ -376,9 +393,15 @@ function TagManager({ tags, topics, onClose, onChanged }) {
           <button className={`chip ${tab === 'good' ? 'on' : ''}`} onClick={() => setTab('good')}>⭐ 做得好標籤（{tags.filter(t => t.dim === GOOD_DIM).length}）</button>
         </div>
         <p className="src-note">每個標籤可連結主題庫一個主題：檢視記錄時會顯示該主題的正確做法。停用的標籤不會再出現在記錄表單，但舊記錄會保留。</p>
-        {tags.filter(t => (t.dim === GOOD_DIM) === (tab === 'good')).map(t => (
-          <div key={t.id} className="fd-mgr-row" style={{ opacity: t.active === false ? .5 : 1 }}>
+        {rows.map((t, ri) => (
+          <div key={t.id}>
+          {tab === 'issue' && (ri === 0 || dimIdx(rows[ri - 1]) !== dimIdx(t)) && <div className="p-title" style={{ margin: '12px 2px 6px', color: 'var(--accent)' }}>{DIM_LABEL[dimKey(t)] || dimKey(t)}</div>}
+          <div className="fd-mgr-row" style={{ opacity: t.active === false ? .5 : 1 }}>
             <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+              <span style={{ display: 'flex', flexDirection: 'column', gap: 2, flexShrink: 0 }}>
+                <button className="mv-btn" onClick={() => move(t, -1)} aria-label="上移">▲</button>
+                <button className="mv-btn" onClick={() => move(t, 1)} aria-label="下移">▼</button>
+              </span>
               <input className="fd-inp" defaultValue={t.name} onBlur={e => { const v = e.target.value.trim(); if (v && v !== t.name) patch(t, { name: v }) }} />
               <button className="logout" style={{ color: 'var(--sub)', background: '#eef1f4', flexShrink: 0 }} onClick={() => patch(t, { active: t.active === false })}>{t.active === false ? '啟用' : '停用'}</button>
               <button className="logout" style={{ color: 'var(--red)', background: 'var(--red-soft)', flexShrink: 0 }} onClick={() => setConfirmDel(t)}>✕</button>
@@ -393,6 +416,7 @@ function TagManager({ tags, topics, onClose, onChanged }) {
                 {topicOpts.map(tp => <option key={tp.id} value={tp.id}>{tp.category}｜{tp.title}</option>)}
               </select>
             </div>}
+          </div>
           </div>
         ))}
         <div className="fd-mgr-row" style={{ borderStyle: 'dashed' }}>
