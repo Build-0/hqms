@@ -153,13 +153,12 @@ export default function App() {
           </div>
         ) : (
           <div className="sys-home">
-            <div className="sys-grid">
+            <div className="home-grid" style={{ paddingBottom: 14 }}>
               {SYSTEMS.map(sy => (
-                <button className={`sys-card ${locked(sy.id) ? 'locked' : ''}`} key={sy.id} onClick={() => (locked(sy.id) ? toast('此帳號沒有權限進入「' + sy.label + '」') : go(sy.id))}>
-                  <Icon name={sy.icon} size={46} color="var(--ink)" width={1.8} />
-                  <b>{sy.label}</b>
-                  <span>{sy.sub}</span>
-                  {locked(sy.id) && <i>🔒 無權限</i>}
+                <button className={} key={sy.id} style={locked(sy.id) ? { opacity: .45 } : undefined} onClick={() => (locked(sy.id) ? toast('此帳號沒有權限進入「' + sy.label + '」') : go(sy.id))}>
+                  <span className="hi-circle" style={{ background: sy.color + '26', borderColor: 'transparent' }}><Icon name={sy.icon} size={33} color={sy.color} width={2.2} /></span>
+                  <span className="hi-label">{sy.label}</span>
+                  {locked(sy.id) && <span className="hi-sub">🔒 無權限</span>}
                 </button>
               ))}
             </div>
