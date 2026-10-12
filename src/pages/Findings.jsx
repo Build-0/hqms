@@ -182,9 +182,9 @@ export default function Findings({ session }) {
         <ToolBtn onClick={() => setMgr(true)}>⚙ 標籤（{activeTags.length}）</ToolBtn>
         <ExportBtn onClick={() => setReport(true)} />
       </ToolBar>}
-      {full && <div className="chips" style={{ margin: '12px 0 4px' }}>
-        <button className={`chip ${mode === 'rec' ? 'on' : ''}`} onClick={() => setMode('rec')}>記錄</button>
-        <button className={`chip ${mode === 'perf' ? 'on' : ''}`} onClick={() => setMode('perf')}>人員表現</button>
+      {full && <div className="seg" style={{ margin: '12px 0 8px' }}>
+        <button className={mode === 'rec' ? 'on' : ''} onClick={() => setMode('rec')}>記錄</button>
+        <button className={mode === 'perf' ? 'on' : ''} onClick={() => setMode('perf')}>人員表現</button>
       </div>}
       {mode === 'perf' && <Perf rows={rows} tagById={tagById} atts={atts} onStaff={() => setStaff(true)} edit />}
       <button className="fab" onClick={() => setChoose(true)}>＋</button>
@@ -214,11 +214,15 @@ export default function Findings({ session }) {
         </div>
       )}
 
-      <div className="chips wrap">
-        {[1, 7, 30, 90].map(d => <button key={d} className={`chip ${range === d ? 'on' : ''}`} onClick={() => setRange(d)}>{d === 1 ? '今日' : `${d} 日`}</button>)}
-        {['全部', '有問題', '做得好'].map(k => <button key={k} className={`chip ${kindF === k ? 'on' : ''}`} onClick={() => setKindF(k)}>{k === '有問題' ? '⚠ 有問題' : k === '做得好' ? '⭐ 做得好' : '全部類型'}</button>)}
-        {who && <button className="chip on" onClick={() => setWho('')}>{shortName(attById[who])} ✕</button>}
+      <div className="df-grid" style={{ marginBottom: 8 }}>
+        <select className="df-sel" value={range} onChange={e => setRange(+e.target.value)}>
+          {[[1, '今日'], [7, '近 7 日'], [30, '近 30 日'], [90, '近 90 日']].map(([d, t]) => <option key={d} value={d}>{t}</option>)}
+        </select>
+        <select className="df-sel" value={kindF} onChange={e => setKindF(e.target.value)}>
+          <option value="全部">全部類型</option><option value="有問題">⚠ 有問題</option><option value="做得好">⭐ 做得好</option>
+        </select>
       </div>
+      {who && <div className="chips" style={{ marginBottom: 6 }}><button className="chip on" onClick={() => setWho('')}>{shortName(attById[who])} ✕</button></div>}
 
       <h2 style={{ margin: '4px 4px 10px' }}>查房記錄<span style={{ fontSize: 11.5, color: 'var(--sub)', fontWeight: 400 }}>（{batches.length} 次 · {batches.reduce((n, b) => n + b.items.length, 0)} 個問題）</span></h2>
       {batches.length === 0 && <div className="note">這段時間還沒有記錄。查房發現問題，請按上面的「⚠ 記錄問題」。</div>}
