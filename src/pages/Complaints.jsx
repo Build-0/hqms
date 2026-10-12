@@ -44,6 +44,7 @@ export default function Complaints() {
   const [natureF, setNatureF] = useState('全部')
   const [catF, setCatF] = useState('全部')
   const [floorF, setFloorF] = useState('全部')
+  const [vw, setVw] = useState('list')   // 手機分頁：list 記錄／stats 統計（兩個畫面分開，唔使捲好耐）
   const [allScope, setAllScope] = useState(true) // true=列表顯示全部月份（預設全部；切換月份或按「回到本月」才只看該月）
   const [srcF, setSrcF] = useState('全部')
   const [sortF, setSortF] = useState('最新')
@@ -245,8 +246,12 @@ export default function Complaints() {
         )
       })()}
       <ToolBar label={`共 ${shown.length} 單`}><ExportBtn onClick={() => setReport(true)} /></ToolBar>
+      <div className="seg cx-vw" style={{ margin: '0 0 10px' }}>
+        <button className={vw === 'list' ? 'on' : ''} onClick={() => setVw('list')}>記錄</button>
+        <button className={vw === 'stats' ? 'on' : ''} onClick={() => setVw('stats')}>統計</button>
+      </div>
       <div className={`cx-grid ${panelOpen ? '' : 'closed'}`} style={{ '--panelw': `${pwPx}px` }}>
-        {panelOpen && <div>
+        {panelOpen && <div className={vw === 'stats' ? '' : 'vw-off'}>
           <div className="seg" style={{ margin: '0 0 8px' }}>
             <button className={allScope ? 'on' : ''} onClick={() => { setAllScope(true); setFloorF('全部'); setCatF('全部') }}>全部</button>
             <button className={!allScope ? 'on' : ''} onClick={() => { setAllScope(false); setFloorF('全部') }}>按月份</button>
@@ -361,7 +366,20 @@ export default function Complaints() {
 
         {panelOpen && <div className="cx-divider" onPointerDown={startDrag} title="拖動調整統計欄寬度" />}
 
-        <div>
+        <div className={vw === 'list' ? '' : 'vw-off'}>
+          <div className="cx-scope-m">
+            <div className="seg" style={{ margin: '0 0 8px' }}>
+              <button className={allScope ? 'on' : ''} onClick={() => { setAllScope(true); setFloorF('全部'); setCatF('全部') }}>全部</button>
+              <button className={!allScope ? 'on' : ''} onClick={() => { setAllScope(false); setFloorF('全部') }}>按月份</button>
+            </div>
+            {!allScope && (
+              <div className="month-nav" style={{ marginBottom: 8 }}>
+                <button onClick={() => { setYm(shiftYm(ym, -1)); setFloorF('全部'); setAllScope(false) }}>‹</button>
+                <span className="m-label">{monthLabel}</span>
+                <button onClick={() => { setYm(shiftYm(ym, 1)); setFloorF('全部'); setAllScope(false) }}>›</button>
+              </div>
+            )}
+          </div>
           {!panelOpen && (
             <button className="panel-reopen" onClick={togglePanel} title="展開統計欄">» 統計</button>
           )}

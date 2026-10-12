@@ -727,3 +727,8 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent) 
 .mini.danger{background:var(--red-soft);color:var(--red)}
 .mini.pri{background:var(--accent);color:#fff}
 .mini:active{opacity:.7}
+
+/* 客訴：手機分「記錄／統計」兩頁；電腦版仍然左右並排 */
+.cx-scope-m{display:block}
+@media (max-width:899px){.vw-off{display:none}}
+@media (min-width:900px){.cx-vw,.cx-scope-m{display:none}}
