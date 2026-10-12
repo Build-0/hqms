@@ -8,6 +8,7 @@ import Confirm from '../components/Confirm'
 import { ReportModal, DefectReport } from '../components/Reports'
 import { PERMS, canExport, EXPORT_MSG } from '../lib/accounts'
 import Icon from '../components/Icon'
+import { useBack } from '../lib/nav'
 
 // 房間缺陷登記（原「房間缺陷登記系統」改寫為原生模組）
 const SEVERITY = [
@@ -65,6 +66,7 @@ export default function Defects({ session, init }) {
     return sortBy === 'date-asc' ? x.localeCompare(y) : y.localeCompare(x)
   }), [list, f, sortBy])
 
+  useBack(full && !!tab, () => setTab(null))
   if (!list) return <div className="note">載入中…</div>
 
   function openNew() { setForm({ ...EMPTY(), id: null }) }
@@ -128,19 +130,20 @@ export default function Defects({ session, init }) {
           ))}
         </div>
       )}
-      {full && tab && <button className="linky" style={{ fontSize: 13.5, margin: '0 0 8px', padding: 0 }} onClick={() => setTab(null)}>‹ 缺陷管理</button>}
-      {full && tab && <ToolBar label={tab === 'list' ? `共 ${shown.length} 筆` : tab === 'stats' ? '統計' : '類型設定'}><ExportBtn onClick={() => setReport(true)} /></ToolBar>}
+      {full && tab && <ToolBar sticky label={tab === 'list' ? `共 ${shown.length} 筆` : tab === 'stats' ? '統計' : '類型設定'}><ExportBtn onClick={() => setReport(true)} /></ToolBar>}
 
       {(full ? tab === 'list' : true) && (
         <>
-          <div className="card" style={{ padding: 12 }}>
+          <div className="fstk">
             <input className="search-inp" placeholder="🔍 搜尋房號、備註、登記人" value={f.search} onChange={e => setF({ ...f, search: e.target.value })} />
-            <div className="df-grid">
+            <div className="df-grid df-grid4">
               {sel('floor', '所有樓層', FLOORS.map(x => ({ v: x, t: `${x} 樓` })))}
               {sel('status', '所有狀態', STATUS.map(s => ({ v: s.value, t: s.label })))}
               {sel('severity', '所有程度', SEVERITY.map(s => ({ v: s.value, t: s.label })))}
               {sel('type', '所有類型', types.map(t => ({ v: t, t })))}
             </div>
+          </div>
+          <div className="card" style={{ padding: 10 }}>
             <div className="df-bar">
               <span style={{ color: 'var(--sub)', fontSize: 12.5 }}>排序</span>
               <select className="df-sel sm" value={sortBy} onChange={e => setSortBy(e.target.value)}>

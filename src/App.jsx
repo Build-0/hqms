@@ -12,6 +12,7 @@ import Findings from './pages/Findings'
 import Icon from './components/Icon'
 import Embed from './components/Embed'
 import Gate from './components/Gate'
+import { runBack } from './lib/nav'
 import Confirm from './components/Confirm'
 import { getSession, clearSession, PERMS, ROLE_LABEL } from './lib/accounts'
 import { toast } from './lib/toast'
@@ -132,7 +133,7 @@ export default function App() {
     <div className={`phone ${session && PERMS[session.role].quality !== 'edit' && (inQuality || (cur && !cur.embed && !cur.top)) && !(cur && cur.id === 'findings' && PERMS[session.role].findings === 'add') ? 'ro' : ''}`}>
       <header className={tab === 'home' ? 'hdr-home' : ''}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          {(cur || inQuality) && <button className="back-btn" onClick={cur ? goBack : () => setTab('home')}>‹</button>}
+          {(cur || inQuality) && <button className="back-btn" onClick={() => { if (!runBack()) { cur ? goBack() : setTab('home') } }}>‹</button>}
           {cur && <span className="hdr-ico" style={{ background: 'rgba(255,255,255,.2)' }}><Icon name={cur.icon} size={18} color="#fff" /></span>}
           <h1 style={{ flex: 1 }}>{title}</h1>
           <button className="hdr-gear" onClick={() => setSettings(true)} aria-label="設定"><Icon name="gear" size={26} color="#fff" width={2} /></button>

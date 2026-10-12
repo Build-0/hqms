@@ -215,6 +215,7 @@ export default function Findings({ session }) {
         </div>
       )}
 
+      <div className="fstk">
       <div className="df-grid" style={{ marginBottom: 8 }}>
         <select className="df-sel" value={range} onChange={e => setRange(+e.target.value)}>
           {[[1, '今日'], [7, '近 7 日'], [30, '近 30 日'], [90, '近 90 日']].map(([d, t]) => <option key={d} value={d}>{t}</option>)}
@@ -224,6 +225,7 @@ export default function Findings({ session }) {
         </select>
       </div>
       {who && <div className="chips" style={{ marginBottom: 6 }}><button className="chip on" onClick={() => setWho('')}>{shortName(attById[who])} ✕</button></div>}
+      </div>
 
       <h2 style={{ margin: '4px 4px 10px' }}>查房記錄<span style={{ fontSize: 11.5, color: 'var(--sub)', fontWeight: 400 }}>（{batches.length} 次 · {batches.reduce((n, b) => n + b.items.length, 0)} 個問題）</span></h2>
       {batches.length === 0 && <div className="note">這段時間還沒有記錄。查房發現問題，請按上面的「⚠ 記錄問題」。</div>}

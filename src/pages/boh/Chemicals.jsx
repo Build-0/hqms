@@ -1,3 +1,4 @@
+import { useBack } from '../../lib/nav'
 import { SqChip } from '../../components/ui'
 import { useEffect, useMemo, useState } from 'react'
 import * as api from '../../lib/api'
@@ -92,11 +93,11 @@ export default function Chemicals({ d, edit, reload, init, reg }) {
       }),
     })),
   })
+  useBack(sub === 'report', () => setSub('list'), 2)
   const pvP = pv ? d.products.find(x => x.id === pv) : null
   const chip = (k, t) => <SqChip key={k} on={fk === k} onClick={() => setFk(k)} label={t} />
   return (
     <>
-      {sub === 'report' && <button className="linky" style={{ fontSize: 13.5, margin: '0 0 8px', padding: 0 }} onClick={() => setSub('list')}>‹ 返回產品</button>}
       {sub === 'report' ? <UsageReport d={d} /> : (
         <>
           <div className="fstk">

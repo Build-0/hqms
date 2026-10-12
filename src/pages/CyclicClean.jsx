@@ -7,6 +7,7 @@ import { toast } from '../lib/toast'
 import Confirm from '../components/Confirm'
 import { PhotoGrid, PhotoField } from '../components/Photos'
 import Icon from '../components/Icon'
+import { useBack } from '../lib/nav'
 import { ReportModal, ListReport } from '../components/Reports'
 
 // 匯出：先揀要匯出的分區，再按需要附上相片（與其他模組匯出一致）
@@ -46,7 +47,8 @@ const SECTIONS = [
 export default function CyclicClean() {
   const [items, setItems] = useState(null)
   const [err, setErr] = useState('')
-  const [sub, setSub] = useState(null)     // null=三圓入口；'daily'|'cycle'|'deep'
+  const [sub, setSub] = useState(null)
+  useBack(!!sub, () => setSub(null))     // null=三圓入口；'daily'|'cycle'|'deep'
   const [form, setForm] = useState(null)   // {id?, section, day, grp, text, wrong}
   const [daySheet, setDaySheet] = useState(null) // 月曆點中的日期
   const [confirmDel, setConfirmDel] = useState(null)
@@ -249,7 +251,6 @@ export default function CyclicClean() {
   const rows = sub === 'cycle' ? cycle : bySection(sub)
   return (
     <>
-      <button className="linky" style={{ fontSize: 13.5, margin: '0 0 8px', padding: 0 }} onClick={() => setSub(null)}>‹ 清潔要點</button>
       {sub === 'daily' && (
         <div className="daily-banner">💡 這不是每週或每月的深度清潔項目，而是<b>每天需要做到的「習慣」</b>。</div>
       )}

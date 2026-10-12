@@ -763,3 +763,7 @@ body{overflow-x:clip}
 .sq-card .bh-thumb{max-width:100%}
 .sq-name{overflow-wrap:anywhere}
 @media (min-width:600px){.t-grid{grid-template-columns:repeat(auto-fill,minmax(110px,1fr))}.sq-grid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr))}}
+
+.df-grid4{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.df-grid4 .df-sel{padding:9px 6px;font-size:13px}
+.fstk .search-inp{margin-bottom:6px}

@@ -1,4 +1,5 @@
 import { ToolBar, ToolBtn, ExportBtn } from '../components/ui'
+import { useBack } from '../lib/nav'
 import { useEffect, useRef, useState } from 'react'
 import * as api from '../lib/api'
 import { todayStr } from '../lib/dates'
@@ -26,6 +27,7 @@ export default function Boh({ session, init }) {
   const [d, setD] = useState(null)
   const [err, setErr] = useState('')
   const [report, setReport] = useState(null)   // 目前篩選結果的報告資料
+  useBack(!!tab, () => setTab(null))
   const reg = useRef(null)                    // 目前分頁登記的「產生報告」函式
 
   useEffect(() => { load() }, [])
@@ -58,7 +60,7 @@ export default function Boh({ session, init }) {
           ))}
         </div>
       )}
-      {tab && <ToolBar sticky label={<button className="linky" style={{ fontSize: 14.5, fontWeight: 700, padding: 0 }} onClick={() => setTab(null)}>‹ {TABS.find(x => x[0] === tab)[1]}</button>}><ExportBtn onClick={() => setReport((reg.current && reg.current()) || { title: '', filterText: '', cols: [], groups: [] })} /></ToolBar>}
+      {tab && <ToolBar sticky label={TABS.find(x => x[0] === tab)[1]}><ExportBtn onClick={() => setReport((reg.current && reg.current()) || { title: '', filterText: '', cols: [], groups: [] })} /></ToolBar>}
       {!edit && <p className="note" style={{ textAlign: 'left', margin: '0 4px 6px' }}>目前帳號只可查看</p>}
       {tab === 'chem' && <Chemicals d={d} edit={edit} reload={load} init={init} reg={reg} />}
       {tab === 'vac' && <Machines kind="vacuum" d={d} edit={edit} reload={load} reg={reg} />}
