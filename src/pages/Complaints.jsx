@@ -87,9 +87,10 @@ export default function Complaints() {
   const hasTags = list.length > 0 && 'tags' in list[0]
   const catsOf = c => [...new Set([c.category, ...(c.tags || [])])].filter(Boolean) // 主分類＋附加標籤
   const mAll = list.filter(c => c.date.startsWith(ym))
+  const cardRows = allScope ? list : mAll   // 預設跟「全部月份」；切換月份才只計該月
   // 部門統計組
   const groups = DEPTS.map(d => {
-    const mine = mAll.filter(c => deptOf(c) === d)
+    const mine = cardRows.filter(c => deptOf(c) === d)
     return {
       d,
       y: list.filter(c => deptOf(c) === d && natOf(c) === '投訴' && c.date === yesterday).length,
@@ -248,7 +249,7 @@ export default function Complaints() {
         {panelOpen && <div>
           <div className="month-nav">
             <button onClick={() => { setYm(shiftYm(ym, -1)); setFloorF('全部'); setAllScope(false) }}>‹</button>
-            <span className="m-label">{monthLabel}</span>
+            <span className="m-label">{allScope ? '全部月份' : monthLabel}</span>
             <button onClick={() => { setYm(shiftYm(ym, 1)); setFloorF('全部'); setAllScope(false) }}>›</button>
             <button className="panel-w-btn" title="收起統計欄" onClick={togglePanel}>«</button>
           </div>
@@ -261,12 +262,12 @@ export default function Complaints() {
                 </div>
                 <div className="dc-stats">
                   <div><b className={g.y ? 'warn' : ''}>{g.y}</b><span>昨日投訴</span></div>
-                  <div><b>{g.inv}</b><span>當月投訴</span></div>
+                  <div><b>{g.inv}</b><span>{allScope ? '全部投訴' : '當月投訴'}</span></div>
                   <div><b style={{ color: 'var(--sub)' }}>{g.ab}</b><span>濫訴</span></div>
                 </div>
               </div>
             ))}
-            <div className="dept-sum">📊 {monthLabel}全部合計 <b>{mAll.length}</b> 單</div>
+            <div className="dept-sum">📊 {allScope ? '全部月份' : monthLabel}合計 <b>{cardRows.length}</b> 單</div>
           </div>
 
           <div className="cx-cards">

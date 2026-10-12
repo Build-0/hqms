@@ -35,6 +35,9 @@ export default function Perf({ rows, tagById, atts, onStaff, edit }) {
   })
 
   const reportData = () => ({
+    fk,
+    people: people.map(x => ({ level: x.p ? x.p.level.key : '未有記錄', color: x.p ? x.p.level.color : '#97a3ad', floor: x.a.floor, name: staffName(x.a), total: x.p ? x.p.total : null, weak: x.p ? x.p.weak : [], date: x.p ? x.p.last : '' }))
+      .sort((a, b) => (a.total ?? 999) - (b.total ?? 999)),
     ratedN: rated.length, totalN: people.length, max: SCORE_MAX,
     levels: LEVELS.map(l => ({ key: l.key, color: l.color, n: count(l.key), range: RANGE[l.key] })),
     dimWeak: SCORE_DIMS.map(k => ({ k, n: rated.filter(x => x.p.dims[k] <= 2).length })),

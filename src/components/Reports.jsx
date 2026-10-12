@@ -54,9 +54,42 @@ const Bars = ({ rows, color = '#5a6b7d' }) => {
 
 // ── 房務員清潔評分 ──
 export function ScoresReport({ data }) {
-  const { ratedN, totalN, max, levels, dimWeak, follow } = data
+  const { ratedN, totalN, max, levels, dimWeak, follow, people = [] } = data
+  // 先揀範圍（全部／某一分級／未有記錄），預設跟目前畫面的篩選
+  const [lv, setLv] = useState(data.fk && data.fk !== 'all' ? (data.fk === 'none' ? '未有記錄' : data.fk) : '')
+  const picked = lv ? people.filter(p => p.level === lv) : []
+  if (lv) {
+    return (
+      <>
+        <div className="chips wrap rpt-noprint">
+          <button className={`chip ${!lv ? 'on' : ''}`} onClick={() => setLv('')}>全部</button>
+          {[...levels.map(l => l.key), '未有記錄'].map(k => <button key={k} className={`chip ${lv === k ? 'on' : ''}`} onClick={() => setLv(k)}>{k}</button>)}
+        </div>
+        <p className="rpt-mut">近 30 日 · 範圍：{lv} · 共 {picked.length} 人 · 滿分 {max}</p>
+        {picked.length === 0 ? <Empty>沒有符合的人員</Empty> : (
+          <table className="rpt-t">
+            <thead><tr><th>樓層</th><th>姓名</th><th>總分</th><th>弱項</th><th>最近評分</th></tr></thead>
+            <tbody>
+              {picked.map((p, i) => (
+                <tr key={i}>
+                  <td>{p.floor || '—'}</td><td>{p.name}</td>
+                  <td>{p.total == null ? '—' : <span className="rpt-tag" style={{ background: p.color }}>{p.total}</span>}</td>
+                  <td className="rpt-red">{p.weak.length >= 7 ? '全部 7 項' : p.weak.join('、') || '—'}</td>
+                  <td className="rpt-mut">{p.date || '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </>
+    )
+  }
   return (
     <>
+      <div className="chips wrap rpt-noprint">
+        <button className="chip on" onClick={() => setLv('')}>全部</button>
+        {[...levels.map(l => l.key), '未有記錄'].map(k => <button key={k} className="chip" onClick={() => setLv(k)}>{k}</button>)}
+      </div>
       <p className="rpt-mut">近 30 日有記錄 {ratedN} / {totalN} 人 · 滿分 {max}</p>
       <Sub>分數分布</Sub>
       <div className="rpt-kpis">
