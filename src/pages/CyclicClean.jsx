@@ -101,7 +101,7 @@ export default function CyclicClean() {
   // 照片格：遠+近；空則佔位。點圖放大（不觸發編輯）
   const photoCells = arr => {
     const a = arr || []
-    if (!a.length) return <div className="da-ph empty">📷 待補圖（遠＋近）</div>
+    if (!a.length) return <div className="da-ph empty">📷<br />待補圖</div>
     return a.slice(0, 4).map((p, i) => (
       <img className="da-ph" key={i} src={p} alt="" loading="lazy"
         onClick={e => { e.stopPropagation(); setBig(p) }} />
@@ -111,6 +111,7 @@ export default function CyclicClean() {
   const cardA = r => (
     <div className="da-card" key={r.id} onClick={() => openEdit(r)}>
       <div className="da-ttl">{r.text}</div>
+      <div className="da-sides">
       <div className="da-block ok">
         <div className="da-lab">✓ 正確做法</div>
         <div className="da-duo">{photoCells(r.photos)}</div>
@@ -118,6 +119,7 @@ export default function CyclicClean() {
       <div className="da-block no">
         <div className="da-lab">✗ 錯誤做法{r.wrong ? `：${r.wrong}` : ''}</div>
         <div className="da-duo">{photoCells(r.photos_wrong)}</div>
+      </div>
       </div>
     </div>
   )
