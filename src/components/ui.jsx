@@ -12,12 +12,5 @@ export const ToolBtn = ({ onClick, children, primary }) => (
 )
 export const ExportBtn = ({ onClick }) => <ToolBtn onClick={onClick}>📄 匯出</ToolBtn>
 
-// 小正方形篩選掣：上面數字、下面名稱（後勤等篩選列用）
-export const SqChip = ({ on, onClick, label }) => {
-  const m = String(label).match(/^(.*?)\s*(\d+)$/)
-  return (
-    <button className={`chip sq ${on ? 'on' : ''}`} onClick={onClick}>
-      {m ? <><b>{m[2]}</b><small>{m[1].trim() || '全部'}</small></> : <small>{label}</small>}
-    </button>
-  )
-}
+// 篩選掣：維持膠囊型（清單項目才用方形卡片）
+export const SqChip = ({ on, onClick, label }) => <button className={`chip ${on ? 'on' : ''}`} onClick={onClick}>{label}</button>
