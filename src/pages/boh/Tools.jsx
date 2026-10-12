@@ -63,6 +63,7 @@ export default function Tools({ d, edit, reload, reg }) {
   const chip = (k, t) => <button key={k} className={`chip ${fk === k ? 'on' : ''}`} onClick={() => setFk(k)}>{t}</button>
   return (
     <>
+      <div className="fstk">
       <div className="srch-row">
         <input className="search-inp" placeholder="🔍 搜尋工具名稱、分類" value={q} onChange={e => setQ(e.target.value)} />
         {edit && <button className="tb-btn sq" title="管理分類" onClick={() => setMgr(true)}>⚙</button>}
@@ -72,6 +73,7 @@ export default function Tools({ d, edit, reload, reg }) {
         {lowN > 0 && chip('low', `🛒 需補貨 ${lowN}`)}
         {offN > 0 && chip('off', `停用 ${offN}`)}
         {d.toolCats.map(c => chip(c.name, c.name))}
+      </div>
       </div>
       {groups.length === 0 && <div className="note">沒有符合的工具</div>}
       {groups.map(g => (

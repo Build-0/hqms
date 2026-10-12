@@ -90,6 +90,7 @@ export default function Machines({ kind, d, edit, reload, reg }) {
   const chip = (on, set, t, k) => <button key={k} className={`chip ${on ? 'on' : ''}`} onClick={set}>{t}</button>
   return (
     <>
+      <div className="fstk">
       <div className="srch-row">
       <input className="search-inp" placeholder={isVac ? '🔍 搜尋機號、型號、序號、位置' : '🔍 搜尋類型、機號、型號、位置'} value={q} onChange={e => setQ(e.target.value)} />
         {edit && <button className="tb-btn sq" title={'管理' + (isVac ? '位置' : '類型')} onClick={() => setMgr(true)}>⚙</button>}
@@ -103,6 +104,7 @@ export default function Machines({ kind, d, edit, reload, reg }) {
           <option value="">{isVac ? '所有位置' : '所有類型'}</option>
           {allGroups.map(g => <option key={g} value={g}>{g}</option>)}
         </select>
+      </div>
       </div>
       {groups.length === 0 && <div className="note">沒有符合的{C.name}</div>}
       {groups.map(g => (

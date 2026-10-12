@@ -96,6 +96,7 @@ export default function Chemicals({ d, edit, reload, init, reg }) {
       {sub === 'report' && <button className="linky" style={{ fontSize: 13.5, margin: '0 0 8px', padding: 0 }} onClick={() => setSub('list')}>‹ 返回產品</button>}
       {sub === 'report' ? <UsageReport d={d} /> : (
         <>
+          <div className="fstk">
           <div className="srch-row">
             <input className="search-inp" placeholder="🔍 搜尋名稱、適用範圍" value={q} onChange={e => setQ(e.target.value)} />
             <button className="tb-btn sq" title="用量報表" onClick={() => setSub('report')}>📊</button>
@@ -107,6 +108,7 @@ export default function Chemicals({ d, edit, reload, init, reg }) {
             {expSet.size > 0 && chip('exp', `⚠ 臨期 ${expSet.size}`)}
             {offN > 0 && chip('off', `停用 ${offN}`)}
             {d.cats.map(c => chip(String(c.id), `${c.icon || ''} ${c.name_zh}`))}
+          </div>
           </div>
           {groups.length === 0 && <div className="note">沒有符合的產品</div>}
           {groups.map(g => (
