@@ -80,19 +80,15 @@ export default function Tools({ d, edit, reload, reg }) {
       {groups.map(g => (
         <div key={g.c}>
           <div className="bh-grp">{g.c}<span>{g.items.length}</span></div>
-          {g.items.map(t => (
-            <div className="c-item bh-item" key={t.id} onClick={() => edit && open(t)} style={t.status === '停用' ? { opacity: .55 } : undefined}>
-              <Thumb src={img(t.id)} fallback="🧹" />
-              <div className="bh-main">
-                <div className="bh-name">{t.name}{t.status === '停用' && <span className="badge b-gray">停用</span>}</div>
-                <div className="bh-sub">
-                  <span className={`badge ${low(t) ? 'b-red' : 'b-teal'}`}>庫存 {t.stock}{num(t.min_stock) > 0 ? ` / 最低 ${t.min_stock}` : ''}</span>
-                  {num(t.in_use) > 0 && <span className="badge b-gray">在用 {t.in_use}</span>}
-                </div>
-                {t.notes && <div className="bh-note">{t.notes}</div>}
-              </div>
-            </div>
-          ))}
+          <div className="sq-grid">
+            {g.items.map(t => (
+              <button className={`sq-card ${t.status === '停用' ? 'off' : ''}`} key={t.id} onClick={() => edit && open(t)}>
+                <Thumb src={img(t.id)} fallback="🧹" size={64} />
+                <span className="sq-name">{t.name}</span>
+                <span className={`sq-n ${low(t) ? 'low' : ''}`}>{t.stock}<small>{t.status === '停用' ? '停用' : low(t) ? '需補貨' : '庫存'}</small></span>
+              </button>
+            ))}
+          </div>
         </div>
       ))}
       {edit && <button className="fab" onClick={() => open(null)}>＋</button>}

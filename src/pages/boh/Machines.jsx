@@ -110,17 +110,15 @@ export default function Machines({ kind, d, edit, reload, reg }) {
       {groups.map(g => (
         <div key={g.g}>
           <div className="bh-grp">{g.g}<span>{g.items.length}</span></div>
-          {g.items.map(x => (
-            <div className="c-item bh-item" key={x.id} onClick={() => setView(x)}>
-              <Thumb src={img(x.id)} fallback={C.icon} />
-              <div className="bh-main">
-                <div className="bh-name">{title(x)}<span className={`badge ${STATUS_CLS[x.status] || 'b-gray'}`}>{x.status}</span></div>
-                <div className="bh-sub">{sub(x) || ' '}</div>
-                {x.serial && <div className="bh-note">序號 {x.serial}</div>}
-                {!isVac && x.floor_code && <div className="bh-note">📍 {x.floor_code}</div>}
-              </div>
-            </div>
-          ))}
+          <div className="sq-grid">
+            {g.items.map(x => (
+              <button className="sq-card" key={x.id} onClick={() => setView(x)}>
+                <Thumb src={img(x.id)} fallback={C.icon} size={64} />
+                <span className="sq-name">{title(x)}</span>
+                <span className={`badge ${STATUS_CLS[x.status] || 'b-gray'}`}>{x.status}</span>
+              </button>
+            ))}
+          </div>
         </div>
       ))}
       {edit && <button className="fab" onClick={() => open(null)}>＋</button>}

@@ -748,3 +748,12 @@ body{overflow-x:clip}
 .chip.sq b{font-size:19px;font-weight:800}
 .chip.sq small{font-size:11.5px;font-weight:600;white-space:nowrap;max-width:58px;overflow:hidden;text-overflow:ellipsis}
 .chip.sq.on b,.chip.sq.on small{color:#fff}
+
+/* 後勤：方形卡片（與培訓主題庫一致，一行三張） */
+.sq-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+.sq-card{aspect-ratio:1/1;background:var(--card);border:1px solid var(--line);border-radius:var(--r-card,16px);box-shadow:var(--shadow-card);padding:8px 6px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer;font-family:inherit;color:var(--ink);text-align:center}
+.sq-card.off{opacity:.55}
+.sq-name{font-size:12.5px;font-weight:700;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;max-width:100%}
+.sq-n{font-size:19px;font-weight:800;line-height:1;color:var(--accent)}.sq-n small{display:block;font-size:10.5px;font-weight:600;color:var(--sub);margin-top:2px}
+.sq-n.low{color:var(--red)}.sq-n.low small{color:var(--red)}
+.sq-card .bh-thumb{border-radius:12px}

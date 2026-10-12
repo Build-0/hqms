@@ -8,6 +8,7 @@ import { Thumb, ImageField, useImages, setCachedImage, num, today, daysUntil } f
 const EMPTY = { category_id: '', name_zh: '', name_en: '', applicable_zh: '', dilution_zh: '', rinse: 'no', min_stock: 0, status: '啟用', image: '' }
 
 export default function Chemicals({ d, edit, reload, init, reg }) {
+  const [pv, setPv] = useState(null)             // 方形卡片點開的產品 id
   const [sub, setSub] = useState('list')       // list / report
   const [q, setQ] = useState('')
   const [fk, setFk] = useState(init?.fk || 'all')
@@ -91,6 +92,7 @@ export default function Chemicals({ d, edit, reload, init, reg }) {
       }),
     })),
   })
+  const pvP = pv ? d.products.find(x => x.id === pv) : null
   const chip = (k, t) => <SqChip key={k} on={fk === k} onClick={() => setFk(k)} label={t} />
   return (
     <>
@@ -115,62 +117,76 @@ export default function Chemicals({ d, edit, reload, init, reg }) {
           {groups.map(g => (
             <div key={g.c.id}>
               <div className="bh-grp" style={{ borderColor: g.c.color }}>{g.c.icon} {g.c.name_zh}<span>{g.items.length}</span></div>
-              {g.items.map(p => {
-                const bs = batchesOf(p.id)
-                return (
-                  <div className="c-item bh-card" key={p.id} style={!active(p) ? { opacity: .6 } : undefined}>
-                    <div className="bh-item" style={{ cursor: 'default' }}>
-                      <Thumb src={img(p.id)} fallback="🧴" size={72} />
-                      <div className="bh-main">
-                        <div className="bh-name">{p.name_zh}{!active(p) && <span className="badge b-gray">停用</span>}</div>
-                        {p.name_en && <div className="bh-sub">{p.name_en}</div>}
-                      </div>
-                      <div className="bh-stock">
-                        <div className={`bh-sn ${low(p) ? 'low' : ''}`}>{p.stock}</div>
-                        <div className="bh-sl">{low(p) ? '需補貨' : '庫存'}</div>
-                        {num(p.min_stock) > 0 && <div className="bh-sl">最低 {p.min_stock}</div>}
-                      </div>
-                    </div>
-                    <div className="bh-info">
-                      {p.applicable_zh && <div><span>適用範圍</span><b>{p.applicable_zh}</b></div>}
-                      {p.dilution_zh && <div><span>兌水比例</span><b>{p.dilution_zh}</b></div>}
-                      {p.rinse_zh && <div><span>需要過水</span><b>{p.rinse_zh}</b></div>}
-                    </div>
-                    {bs.length > 0 && (
-                      <div className="bh-batches">
-                        <div className="bh-bt">效期批次</div>
-                        {bs.map(b => {
-                          const dd = daysUntil(b.expiry_date)
-                          const cls = dd === null ? 'none' : dd < 0 ? 'past' : dd <= 30 ? 'soon' : 'ok'
-                          return (
-                            <div key={b.id} className="bh-b">
-                              <i className={`bh-dot ${cls}`} />
-                              <span style={{ flex: 1 }}>{b.expiry_date || '未設效期'}{dd !== null && dd < 0 ? '（已過期）' : dd !== null && dd <= 30 ? `（剩${dd}天）` : ''}</span>
-                              <b>{b.qty_remaining}</b>
-                              {edit && <button className="linky" onClick={() => setBe({ ...b })}>✎</button>}
-                              {edit && <button className="linky" style={{ color: 'var(--red)' }} onClick={() => setDel(b)}>✕</button>}
-                            </div>
-                          )
-                        })}
-                      </div>
-                    )}
-                    {edit && (
-                      <div className="bh-acts">
-                        <button className="btn ghost" onClick={() => setRecv({ p, qty: '', expiry: '', date: today(), note: '' })}>＋ 進貨</button>
-                        <button className="btn ghost" onClick={() => setCount({ p, actual: '', note: '' })}>盤點</button>
-                        <button className="btn ghost" onClick={() => open(p)}>編輯</button>
-                        <button className="btn ghost" onClick={() => toggle(p)}>{active(p) ? '停用' : '啟用'}</button>
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
+              <div className="sq-grid">
+                {g.items.map(p => (
+                  <button className={`sq-card ${!active(p) ? 'off' : ''}`} key={p.id} onClick={() => setPv(p.id)}>
+                    <Thumb src={img(p.id)} fallback="🧴" size={64} />
+                    <span className="sq-name">{p.name_zh}</span>
+                    <span className={`sq-n ${low(p) ? 'low' : ''}`}>{p.stock}<small>{!active(p) ? '停用' : low(p) ? '需補貨' : '庫存'}</small></span>
+                  </button>
+                ))}
+              </div>
             </div>
           ))}
           {edit && <button className="fab" onClick={() => open(null)}>＋</button>}
         </>
       )}
 
+      {pvP && (
+        <div className="modal" onClick={e => { if (e.target === e.currentTarget) setPv(null) }}>
+          <div className="sheet" style={{ padding: 12 }}>
+            {(() => { const p = pvP; const bs = batchesOf(p.id); return (
+                      <div className="c-item bh-card" key={p.id} style={!active(p) ? { opacity: .6 } : undefined}>
+                        <div className="bh-item" style={{ cursor: 'default' }}>
+                          <Thumb src={img(p.id)} fallback="🧴" size={72} />
+                          <div className="bh-main">
+                            <div className="bh-name">{p.name_zh}{!active(p) && <span className="badge b-gray">停用</span>}</div>
+                            {p.name_en && <div className="bh-sub">{p.name_en}</div>}
+                          </div>
+                          <div className="bh-stock">
+                            <div className={`bh-sn ${low(p) ? 'low' : ''}`}>{p.stock}</div>
+                            <div className="bh-sl">{low(p) ? '需補貨' : '庫存'}</div>
+                            {num(p.min_stock) > 0 && <div className="bh-sl">最低 {p.min_stock}</div>}
+                          </div>
+                        </div>
+                        <div className="bh-info">
+                          {p.applicable_zh && <div><span>適用範圍</span><b>{p.applicable_zh}</b></div>}
+                          {p.dilution_zh && <div><span>兌水比例</span><b>{p.dilution_zh}</b></div>}
+                          {p.rinse_zh && <div><span>需要過水</span><b>{p.rinse_zh}</b></div>}
+                        </div>
+                        {bs.length > 0 && (
+                          <div className="bh-batches">
+                            <div className="bh-bt">效期批次</div>
+                            {bs.map(b => {
+                              const dd = daysUntil(b.expiry_date)
+                              const cls = dd === null ? 'none' : dd < 0 ? 'past' : dd <= 30 ? 'soon' : 'ok'
+                              return (
+                                <div key={b.id} className="bh-b">
+                                  <i className={`bh-dot ${cls}`} />
+                                  <span style={{ flex: 1 }}>{b.expiry_date || '未設效期'}{dd !== null && dd < 0 ? '（已過期）' : dd !== null && dd <= 30 ? `（剩${dd}天）` : ''}</span>
+                                  <b>{b.qty_remaining}</b>
+                                  {edit && <button className="linky" onClick={() => setBe({ ...b })}>✎</button>}
+                                  {edit && <button className="linky" style={{ color: 'var(--red)' }} onClick={() => setDel(b)}>✕</button>}
+                                </div>
+                              )
+                            })}
+                          </div>
+                        )}
+                        {edit && (
+                          <div className="bh-acts">
+                            <button className="btn ghost" onClick={() => setRecv({ p, qty: '', expiry: '', date: today(), note: '' })}>＋ 進貨</button>
+                            <button className="btn ghost" onClick={() => setCount({ p, actual: '', note: '' })}>盤點</button>
+                            <button className="btn ghost" onClick={() => open(p)}>編輯</button>
+                            <button className="btn ghost" onClick={() => toggle(p)}>{active(p) ? '停用' : '啟用'}</button>
+                          </div>
+                        )}
+                      </div>
+    
+            ) })()}
+            <button className="btn ghost" onClick={() => setPv(null)}>關閉</button>
+          </div>
+        </div>
+      )}
       {form && (
         <div className="modal" onClick={e => { if (e.target === e.currentTarget) setForm(null) }}>
           <div className="sheet">
