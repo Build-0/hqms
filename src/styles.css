@@ -757,3 +757,9 @@ body{overflow-x:clip}
 .sq-n{font-size:19px;font-weight:800;line-height:1;color:var(--accent)}.sq-n small{display:block;font-size:10.5px;font-weight:600;color:var(--sub);margin-top:2px}
 .sq-n.low{color:var(--red)}.sq-n.low small{color:var(--red)}
 .sq-card .bh-thumb{border-radius:12px}
+/* 方形卡片格：欄寬不得被內容撐出螢幕（1fr 預設最小為內容寬度） */
+.sq-grid,.t-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+.sq-card,.t-item{min-width:0;overflow:hidden}
+.sq-card .bh-thumb{max-width:100%}
+.sq-name{overflow-wrap:anywhere}
+@media (min-width:600px){.t-grid{grid-template-columns:repeat(auto-fill,minmax(110px,1fr))}.sq-grid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr))}}
