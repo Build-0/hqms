@@ -348,7 +348,7 @@ h3{font-size:13px;color:var(--sub);font-weight:700;margin:14px 0 6px}
 .rpt-ft{display:flex;justify-content:space-between;font-size:10px;color:#8a94a1;border-top:1px solid #e3e7ec;margin-top:16px;padding-top:6px}
 @media (max-width:480px){.rpt-two{grid-template-columns:1fr}.rpt-bar-row em{width:70px}}
 @media print{
-  @page{size:A4;margin:12mm}
+  @page{size:A4;margin:12mm 12mm 16mm;@bottom-center{content:"第 " counter(page) " / " counter(pages) " 頁";font-size:9pt;color:#8a94a1}}
   html,body{background:#fff!important}
   #root{display:none!important}
   .rpt-overlay{position:static;background:#fff;display:block}
