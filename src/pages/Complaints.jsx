@@ -246,13 +246,19 @@ export default function Complaints() {
         )
       })()}
       <ToolBar label={`共 ${shown.length} 單`}><ExportBtn onClick={() => setReport(true)} /></ToolBar>
-      <div className="seg cx-vw" style={{ margin: '0 0 10px' }}>
-        <button className={vw === 'list' ? 'on' : ''} onClick={() => setVw('list')}>記錄</button>
-        <button className={vw === 'stats' ? 'on' : ''} onClick={() => setVw('stats')}>統計</button>
+      <div className="cx-ctl cx-vw">
+        <div className="seg">
+          <button className={vw === 'list' ? 'on' : ''} onClick={() => setVw('list')}>記錄</button>
+          <button className={vw === 'stats' ? 'on' : ''} onClick={() => setVw('stats')}>統計</button>
+        </div>
+        <div className="seg">
+          <button className={allScope ? 'on' : ''} onClick={() => { setAllScope(true); setFloorF('全部'); setCatF('全部') }}>全部</button>
+          <button className={!allScope ? 'on' : ''} onClick={() => { setAllScope(false); setFloorF('全部') }}>按月份</button>
+        </div>
       </div>
       <div className={`cx-grid ${panelOpen ? '' : 'closed'}`} style={{ '--panelw': `${pwPx}px` }}>
         {panelOpen && <div className={vw === 'stats' ? '' : 'vw-off'}>
-          <div className="seg" style={{ margin: '0 0 8px' }}>
+          <div className="seg cx-seg-d" style={{ margin: '0 0 8px' }}>
             <button className={allScope ? 'on' : ''} onClick={() => { setAllScope(true); setFloorF('全部'); setCatF('全部') }}>全部</button>
             <button className={!allScope ? 'on' : ''} onClick={() => { setAllScope(false); setFloorF('全部') }}>按月份</button>
           </div>
@@ -368,10 +374,6 @@ export default function Complaints() {
 
         <div className={vw === 'list' ? '' : 'vw-off'}>
           <div className="cx-scope-m">
-            <div className="seg" style={{ margin: '0 0 8px' }}>
-              <button className={allScope ? 'on' : ''} onClick={() => { setAllScope(true); setFloorF('全部'); setCatF('全部') }}>全部</button>
-              <button className={!allScope ? 'on' : ''} onClick={() => { setAllScope(false); setFloorF('全部') }}>按月份</button>
-            </div>
             {!allScope && (
               <div className="month-nav" style={{ marginBottom: 8 }}>
                 <button onClick={() => { setYm(shiftYm(ym, -1)); setFloorF('全部'); setAllScope(false) }}>‹</button>
@@ -392,7 +394,18 @@ export default function Complaints() {
           </h2>
           <div className="fstk">
           <input className="search-inp" placeholder="🔍 搜尋房號或內容（跨全部月份）" value={q} onChange={e => setQ(e.target.value)} />
-          <div className="chips">
+          <div className="cx-flt-m df-grid3">
+            <select className="df-sel" value={deptF} onChange={e => setDeptF(e.target.value)}>
+              <option value="全部">部門</option><option value="客房">🛏️ 客房</option><option value="工程其他">🔧 工程與其他</option>
+            </select>
+            <select className="df-sel" value={catF} onChange={e => setCatF(e.target.value)}>
+              <option value="全部">分類</option>{catList.map(k => <option key={k.name} value={k.name}>{k.emoji} {k.name}</option>)}
+            </select>
+            <select className="df-sel" value={floorF} onChange={e => setFloorF(e.target.value)} disabled={searching || floors.length <= 1}>
+              <option value="全部">樓層</option>{floors.map(f => <option key={f} value={f}>{f === '無房號' ? f : `${f} 樓`}</option>)}
+            </select>
+          </div>
+          <div className="chips cx-flt-d">
             {['全部', ...DEPTS].map(d => (
               <button key={d} className={`chip ${deptF === d ? 'on' : ''}`} onClick={() => setDeptF(d)}>{d === '工程其他' ? '🔧 工程與其他' : d === '客房' ? '🛏️ 客房' : d}</button>
             ))}
@@ -404,21 +417,32 @@ export default function Complaints() {
             ))}
           </div>
           </div>
-          <div className="chips">
+          <div className="cx-flt-m df-grid3" style={{ margin: '0 0 8px' }}>
+            <select className="df-sel" value={natureF} onChange={e => setNatureF(e.target.value)}>
+              <option value="全部">性質</option>{NATURES.map(n => <option key={n} value={n}>{n}</option>)}
+            </select>
+            <select className="df-sel" value={srcF} onChange={e => setSrcF(e.target.value)} disabled={!hasSource}>
+              <option value="全部">來源</option><option value="wechat">💬 wechat</option><option value="其它">📋 其它來源</option>
+            </select>
+            <select className="df-sel" value={sortF} onChange={e => setSortF(e.target.value)}>
+              {['最新', '最舊', '房號低→高', '房號高→低'].map(x => <option key={x} value={x}>{x}</option>)}
+            </select>
+          </div>
+          <div className="chips cx-flt-d">
             <button className={`chip ${catF === '全部' ? 'on' : ''}`} onClick={() => setCatF('全部')}>全部分類</button>
             {catList.map(k => (
               <button key={k.name} className={`chip ${catF === k.name ? 'on' : ''}`} onClick={() => setCatF(k.name)}>{k.emoji} {k.name}</button>
             ))}
           </div>
           {!searching && floors.length > 1 && (
-            <div className="chips">
+            <div className="chips cx-flt-d">
               <button className={`chip ${floorF === '全部' ? 'on' : ''}`} onClick={() => setFloorF('全部')}>全部樓層</button>
               {floors.map(f => (
                 <button key={f} className={`chip ${floorF === f ? 'on' : ''}`} onClick={() => setFloorF(f)}>{f === '無房號' ? f : `${f} 樓`}</button>
               ))}
             </div>
           )}
-          <div className="chips">
+          <div className="chips cx-flt-d">
             {['最新', '最舊', '房號低→高', '房號高→低'].map(s => (
               <button key={s} className={`chip ${sortF === s ? 'on' : ''}`} onClick={() => setSortF(s)}>
                 {s.startsWith('房號') ? `🚪 ${s}` : `🕐 ${s}`}
@@ -438,11 +462,11 @@ export default function Complaints() {
                   {eng && <span className="badge b-blue">🔧 工程</span>}
                   {abuse && <span className="badge b-gray">🚫 濫訴</span>}
                   <span className="room">{c.room}</span>
-                  <span className="desc">{c.guest_comment}</span>
                   {c.photos?.length > 0 && <span className="ph-count">📷{c.photos.length}</span>}
+                  <span className="cdate" style={{ fontSize: 11, color: 'var(--sub)' }}>{wholeSpan ? c.date : c.date.slice(5)}</span>
+                  <span className="desc">{c.guest_comment}</span>
                   <button className="row-ico" onClick={e => { e.stopPropagation(); setForm({ ...EMPTY, ...c, dept: deptOf(c), nature: natOf(c) }) }}>✏️</button>
                   <button className="row-ico del" onClick={e => { e.stopPropagation(); setConfirmDel(c) }}>🗑</button>
-                  <span style={{ fontSize: 11, color: 'var(--sub)' }}>{wholeSpan ? c.date : c.date.slice(5)}</span>
                 </div>
                 {open === c.id && (
                   <div className="c-body">
@@ -470,6 +494,10 @@ export default function Complaints() {
                         <button key={n} className={`chip ${natOf(c) === n ? 'on' : ''}`}
                           onClick={() => natOf(c) !== n && patch(c, { nature: n })}>{n}</button>
                       ))}
+                    </div>
+                    <div className="cx-body-acts">
+                      <button className="mini" onClick={() => setForm({ ...EMPTY, ...c, dept: deptOf(c), nature: natOf(c) })}>✏️ 編輯</button>
+                      <button className="mini danger" onClick={() => setConfirmDel(c)}>🗑 刪除</button>
                     </div>
                     <button className={`toggle-row ${c.shared ? 'on' : ''}`} onClick={() => patch(c, { shared: !c.shared })}>
                       📣 已於早會分享<span className="tg-state">{c.shared ? '✓ 是' : '未'}</span>

@@ -823,3 +823,18 @@ body{overflow-x:clip}
 .btn.warn{background:var(--red);color:#fff;margin-top:10px}
 .btn.alt{background:#fff;color:var(--accent);border:2px solid var(--accent);margin-top:10px}
 .sheet .btn+.btn.ghost{margin-top:6px}
+
+/* 客訴：手機版精簡（電腦版維持原樣） */
+.cx-ctl{display:flex;gap:8px;margin:0 0 10px}.cx-ctl .seg{flex:1;margin:0}
+.cx-ctl .seg button{padding:9px 4px;font-size:14px}
+.df-grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-bottom:6px}
+.df-grid3 .df-sel{padding:9px 6px;font-size:13px}
+.cx-body-acts{display:flex;gap:8px;margin:2px 0 10px}
+@media (max-width:899px){
+  .cx-seg-d,.cx-flt-d{display:none !important}
+  .c-head{flex-wrap:wrap;row-gap:4px;padding:10px 12px}
+  .c-head .row-ico{display:none}
+  .c-head .cdate{margin-left:auto}
+  .c-head .desc{order:9;flex:1 1 100%;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;font-size:13px;color:var(--ink)}
+}
+@media (min-width:900px){.cx-flt-m{display:none !important}.cx-body-acts{display:none}}
