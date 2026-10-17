@@ -778,3 +778,15 @@ body{overflow-x:clip}
 /* 後勤相片：完整顯示（不再裁切成正方形），留白用淡灰底 */
 .bh-thumb img{object-fit:contain !important;background:#f1f4f6}
 .sq-card .bh-thumb{width:56px !important;height:56px !important}
+
+/* 直接列印：不得超出紙張邊界（不用 fixed／固定寬度／放大，內容按紙寬排版） */
+@media print{
+  html,body{width:auto!important;min-width:0!important;height:auto!important;margin:0!important;padding:0!important;overflow:visible!important;zoom:1!important}
+  html.big body{zoom:1!important}
+  .rpt-overlay{position:static!important;inset:auto!important;width:auto!important;max-width:none!important;height:auto!important;margin:0!important;padding:0!important;transform:none!important;overflow:visible!important;display:block!important}
+  .rpt-scroll{position:static!important;height:auto!important;overflow:visible!important;padding:0!important;margin:0!important}
+  .rpt-print{width:auto!important;max-width:none!important;margin:0!important;padding:0 !important;box-sizing:border-box;box-shadow:none!important}
+  .rpt-print *{max-width:100%;box-sizing:border-box}
+  .rpt-print img{max-width:100%;height:auto}
+  .rpt-t{width:100%;table-layout:auto}
+}

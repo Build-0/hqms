@@ -1,10 +1,16 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { todayStr } from '../lib/dates'
 import { canExport, EXPORT_MSG } from '../lib/accounts'
 
 // 報告外殼：全螢幕預覽 + 「儲存為 PDF」（瀏覽器列印 → 另存 PDF；手機用分享 → 列印/存成 PDF）
 export function ReportModal({ title, sub, onClose, children }) {
+  useEffect(() => {
+    const old = document.title
+    const clean = x => String(x || '').replace(/[\\/:*?"<>|]/g, '-').trim()
+    document.title = [clean(title), clean(sub)].filter(Boolean).join(' ') || old
+    return () => { document.title = old }
+  }, [title, sub])
   // 只有管理員可以匯出；其他帳號只顯示提示
   if (!canExport()) {
     return createPortal(
