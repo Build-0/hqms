@@ -803,3 +803,19 @@ body{overflow-x:clip}
 .sf-cell small{position:absolute;top:2px;right:4px;font-size:9px;font-weight:700;opacity:.8}
 .hm-sofa{width:100%;display:flex;align-items:center;gap:8px;background:#f0ecfa;border:none;border-radius:12px;padding:12px;margin-top:10px;font-family:inherit;color:var(--ink);cursor:pointer;text-align:left}
 .hm-sofa span{font-size:14px;font-weight:700}.hm-sofa b{flex:1;text-align:right;font-size:14px;color:#6a4fb0}.hm-sofa i{font-style:normal;color:var(--sub)}
+
+/* 沙發總表（高對比版） */
+.sf-rows{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
+.sf-row{display:flex;align-items:center;gap:10px;background:var(--card);border:2px solid var(--line);border-radius:12px;padding:10px 12px;cursor:pointer;font-family:inherit;color:var(--ink);text-align:left}
+.sf-row.on{border-color:var(--accent);background:var(--accent-soft)}
+.sf-row>b{width:46px;font-size:15px;flex-shrink:0}
+.sf-bar{flex:1;height:16px;display:flex;gap:2px;border-radius:99px;overflow:hidden;min-width:60px}
+.sf-bar i{display:block;height:100%;min-width:6px}
+.sf-nums{display:flex;gap:4px;flex-shrink:0}
+.sf-nums em{font-style:normal;font-weight:800;font-size:13px;min-width:26px;height:24px;border-radius:7px;display:flex;align-items:center;justify-content:center;padding:0 6px}
+.sf-legend{gap:6px 14px;font-size:12.5px;color:var(--ink);margin:4px 2px 8px}
+.sf-legend i{width:16px;height:16px;border-radius:5px;border-width:1.5px}
+.sf-cell{border:none !important;height:48px;font-size:15px;box-shadow:0 1px 2px rgba(20,35,48,.12)}
+.sf-cell.k-none{border:1.5px dashed #9aa6b1 !important;box-shadow:none}
+.sf-cell u{position:absolute;bottom:2px;right:5px;font-size:10px;text-decoration:none;font-weight:800}
+.sf-cell small{color:inherit}

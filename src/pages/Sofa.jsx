@@ -9,12 +9,12 @@ import { SOFA_ROOMS, SOFA_FLOORS, SOFA_TYPE } from '../data/sofaRooms'
 
 // 大床梳化檢查總表：每間房一個格仔，顏色 = 缺陷嚴重度／已修復／已確認無問題／未檢查
 const ST = {
-  high: { t: '嚴重', c: '#c62828', bg: '#f7e0de' },
-  medium: { t: '中度', c: '#c77a00', bg: '#fbecd0' },
-  low: { t: '輕微', c: '#2f6fba', bg: '#dfeaf7' },
-  fixed: { t: '已修復', c: '#1f7a6d', bg: '#dcefea' },
-  ok: { t: '已確認無問題', c: '#1b8a5a', bg: '#d8f1e3' },
-  none: { t: '未檢查', c: '#7a8894', bg: '#eceff2' },
+  high: { t: '嚴重', c: '#fff', bg: '#d32f2f' },
+  medium: { t: '中度', c: '#fff', bg: '#f57c00' },
+  low: { t: '輕微', c: '#4a3b00', bg: '#f6c90e' },
+  fixed: { t: '已修復', c: '#17624f', bg: '#bfe3d9' },
+  ok: { t: '已確認無問題', c: '#fff', bg: '#2e9e5b' },
+  none: { t: '未檢查', c: '#7a8894', bg: '#fff' },
 }
 const ORDER = ['high', 'medium', 'low', 'fixed', 'ok', 'none']
 
@@ -81,21 +81,16 @@ export default function Sofa({ list, session, onList }) {
       </ToolBar>
       {err && <div className="note" style={{ color: 'var(--red)', textAlign: 'left' }}>讀取確認記錄失敗（可能未建立資料表）：{err}</div>}
 
-      <div className="sf-sum">
-        <button className={`sf-fl ${fl === 0 ? 'on' : ''}`} onClick={() => setFl(0)}>
-          <b>全部</b><span>{rows.length} 間</span>
-        </button>
-        {floors.map(f => {
-          const fr = rows.filter(r => r.floor === f)
+      <div className="sf-rows">
+        {[0, ...floors].map(f => {
+          const fr = f ? rows.filter(r => r.floor === f) : rows
+          const segs = ORDER.map(k => ({ k, n: count(fr, k) })).filter(x => x.n > 0)
           return (
-            <button key={f} className={`sf-fl ${fl === f ? 'on' : ''}`} onClick={() => setFl(fl === f ? 0 : f)}>
-              <b>{f} 樓</b>
-              <span>
-                {count(fr, 'high') > 0 && <i style={{ color: ST.high.c }}>{count(fr, 'high')}</i>}
-                {count(fr, 'medium') > 0 && <i style={{ color: ST.medium.c }}>{count(fr, 'medium')}</i>}
-                {count(fr, 'low') > 0 && <i style={{ color: ST.low.c }}>{count(fr, 'low')}</i>}
-                <i style={{ color: ST.ok.c }}>✓{count(fr, 'ok') + count(fr, 'fixed')}</i>
-                <i style={{ color: ST.none.c }}>○{count(fr, 'none')}</i>
+            <button key={f} className={`sf-row ${fl === f ? 'on' : ''}`} onClick={() => setFl(fl === f ? 0 : f)}>
+              <b>{f ? `${f} 樓` : '全部'}</b>
+              <span className="sf-bar">{segs.map(x => <i key={x.k} style={{ flexGrow: x.n, background: ST[x.k].bg, border: x.k === 'none' ? '1px dashed #9aa6b1' : 'none' }} />)}</span>
+              <span className="sf-nums">
+                {ORDER.map(k => { const n = count(fr, k); return n > 0 ? <em key={k} style={{ background: ST[k].bg, color: ST[k].c, border: k === 'none' ? '1px dashed #9aa6b1' : 'none' }}>{n}</em> : null })}
               </span>
             </button>
           )
@@ -103,7 +98,7 @@ export default function Sofa({ list, session, onList }) {
       </div>
 
       <div className="sf-legend">
-        {ORDER.map(k => <span key={k}><i style={{ background: ST[k].bg, borderColor: ST[k].c }} />{ST[k].t}</span>)}
+        {ORDER.map(k => <span key={k}><i style={{ background: ST[k].bg, borderColor: k === 'none' ? '#9aa6b1' : ST[k].bg, borderStyle: k === 'none' ? 'dashed' : 'solid' }} />{ST[k].t}</span>)}
       </div>
 
       {floors.filter(f => !fl || f === fl).map(f => {
@@ -113,8 +108,8 @@ export default function Sofa({ list, session, onList }) {
             <div className="bh-grp">{f} 樓<span>{fr.length} 間 · 未檢查 {count(fr, 'none')}</span></div>
             <div className="sf-grid">
               {fr.map(r => (
-                <button key={r.room} className="sf-cell" style={{ background: ST[r.k].bg, color: ST[r.k].c, borderColor: ST[r.k].c }} onClick={() => setSel(r.room)}>
-                  {r.room}{r.suite && <small>套</small>}
+                <button key={r.room} className={`sf-cell k-${r.k}`} style={{ background: ST[r.k].bg, color: ST[r.k].c }} onClick={() => setSel(r.room)}>
+                  {r.room}{r.suite && <small>套</small>}{r.k === 'ok' && <u>✓</u>}{r.k === 'fixed' && <u>修</u>}
                 </button>
               ))}
             </div>
@@ -126,7 +121,7 @@ export default function Sofa({ list, session, onList }) {
         <div className="modal" onClick={e => { if (e.target === e.currentTarget) setSel(null) }}>
           <div className="sheet">
             <h2>{cur.room} 房{cur.suite ? '（套房）' : ''} · 大床梳化</h2>
-            <p><span className="badge" style={{ background: ST[cur.k].bg, color: ST[cur.k].c }}>{ST[cur.k].t}</span></p>
+            <p><span className="badge" style={{ background: ST[cur.k].bg, color: ST[cur.k].c, border: cur.k === 'none' ? '1px dashed #9aa6b1' : 'none', fontSize: 14, padding: '4px 12px' }}>{ST[cur.k].t}</span></p>
             {cur.ds.map(d => (
               <div className="kv" key={d.id}>
                 <span className="k">{d.register_date || (d.created_at || '').slice(0, 10)}</span>
