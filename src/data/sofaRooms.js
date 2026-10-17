@@ -1,7 +1,8 @@
-// 大床梳化檢查總表的房間名單（4–10 樓大床房 + 5、6 樓套房）
+// 大床梳化檢查總表的房間名單（4–10 樓大床房 26 間 + 每層 5 間套房 37、69、77、79、81）
 const BIG = '01.02.03.05.06.08.11.13.18.20.30.33.35.36.38.40.46.48.52.63.65.66.67.68.71.75'.split('.')
 export const SOFA_FLOORS = [4, 5, 6, 7, 8, 9, 10]
-const SUITES = ['537', '569', '577', '579', '677', '681']   // 套房
+const SUITE_NO = ['37', '69', '77', '79', '81']   // 套房：每層都有
+const SUITES = SOFA_FLOORS.flatMap(f => SUITE_NO.map(r => `${f}${r}`))
 
 export const SOFA_ROOMS = [
   ...SOFA_FLOORS.flatMap(f => BIG.map(r => ({ room: `${f}${r}`, floor: f, suite: false }))),
