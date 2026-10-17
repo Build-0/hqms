@@ -819,3 +819,7 @@ body{overflow-x:clip}
 .sf-cell.k-none{border:1.5px dashed #9aa6b1 !important;box-shadow:none}
 .sf-cell u{position:absolute;bottom:2px;right:5px;font-size:10px;text-decoration:none;font-weight:800}
 .sf-cell small{color:inherit}
+
+.btn.warn{background:var(--red);color:#fff;margin-top:10px}
+.btn.alt{background:#fff;color:var(--accent);border:2px solid var(--accent);margin-top:10px}
+.sheet .btn+.btn.ghost{margin-top:6px}

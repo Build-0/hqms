@@ -131,9 +131,9 @@ export default function Sofa({ list, session, onList }) {
             {cur.k === 'ok' && <div className="kv"><span className="k">確認人</span><span className="v">{chkOf[cur.room].ok_by || '—'}　{(chkOf[cur.room].ok_at || '').slice(0, 10)}</span></div>}
             {cur.k === 'none' && <p className="src-note">這間房還沒有檢查記錄。檢查後如有問題，請登記缺陷；沒有問題請確認。</p>}
             {canConfirm && (cur.k === 'none') && <button className="btn" onClick={() => confirmOk(cur.room)}>✅ 確認無問題</button>}
-            {canConfirm && cur.k === 'ok' && <button className="btn ghost" onClick={() => undoOk(cur.room)}>↩ 取消確認</button>}
-            {(cur.k === 'none' || cur.k === 'ok') && onList && <button className="btn ghost" onClick={() => { setSel(null); onList(cur.room, 'new') }}>⚠ 登記缺陷</button>}
-            {cur.ds.length > 0 && onList && <button className="btn ghost" onClick={() => { setSel(null); onList(cur.room) }}>查看缺陷記錄</button>}
+            {canConfirm && cur.k === 'ok' && <button className="btn alt" onClick={() => undoOk(cur.room)}>↩ 取消確認</button>}
+            {(cur.k === 'none' || cur.k === 'ok') && onList && <button className="btn warn" onClick={() => { setSel(null); onList(cur.room, 'new') }}>⚠ 登記缺陷</button>}
+            {cur.ds.length > 0 && onList && <button className="btn alt" onClick={() => { setSel(null); onList(cur.room) }}>查看缺陷記錄</button>}
             <button className="btn ghost" onClick={() => setSel(null)}>關閉</button>
           </div>
         </div>
