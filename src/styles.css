@@ -790,3 +790,16 @@ body{overflow-x:clip}
   .rpt-print img{max-width:100%;height:auto}
   .rpt-t{width:100%;table-layout:auto}
 }
+
+/* 大床梳化檢查總表 */
+.sf-sum{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-bottom:8px}
+.sf-fl{background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:8px 4px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;font-family:inherit;color:var(--ink);min-width:0}
+.sf-fl.on{border-color:var(--accent);background:var(--accent-soft)}
+.sf-fl b{font-size:14px}.sf-fl span{font-size:11px;color:var(--sub);display:flex;gap:5px;flex-wrap:wrap;justify-content:center}.sf-fl i{font-style:normal;font-weight:800}
+.sf-legend{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11.5px;color:var(--sub);margin:2px 2px 4px}
+.sf-legend span{display:flex;align-items:center;gap:4px}.sf-legend i{width:12px;height:12px;border-radius:4px;border:1.5px solid;display:inline-block}
+.sf-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin-bottom:10px}
+.sf-cell{height:46px;border-radius:10px;border:1.5px solid;font:800 14px/1 inherit;font-family:inherit;cursor:pointer;position:relative;padding:0}
+.sf-cell small{position:absolute;top:2px;right:4px;font-size:9px;font-weight:700;opacity:.8}
+.hm-sofa{width:100%;display:flex;align-items:center;gap:8px;background:#f0ecfa;border:none;border-radius:12px;padding:12px;margin-top:10px;font-family:inherit;color:var(--ink);cursor:pointer;text-align:left}
+.hm-sofa span{font-size:14px;font-weight:700}.hm-sofa b{flex:1;text-align:right;font-size:14px;color:#6a4fb0}.hm-sofa i{font-style:normal;color:var(--sub)}

@@ -1,0 +1,154 @@
+import { useEffect, useMemo, useState } from 'react'
+import * as api from '../lib/api'
+import { ToolBar, ToolBtn, ExportBtn } from '../components/ui'
+import { ReportModal, ListReport } from '../components/Reports'
+import { toast } from '../lib/toast'
+import { todayStr } from '../lib/dates'
+import { SUP_FLOORS } from '../lib/accounts'
+import { SOFA_ROOMS, SOFA_FLOORS, SOFA_TYPE } from '../data/sofaRooms'
+
+// 大床梳化檢查總表：每間房一個格仔，顏色 = 缺陷嚴重度／已修復／已確認無問題／未檢查
+const ST = {
+  high: { t: '嚴重', c: '#c62828', bg: '#f7e0de' },
+  medium: { t: '中度', c: '#c77a00', bg: '#fbecd0' },
+  low: { t: '輕微', c: '#2f6fba', bg: '#dfeaf7' },
+  fixed: { t: '已修復', c: '#1f7a6d', bg: '#dcefea' },
+  ok: { t: '已確認無問題', c: '#1b8a5a', bg: '#d8f1e3' },
+  none: { t: '未檢查', c: '#7a8894', bg: '#eceff2' },
+}
+const ORDER = ['high', 'medium', 'low', 'fixed', 'ok', 'none']
+
+export default function Sofa({ list, session, onList }) {
+  const [checks, setChecks] = useState(null)
+  const [err, setErr] = useState('')
+  const [fl, setFl] = useState(0)          // 0 ＝ 全部樓層
+  const [sel, setSel] = useState(null)
+  const [report, setReport] = useState(false)
+  const isSup = !!session && session.role === 'supervisor'
+  const mine = isSup ? SUP_FLOORS[session.id || session.key] : null
+  const floors = mine && mine.length ? mine.map(Number) : SOFA_FLOORS
+  const canConfirm = !session || session.role === 'admin' || session.role === 'supervisor'
+
+  useEffect(() => { load() }, [])
+  async function load() {
+    try { setChecks(await api.dbSelect('sofa_checks')); setErr('') }
+    catch (ex) { setChecks([]); setErr(ex.message) }
+  }
+  const chkOf = useMemo(() => Object.fromEntries((checks || []).map(c => [c.room, c])), [checks])
+  const defOf = room => (list || []).filter(d => d.room === room && SOFA_TYPE.test(d.type || ''))
+  const stateOf = room => {
+    const ds = defOf(room)
+    const open = ds.filter(d => d.status !== 'done')
+    if (open.length) return { k: ['high', 'medium', 'low'].find(s => open.some(d => d.severity === s)) || 'low', ds }
+    if (ds.length) return { k: 'fixed', ds }
+    if (chkOf[room]) return { k: 'ok', ds }
+    return { k: 'none', ds }
+  }
+  const rooms = SOFA_ROOMS.filter(r => floors.includes(r.floor))
+  const rows = rooms.map(r => ({ ...r, ...stateOf(r.room) }))
+  const shown = fl ? rows.filter(r => r.floor === fl) : rows
+  const count = (arr, k) => arr.filter(r => r.k === k).length
+  const checkedN = rows.filter(r => r.k !== 'none').length
+
+  async function confirmOk(room) {
+    try { await api.dbInsert('sofa_checks', { room, ok_by: session ? session.name : '' }); toast('已確認 ' + room + ' 無問題'); setSel(null); load() }
+    catch (ex) { toast('儲存失敗：' + ex.message) }
+  }
+  async function undoOk(room) {
+    try { await api.dbDelete('sofa_checks', chkOf[room].id); toast('已取消確認'); setSel(null); load() }
+    catch (ex) { toast('取消失敗：' + ex.message) }
+  }
+
+  if (checks === null) return <div className="note">載入中…</div>
+  const cur = sel ? rows.find(r => r.room === sel) : null
+
+  const reportData = () => ({
+    filterText: (fl ? `${fl} 樓` : floors.map(f => `${f} 樓`).join('、')) + `（共 ${shown.length} 間）`,
+    cols: ['房號', '狀態', '備註／確認人'],
+    groups: floors.filter(f => !fl || f === fl).map(f => ({
+      name: `${f} 樓`,
+      rows: shown.filter(r => r.floor === f).map(r => ({
+        cells: [r.room + (r.suite ? '（套房）' : ''), ST[r.k].t, r.k === 'ok' ? (chkOf[r.room].ok_by || '') : (r.ds.filter(d => d.status !== 'done')[0]?.note || '')],
+        cls: ['', r.k === 'high' ? 'rpt-red' : '', ''],
+      })),
+    })).filter(g => g.rows.length),
+  })
+
+  return (
+    <>
+      <ToolBar label={`已檢查 ${checkedN} / ${rows.length}`}>
+        {!isSup && <ExportBtn onClick={() => setReport(true)} />}
+      </ToolBar>
+      {err && <div className="note" style={{ color: 'var(--red)', textAlign: 'left' }}>讀取確認記錄失敗（可能未建立資料表）：{err}</div>}
+
+      <div className="sf-sum">
+        <button className={`sf-fl ${fl === 0 ? 'on' : ''}`} onClick={() => setFl(0)}>
+          <b>全部</b><span>{rows.length} 間</span>
+        </button>
+        {floors.map(f => {
+          const fr = rows.filter(r => r.floor === f)
+          return (
+            <button key={f} className={`sf-fl ${fl === f ? 'on' : ''}`} onClick={() => setFl(fl === f ? 0 : f)}>
+              <b>{f} 樓</b>
+              <span>
+                {count(fr, 'high') > 0 && <i style={{ color: ST.high.c }}>{count(fr, 'high')}</i>}
+                {count(fr, 'medium') > 0 && <i style={{ color: ST.medium.c }}>{count(fr, 'medium')}</i>}
+                {count(fr, 'low') > 0 && <i style={{ color: ST.low.c }}>{count(fr, 'low')}</i>}
+                <i style={{ color: ST.ok.c }}>✓{count(fr, 'ok') + count(fr, 'fixed')}</i>
+                <i style={{ color: ST.none.c }}>○{count(fr, 'none')}</i>
+              </span>
+            </button>
+          )
+        })}
+      </div>
+
+      <div className="sf-legend">
+        {ORDER.map(k => <span key={k}><i style={{ background: ST[k].bg, borderColor: ST[k].c }} />{ST[k].t}</span>)}
+      </div>
+
+      {floors.filter(f => !fl || f === fl).map(f => {
+        const fr = shown.filter(r => r.floor === f)
+        return (
+          <div key={f}>
+            <div className="bh-grp">{f} 樓<span>{fr.length} 間 · 未檢查 {count(fr, 'none')}</span></div>
+            <div className="sf-grid">
+              {fr.map(r => (
+                <button key={r.room} className="sf-cell" style={{ background: ST[r.k].bg, color: ST[r.k].c, borderColor: ST[r.k].c }} onClick={() => setSel(r.room)}>
+                  {r.room}{r.suite && <small>套</small>}
+                </button>
+              ))}
+            </div>
+          </div>
+        )
+      })}
+
+      {cur && (
+        <div className="modal" onClick={e => { if (e.target === e.currentTarget) setSel(null) }}>
+          <div className="sheet">
+            <h2>{cur.room} 房{cur.suite ? '（套房）' : ''} · 大床梳化</h2>
+            <p><span className="badge" style={{ background: ST[cur.k].bg, color: ST[cur.k].c }}>{ST[cur.k].t}</span></p>
+            {cur.ds.map(d => (
+              <div className="kv" key={d.id}>
+                <span className="k">{d.register_date || (d.created_at || '').slice(0, 10)}</span>
+                <span className="v">{(['high', 'medium', 'low'].includes(d.severity) ? ST[d.severity].t : '')} · {d.status === 'done' ? '已修復' : d.status === 'processing' ? '處理中' : '待處理'}{d.note ? `：${d.note}` : ''}</span>
+              </div>
+            ))}
+            {cur.k === 'ok' && <div className="kv"><span className="k">確認人</span><span className="v">{chkOf[cur.room].ok_by || '—'}　{(chkOf[cur.room].ok_at || '').slice(0, 10)}</span></div>}
+            {cur.k === 'none' && <p className="src-note">這間房還沒有檢查記錄。檢查後如有問題，請登記缺陷；沒有問題請確認。</p>}
+            {canConfirm && (cur.k === 'none') && <button className="btn" onClick={() => confirmOk(cur.room)}>✅ 確認無問題</button>}
+            {canConfirm && cur.k === 'ok' && <button className="btn ghost" onClick={() => undoOk(cur.room)}>↩ 取消確認</button>}
+            {(cur.k === 'none' || cur.k === 'ok') && onList && <button className="btn ghost" onClick={() => { setSel(null); onList(cur.room, 'new') }}>⚠ 登記缺陷</button>}
+            {cur.ds.length > 0 && onList && <button className="btn ghost" onClick={() => { setSel(null); onList(cur.room) }}>查看缺陷記錄</button>}
+            <button className="btn ghost" onClick={() => setSel(null)}>關閉</button>
+          </div>
+        </div>
+      )}
+
+      {report && (
+        <ReportModal title="大床梳化檢查總表" sub={todayStr()} onClose={() => setReport(false)}>
+          <ListReport data={reportData()} />
+        </ReportModal>
+      )}
+    </>
+  )
+}
