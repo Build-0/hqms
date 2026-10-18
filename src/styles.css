@@ -943,3 +943,8 @@ body{overflow-x:clip}
 }
 /* 手機首頁：底部導覽列已有四個入口，頂部三張模組卡不再重複顯示（電腦版沒有底部導覽，保留） */
 @media (max-width:899px){.sys-grid{display:none}}
+/* 方形卡片：圖片不再有底框，只留圖片本身（透明底） */
+.sq-card .bh-thumb,.bh-thumb{background:transparent !important}
+.bh-thumb img{background:transparent !important;border-radius:10px}
+.sq-card .bh-thumb{width:64px !important;height:64px !important}
+.t-item .t-ico{background:transparent !important;width:56px;height:56px;font-size:38px}
