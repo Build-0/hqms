@@ -205,6 +205,19 @@ export default function App() {
             if (api.isOpen) { await api.signOut(); clearSession(); setTab('home'); setSessionState(null) } else { await api.signOut(); setUser(null) }
           }} />
       )}
+      <nav className="gnav" aria-label="主導覽">
+        {[['home', '首頁', 'hotel'], ['quality', '品質', 'clipcheck'], ['boh', '後勤', 'box'], ['defect', '缺陷', 'wrench']].map(([id, label, ic]) => {
+          const area = tab === 'home' ? 'home' : tab === 'boh' ? 'boh' : tab === 'defect' ? 'defect' : 'quality'
+          const lock = id !== 'home' && locked(id)
+          return (
+            <button key={id} className={`gnav-i ${area === id ? 'on' : ''} ${lock ? 'lock' : ''}`}
+              onClick={() => (lock ? toast('此帳號沒有權限進入「' + label + '」') : go(id))}>
+              <Icon name={ic} size={22} width={2} />
+              <span>{label}</span>
+            </button>
+          )
+        })}
+      </nav>
       {msg && <div className="toast">{msg}</div>}
     </div>
   )
