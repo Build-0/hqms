@@ -953,3 +953,7 @@ body{overflow-x:clip}
 .bh-thumb.has-img{background:#eef2f4 !important;border-radius:14px;overflow:hidden}
 .bh-thumb.has-img img{border-radius:0;background:transparent !important}
 .bh-thumb.no-img{background:transparent !important}
+
+/* 真實相片：同樣去掉底框（只保留相片本身與細圓角） */
+.bh-thumb.has-img{background:transparent !important;border-radius:0;overflow:visible}
+.bh-thumb.has-img img{border-radius:10px}

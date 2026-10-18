@@ -9,7 +9,8 @@ const EMPTY = { name: '', category: '', stock: 0, in_use: 0, min_stock: 0, statu
 
 export default function Tools({ d, edit, reload, reg }) {
   const [q, setQ] = useState('')
-  const [fk, setFk] = useState('all')
+  const [fk, setFk] = useState('all')   // 狀態：all／low／off
+  const [ck, setCk] = useState('')        // 分類（可與狀態同時生效）
   const [form, setForm] = useState(null)
   const [orig, setOrig] = useState('')
   const [del, setDel] = useState(null)
@@ -23,10 +24,10 @@ export default function Tools({ d, edit, reload, reg }) {
     if (fk === 'low' && !low(t)) return false
     if (fk === 'off' && t.status !== '停用') return false
     if (fk === 'on' && t.status === '停用') return false
-    if (!['all', 'low', 'off', 'on'].includes(fk) && t.category !== fk) return false
+    if (ck && t.category !== ck) return false
     const s = q.trim().toLowerCase()
     return !s || [t.name, t.category, t.notes].join(' ').toLowerCase().includes(s)
-  }), [tools, q, fk])
+  }), [tools, q, fk, ck])
 
   const catNames = [...d.toolCats.map(c => c.name), ...new Set(tools.map(t => t.category).filter(c => c && !d.toolCats.some(x => x.name === c)))]
   const groups = catNames.map(c => ({ c, items: shown.filter(t => t.category === c) })).filter(g => g.items.length)
@@ -54,7 +55,7 @@ export default function Tools({ d, edit, reload, reg }) {
 
   if (reg) reg.current = () => ({
     title: '清潔工具',
-    filterText: [fk === 'all' ? '' : fk === 'low' ? '需補貨' : fk === 'off' ? '停用' : fk === 'on' ? '啟用' : fk, q.trim() && `搜尋「${q.trim()}」`].filter(Boolean).join(' · ') || '全部工具',
+    filterText: [fk === 'low' ? '需補貨' : fk === 'off' ? '停用' : fk === 'on' ? '啟用' : '', ck, q.trim() && `搜尋「${q.trim()}」`].filter(Boolean).join(' · ') || '全部工具',
     cols: ['名稱', '庫存', '在用', '最低', '狀態'],
     groups: groups.map(g => ({
       name: g.c,
@@ -70,12 +71,12 @@ export default function Tools({ d, edit, reload, reg }) {
         {edit && <button className="tb-btn sq" title="管理分類" onClick={() => setMgr(true)}>⚙</button>}
       </div>
       <div className="df-grid" style={{ marginBottom: 6 }}>
-        <select className="df-sel" value={['all', 'low', 'off'].includes(fk) ? fk : 'all'} onChange={e => setFk(e.target.value)}>
+        <select className="df-sel" value={fk} onChange={e => setFk(e.target.value)}>
           <option value="all">{`全部 ${tools.length}`}</option>
           {lowN > 0 && <option value="low">{`🛒 需補貨 ${lowN}`}</option>}
           {offN > 0 && <option value="off">{`停用 ${offN}`}</option>}
         </select>
-        <select className="df-sel" value={['all', 'low', 'off'].includes(fk) ? '' : fk} onChange={e => setFk(e.target.value || 'all')}>
+        <select className="df-sel" value={ck} onChange={e => setCk(e.target.value)}>
           <option value="">所有分類</option>
           {d.toolCats.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
         </select>

@@ -12,7 +12,8 @@ export default function Chemicals({ d, edit, reload, init, reg }) {
   const [pv, setPv] = useState(null)             // 方形卡片點開的產品 id
   const [sub, setSub] = useState('list')       // list / report
   const [q, setQ] = useState('')
-  const [fk, setFk] = useState(init?.fk || 'all')
+  const [fk, setFk] = useState(init?.fk || 'all')   // 狀態：all／low／exp／off
+  const [ck, setCk] = useState('')                    // 分類（可與狀態同時生效）
   const [form, setForm] = useState(null)
   const [orig, setOrig] = useState('')
   const [recv, setRecv] = useState(null)
@@ -37,7 +38,7 @@ export default function Chemicals({ d, edit, reload, init, reg }) {
     if (fk === 'low' && !low(p)) return false
     if (fk === 'exp' && !expSet.has(p.id)) return false
     if (fk === 'off' ? active(p) : (fk !== 'low' && fk !== 'exp' && !active(p))) return false
-    if (!['all', 'low', 'exp', 'off'].includes(fk) && String(p.category_id) !== String(fk)) return false
+    if (ck && String(p.category_id) !== String(ck)) return false
     const s = q.trim().toLowerCase()
     return !s || [p.name_zh, p.name_en, p.applicable_zh].join(' ').toLowerCase().includes(s)
   })
@@ -83,7 +84,7 @@ export default function Chemicals({ d, edit, reload, init, reg }) {
 
   if (reg) reg.current = () => ({
     title: '清潔劑',
-    filterText: [fk === 'all' ? '' : fk === 'low' ? '需補貨' : fk === 'exp' ? '臨期' : fk === 'off' ? '停用' : (d.cats.find(c => String(c.id) === String(fk)) || {}).name_zh, q.trim() && `搜尋「${q.trim()}」`].filter(Boolean).join(' · ') || '全部（啟用中）',
+    filterText: [fk === 'low' ? '需補貨' : fk === 'exp' ? '臨期' : fk === 'off' ? '停用' : '', ck && (d.cats.find(c => String(c.id) === String(ck)) || {}).name_zh, q.trim() && `搜尋「${q.trim()}」`].filter(Boolean).join(' · ') || '全部（啟用中）',
     cols: ['名稱', '庫存', '最低', '最近到期', '狀態'],
     groups: groups.map(g => ({
       name: `${g.c.icon || ''} ${g.c.name_zh}`,
@@ -107,13 +108,13 @@ export default function Chemicals({ d, edit, reload, init, reg }) {
             {edit && <button className="tb-btn sq" title="管理分類" onClick={() => setCm(true)}>⚙</button>}
           </div>
           <div className="df-grid" style={{ marginBottom: 6 }}>
-            <select className="df-sel" value={['all', 'low', 'exp', 'off'].includes(fk) ? fk : 'all'} onChange={e => setFk(e.target.value)}>
+            <select className="df-sel" value={fk} onChange={e => setFk(e.target.value)}>
               <option value="all">{`全部 ${d.products.filter(active).length}`}</option>
               {lowN > 0 && <option value="low">{`🛒 補貨 ${lowN}`}</option>}
               {expSet.size > 0 && <option value="exp">{`⚠ 臨期 ${expSet.size}`}</option>}
               {offN > 0 && <option value="off">{`停用 ${offN}`}</option>}
             </select>
-            <select className="df-sel" value={['all', 'low', 'exp', 'off'].includes(fk) ? '' : fk} onChange={e => setFk(e.target.value || 'all')}>
+            <select className="df-sel" value={ck} onChange={e => setCk(e.target.value)}>
               <option value="">所有分類</option>
               {d.cats.map(c => <option key={c.id} value={String(c.id)}>{`${c.icon || ''} ${c.name_zh}`}</option>)}
             </select>
