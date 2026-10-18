@@ -842,3 +842,22 @@ body{overflow-x:clip}
 .sheet-hd{position:sticky;top:-18px;z-index:5;background:var(--card);margin:-18px -18px 10px;padding:14px 18px 10px;display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid var(--line)}
 .sheet-hd h2{margin:0;font-size:17px}.sheet-hd-acts{display:flex;gap:8px;flex-shrink:0}
 .mini:disabled{opacity:.45}
+
+/* 沙發檢查表：每層一頁 A4，打勾用 */
+.sf-page{margin-bottom:18px}
+.sf-ph{display:flex;justify-content:space-between;align-items:flex-end;gap:8px;border-bottom:2px solid #1f7a6d;padding-bottom:6px}
+.sf-ph b{font-size:18px}.sf-ph span{font-size:10.5px;color:#6b7785}
+.sf-sign{font-size:11.5px;margin:8px 0 6px;letter-spacing:.3px}
+.sf-tbl{width:100%;border-collapse:collapse;font-size:12px}
+.sf-tbl th{background:#eef2f4;border:1px solid #9aa6b1;padding:5px 4px;font-size:11.5px}
+.sf-tbl td{border:1px solid #9aa6b1;padding:0 5px;height:8.2mm;vertical-align:middle}
+.sf-rm{font-weight:800;font-size:13.5px;white-space:nowrap}
+.sf-cur{font-size:11px;white-space:nowrap}
+.sf-cur.k-high{color:#c62828;font-weight:800}.sf-cur.k-medium{color:#c77a00;font-weight:800}.sf-cur.k-low{color:#8a6d00;font-weight:800}.sf-cur.k-none{color:#7a8894}
+.sf-ck{white-space:nowrap}.sf-ck span{margin-right:10px;font-size:12.5px}
+.sf-note{font-size:10px;color:#8a94a1;margin-top:6px}
+@media print{
+  .sf-page{break-after:page;page-break-after:always;margin:0}
+  .sf-page:last-of-type{break-after:auto;page-break-after:auto}
+  .sf-tbl td{height:6.9mm}
+}

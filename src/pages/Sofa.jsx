@@ -24,6 +24,7 @@ export default function Sofa({ list, session, onList }) {
   const [fl, setFl] = useState(0)          // 0 ＝ 全部樓層
   const [sel, setSel] = useState(null)
   const [report, setReport] = useState(false)
+  const [rmode, setRmode] = useState('sheet')   // 匯出：sheet 檢查表（每層一頁，打勾用）／summary 總表
   const isSup = !!session && session.role === 'supervisor'
   const mine = isSup ? SUP_FLOORS[session.id || session.key] : null
   const floors = mine && mine.length ? mine.map(Number) : SOFA_FLOORS
@@ -140,8 +141,37 @@ export default function Sofa({ list, session, onList }) {
       )}
 
       {report && (
-        <ReportModal title="大床梳化檢查總表" sub={todayStr()} onClose={() => setReport(false)}>
-          <ListReport data={reportData()} />
+        <ReportModal title={rmode === 'sheet' ? '大床梳化檢查表' : '大床梳化檢查總表'} sub={todayStr()} onClose={() => setReport(false)}>
+          <div className="chips rpt-noprint">
+            <button className={`chip ${rmode === 'sheet' ? 'on' : ''}`} onClick={() => setRmode('sheet')}>檢查表（每層一張 A4，打勾）</button>
+            <button className={`chip ${rmode === 'summary' ? 'on' : ''}`} onClick={() => setRmode('summary')}>狀態總表</button>
+          </div>
+          {rmode === 'summary' ? <ListReport data={reportData()} /> : floors.filter(f => !fl || f === fl).map(f => {
+            const fr = shown.filter(r => r.floor === f)
+            return (
+              <div className="sf-page" key={f}>
+                <div className="sf-ph">
+                  <b>大床梳化檢查表 · {f} 樓</b>
+                  <span>共 {fr.length} 間　已列印日期 {todayStr()}</span>
+                </div>
+                <div className="sf-sign">檢查人：＿＿＿＿＿＿＿＿　檢查日期：＿＿＿＿＿＿＿＿　主管簽名：＿＿＿＿＿＿＿＿</div>
+                <table className="sf-tbl">
+                  <thead><tr><th>房號</th><th>現況</th><th>檢查結果（在方格內打 ✓）</th><th>備註</th></tr></thead>
+                  <tbody>
+                    {fr.map(r => (
+                      <tr key={r.room}>
+                        <td className="sf-rm">{r.room}{r.suite ? '（套）' : ''}</td>
+                        <td className={`sf-cur k-${r.k}`}>{ST[r.k].t}</td>
+                        <td className="sf-ck"><span>☐ 無問題</span><span>☐ 輕微</span><span>☐ 中度</span><span>☐ 嚴重</span></td>
+                        <td></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <div className="sf-note">有問題請到系統「缺陷管理」登記，無問題請在系統「沙發檢查」確認。</div>
+              </div>
+            )
+          })}
         </ReportModal>
       )}
     </>
