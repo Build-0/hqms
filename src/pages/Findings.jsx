@@ -354,7 +354,7 @@ export default function Findings({ session }) {
                 </div>
               )
             })}
-            {full && <button className="btn" style={{ marginTop: 14 }} onClick={() => editBatch(view)}>✏️ 編輯這次記錄</button>}
+            {full && <button className="btn" style={{ marginTop: 14 }} onClick={() => editBatch(view)}>編輯這次記錄</button>}
             {full && <button className="btn danger" onClick={() => setConfirmDel(view)}>刪除這次記錄</button>}
             <button className="btn ghost" onClick={() => setView(null)}>關閉</button>
           </div>
