@@ -863,3 +863,9 @@ body{overflow-x:clip}
 }
 
 .sf-ck span.on{font-weight:800}
+/* 沙發檢查表：檢查結果欄收窄，備註欄加闊 */
+.sf-tbl{table-layout:fixed}
+.sf-tbl th:nth-child(1){width:15%}.sf-tbl th:nth-child(2){width:14%}.sf-tbl th:nth-child(3){width:31%}
+.sf-ck span{margin-right:5px;font-size:11.5px}
+.sf-ck{white-space:normal;line-height:1.25}
+.sf-cur{font-size:10.5px}
