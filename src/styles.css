@@ -941,3 +941,5 @@ body{overflow-x:clip}
   .home-grid,.home-grid.sub-grid{padding:48px 30px}
   .home-grid .home-item{width:210px}
 }
+/* 手機首頁：底部導覽列已有四個入口，頂部三張模組卡不再重複顯示（電腦版沒有底部導覽，保留） */
+@media (max-width:899px){.sys-grid{display:none}}
