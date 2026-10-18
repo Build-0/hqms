@@ -871,3 +871,8 @@ body{overflow-x:clip}
 .sf-cur{font-size:10.5px}
 
 .fd-by{font-size:11.5px;color:var(--sub);margin-top:3px}
+/* 電腦版：圓形入口置中（項目少於欄數時不再偏左） */
+@media (min-width:900px){
+  .home-grid,.home-grid.sub-grid{display:flex;flex-wrap:wrap;justify-content:center;gap:36px 32px;max-width:900px;margin:0 auto;padding:64px 30px}
+  .home-grid .home-item{width:132px}
+}
