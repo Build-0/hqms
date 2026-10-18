@@ -861,3 +861,5 @@ body{overflow-x:clip}
   .sf-page:last-of-type{break-after:auto;page-break-after:auto}
   .sf-tbl td{height:6.9mm}
 }
+
+.sf-ck span.on{font-weight:800}

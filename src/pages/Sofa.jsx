@@ -162,7 +162,7 @@ export default function Sofa({ list, session, onList }) {
                       <tr key={r.room}>
                         <td className="sf-rm">{r.room}{r.suite ? '（套）' : ''}</td>
                         <td className={`sf-cur k-${r.k}`}>{ST[r.k].t}</td>
-                        <td className="sf-ck"><span>☐ 無問題</span><span>☐ 輕微</span><span>☐ 中度</span><span>☐ 嚴重</span></td>
+                        <td className="sf-ck">{[['ok', '無問題'], ['low', '輕微'], ['medium', '中度'], ['high', '嚴重']].map(([k, t]) => <span key={k} className={r.k === k ? 'on' : ''}>{r.k === k ? '☑' : '☐'} {t}</span>)}</td>
                         <td></td>
                       </tr>
                     ))}
