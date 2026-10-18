@@ -70,6 +70,7 @@ export default function Perf({ rows, tagById, atts, onStaff, edit }) {
         <p className="src-note" style={{ marginTop: 8 }}>算法：七項各 5 分起，近 {PERF_DAYS} 日每個「有問題」標籤扣 1 分（扣在標籤所屬項目，最低 1 分）；每次「做得好」總分 +1。</p>
       </div>
 
+      <InspectorCompare rows={rows} since={since} atts={atts} />
       <input className="search-inp" placeholder="🔍 搜尋姓名、樓層、編號" value={q} onChange={e => setQ(e.target.value)} />
       {shown.length === 0 && <div className="note">沒有符合的人員</div>}
       {shown.map(({ a, p }) => (
@@ -100,11 +101,12 @@ export default function Perf({ rows, tagById, atts, onStaff, edit }) {
               <div className="dim-cell total"><span className="dv" style={{ color: view.p.level.color }}>{view.p.total}</span><span className="dk">總分/{SCORE_MAX}</span></div>
             </div>
             {view.p.issues.length > 0 && <div className="fd-std"><div className="fd-std-h">❌ 問題記錄</div>
-              {view.p.issues.slice().sort((x, y) => y.date.localeCompare(x.date)).slice(0, 15).map((it, i) => <div key={i} className="pf-line"><span>{it.date.slice(5)}</span><span>{it.name}{it.room ? ` · ${it.room}房` : ''}</span></div>)}
+              {view.p.issues.slice().sort((x, y) => y.date.localeCompare(x.date)).slice(0, 15).map((it, i) => <div key={i} className="pf-line"><span>{it.date.slice(5)}{it.time ? ` ${it.time}` : ''}</span><span>{it.name}{it.insp ? ` · ${it.insp}` : ''}{it.room ? ` · ${it.room}房` : ''}</span></div>)}
             </div>}
             {view.p.goods.length > 0 && <div className="fd-std"><div className="fd-std-h good">⭐ 做得好</div>
-              {view.p.goods.slice().sort((x, y) => y.date.localeCompare(x.date)).slice(0, 10).map((it, i) => <div key={i} className="pf-line"><span>{it.date.slice(5)}</span><span>{it.name}</span></div>)}
+              {view.p.goods.slice().sort((x, y) => y.date.localeCompare(x.date)).slice(0, 10).map((it, i) => <div key={i} className="pf-line"><span>{it.date.slice(5)}{it.time ? ` ${it.time}` : ''}</span><span>{it.name}{it.insp ? ` · ${it.insp}` : ''}</span></div>)}
             </div>}
+            <PersonSplit p={view.p} />
             <button className="btn ghost" onClick={() => setView(null)}>關閉</button>
           </div>
         </div>
@@ -115,5 +117,79 @@ export default function Perf({ rows, tagById, atts, onStaff, edit }) {
         </ReportModal>
       )}
     </>
+  )
+}
+
+// 同一位同事：不同主管、不同時段嘅評價（上午／下午）
+function PersonSplit({ p }) {
+  const all = [...p.issues.map(x => ({ ...x, g: 0 })), ...p.goods.map(x => ({ ...x, g: 1 }))]
+  const by = {}
+  all.forEach(x => { const k = (x.insp || '').trim() || '未記錄'; by[k] = by[k] || { i: 0, g: new Set(), gb: 0 }; if (x.g) by[k].g.add(x.batch || x.date); else by[k].i++ })
+  const insp = Object.entries(by)
+  const am = { i: 0, g: new Set() }, pm = { i: 0, g: new Set() }
+  let hasT = false
+  all.forEach(x => { if (!x.time) return; hasT = true; const t = x.time < '12:00' ? am : pm; if (x.g) t.g.add(x.batch || x.date); else t.i++ })
+  if (insp.length < 2 && !hasT) return null
+  return (
+    <div className="fd-std">
+      {insp.length >= 1 && <><div className="fd-std-h" style={{ color: 'var(--ink)' }}>🧑‍💼 按主管（{insp.length} 位）</div>
+        {insp.map(([k, v]) => <div key={k} className="pf-line"><span>{k}</span><span>⚠ {v.i}　⭐ {v.g.size}</span></div>)}</>}
+      {hasT && <><div className="fd-std-h" style={{ color: 'var(--ink)', marginTop: 8 }}>🕐 按時段</div>
+        <div className="pf-line"><span>上午（12:00 前）</span><span>⚠ {am.i}　⭐ {am.g.size}</span></div>
+        <div className="pf-line"><span>下午（12:00 後）</span><span>⚠ {pm.i}　⭐ {pm.g.size}</span></div></>}
+    </div>
+  )
+}
+
+// 主管評核比較：每位主管嘅記錄數、問題與做得好比例；同一同事被不同主管給出相反評價嘅個案
+function InspectorCompare({ rows, since, atts }) {
+  const [open, setOpen] = useState(false)
+  const isGood = f => String(f.batch || '').startsWith('good-')
+  const by = {}, per = {}
+  const seen = new Set()
+  for (const f of rows) {
+    if (f.date < since || !f.attendant_id) continue
+    const insp = (f.inspector || '').trim() || '未記錄'
+    const key = f.batch || f.id
+    const o = (by[insp] = by[insp] || { n: 0, good: 0, issue: 0, atts: new Set() })
+    if (!seen.has(insp + '|' + key)) { seen.add(insp + '|' + key); o.n++; isGood(f) ? o.good++ : o.issue++ }
+    o.atts.add(f.attendant_id)
+    const pp = (per[f.attendant_id] = per[f.attendant_id] || {})
+    const q = (pp[insp] = pp[insp] || { good: new Set(), issue: 0 })
+    isGood(f) ? q.good.add(key) : q.issue++
+  }
+  const list = Object.entries(by).sort((a, b) => b[1].n - a[1].n)
+  if (list.length < 1) return null
+  const nameOf = id => { const a = atts.find(x => x.id === id); return a ? (a.name || a.name_cn) : '' }
+  const diverge = Object.entries(per).map(([id, m]) => {
+    const e = Object.entries(m)
+    const hasBad = e.filter(([, v]) => v.issue > 0).map(([k]) => k), hasGood = e.filter(([, v]) => v.good.size > 0).map(([k]) => k)
+    return { id, bad: hasBad, good: hasGood, split: hasBad.length > 0 && hasGood.some(g => !hasBad.includes(g) || hasBad.length > 1) && e.length >= 2 }
+  }).filter(x => x.split)
+  return (
+    <div className="card">
+      <button className="linky" style={{ fontSize: 14, fontWeight: 700, padding: 0, width: '100%', textAlign: 'left' }} onClick={() => setOpen(!open)}>
+        🧑‍💼 主管評核比較（{list.length} 位）{open ? '▲' : '▼'}
+      </button>
+      {open && (
+        <>
+          <p className="src-note">近 {PERF_DAYS} 日各主管的查房記錄：每次記錄計一次。好評率＝做得好 ÷ 總次數，可以看各主管評核標準是否一致。</p>
+          <table className="rpt-t" style={{ fontSize: 13 }}>
+            <thead><tr><th>主管</th><th>次數</th><th>⚠ 問題</th><th>⭐ 做得好</th><th>好評率</th></tr></thead>
+            <tbody>
+              {list.map(([k, v]) => <tr key={k}><td>{k}</td><td>{v.n}</td><td>{v.issue}</td><td>{v.good}</td><td><b>{Math.round(v.good / v.n * 100)}%</b></td></tr>)}
+            </tbody>
+          </table>
+          {diverge.length > 0 && (
+            <div className="fd-std" style={{ marginTop: 8 }}>
+              <div className="fd-std-h" style={{ color: 'var(--ink)' }}>同一位同事、不同主管有不同評價（{diverge.length} 位）</div>
+              {diverge.slice(0, 12).map(d => (
+                <div key={d.id} className="pf-line"><span>{nameOf(d.id)}</span><span>⚠ {d.bad.join('、')}　⭐ {d.good.join('、')}</span></div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+    </div>
   )
 }

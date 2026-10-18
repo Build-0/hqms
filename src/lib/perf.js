@@ -28,9 +28,9 @@ export function computePerf(rows, tagById, sinceStr) {
     const p = get(f.attendant_id)
     if (f.date > p.last) p.last = f.date
     const name = (tagById[f.tag_id] || {}).name || f.tag
-    if (goodKind(f)) { p.goodBatches.add(f.batch); p.goods.push({ date: f.date, name }); continue }
+    if (goodKind(f)) { p.goodBatches.add(f.batch); p.goods.push({ date: f.date, name, time: f.check_time, insp: f.inspector, batch: f.batch }); continue }
     p.issueN++
-    p.issues.push({ date: f.date, name, room: f.room })
+    p.issues.push({ date: f.date, name, room: f.room, time: f.check_time, insp: f.inspector, batch: f.batch })
     const dim = (tagById[f.tag_id] || {}).dim
     if (SCORE_DIMS.includes(dim)) p.dims[dim] = Math.max(1, p.dims[dim] - 1)
     else p.otherN++

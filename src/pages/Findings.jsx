@@ -37,7 +37,8 @@ const REPEAT_DAYS = 30
 const REPEAT_MIN = 2
 
 export default function Findings({ session }) {
-  const full = !session || PERMS[session.role].findings === 'edit'   // 樓層主管：只可查看與新增
+  const full = !session || PERMS[session.role].findings === 'edit'   // 管理員：名單、標籤、匯出、人員表現、刪除
+  const canEdit = !session || PERMS[session.role].findings !== 'none'   // 管理員與樓層主管：查看全部、新增、編輯（公開透明）
   const [atts, setAtts] = useState([])
   const [tags, setTags] = useState([])
   const [topics, setTopics] = useState([])
@@ -84,7 +85,7 @@ export default function Findings({ session }) {
     if (kindF !== '全部' && kindOf(f) !== (kindF === '有問題' ? 'issue' : 'good')) continue
     if (who && f.attendant_id !== who) continue
     const k = f.batch || f.id
-    if (!seen[k]) { seen[k] = { key: k, kind: kindOf(f), date: f.date, room: f.room, attendant_id: f.attendant_id, photos: f.photos || [], note: f.note, inspector: f.inspector, items: [] }; batches.push(seen[k]) }
+    if (!seen[k]) { seen[k] = { key: k, kind: kindOf(f), date: f.date, room: f.room, attendant_id: f.attendant_id, photos: f.photos || [], note: f.note, inspector: f.inspector, time: f.check_time, edited_by: f.edited_by, items: [] }; batches.push(seen[k]) }
     seen[k].items.push(f)
   }
 
@@ -101,12 +102,15 @@ export default function Findings({ session }) {
   const repeats = Object.values(repMap).filter(r => r.n >= REPEAT_MIN).sort((a, b) => b.n - a.n || b.last.localeCompare(a.last))
 
   // ── 表單 ──
+  const hasTime = rows.some(r => 'check_time' in r)
+  const hasEdit = rows.some(r => 'edited_by' in r)
+  const nowHM = () => { const d = new Date(); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0') }
   const activeAtts = atts.filter(a => a.active)
   const activeTags = tags.filter(t => t.active !== false)
   function newForm(keep, kind = 'issue') {
     setForm({
       kind, confirmedAtt: keep?.confirmedAtt ?? '',
-      date: todayStr(), room: '', attendant_id: keep?.attendant_id ?? (kind === 'issue' ? '' : lsGet(LS_ATT)), tag_ids: [],
+      date: todayStr(), time: nowHM(), room: '', attendant_id: keep?.attendant_id ?? (kind === 'issue' ? '' : lsGet(LS_ATT)), tag_ids: [],
       photos: [], note: '', inspector: keep?.inspector ?? (session ? session.name : lsGet(LS_INSP)),   // 預設為目前登入者
     })
   }
@@ -135,6 +139,8 @@ export default function Findings({ session }) {
     const list = ids.map(id => ({
       date: f.date || todayStr(), attendant_id: f.attendant_id, room: f.room.trim(), tag_id: id,
       tag: id ? (tagById[id] || {}).name || '' : (f.kind === 'good' ? OTHER_GOOD : OTHER_TAG), photos: f.photos, note: f.note.trim(), inspector: f.inspector.trim(), batch,
+      ...(hasTime ? { check_time: f.time || nowHM() } : {}),
+      ...(f.editIds && hasEdit ? { edited_by: session ? session.name : '', edited_at: new Date().toISOString() } : {}),
     }))
     try {
       await api.addFindings(list)
@@ -152,7 +158,7 @@ export default function Findings({ session }) {
     setForm({
       kind: b.kind, confirmedAtt: b.attendant_id || '', date: b.date, room: b.room || '', attendant_id: b.attendant_id || '',
       tag_ids: b.items.map(i => i.tag_id).filter(Boolean), photos: b.photos || [], note: b.note || '', inspector: b.inspector || '',
-      editIds: b.items.map(i => i.id), editBatch: b.items[0]?.batch || '',
+      time: b.time || '', editIds: b.items.map(i => i.id), editBatch: b.items[0]?.batch || '',
     })
     setView(null)
   }
@@ -248,6 +254,7 @@ export default function Findings({ session }) {
             <div className="fd-top">{b.kind === 'good' && <span className="fd-goodmark">⭐</span>}<b>{shortName(attById[b.attendant_id])}</b>{b.room && <span className="fd-sub"> · {b.room}房</span>}<span className="fd-date">{b.date.slice(5).replace('-', '/')}</span></div>
             <div className="fd-tags">{b.items.map(it => <span key={it.id} className={`fd-tag ${b.kind === 'good' ? 'good' : ''}`}>{(tagById[it.tag_id] || {}).name || it.tag}</span>)}</div>
             {b.note && <div className="fd-note">{b.note}</div>}
+            {(b.inspector || b.time) && <div className="fd-by">{b.time ? `🕐 ${b.time}` : ''}{b.time && b.inspector ? ' · ' : ''}{b.inspector ? `抽查 ${b.inspector}` : ''}</div>}
           </div>
         </div>
       ))}
@@ -264,6 +271,7 @@ export default function Findings({ session }) {
             <div style={{ display: 'flex', gap: 10 }}>
               <div style={{ flex: 1 }} className="f-row"><label>② 房號</label><input inputMode="numeric" value={form.room} onChange={e => setForm({ ...form, room: e.target.value })} placeholder="例：1016" /></div>
               <div style={{ flex: 1 }} className="f-row"><label>日期</label><input type="date" value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} /></div>
+              {hasTime && <div style={{ flex: 1 }} className="f-row"><label>時間</label><input type="time" value={form.time || ''} onChange={e => setForm({ ...form, time: e.target.value })} /></div>}
             </div>
             <div className="f-row">
               <label>③ 房務員{fl != null && suggested.length > 0 ? `（${fl} 樓）` : ''}</label>
@@ -336,7 +344,7 @@ export default function Findings({ session }) {
         <div className="modal" onClick={e => { if (e.target === e.currentTarget) setView(null) }}>
           <div className="sheet">
             <h2 style={{ marginBottom: 4 }}>{shortName(attById[view.attendant_id])}{view.room ? ` · ${view.room}房` : ''}</h2>
-            <p className="src-note">{view.date}{view.inspector ? ` · 抽查：${view.inspector}` : ''}</p>
+            <p className="src-note">{view.date}{view.time ? ` ${view.time}` : ''}{view.inspector ? ` · 抽查：${view.inspector}` : ''}{view.edited_by ? ` · 最後編輯：${view.edited_by}` : ''}</p>
             <PhotoGrid photos={view.photos} />
             {view.note && <div className="kv"><span className="k">補充</span><span className="v">{view.note}</span></div>}
             {view.items.map(it => {
@@ -354,7 +362,7 @@ export default function Findings({ session }) {
                 </div>
               )
             })}
-            {full && <button className="btn" style={{ marginTop: 14 }} onClick={() => editBatch(view)}>編輯這次記錄</button>}
+            {canEdit && <button className="btn" style={{ marginTop: 14 }} onClick={() => editBatch(view)}>編輯這次記錄</button>}
             {full && <button className="btn danger" onClick={() => setConfirmDel(view)}>刪除這次記錄</button>}
             <button className="btn ghost" onClick={() => setView(null)}>關閉</button>
           </div>
