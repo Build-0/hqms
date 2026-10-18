@@ -153,6 +153,7 @@ export default function App() {
               <button className="home-item" key={m.id} onClick={() => setTab(m.id)}>
                 <span className="hi-circle" style={{ background: m.color + '26', borderColor: 'transparent' }}><Icon name={m.icon} size={33} color={m.color} width={2.2} /></span>
                 <span className="hi-label">{m.label}</span>
+                <span className="hi-sub">{m.sub}</span>
               </button>
             ))}
           </div>
