@@ -106,12 +106,17 @@ export default function Chemicals({ d, edit, reload, init, reg }) {
             <button className="tb-btn sq" title="用量報表" onClick={() => setSub('report')}>📊</button>
             {edit && <button className="tb-btn sq" title="管理分類" onClick={() => setCm(true)}>⚙</button>}
           </div>
-          <div className="chips">
-            {chip('all', `全部 ${d.products.filter(active).length}`)}
-            {lowN > 0 && chip('low', `🛒 補貨 ${lowN}`)}
-            {expSet.size > 0 && chip('exp', `⚠ 臨期 ${expSet.size}`)}
-            {offN > 0 && chip('off', `停用 ${offN}`)}
-            {d.cats.map(c => chip(String(c.id), `${c.icon || ''} ${c.name_zh}`))}
+          <div className="df-grid" style={{ marginBottom: 6 }}>
+            <select className="df-sel" value={['all', 'low', 'exp', 'off'].includes(fk) ? fk : 'all'} onChange={e => setFk(e.target.value)}>
+              <option value="all">{`全部 ${d.products.filter(active).length}`}</option>
+              {lowN > 0 && <option value="low">{`🛒 補貨 ${lowN}`}</option>}
+              {expSet.size > 0 && <option value="exp">{`⚠ 臨期 ${expSet.size}`}</option>}
+              {offN > 0 && <option value="off">{`停用 ${offN}`}</option>}
+            </select>
+            <select className="df-sel" value={['all', 'low', 'exp', 'off'].includes(fk) ? '' : fk} onChange={e => setFk(e.target.value || 'all')}>
+              <option value="">所有分類</option>
+              {d.cats.map(c => <option key={c.id} value={String(c.id)}>{`${c.icon || ''} ${c.name_zh}`}</option>)}
+            </select>
           </div>
           </div>
           {groups.length === 0 && <div className="note">沒有符合的產品</div>}

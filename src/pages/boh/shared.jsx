@@ -29,7 +29,7 @@ export const setCachedImage = (table, id, v) => cache.set(table + id, v || '')
 
 export function Thumb({ src, fallback = '📦', size = 64 }) {
   return (
-    <div className="bh-thumb" style={{ width: size, height: size }}>
+    <div className={`bh-thumb ${src ? 'has-img' : 'no-img'}`} style={{ width: size, height: size }}>
       {src ? <img src={src} alt="" loading="lazy" /> : <span>{fallback}</span>}
     </div>
   )

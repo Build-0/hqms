@@ -948,3 +948,8 @@ body{overflow-x:clip}
 .bh-thumb img{background:transparent !important;border-radius:10px}
 .sq-card .bh-thumb{width:64px !important;height:64px !important}
 .t-item .t-ico{background:transparent !important;width:56px;height:56px;font-size:38px}
+
+/* 相片（自己上傳）：四角圓框；系統內置圖示：無底 */
+.bh-thumb.has-img{background:#eef2f4 !important;border-radius:14px;overflow:hidden}
+.bh-thumb.has-img img{border-radius:0;background:transparent !important}
+.bh-thumb.no-img{background:transparent !important}
