@@ -101,7 +101,9 @@ export default function Daily() {
         return Object.values(g).sort((a, b) => b.n - a.n).map(o => ({ ...o, floors: [...o.floors].sort((a, b) => a - b) }))
       }
       const isGood = f => String(f.batch || '').startsWith('good-')
-      digest.top = group(fr.filter(f => !isGood(f) && f.tag !== '其他')).slice(0, 3)
+      // 同一次查房選了多個標籤時，各標籤共用同一組相片：相片相同的只留最常見嗰個，避免卡片重複
+      const seenPh = new Set()
+      digest.top = group(fr.filter(f => !isGood(f) && f.tag !== '其他')).filter(t => { const k = (t.photos || [])[0]; if (!k) return true; if (seenPh.has(k)) return false; seenPh.add(k); return true }).slice(0, 3)
       digest.good = group(fr.filter(isGood)).slice(0, 3)
       digest.topTopicIds = [...new Set(digest.top.map(t => t.topic_id).filter(Boolean))]
     } catch { /* 查房資料不可用時，照舊選題 */ }
