@@ -83,9 +83,9 @@ export default function Daily() {
     const pick = n => (pool.length ? pool[(Math.floor(Date.parse(today + 'T00:00:00Z') / 86400000) + n) % pool.length] : null)
 
     // 近 7 日查房記錄 → 最常見問題、做得好（今日重點的主要來源）
-    const digest = { top: [], good: [], topTopicIds: [] }
+    const digest = { top: [], good: [], topTopicIds: [], allTop: [], allGood: [] }
     try {
-      const [fr, ft] = await Promise.all([api.listFindings(addDaysStr(-6)), api.listFindingTags()])
+      const [fr, ft, frAll] = await Promise.all([api.listFindings(addDaysStr(-6)), api.listFindingTags(), api.listFindings(addDaysStr(-364))])
       const tagById = Object.fromEntries(ft.map(t => [t.id, t]))
       const floorOf = r => { const m = String(r || '').replace(/\D/g, ''); return m.length >= 4 ? m.slice(0, m.length - 2) : m.length === 3 ? m[0] : '' }
       const group = rows => {
@@ -118,6 +118,11 @@ export default function Daily() {
       digest.top = mergeByPhoto(group(fr.filter(f => !isGood(f) && f.tag !== '其他'))).slice(0, 3)
       digest.good = mergeByPhoto(group(fr.filter(isGood))).slice(0, 3)
       digest.topTopicIds = [...new Set(digest.top.map(t => t.topic_id).filter(Boolean))]
+      // 自選用：全部查房記錄（近 12 個月），按標籤統計，附最近日期
+      const lastOf = {}
+      for (const x of frAll) { const nm = (tagById[x.tag_id] || {}).name || x.tag; if (nm && (!lastOf[nm] || x.date > lastOf[nm])) lastOf[nm] = x.date }
+      digest.allTop = group(frAll.filter(f => !isGood(f) && f.tag !== '其他')).map(o => ({ ...o, last: lastOf[o.name] }))
+      digest.allGood = group(frAll.filter(isGood)).map(o => ({ ...o, last: lastOf[o.name] }))
     } catch { /* 查房資料不可用時，照舊選題 */ }
 
     let focus = await api.getFocus(today)
@@ -201,6 +206,11 @@ export default function Daily() {
   slots.filter(sl => sl.complaint).forEach(sl => cands.push({ key: 'c:' + sl.complaint.id, group: '昨日客訴', kind: 'complaint', source: '昨日客訴', title: `${sl.complaint.room} 房客訴：${(sl.complaint.guest_comment || '').slice(0, 24)}`, complaint: sl.complaint, photos: sl.complaint.photos }))
   digest.top.forEach(t => cands.push({ key: 'd:' + t.name, group: '近 7 日查房常見問題', kind: 'finding', source: '查房記錄', title: t.name, meta: `查房 ${t.n} 次${t.floors.length ? ' · ' + t.floors.map(f => f + '樓').join('、') : ''}`, topic: allTopics.find(x => x.id === t.topic_id), photos: t.photos }))
   digest.good.forEach(t => cands.push({ key: 'g:' + t.name, group: '近 7 日做得好', kind: 'good', source: '做得好', title: t.name, meta: `做得好 ${t.n} 次`, photos: t.photos }))
+  // 全部查房記錄（排除上面已列出嘅近 7 日項目）
+  const inTop = new Set(digest.top.flatMap(t => t.names || [t.name]))
+  const inGood = new Set(digest.good.flatMap(t => t.names || [t.name]))
+  digest.allTop.filter(t => !inTop.has(t.name)).forEach(t => cands.push({ key: 'd:' + t.name, group: '全部查房記錄 · 問題', kind: 'finding', source: '查房記錄', title: t.name, meta: `查房 ${t.n} 次 · 最近 ${(t.last || '').slice(5)}${t.floors.length ? ' · ' + t.floors.map(f => f + '樓').join('、') : ''}`, topic: allTopics.find(x => x.id === t.topic_id), photos: t.photos }))
+  digest.allGood.filter(t => !inGood.has(t.name)).forEach(t => cands.push({ key: 'g:' + t.name, group: '全部查房記錄 · 做得好', kind: 'good', source: '做得好', title: t.name, meta: `做得好 ${t.n} 次 · 最近 ${(t.last || '').slice(5)}`, photos: t.photos }))
   allTopics.forEach(t => cands.push({ key: 't:' + t.id, group: '主題庫 · ' + t.category, kind: 'topic', source: t.category, title: t.title, topic: t, photos: t.photos }))
   const byKey = k => cands.find(c => c.key === k)
   const MAXT = 3
@@ -219,7 +229,7 @@ export default function Daily() {
   const picked = sel.map(k => byKey(k)).filter(Boolean)
   const toggle = k => setSel(a => (a.includes(k) ? a.filter(x => x !== k) : a.length >= MAXT ? a : [...a, k]))
   const tqs = tq.trim().toLowerCase()
-  const visible = cands.filter(c => !c.key.startsWith('t:') || !tqs || (c.title + c.source).toLowerCase().includes(tqs))
+  const visible = cands.filter(c => !tqs || (c.title + c.source).toLowerCase().includes(tqs))
   const groups = [...new Set(visible.map(c => c.group))]
   const openPick = mode => {
     if (mode === 'export') { if (canExport()) setSel(todayKeys); setReport(true); return }   // 匯出直接用畫面上今日講的幾項，不用重新揀
@@ -250,9 +260,17 @@ export default function Daily() {
       {pick && (
         <div className="modal" onClick={e => { if (e.target === e.currentTarget) setPick(null) }}>
           <div className="sheet">
-            <h2>{pick === 'edit' ? '自選今日要講的內容' : '匯出早會講稿'}</h2>
+            <div className="sheet-hd">
+              <h2>{pick === 'edit' ? '自選今日內容' : '匯出早會講稿'}</h2>
+              <span className="sheet-hd-acts">
+                <button className="mini" onClick={() => setPick(null)}>取消</button>
+                {pick === 'edit'
+                  ? <button className="mini pri" disabled={sel.length === 0} onClick={saveCustom}>確定（{sel.length}）</button>
+                  : <button className="mini pri" disabled={sel.length === 0} onClick={() => { setPick(null); setReport(true) }}>匯出（{sel.length}）</button>}
+              </span>
+            </div>
             <p className="src-note">{pick === 'edit' ? `最多選 ${MAXT} 項（已選 ${sel.length}/${MAXT}），今日早會就講這幾項，所有裝置都會看到。` : `預設是畫面上今日要講的 ${MAXT} 項，可以修改（已選 ${sel.length}/${MAXT}）。有相片會一併印出。`}</p>
-            <input className="search-inp" placeholder="🔍 搜尋主題庫" value={tq} onChange={e => setTq(e.target.value)} />
+            <input className="search-inp" placeholder="🔍 搜尋（主題、查房問題）" value={tq} onChange={e => setTq(e.target.value)} />
             {groups.map(g => (
               <div key={g}>
                 <div className="sp-grp">{g}</div>
@@ -268,10 +286,6 @@ export default function Daily() {
                 })}
               </div>
             ))}
-            {pick === 'edit'
-              ? <button className="btn" disabled={sel.length === 0} onClick={saveCustom}>確定，今日改講這 {sel.length} 項</button>
-              : <button className="btn" disabled={sel.length === 0} onClick={() => { setPick(null); setReport(true) }}>預覽並匯出（{sel.length} 項）</button>}
-            <button className="btn ghost" onClick={() => setPick(null)}>取消</button>
           </div>
         </div>
       )}

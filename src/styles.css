@@ -838,3 +838,7 @@ body{overflow-x:clip}
   .c-head .desc{order:9;flex:1 1 100%;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;font-size:13px;color:var(--ink)}
 }
 @media (min-width:900px){.cx-flt-m{display:none !important}.cx-body-acts{display:none}}
+
+.sheet-hd{position:sticky;top:-18px;z-index:5;background:var(--card);margin:-18px -18px 10px;padding:14px 18px 10px;display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid var(--line)}
+.sheet-hd h2{margin:0;font-size:17px}.sheet-hd-acts{display:flex;gap:8px;flex-shrink:0}
+.mini:disabled{opacity:.45}
