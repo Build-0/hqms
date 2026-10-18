@@ -130,19 +130,31 @@ export default function Findings({ session }) {
     if (!f.attendant_id) { toast('請選擇房務員'); return }
     if (!f.tag_ids.length && !f.note.trim()) { toast(f.kind === 'good' ? '請選擇做得好的地方，或在「補充」寫下來' : '請選擇問題，或在「補充」寫下問題'); return }
     setSaving(true)
-    const batch = `${f.kind === 'good' ? 'good-' : ''}${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+    const batch = f.editBatch || `${f.kind === 'good' ? 'good-' : ''}${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
     const ids = f.tag_ids.length ? f.tag_ids : [null] // 沒有適合的標籤：只靠補充文字記一筆
     const list = ids.map(id => ({
       date: f.date || todayStr(), attendant_id: f.attendant_id, room: f.room.trim(), tag_id: id,
       tag: id ? (tagById[id] || {}).name || '' : (f.kind === 'good' ? OTHER_GOOD : OTHER_TAG), photos: f.photos, note: f.note.trim(), inspector: f.inspector.trim(), batch,
     }))
-    try { await api.addFindings(list) } catch (ex) { setSaving(false); toast('儲存失敗：' + ex.message); return }
+    try {
+      await api.addFindings(list)
+      if (f.editIds) for (const id of f.editIds) await api.deleteFinding(id)   // 先寫入新的，成功後才刪舊的
+    } catch (ex) { setSaving(false); toast('儲存失敗：' + ex.message); return }
     setSaving(false)
     lsSet(LS_ATT, f.attendant_id); lsSet(LS_INSP, f.inspector.trim())
+    if (f.editIds) { toast('已儲存修改'); setForm(null); setSaving(false); load(); return }
     toast(f.kind === 'good' ? '已記錄表揚 ⭐' : f.tag_ids.length ? `已記錄 ${list.length} 個問題` : '已記錄（其他問題）')
     if (next) newForm({ attendant_id: f.attendant_id, inspector: f.inspector, confirmedAtt: f.confirmedAtt }, f.kind)
     else setForm(null)
     load()
+  }
+  function editBatch(b) {
+    setForm({
+      kind: b.kind, confirmedAtt: b.attendant_id || '', date: b.date, room: b.room || '', attendant_id: b.attendant_id || '',
+      tag_ids: b.items.map(i => i.tag_id).filter(Boolean), photos: b.photos || [], note: b.note || '', inspector: b.inspector || '',
+      editIds: b.items.map(i => i.id), editBatch: b.items[0]?.batch || '',
+    })
+    setView(null)
   }
   async function delBatch(b) {
     try { for (const it of b.items) await api.deleteFinding(it.id) } catch (ex) { toast('刪除失敗：' + ex.message); return }
@@ -247,7 +259,7 @@ export default function Findings({ session }) {
       {form && (
         <div className="modal" onClick={e => { if (e.target === e.currentTarget) setForm(null) }}>
           <div className="sheet fd-form">
-            <h2>{form.kind === 'good' ? '⭐ 表揚做得好' : '記錄問題'}</h2>
+            <h2>{form.editIds ? '✏️ 編輯記錄' : form.kind === 'good' ? '⭐ 表揚做得好' : '記錄問題'}</h2>
             <PhotoField label="① 拍照" photos={form.photos} onChange={p => setForm({ ...form, photos: p })} max={4} />
             <div style={{ display: 'flex', gap: 10 }}>
               <div style={{ flex: 1 }} className="f-row"><label>② 房號</label><input inputMode="numeric" value={form.room} onChange={e => setForm({ ...form, room: e.target.value })} placeholder="例：1016" /></div>
@@ -286,8 +298,9 @@ export default function Findings({ session }) {
             </div>
             <div className="f-row"><label>補充（沒有適合的標籤就寫這裡 · 可語音輸入）</label><input value={form.note} onChange={e => setForm({ ...form, note: e.target.value })} placeholder="例：浴缸邊" /></div>
             <div className="f-row"><label>抽查人</label><input value={form.inspector} onChange={e => setForm({ ...form, inspector: e.target.value })} placeholder="抽查人姓名" /></div>
-            <button className="btn" disabled={saving || !form.attendant_id || (!form.tag_ids.length && !form.note.trim())} onClick={() => save(true)}>{saving ? '儲存中…' : '儲存，記下一間'}</button>
-            <button className="btn ghost" disabled={saving} onClick={() => save(false)} style={{ color: 'var(--accent)', fontWeight: 700 }}>儲存並關閉</button>
+            {form.editIds && <button className="btn" disabled={saving || !form.attendant_id || (!form.tag_ids.length && !form.note.trim())} onClick={() => save(false)}>{saving ? '儲存中…' : '儲存修改'}</button>}
+            {!form.editIds && <button className="btn" disabled={saving || !form.attendant_id || (!form.tag_ids.length && !form.note.trim())} onClick={() => save(true)}>{saving ? '儲存中…' : '儲存，記下一間'}</button>}
+            {!form.editIds && <button className="btn ghost" disabled={saving} onClick={() => save(false)} style={{ color: 'var(--accent)', fontWeight: 700 }}>儲存並關閉</button>}
             <button className="btn ghost" onClick={() => setForm(null)}>取消</button>
           </div>
         </div>
@@ -341,7 +354,8 @@ export default function Findings({ session }) {
                 </div>
               )
             })}
-            {full && <button className="btn danger" style={{ marginTop: 14 }} onClick={() => setConfirmDel(view)}>刪除這次記錄</button>}
+            {full && <button className="btn" style={{ marginTop: 14 }} onClick={() => editBatch(view)}>✏️ 編輯這次記錄</button>}
+            {full && <button className="btn danger" onClick={() => setConfirmDel(view)}>刪除這次記錄</button>}
             <button className="btn ghost" onClick={() => setView(null)}>關閉</button>
           </div>
         </div>
