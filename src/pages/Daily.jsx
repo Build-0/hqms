@@ -101,10 +101,22 @@ export default function Daily() {
         return Object.values(g).sort((a, b) => b.n - a.n).map(o => ({ ...o, floors: [...o.floors].sort((a, b) => a - b) }))
       }
       const isGood = f => String(f.batch || '').startsWith('good-')
-      // 同一次查房選了多個標籤時，各標籤共用同一組相片：相片相同的只留最常見嗰個，避免卡片重複
-      const seenPh = new Set()
-      digest.top = group(fr.filter(f => !isGood(f) && f.tag !== '其他')).filter(t => { const k = (t.photos || [])[0]; if (!k) return true; if (seenPh.has(k)) return false; seenPh.add(k); return true }).slice(0, 3)
-      digest.good = group(fr.filter(isGood)).slice(0, 3)
+      // 同一次查房對同一間房揀了多個問題標籤時（共用同一組相片）：併成一張卡，標題列出全部問題，不重複也不遺漏
+      const mergeByPhoto = list => {
+        const out = []
+        for (const t of list) {
+          const k = (t.photos || [])[0]
+          const hit = k && out.find(o => (o.photos || [])[0] === k)
+          if (hit) {
+            hit.names.push(t.name); hit.n = Math.max(hit.n, t.n)
+            hit.floors = [...new Set([...hit.floors, ...t.floors])].sort((a, b) => a - b)
+            if (!hit.topic_id && t.topic_id) hit.topic_id = t.topic_id
+          } else out.push({ ...t, names: [t.name] })
+        }
+        return out.map(o => ({ ...o, name: o.names.join('、') }))
+      }
+      digest.top = mergeByPhoto(group(fr.filter(f => !isGood(f) && f.tag !== '其他'))).slice(0, 3)
+      digest.good = mergeByPhoto(group(fr.filter(isGood))).slice(0, 3)
       digest.topTopicIds = [...new Set(digest.top.map(t => t.topic_id).filter(Boolean))]
     } catch { /* 查房資料不可用時，照舊選題 */ }
 
