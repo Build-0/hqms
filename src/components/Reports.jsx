@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { todayStr } from '../lib/dates'
 import { canExport, EXPORT_MSG } from '../lib/accounts'
+import { savePdf } from '../lib/pdf'
 
 // 報告外殼：全螢幕預覽 + 「儲存為 PDF」（瀏覽器列印 → 另存 PDF；手機用分享 → 列印/存成 PDF）
 export function ReportModal({ title, sub, onClose, children }) {
@@ -25,6 +26,17 @@ export function ReportModal({ title, sub, onClose, children }) {
       document.body
     )
   }
+  const [busy, setBusy] = useState(false)
+  async function toPdf() {
+    if (busy) return
+    setBusy(true)
+    try {
+      const el = document.querySelector('.rpt-print')
+      const how = await savePdf(el, document.title || 'report')
+      if (how === 'download') alert('PDF 已下載。若沒有出現，請到「檔案」App → 下載項目查看。')
+    } catch (e) { alert('產生 PDF 失敗：' + (e && e.message ? e.message : e)); window.print() }
+    setBusy(false)
+  }
   const now = new Date()
   const stamp = `${todayStr()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
   return createPortal(
@@ -32,7 +44,7 @@ export function ReportModal({ title, sub, onClose, children }) {
       <div className="rpt-bar">
         <button className="rpt-btn ghost" onClick={onClose}>‹ 返回</button>
         <span className="rpt-bar-t">報告預覽</span>
-        <button className="rpt-btn" onClick={() => window.print()}>儲存為 PDF</button>
+        <button className="rpt-btn" disabled={busy} onClick={toPdf}>{busy ? '產生中…' : '儲存為 PDF'}</button>
       </div>
       <div className="rpt-scroll">
         <div className="rpt-print">
@@ -43,7 +55,8 @@ export function ReportModal({ title, sub, onClose, children }) {
       </div>
       <div className="rpt-foot rpt-noprint">
         <button className="btn ghost" onClick={onClose}>‹ 返回</button>
-        <button className="btn" onClick={() => window.print()}>儲存為 PDF／列印</button>
+        <button className="btn ghost" style={{ flex: '0 0 26%' }} onClick={() => window.print()}>列印</button>
+        <button className="btn" disabled={busy} onClick={toPdf}>{busy ? '產生中…' : '儲存為 PDF'}</button>
       </div>
     </div>,
     document.body
