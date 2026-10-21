@@ -1030,3 +1030,8 @@ html.rpt-open #root{visibility:hidden}
 .rpt-wide .mxr-t th b{font-size:9.5px}.rpt-wide .mxr-t th span{font-size:8.5px}.rpt-wide .mxr-t th small{font-size:7.5px}
 .rpt-wide .mxr-t .mxr-tm{height:15px;font-size:8px;width:36px}.rpt-wide .mxr-t th:first-child{width:36px}
 .rpt-wide .mxr-t tbody td{height:15px}
+
+/* A3 橫向：字體同行高放大 */
+.rpt-wide .mxr-t{font-size:9.5px}
+.rpt-wide .mxr-t th b{font-size:11px}.rpt-wide .mxr-t th span{font-size:10px}.rpt-wide .mxr-t th small{font-size:9px}
+.rpt-wide .mxr-t .mxr-tm,.rpt-wide .mxr-t tbody td{height:17px}.rpt-wide .mxr-t .mxr-tm{font-size:9.5px}

@@ -313,7 +313,7 @@ function Board({ d, load, log, staffOf, canEdit }) {
         </>
       )}
       {report === true && <ReportModal title={tr('24 小時看板', '24-Hour Board')} sub={todayStr()} onClose={() => setReport(false)}><ListReport data={boardReport()} /></ReportModal>}
-      {report === 'matrix' && <ReportModal landscape title={tr('24 小時看板總表', '24-Hour Board Matrix')} sub={todayStr()} onClose={() => setReport(false)}>{matrixPages()}</ReportModal>}
+      {report === 'matrix' && <ReportModal landscape a3 title={tr('24 小時看板總表', '24-Hour Board Matrix')} sub={todayStr()} onClose={() => setReport(false)}>{matrixPages()}</ReportModal>}
       {canEdit && edit && (
         <div className="modal" onClick={e => { if (e.target === e.currentTarget) setEdit(null) }}>
           <div className="sheet">
