@@ -1,13 +1,14 @@
 // 把報告預覽直接轉成 PDF 檔（iPhone「加到主畫面」的網頁不支援 window.print，所以改為自己產生 PDF，再分享／下載）
 // 做法：逐塊把畫面轉成圖片，順序排進 A4；放唔落當頁就換頁，過高嘅區塊分頁切開；每頁底部加頁碼。
-const A4 = { w: 210, h: 297 }
+const A4P = { w: 210, h: 297 }
 const M = 10          // 頁邊距 mm
 
 const PAGE_BREAK_CLASS = 'sf-page'   // 沙發檢查表：每層一頁
 
-export async function savePdf(rootEl, fileName) {
+export async function savePdf(rootEl, fileName, opts = {}) {
+  const A4 = opts.landscape ? { w: A4P.h, h: A4P.w } : A4P
   const [{ default: html2canvas }, { jsPDF }] = await Promise.all([import('html2canvas'), import('jspdf')])
-  const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' })
+  const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: opts.landscape ? 'landscape' : 'portrait' })
   const innerW = A4.w - M * 2, innerH = A4.h - M * 2 - 6
   const blocks = [...rootEl.children].filter(el => !el.classList.contains('rpt-noprint') && el.offsetHeight > 0)
   let y = M, first = true, pages = 1

@@ -5,7 +5,7 @@ import { canExport, EXPORT_MSG } from '../lib/accounts'
 import { savePdf } from '../lib/pdf'
 
 // 報告外殼：全螢幕預覽 + 「儲存為 PDF」（瀏覽器列印 → 另存 PDF；手機用分享 → 列印/存成 PDF）
-export function ReportModal({ title, sub, onClose, children }) {
+export function ReportModal({ title, sub, onClose, children, landscape }) {
   useEffect(() => {
     const old = document.title
     const clean = x => String(x || '').replace(/[\\/:*?"<>|]/g, '-').trim()
@@ -32,7 +32,7 @@ export function ReportModal({ title, sub, onClose, children }) {
     setBusy(true)
     try {
       const el = document.querySelector('.rpt-print')
-      const how = await savePdf(el, document.title || 'report')
+      const how = await savePdf(el, document.title || 'report', { landscape })
       if (how === 'download') alert('PDF 已下載。若沒有出現，請到「檔案」App → 下載項目查看。')
     } catch (e) { alert('產生 PDF 失敗：' + (e && e.message ? e.message : e)); window.print() }
     setBusy(false)
@@ -42,7 +42,7 @@ export function ReportModal({ title, sub, onClose, children }) {
   return createPortal(
     <div className="rpt-overlay">
       <div className="rpt-scroll">
-        <div className="rpt-print">
+        <div className={'rpt-print' + (landscape ? ' rpt-wide' : '')}>
           <div className="rpt-hd"><b>{title}</b><span>{sub}</span></div>
           {children}
           <div className="rpt-ft"><span>酒店客房管理系統</span><span>匯出時間 {stamp}</span></div>
