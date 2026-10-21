@@ -1020,3 +1020,13 @@ html.rpt-open #root{visibility:hidden}
 .mxr-t th{background:#f1f4f6;text-align:center;vertical-align:middle}.mxr-t th b{display:block;font-size:11px}.mxr-t th span{display:block;font-size:10px}.mxr-t th small{display:block;font-size:8.5px;color:#6b7785}
 .mxr-t .mxr-tm{width:44px;text-align:center;background:#f1f4f6;font-weight:700;vertical-align:middle;height:22px}
 .mxr-t th:first-child{width:44px}
+
+/* 橫向總表：全日 48 行、全部崗位同一頁 */
+.rpt-print.rpt-wide{min-width:1400px;max-width:1400px;padding:10px 12px 8px}
+.rpt-wide .rpt-ft{display:none}
+.rpt-wide .rpt-hd{margin-bottom:4px}
+.rpt-wide .mxr-t{font-size:8px;line-height:1.15}
+.rpt-wide .mxr-t th,.rpt-wide .mxr-t td{padding:0 2px;overflow:hidden}
+.rpt-wide .mxr-t th b{font-size:9.5px}.rpt-wide .mxr-t th span{font-size:8.5px}.rpt-wide .mxr-t th small{font-size:7.5px}
+.rpt-wide .mxr-t .mxr-tm{height:15px;font-size:8px;width:36px}.rpt-wide .mxr-t th:first-child{width:36px}
+.rpt-wide .mxr-t tbody td{height:15px}

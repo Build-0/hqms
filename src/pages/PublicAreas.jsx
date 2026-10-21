@@ -232,15 +232,12 @@ function Board({ d, load, log, staffOf, canEdit }) {
   // 橫向總表：崗位分兩批、時間分上下半日，共 4 頁；同一任務連續時間合併成一格
   const segIn = (pid, a, b) => { const out = []; segs(pid).forEach(x => { const f = Math.max(x.from, a), t = Math.min(x.to, b); if (t > f) out.push({ ...x, from: f, to: t }) }); return out }
   const matrixPages = () => {
-    const half = Math.ceil(posts.length / 2)
-    const pages = []
-    ;[[0, half], [half, posts.length]].forEach(([p0, p1]) => [[0, 24], [24, 48]].forEach(([a, b]) => pages.push({ ps: posts.slice(p0, p1), a, b })))
+    const pages = [{ ps: posts, a: 0, b: 48 }]
     return pages.map((pg, k) => {
       const starts = {}
       pg.ps.forEach(p => segIn(p.id, pg.a, pg.b).forEach(x => { starts[p.id + ':' + x.from] = x }))
       return (
         <div key={k} className={'mxr' + (k ? ' sf-page' : '')}>
-          <p className="rpt-mut" style={{ margin: '0 0 4px' }}>{tr('崗位', 'Posts')} {pg.ps[0].code}–{pg.ps[pg.ps.length - 1].code}　·　{hm(pg.a)}–{endLabel(pg.b)}</p>
           <table className="mxr-t">
             <thead><tr><th>{tr('時間', 'Time')}</th>{pg.ps.map(p => <th key={p.id}><b>{p.code}</b><span>{(staffOf(p.staff_id) || {}).name || ''}</span><small>{p.start_time}‑{p.end_time}</small></th>)}</tr></thead>
             <tbody>
@@ -251,7 +248,8 @@ function Board({ d, load, log, staffOf, canEdit }) {
                     const x = starts[p.id + ':' + i]
                     if (!x) return (segIn(p.id, pg.a, pg.b).some(y => i > y.from && i < y.to)) ? null : <td key={p.id} />
                     const [bg, fg] = x.task && x.task !== '休息' ? catColor(taskParts(x.task)[0]) : x.task === '休息' ? ['#eceff2', '#5b6773'] : ['#fff', '#aab']
-                    const text = x.off ? '' : x.task === '休息' ? tr('休息', 'Break') : x.task ? taskParts(x.task).map(c => c + (taskName(c) ? ' ' + taskName(c) : '')).join(' ＋ ') : ''
+                    const long = x.to - x.from >= 2
+                    const text = x.off ? '' : x.task === '休息' ? tr('休息', 'Break') : x.task ? taskParts(x.task).map(c => c + (long && taskName(c) ? ' ' + taskName(c) : '')).join(' ＋ ') : ''
                     return <td key={p.id} rowSpan={x.to - x.from} style={{ background: x.off ? '#f6f7f8' : bg, color: fg }}>{text}</td>
                   })}
                 </tr>
