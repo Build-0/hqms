@@ -4,7 +4,7 @@ export const ROLE_LABEL = { admin: '管理員', store: '倉管員', clerk: '文�
 
 // 各系統權限：edit 可編輯／register 只可登記（缺陷）／none 封鎖（顯示為灰色，點擊不能進入）
 export const PERMS = {
-  admin: { quality: 'edit', findings: 'edit', boh: 'edit', defect: 'edit' },
+  admin: { quality: 'edit', findings: 'edit', boh: 'edit', defect: 'edit', public: 'edit' },
   store: { quality: 'none', findings: 'none', boh: 'edit', defect: 'edit' },
   clerk: { quality: 'none', findings: 'none', boh: 'none', defect: 'edit' },
   supervisor: { quality: 'none', findings: 'add', boh: 'none', defect: 'register' },   // 查房記錄：可查看與新增，不能刪改
@@ -24,6 +24,9 @@ export const SUP_FLOORS = {
   '100224': ['12'],  // Cindy Ngan
 }
 
+// 公共地區：管理員可改；公眾主管（帳號有 pub 旗標）可查看；其他帳號沒有
+export const publicPerm = s => (!s ? 'edit' : s.role === 'admin' ? 'edit' : s.pub ? 'view' : 'none')
+
 export const ACCOUNTS = [
   { key: '101428', id: '101428', name: 'Benny Liang', role: 'admin' },
   { key: '100663', id: '100663', name: 'Winnie Weng', role: 'admin' },
@@ -37,19 +40,19 @@ export const ACCOUNTS = [
   { key: '101488', id: '101488', name: 'Candy Huang', role: 'supervisor' },
   { key: '100276', id: '100276', name: 'Cici Li', role: 'supervisor' },
   { key: '101170', id: '101170', name: 'Gigi Zeng', role: 'supervisor' },
-  { key: '100662', id: '100662', name: 'Annie Feng', role: 'supervisor' },
+  { key: '100662', id: '100662', name: 'Annie Feng', role: 'supervisor', pub: true },
   { key: '100667', id: '100667', name: 'Bobo Zhang', role: 'supervisor' },
   { key: '100668', id: '100668', name: 'Rose Zhang', role: 'supervisor' },
   { key: '100658', id: '100658', name: 'Linda Wu', role: 'supervisor' },
   { key: '100262', id: '100262', name: 'Jenny Nip', role: 'supervisor' },
   { key: '100224', id: '100224', name: 'Cindy Ngan', role: 'supervisor' },
-  { key: '100922', id: '100922', name: 'Edward Xu', role: 'supervisor' },
+  { key: '100922', id: '100922', name: 'Edward Xu', role: 'supervisor', pub: true },
   { key: '100779', id: '100779', name: 'Ling Gong', role: 'supervisor' },
-  { key: '101494', id: '101494', name: 'Nick Su', role: 'supervisor' },
-  { key: '100957', id: '100957', name: 'David Kim', role: 'supervisor' },
+  { key: '101494', id: '101494', name: 'Nick Su', role: 'supervisor', pub: true },
+  { key: '100957', id: '100957', name: 'David Kim', role: 'supervisor', pub: true },
   { key: '100660', id: '100660', name: 'Eddie Li', role: 'supervisor' },
-  { key: '100617', id: '100617', name: 'Serito Froilan', role: 'supervisor' },
-  { key: '100669', id: '100669', name: 'Tony Cao', role: 'supervisor' },
+  { key: '100617', id: '100617', name: 'Serito Froilan', role: 'supervisor', pub: true },
+  { key: '100669', id: '100669', name: 'Tony Cao', role: 'supervisor', pub: true },
   { key: '100926', id: '100926', name: 'Joe Huang', role: 'supervisor' },
 ]
 

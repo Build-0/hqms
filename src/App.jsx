@@ -12,9 +12,10 @@ import Findings from './pages/Findings'
 import Icon from './components/Icon'
 import Embed from './components/Embed'
 import Gate from './components/Gate'
+import PublicAreas from './pages/PublicAreas'
 import { runBack } from './lib/nav'
 import Confirm from './components/Confirm'
-import { getSession, clearSession, PERMS, ROLE_LABEL } from './lib/accounts'
+import { getSession, clearSession, PERMS, ROLE_LABEL, publicPerm } from './lib/accounts'
 import { toast } from './lib/toast'
 
 // 首頁圓形入口：之後加新模組（清潔劑、機器…）直接在這裡加一行
@@ -23,6 +24,7 @@ const MODULES = [
   { id: 'findings', sub: '問題、表揚與人員表現', icon: 'camera', label: '查房記錄', color: '#d07a2c', Page: Findings },
   { id: 'topics', sub: '分類教材與正確做法', icon: 'book', label: '培訓主題庫', color: '#4a6fa5', Page: Topics },
   { id: 'cyclic', sub: '每日、循環、深度清潔', icon: 'clean', label: '清潔要點', color: '#54808c', Page: CyclicClean },
+  { id: 'public', sub: '崗位、看板、任務、員工', icon: 'hotel', label: '公共地區', color: '#8a6d3b', Page: PublicAreas },
   // 嵌入的舊系統（與品質系統同網站、各自保留原有資料庫）
   { id: 'boh', icon: 'box', label: '後勤管理', color: '#7a6a4f', top: true, Page: Boh },
   { id: 'defect', icon: 'wrench', label: '缺陷管理', color: '#b5603a', top: true, Page: Defects },
@@ -113,7 +115,7 @@ export default function App() {
   // 即使被封鎖的頁面（例如舊分頁狀態）也一律退回首頁
   if (tab !== 'home' && session && (((cur && cur.id === 'boh') && locked('boh')) || ((cur && cur.id === 'defect') && locked('defect')) || ((tab === 'quality' || (cur && !cur.embed && !cur.top)) && locked('quality')))) setTimeout(() => setTab('home'), 0)
   // 只有查房記錄權限（樓層主管）的帳號：其他品質模組一律退回首頁
-  if (session && !qFull && cur && !cur.embed && !cur.top && cur.id !== 'findings') setTimeout(() => setTab('home'), 0)
+  if (session && !qFull && cur && !cur.embed && !cur.top && cur.id !== 'findings' && !(cur.id === 'public' && publicPerm(session) !== 'none')) setTimeout(() => setTab('home'), 0)
   const hardReload = () => { location.href = location.pathname + '?v=' + Date.now() }
   async function doRefresh() {
     if (refreshing) return
@@ -149,7 +151,7 @@ export default function App() {
       <main className={cur?.embed ? 'embed-main' : ''}>
         {cur ? <cur.Page key={tab + ':' + rk} session={session} init={init} /> : inQuality ? (
           <div className="home-grid">
-            {MODULES.filter(m => !m.embed && !m.top && (qFull || m.id === 'findings')).map(m => (
+            {MODULES.filter(m => !m.embed && !m.top && (qFull || m.id === 'findings' || m.id === 'public') && (m.id !== 'public' || publicPerm(session) !== 'none')).map(m => (
               <button className="home-item" key={m.id} onClick={() => setTab(m.id)}>
                 <span className="hi-circle" style={{ background: m.color + '26', borderColor: 'transparent' }}><Icon name={m.icon} size={33} color={m.color} width={2.2} /></span>
                 <span className="hi-label">{m.label}</span>

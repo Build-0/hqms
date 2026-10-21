@@ -451,6 +451,18 @@ export async function dbUpdate(table, id, patch) {
   throwIf(error)
   return data
 }
+export async function dbInsertMany(table, rows) {
+  needDb()
+  if (!rows.length) return
+  const { error } = await sb.from(table).insert(rows)
+  throwIf(error)
+}
+export async function dbUpdateMany(table, ids, patch) {
+  needDb()
+  if (!ids.length) return
+  const { error } = await sb.from(table).update(patch).in('id', ids)
+  throwIf(error)
+}
 export async function dbDelete(table, id) {
   needDb()
   const { error } = await sb.from(table).delete().eq('id', id)
