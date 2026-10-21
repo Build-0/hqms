@@ -1002,3 +1002,5 @@ html.rpt-open #root{visibility:hidden}
     radial-gradient(55% 32% at 100% 18%,rgba(74,111,165,.14),transparent 70%),
     radial-gradient(70% 38% at 20% 100%,rgba(31,122,109,.12),transparent 70%),#f2f6f6}
 }
+
+@media (max-width:899px){.rpt-printbtn{display:none}}
