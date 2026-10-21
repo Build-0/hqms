@@ -41,6 +41,10 @@ export function ReportModal({ title, sub, onClose, children }) {
           <div className="rpt-ft"><span>酒店客房管理系統</span><span>匯出時間 {stamp}</span></div>
         </div>
       </div>
+      <div className="rpt-foot rpt-noprint">
+        <button className="btn ghost" onClick={onClose}>‹ 返回</button>
+        <button className="btn" onClick={() => window.print()}>儲存為 PDF／列印</button>
+      </div>
     </div>,
     document.body
   )
