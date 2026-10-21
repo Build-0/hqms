@@ -181,6 +181,7 @@ function Board({ d, load, log, staffOf, canEdit }) {
   const [mode, setMode] = useState('post')       // post 按崗位／all 總覽
   const [pid, setPid] = useState(posts[0] ? posts[0].id : '')
   const [edit, setEdit] = useState(null)
+  const [report, setReport] = useState(false)
   const slotsOf = useMemo(() => {
     const m = {}
     d.slots.forEach(s => { (m[s.post_id] = m[s.post_id] || Array(48).fill(null))[s.slot] = s })
@@ -210,9 +211,20 @@ function Board({ d, load, log, staffOf, canEdit }) {
       toast(tr('已更新', 'Updated')); setEdit(null); load()
     } catch (ex) { toast(tr('儲存失敗：', 'Save failed: ') + ex.message) }
   }
+  // 匯出：按崗位為一組，列出每段時間的任務（「按崗位」只出目前崗位；「總覽」出全部崗位）
+  const taskText = s => (s.task === '休息' ? tr('休息', 'Break') : s.task ? taskParts(s.task).map(c => `${c}${taskName(c) ? ' ' + taskName(c) : ''}`).join(' + ') : tr('（未安排）', '(unscheduled)'))
+  const boardReport = () => {
+    const list = mode === 'post' && post ? [post] : posts
+    return {
+      filterText: mode === 'post' && post ? post.code : tr('全部崗位', 'All posts'),
+      cols: [tr('時間', 'Time'), tr('任務', 'Task')],
+      groups: list.map(p => ({ name: `${p.code} · ${(staffOf(p.staff_id) || {}).name || tr('未指派', 'unassigned')}（${p.start_time}‑${p.end_time}）`, rows: segs(p.id).map(x => ({ cells: [`${hm(x.from)}‑${endLabel(x.to)}`, taskText(x)] })) })),
+    }
+  }
   const openSeg = (post_id, s) => { if (!canEdit || !s) return; const [a, b] = taskParts(s.task); setEdit({ post_id, from: s.from, to: s.to, t1: a || '', t2: b || '' }) }
   return (
     <>
+      <ToolBar label={mode === 'post' ? tr('目前崗位', 'Current post') : tr(`${posts.length} 個崗位`, `${posts.length} posts`)}><ExportBtn onClick={() => setReport(true)} /></ToolBar>
       <div className="seg" style={{ margin: '0 0 10px' }}>
         <button className={mode === 'post' ? 'on' : ''} onClick={() => setMode('post')}>{tr('按崗位', 'By post')}</button>
         <button className={mode === 'all' ? 'on' : ''} onClick={() => setMode('all')}>{tr(`總覽（${posts.length} 崗）`, `Overview (${posts.length} posts)`)}</button>
@@ -255,6 +267,7 @@ function Board({ d, load, log, staffOf, canEdit }) {
           </table>
         </div>
       )}
+      {report && <ReportModal title={tr('24 小時看板', '24-Hour Board')} sub={todayStr()} onClose={() => setReport(false)}><ListReport data={boardReport()} /></ReportModal>}
       {canEdit && edit && (
         <div className="modal" onClick={e => { if (e.target === e.currentTarget) setEdit(null) }}>
           <div className="sheet">
