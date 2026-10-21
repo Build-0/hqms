@@ -182,6 +182,7 @@ function Board({ d, load, log, staffOf, canEdit }) {
   const [pid, setPid] = useState(posts[0] ? posts[0].id : '')
   const [edit, setEdit] = useState(null)
   const [report, setReport] = useState(false)
+  const [names, setNames] = useState(true)       // 總覽：格內顯示任務名稱
   const slotsOf = useMemo(() => {
     const m = {}
     d.slots.forEach(s => { (m[s.post_id] = m[s.post_id] || Array(48).fill(null))[s.slot] = s })
@@ -256,8 +257,13 @@ function Board({ d, load, log, staffOf, canEdit }) {
         </>
       )}
       {mode === 'all' && (
+        <>
+        <div className="seg" style={{ margin: '0 0 8px' }}>
+          <button className={names ? 'on' : ''} onClick={() => setNames(true)}>{tr('顯示名稱', 'Names')}</button>
+          <button className={!names ? 'on' : ''} onClick={() => setNames(false)}>{tr('只顯示代碼', 'Codes only')}</button>
+        </div>
         <div className="pa-mx-wrap">
-          <table className="pa-mx">
+          <table className={'pa-mx' + (names ? ' pa-mx-n' : '')}>
             <thead><tr><th className="pa-t">{tr('時間', 'Time')}</th>{posts.map(p => <th key={p.id}>{p.code.replace('崗', '')}<small>{(staffOf(p.staff_id) || {}).name || ''}</small></th>)}</tr></thead>
             <tbody>
               {Array.from({ length: 48 }, (_, i) => (
@@ -266,13 +272,14 @@ function Board({ d, load, log, staffOf, canEdit }) {
                   {posts.map(p => {
                     const t = ((slotsOf[p.id] || [])[i] || {}).task || ''
                     const [bg, fg] = t ? catColor(taskParts(t)[0]) : ['transparent', '#aab']
-                    return <td key={p.id} style={{ background: bg, color: fg }} onClick={() => openSeg(p.id, segs(p.id).find(x => i >= x.from && i < x.to))}>{t === '休息' ? (en ? 'Br' : '休') : t}</td>
+                    return <td key={p.id} style={{ background: bg, color: fg }} onClick={() => openSeg(p.id, segs(p.id).find(x => i >= x.from && i < x.to))}>{t === '休息' ? (en ? 'Br' : '休') : names && t ? taskParts(t).map(c => <div key={c}>{c}<small>{taskName(c)}</small></div>) : t}</td>
                   })}
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+        </>
       )}
       {report && <ReportModal title={tr('24 小時看板', '24-Hour Board')} sub={todayStr()} onClose={() => setReport(false)}><ListReport data={boardReport()} /></ReportModal>}
       {canEdit && edit && (
