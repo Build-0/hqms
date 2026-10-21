@@ -54,6 +54,7 @@ export const ACCOUNTS = [
   { key: '100617', id: '100617', name: 'Serito Froilan', role: 'supervisor', pub: true },
   { key: '100669', id: '100669', name: 'Tony Cao', role: 'supervisor', pub: true },
   { key: '100926', id: '100926', name: 'Joe Huang', role: 'supervisor' },
+  { key: '100892', id: '100892', name: 'Anna Song', role: 'supervisor', pub: true },
 ]
 
 // 把輸入（員工編號、英文全名、或唯一的名字）對應到帳號；密碼不在這裡驗證
