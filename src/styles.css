@@ -1007,3 +1007,5 @@ html.rpt-open #root{visibility:hidden}
 
 /* 手機報告：避開狀態列、表格縮窄 */
 @media (max-width:899px){.rpt-scroll{padding:calc(14px + env(safe-area-inset-top,0px)) 8px 12px}.rpt-print{padding:12px 8px 10px}.rpt-t{font-size:10.5px}.rpt-t th,.rpt-t td{padding:4px 3px;overflow-wrap:anywhere}}
+
+.pa-kind.k-pos{background:#e4dcf3;color:#5b3d99}

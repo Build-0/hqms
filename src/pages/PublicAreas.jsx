@@ -10,8 +10,9 @@ import { todayStr } from '../lib/dates'
 
 // 公共地區管理（管理員可改；公眾主管可查看）。右上角可切換 中文／English。
 const GRPS = ['商場', '前區', '後區', '深度清潔', '管理支援']
-const GRP_EN = { 商場: 'Mall', 前區: 'Front of house', 後區: 'Back of house', 深度清潔: 'Deep cleaning', 管理支援: 'Supervision', 其他: 'Other' }
+const GRP_EN = { 商場: 'Mall', 前區: 'Front of house', 後區: 'Back of house', 深度清潔: 'Deep cleaning', 管理支援: 'Supervisors & Captains', 其他: 'Other' }
 const KINDS = ['HSKP', '外判', '主管']
+const POS_EN = { 組長: 'Captain' }
 const KIND_EN = { HSKP: 'HSKP', 外判: 'Pro-Cleaning', 主管: 'Supervisor' }
 const NATS = ['中國', '菲律賓', '越南', '緬甸', '印尼', '尼泊爾', '泰國', '其他']
 const NAT_EN = { 中國: 'China', 菲律賓: 'Philippines', 越南: 'Vietnam', 緬甸: 'Myanmar', 印尼: 'Indonesia', 尼泊爾: 'Nepal', 泰國: 'Thailand', 其他: 'Other' }
@@ -132,7 +133,7 @@ function Posts({ d, load, log, staffOf, canEdit }) {
               <button className="pa-card" key={p.id} onClick={() => canEdit && setEdit({ ...p })} style={canEdit ? undefined : { cursor: 'default' }}>
                 <span className="pa-code">{p.code}</span>
                 <span className="pa-main">
-                  <b>{s ? s.name : tr('（未指派）', '(unassigned)')}{s && <small className={`pa-kind k-${s.kind}`}>{en ? KIND_EN[s.kind] : s.kind}</small>}{p.flag && <small className="pa-flag">{en ? 'To confirm' : p.flag}</small>}</b>
+                  <b>{s ? s.name : tr('（未指派）', '(unassigned)')}{s && <small className={`pa-kind k-${s.kind}`}>{en ? KIND_EN[s.kind] : s.kind}</small>}{s && s.position && <small className="pa-kind k-pos">{en ? POS_EN[s.position] || s.position : s.position}</small>}{p.flag && <small className="pa-flag">{en ? 'To confirm' : p.flag}</small>}</b>
                   <span>{p.start_time} — {p.end_time}{p.break_text ? ` · ${tr('休', 'Break')} ${p.break_text}` : ''}</span>
                   <span className="pa-sub">{areaOf(en, p) || '—'}</span>
                 </span>
@@ -349,7 +350,7 @@ function StaffView({ d, load, log, canEdit }) {
   const gLabel = g => (en ? ({ 男: 'Male', 女: 'Female' }[g] || '') : g)
   async function save() {
     const e = edit
-    const row = { name: e.name.trim(), kind: e.kind, gender: e.gender, nationality: e.nationality, langs: e.langs, phone: e.phone.trim(), notes: e.notes.trim(), old_name: e.old_name, rest_kind: e.rest_kind, rest_weekdays: e.rest_weekdays, rest_dates: e.rest_dates, active: e.active }
+    const row = { name: e.name.trim(), kind: e.kind, gender: e.gender, nationality: e.nationality, position: e.position || '', langs: e.langs, phone: e.phone.trim(), notes: e.notes.trim(), old_name: e.old_name, rest_kind: e.rest_kind, rest_weekdays: e.rest_weekdays, rest_dates: e.rest_dates, active: e.active }
     if (!row.name) { toast(tr('請填姓名', 'Name required')); return }
     try {
       if (e.id) { await api.dbUpdate('pa_staff', e.id, row); await log('修改員工 ' + row.name) }
@@ -368,7 +369,7 @@ function StaffView({ d, load, log, canEdit }) {
     return {
       filterText: tr('在職員工', 'Active staff'),
       cols: [tr('姓名', 'Name'), tr('類別', 'Type'), tr('性別', 'Gender'), tr('國籍', 'Nationality'), tr('上班—收工', 'Shift'), tr('主要負責區域', 'Main area')],
-      groups: names.map(n => ({ name: n === '未分配崗位' ? tr('未分配崗位', 'No post assigned') : grpName(en, n), rows: rows.filter(x => grp(x) === n).map(({ s, p }) => ({ cells: [s.name, en ? KIND_EN[s.kind] : s.kind, gLabel(s.gender) || '—', (en ? NAT_EN[s.nationality] : s.nationality) || '—', p ? `${p.start_time}‑${p.end_time}` : '—', p ? (areaOf(en, p) || p.code) : '—'] })) })).filter(g => g.rows.length),
+      groups: names.map(n => ({ name: n === '未分配崗位' ? tr('未分配崗位', 'No post assigned') : grpName(en, n), rows: rows.filter(x => grp(x) === n).map(({ s, p }) => ({ cells: [s.name, (en ? KIND_EN[s.kind] : s.kind) + (s.position ? (en ? ' · ' + (POS_EN[s.position] || s.position) : ' · ' + s.position) : ''), gLabel(s.gender) || '—', (en ? NAT_EN[s.nationality] : s.nationality) || '—', p ? `${p.start_time}‑${p.end_time}` : '—', p ? (areaOf(en, p) || p.code) : '—'] })) })).filter(g => g.rows.length),
     }
   }
   return (
@@ -385,7 +386,7 @@ function StaffView({ d, load, log, canEdit }) {
           <button className="pa-card" key={s.id} onClick={() => canEdit && setEdit({ ...s, langs: s.langs || [], rest_weekdays: s.rest_weekdays || [], rest_dates: s.rest_dates || [] })} style={canEdit ? undefined : { cursor: 'default' }}>
             <span className="pa-code" style={{ fontSize: 15 }}>{s.name.slice(0, 2)}</span>
             <span className="pa-main">
-              <b>{s.name}<small className={`pa-kind k-${s.kind}`}>{en ? KIND_EN[s.kind] : s.kind}</small></b>
+              <b>{s.name}<small className={`pa-kind k-${s.kind}`}>{en ? KIND_EN[s.kind] : s.kind}</small>{s.position && <small className="pa-kind k-pos">{en ? POS_EN[s.position] || s.position : s.position}</small>}</b>
               <span>{[gLabel(s.gender), en ? NAT_EN[s.nationality] || s.nationality : s.nationality, (s.langs || []).map(l => (en ? LANG_EN[l] : l)).join(en ? ' / ' : '／')].filter(Boolean).join(' · ') || tr('（未填：性別、國籍、語言）', '(gender, nationality, language not filled)')}</span>
               {p && <span className="pa-sub">{p.code} · {p.start_time}—{p.end_time} · {areaOf(en, p) || '—'}</span>}
               <span className="pa-sub">{s.rest_kind === 'weekly2' ? tr(`每週休 2 天${(s.rest_weekdays || []).length ? '：週' + s.rest_weekdays.map(w => WD[w]).join('、週') : ''}`, `2 days off weekly${(s.rest_weekdays || []).length ? ': ' + s.rest_weekdays.map(w => WD_EN[w]).join(', ') : ''}`) : s.rest_kind === 'monthly1' ? tr(`每月休 1 天${(s.rest_dates || []).length ? '：' + s.rest_dates.slice(-1)[0] : ''}`, `1 day off monthly${(s.rest_dates || []).length ? ': ' + s.rest_dates.slice(-1)[0] : ''}`) : ''}</span>
@@ -404,6 +405,7 @@ function StaffView({ d, load, log, canEdit }) {
             {edit.old_name && <p className="src-note">{tr('舊名單名稱：', 'Previous name: ')}{edit.old_name}</p>}
             <div style={{ display: 'flex', gap: 10 }}>
               <div className="f-row" style={{ flex: 1 }}><label>{tr('類別', 'Type')}</label><select value={edit.kind} onChange={e => setEdit({ ...edit, kind: e.target.value, rest_kind: e.target.value === 'HSKP' ? 'weekly2' : 'monthly1' })}>{KINDS.map(k => <option key={k} value={k}>{en ? KIND_EN[k] : k}</option>)}</select></div>
+              <div className="f-row" style={{ flex: 1 }}><label>{tr('職級', 'Position')}</label><select value={edit.position || ''} onChange={e => setEdit({ ...edit, position: e.target.value })}><option value="">{tr('（一般）', '(none)')}</option><option value="組長">{tr('組長', 'Captain')}</option></select></div>
               <div className="f-row" style={{ flex: 1 }}><label>{tr('性別', 'Gender')}</label><select value={edit.gender} onChange={e => setEdit({ ...edit, gender: e.target.value })}><option value="">{tr('（未填）', '(not set)')}</option><option value="男">{tr('男', 'Male')}</option><option value="女">{tr('女', 'Female')}</option></select></div>
             </div>
             <div className="f-row"><label>{tr('國籍', 'Nationality')}</label><select value={edit.nationality} onChange={e => setEdit({ ...edit, nationality: e.target.value })}><option value="">{tr('（未填）', '(not set)')}</option>{NATS.map(n => <option key={n} value={n}>{en ? NAT_EN[n] : n}</option>)}</select></div>
