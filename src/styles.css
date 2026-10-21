@@ -985,3 +985,8 @@ body{overflow-x:clip}
 .pa-lang button{border:1.5px solid var(--accent);background:var(--card);color:var(--accent);font:700 13px/1 inherit;font-family:inherit;padding:8px 14px;cursor:pointer}
 .pa-lang button:first-child{border-radius:99px 0 0 99px}.pa-lang button:last-child{border-radius:0 99px 99px 0;border-left:none}
 .pa-lang button.on{background:var(--accent);color:#fff}
+
+/* 報告預覽開啟時：背後的頁面（含玻璃模糊層）隱藏，頂部「儲存為 PDF」掣才可以撳 */
+html.rpt-open #root{visibility:hidden}
+.rpt-overlay{z-index:500;isolation:isolate}
+.rpt-bar{position:relative;z-index:2;flex-shrink:0}

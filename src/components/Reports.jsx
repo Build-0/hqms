@@ -9,7 +9,8 @@ export function ReportModal({ title, sub, onClose, children }) {
     const old = document.title
     const clean = x => String(x || '').replace(/[\\/:*?"<>|]/g, '-').trim()
     document.title = [clean(title), clean(sub)].filter(Boolean).join(' ') || old
-    return () => { document.title = old }
+    document.documentElement.classList.add('rpt-open')   // 報告開啟時隱藏背後頁面（避免玻璃模糊層蓋住報告頂部掣）
+    return () => { document.title = old; document.documentElement.classList.remove('rpt-open') }
   }, [title, sub])
   // 只有管理員可以匯出；其他帳號只顯示提示
   if (!canExport()) {
