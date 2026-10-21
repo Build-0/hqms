@@ -41,11 +41,6 @@ export function ReportModal({ title, sub, onClose, children }) {
   const stamp = `${todayStr()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
   return createPortal(
     <div className="rpt-overlay">
-      <div className="rpt-bar">
-        <button className="rpt-btn ghost" onClick={onClose}>‹ 返回</button>
-        <span className="rpt-bar-t">報告預覽</span>
-        <button className="rpt-btn" disabled={busy} onClick={toPdf}>{busy ? '產生中…' : '儲存為 PDF'}</button>
-      </div>
       <div className="rpt-scroll">
         <div className="rpt-print">
           <div className="rpt-hd"><b>{title}</b><span>{sub}</span></div>

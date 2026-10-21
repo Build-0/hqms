@@ -12,7 +12,7 @@ import { todayStr } from '../lib/dates'
 const GRPS = ['商場', '前區', '後區', '深度清潔', '管理支援']
 const GRP_EN = { 商場: 'Mall', 前區: 'Front of house', 後區: 'Back of house', 深度清潔: 'Deep cleaning', 管理支援: 'Supervision', 其他: 'Other' }
 const KINDS = ['HSKP', '外判', '主管']
-const KIND_EN = { HSKP: 'HSKP', 外判: 'Outsourced', 主管: 'Supervisor' }
+const KIND_EN = { HSKP: 'HSKP', 外判: 'Pro-Cleaning', 主管: 'Supervisor' }
 const NATS = ['中國', '菲律賓', '越南', '緬甸', '印尼', '尼泊爾', '泰國', '其他']
 const NAT_EN = { 中國: 'China', 菲律賓: 'Philippines', 越南: 'Vietnam', 緬甸: 'Myanmar', 印尼: 'Indonesia', 尼泊爾: 'Nepal', 泰國: 'Thailand', 其他: 'Other' }
 const LANGS = ['粵語', '普通話', '英語']
@@ -117,7 +117,7 @@ function Posts({ d, load, log, staffOf, canEdit }) {
   }
   const nm = p => { const s = staffOf(p.staff_id); return s ? `${s.name}（${en ? KIND_EN[s.kind] : s.kind}）` : '—' }
   const reportData = () => ({
-    filterText: tr('全部崗位', 'All posts'), cols: [tr('崗位', 'Post'), tr('員工', 'Staff'), tr('性別', 'Gender'), tr('上班—收工', 'Shift'), tr('休息', 'Break'), tr('負責區域', 'Area')],
+    filterText: tr('全部崗位', 'All posts'), cols: [tr('崗位', 'Post'), tr('員工', 'Staff'), tr('性別', 'Gender'), tr('國籍', 'Nationality'), tr('上班—收工', 'Shift'), tr('休息', 'Break'), tr('負責區域', 'Area')],
     groups: groups.map(g => ({ name: grpName(en, g.g), rows: g.items.map(p => ({ cells: [p.code, nm(p), (staffOf(p.staff_id) || {}).gender ? (en ? ({ 男: 'M', 女: 'F' }[staffOf(p.staff_id).gender]) : staffOf(p.staff_id).gender) : '—', `${p.start_time}—${p.end_time}`, p.break_text || '—', areaOf(en, p) || '—'] })) })),
   })
   return (
@@ -367,8 +367,8 @@ function StaffView({ d, load, log, canEdit }) {
     const names = [...GRPS, '未分配崗位']
     return {
       filterText: tr('在職員工', 'Active staff'),
-      cols: [tr('姓名', 'Name'), tr('類別', 'Type'), tr('性別', 'Gender'), tr('上班—收工', 'Shift'), tr('主要負責區域', 'Main area')],
-      groups: names.map(n => ({ name: n === '未分配崗位' ? tr('未分配崗位', 'No post assigned') : grpName(en, n), rows: rows.filter(x => grp(x) === n).map(({ s, p }) => ({ cells: [s.name, en ? KIND_EN[s.kind] : s.kind, gLabel(s.gender) || '—', p ? `${p.start_time}—${p.end_time}` : '—', p ? (areaOf(en, p) || p.code) : '—'] })) })).filter(g => g.rows.length),
+      cols: [tr('姓名', 'Name'), tr('類別', 'Type'), tr('性別', 'Gender'), tr('國籍', 'Nationality'), tr('上班—收工', 'Shift'), tr('主要負責區域', 'Main area')],
+      groups: names.map(n => ({ name: n === '未分配崗位' ? tr('未分配崗位', 'No post assigned') : grpName(en, n), rows: rows.filter(x => grp(x) === n).map(({ s, p }) => ({ cells: [s.name, en ? KIND_EN[s.kind] : s.kind, gLabel(s.gender) || '—', (en ? NAT_EN[s.nationality] : s.nationality) || '—', p ? `${p.start_time}—${p.end_time}` : '—', p ? (areaOf(en, p) || p.code) : '—'] })) })).filter(g => g.rows.length),
     }
   }
   return (
