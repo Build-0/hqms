@@ -994,3 +994,11 @@ html.rpt-open #root{visibility:hidden}
 /* 報告預覽底部固定操作列（拇指易撳；頂部掣撳唔到時也可用） */
 .rpt-foot{display:flex;gap:10px;padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));background:#fff;border-top:1px solid #dfe5ea;flex-shrink:0}
 .rpt-foot .btn{margin:0;flex:1}.rpt-foot .btn.ghost{flex:0 0 32%}
+/* 玻璃主題背景：去掉金黃光暈（右上角偏黃），改為清淡的綠藍灰 */
+@media (max-width:899px){
+  body{background:#f1f5f5}
+  .phone::before{background:
+    radial-gradient(65% 36% at 6% 0%,rgba(31,122,109,.20),transparent 70%),
+    radial-gradient(55% 32% at 100% 18%,rgba(74,111,165,.14),transparent 70%),
+    radial-gradient(70% 38% at 20% 100%,rgba(31,122,109,.12),transparent 70%),#f2f6f6}
+}
