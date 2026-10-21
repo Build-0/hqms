@@ -189,12 +189,19 @@ function Board({ d, load, log, staffOf, canEdit }) {
   }, [d.slots])
   const post = posts.find(p => p.id === pid)
   const taskName = code => { const t = d.tasks.find(x => x.code === code); return t ? taskShort(en, t) : '' }
+  // 當值時間（上班—收工，可跨日）；之外嘅格標為「非當值」
+  const onDuty = (p, i) => {
+    const tm = x => { const [h, m] = x.split(':').map(Number); return h * 60 + m }
+    const st = tm(p.start_time), e0 = tm(p.end_time), en = e0 <= st ? e0 + 1440 : e0
+    return [i * 30, i * 30 + 1440].some(x => x + 30 > st && x < en)
+  }
   const segs = id => {
-    const arr = slotsOf[id] || []; const out = []
+    const arr = slotsOf[id] || []; const out = []; const p = posts.find(x => x.id === id)
     for (let i = 0; i < 48; i++) {
       const t = (arr[i] && arr[i].task) || ''
+      const off = p ? !onDuty(p, i) && !t : false
       const last = out[out.length - 1]
-      if (last && last.task === t) last.to = i + 1; else out.push({ from: i, to: i + 1, task: t })
+      if (last && last.task === t && !!last.off === off) last.to = i + 1; else out.push({ from: i, to: i + 1, task: t, off })
     }
     return out
   }
@@ -212,7 +219,7 @@ function Board({ d, load, log, staffOf, canEdit }) {
     } catch (ex) { toast(tr('儲存失敗：', 'Save failed: ') + ex.message) }
   }
   // 匯出：按崗位為一組，列出每段時間的任務（「按崗位」只出目前崗位；「總覽」出全部崗位）
-  const taskText = s => (s.task === '休息' ? tr('休息', 'Break') : s.task ? taskParts(s.task).map(c => `${c}${taskName(c) ? ' ' + taskName(c) : ''}`).join(' + ') : tr('（未安排）', '(unscheduled)'))
+  const taskText = s => (s.off ? tr('（非當值）', '(off duty)') : s.task === '休息' ? tr('休息', 'Break') : s.task ? taskParts(s.task).map(c => `${c}${taskName(c) ? ' ' + taskName(c) : ''}`).join(' + ') : tr('（未安排）', '(unscheduled)'))
   const boardReport = () => {
     const list = mode === 'post' && post ? [post] : posts
     return {
@@ -239,9 +246,9 @@ function Board({ d, load, log, staffOf, canEdit }) {
           {segs(pid).map(s => {
             const [bg, fg] = catColor(taskParts(s.task)[0])
             return (
-              <button key={s.from} className="pa-seg" onClick={() => openSeg(pid, s)} style={{ background: s.task ? bg : 'transparent', color: s.task ? fg : 'var(--sub)', borderStyle: s.task ? 'solid' : 'dashed', cursor: canEdit ? 'pointer' : 'default' }}>
+              <button key={s.from} className="pa-seg" onClick={() => openSeg(pid, s)} style={{ background: s.task ? bg : 'transparent', color: s.task ? fg : 'var(--sub)', borderStyle: s.task ? 'solid' : 'dashed', opacity: s.off ? 0.5 : 1, cursor: canEdit ? 'pointer' : 'default' }}>
                 <b>{hm(s.from)}–{endLabel(s.to)}</b>
-                <span>{s.task === '休息' ? tr('休息', 'Break') : s.task ? taskParts(s.task).map(c => `${c}${taskName(c) ? ' ' + taskName(c) : ''}`).join(' ＋ ') : tr('（未安排）', '(unscheduled)')}</span>
+                <span>{s.off ? tr('（非當值）', '(off duty)') : s.task === '休息' ? tr('休息', 'Break') : s.task ? taskParts(s.task).map(c => `${c}${taskName(c) ? ' ' + taskName(c) : ''}`).join(' ＋ ') : tr('（未安排）', '(unscheduled)')}</span>
               </button>
             )
           })}
