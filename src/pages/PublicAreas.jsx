@@ -133,7 +133,7 @@ function Posts({ d, load, log, staffOf, canEdit }) {
               <button className="pa-card" key={p.id} onClick={() => canEdit && setEdit({ ...p })} style={canEdit ? undefined : { cursor: 'default' }}>
                 <span className="pa-code">{p.code}</span>
                 <span className="pa-main">
-                  <b>{s ? s.name : tr('（未指派）', '(unassigned)')}{s && <small className={`pa-kind k-${s.kind}`}>{en ? KIND_EN[s.kind] : s.kind}</small>}{s && s.position && <small className="pa-kind k-pos">{en ? POS_EN[s.position] || s.position : s.position}</small>}{p.flag && <small className="pa-flag">{en ? 'To confirm' : p.flag}</small>}</b>
+                  <b>{s ? s.name : tr('（未指派）', '(unassigned)')}{s && <small className={`pa-kind k-${s.kind}`}>{en ? KIND_EN[s.kind] : s.kind}</small>}{s && s.position && <small className="pa-kind k-pos">{en ? POS_EN[s.position] || s.position : s.position}</small>}{p.flag && <small className="pa-flag">{en ? (p.flag === '替班' ? 'Relief' : 'To confirm') : p.flag}</small>}</b>
                   <span>{p.start_time} — {p.end_time}{p.break_text ? ` · ${tr('休', 'Break')} ${p.break_text}` : ''}</span>
                   <span className="pa-sub">{areaOf(en, p) || '—'}</span>
                 </span>
