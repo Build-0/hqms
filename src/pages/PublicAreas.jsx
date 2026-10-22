@@ -23,6 +23,16 @@ const WD_EN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 const hm = i => `${String(Math.floor(i / 2) % 24).padStart(2, '0')}:${i % 2 ? '30' : '00'}`
 const endLabel = i => (i >= 48 ? '24:00' : hm(i))
 const catColor = code => ({ M: ['#dff0ee', '#17624f'], F: ['#fbecd0', '#8a5a00'], B: ['#dfeaf7', '#245a9e'], D: ['#efe3f7', '#6a3d99'], G: ['#e8f1d8', '#4a6b1c'], S: ['#f6e0e0', '#9e3a3a'] }[String(code || '')[0]] || ['#eceff2', '#5b6773'])
+// 每日工時：上班—收工（可跨日）= 總工時；扣除看板上標為「休息」嘅時間 = 實際工作時數
+const toMin = t => { const [h, m] = String(t || '0:0').split(':').map(Number); return h * 60 + m }
+const num = n => String(Math.round(n * 10) / 10)
+const hoursOf = (p, slots) => {
+  const st = toMin(p.start_time), e0 = toMin(p.end_time), en = e0 <= st ? e0 + 1440 : e0
+  const gross = (en - st) / 60
+  const brk = slots.filter(x => x.post_id === p.id && x.task === '休息').length * 0.5
+  return { gross, brk, net: Math.max(0, gross - brk) }
+}
+const hoursText = (en, h) => (en ? `${num(h.gross)} h total · ${num(h.net)} h net of break` : `全日 ${num(h.gross)} 小時 · 扣休息淨 ${num(h.net)} 小時`)
 const taskParts = t => String(t || '').split('+').map(x => x.trim()).filter(Boolean)
 
 const LangCtx = createContext({ en: false, tr: a => a })
@@ -118,8 +128,8 @@ function Posts({ d, load, log, staffOf, canEdit }) {
   }
   const nm = p => { const s = staffOf(p.staff_id); return s ? `${s.name}（${en ? KIND_EN[s.kind] : s.kind}）` : '—' }
   const reportData = () => ({
-    filterText: tr('全部崗位', 'All posts'), cols: [tr('崗位', 'Post'), tr('員工', 'Staff'), tr('性別', 'Gender'), tr('國籍', 'Nationality'), tr('上班—收工', 'Shift'), tr('休息', 'Break'), tr('負責區域', 'Area')],
-    groups: groups.map(g => ({ name: grpName(en, g.g), rows: g.items.map(p => ({ cells: [p.code, nm(p), (staffOf(p.staff_id) || {}).gender ? (en ? ({ 男: 'M', 女: 'F' }[staffOf(p.staff_id).gender]) : staffOf(p.staff_id).gender) : '—', `${p.start_time}‑${p.end_time}`, p.break_text || '—', areaOf(en, p) || '—'] })) })),
+    filterText: tr('全部崗位', 'All posts'), cols: [tr('崗位', 'Post'), tr('員工', 'Staff'), tr('性別', 'Gender'), tr('國籍', 'Nationality'), tr('上班—收工', 'Shift'), tr('休息', 'Break'), tr('工時 總／淨', 'Hours total / net'), tr('負責區域', 'Area')],
+    groups: groups.map(g => ({ name: grpName(en, g.g), rows: g.items.map(p => { const h = hoursOf(p, d.slots); const st = staffOf(p.staff_id) || {}; return { cells: [p.code, nm(p), st.gender ? (en ? ({ 男: 'M', 女: 'F' }[st.gender]) : st.gender) : '—', (en ? NAT_EN[st.nationality] : st.nationality) || '—', `${p.start_time}‑${p.end_time}`, p.break_text || '—', `${num(h.gross)} / ${num(h.net)}`, areaOf(en, p) || '—'] } }) })),
   })
   return (
     <>
@@ -135,6 +145,7 @@ function Posts({ d, load, log, staffOf, canEdit }) {
                 <span className="pa-main">
                   <b>{s ? s.name : tr('（未指派）', '(unassigned)')}{s && <small className={`pa-kind k-${s.kind}`}>{en ? KIND_EN[s.kind] : s.kind}</small>}{s && s.position && <small className="pa-kind k-pos">{en ? POS_EN[s.position] || s.position : s.position}</small>}{p.flag && <small className="pa-flag">{en ? ({ 替班: 'Relief', 外判替代中: 'Covered by Pro-Cleaning', 替班待確認: 'Relief TBC' }[p.flag] || 'To confirm') : p.flag}</small>}</b>
                   <span>{p.start_time} — {p.end_time}{p.break_text ? ` · ${tr('休', 'Break')} ${p.break_text}` : ''}</span>
+                  <span className="pa-hrs">⏱ {hoursText(en, hoursOf(p, d.slots))}</span>
                   <span className="pa-sub">{areaOf(en, p) || '—'}</span>
                 </span>
               </button>
@@ -427,8 +438,8 @@ function StaffView({ d, load, log, canEdit }) {
     const names = [...GRPS, '未分配崗位']
     return {
       filterText: tr('在職員工', 'Active staff'),
-      cols: [tr('姓名', 'Name'), tr('類別', 'Type'), tr('性別', 'Gender'), tr('國籍', 'Nationality'), tr('上班—收工', 'Shift'), tr('主要負責區域', 'Main area')],
-      groups: names.map(n => ({ name: n === '未分配崗位' ? tr('未分配崗位', 'No post assigned') : grpName(en, n), rows: rows.filter(x => grp(x) === n).map(({ s, p }) => ({ cells: [s.name, (en ? KIND_EN[s.kind] : s.kind) + (s.position ? (en ? ' · ' + (POS_EN[s.position] || s.position) : ' · ' + s.position) : ''), gLabel(s.gender) || '—', (en ? NAT_EN[s.nationality] : s.nationality) || '—', p ? `${p.start_time}‑${p.end_time}` : '—', p ? (areaOf(en, p) || p.code) : '—'] })) })).filter(g => g.rows.length),
+      cols: [tr('姓名', 'Name'), tr('類別', 'Type'), tr('性別', 'Gender'), tr('國籍', 'Nationality'), tr('上班—收工', 'Shift'), tr('工時 總／淨', 'Hours total / net'), tr('主要負責區域', 'Main area')],
+      groups: names.map(n => ({ name: n === '未分配崗位' ? tr('未分配崗位', 'No post assigned') : grpName(en, n), rows: rows.filter(x => grp(x) === n).map(({ s, p }) => ({ cells: [s.name, (en ? KIND_EN[s.kind] : s.kind) + (s.position ? (en ? ' · ' + (POS_EN[s.position] || s.position) : ' · ' + s.position) : ''), gLabel(s.gender) || '—', (en ? NAT_EN[s.nationality] : s.nationality) || '—', p ? `${p.start_time}‑${p.end_time}` : '—', p ? `${num(hoursOf(p, d.slots).gross)} / ${num(hoursOf(p, d.slots).net)}` : '—', p ? (areaOf(en, p) || p.code) : '—'] })) })).filter(g => g.rows.length),
     }
   }
   return (
@@ -448,6 +459,7 @@ function StaffView({ d, load, log, canEdit }) {
               <b>{s.name}<small className={`pa-kind k-${s.kind}`}>{en ? KIND_EN[s.kind] : s.kind}</small>{s.position && <small className="pa-kind k-pos">{en ? POS_EN[s.position] || s.position : s.position}</small>}</b>
               <span>{[gLabel(s.gender), en ? NAT_EN[s.nationality] || s.nationality : s.nationality, (s.langs || []).map(l => (en ? LANG_EN[l] : l)).join(en ? ' / ' : '／')].filter(Boolean).join(' · ') || tr('（未填：性別、國籍、語言）', '(gender, nationality, language not filled)')}</span>
               {p && <span className="pa-sub">{p.code} · {p.start_time}—{p.end_time} · {areaOf(en, p) || '—'}</span>}
+              {p && <span className="pa-hrs">⏱ {hoursText(en, hoursOf(p, d.slots))}</span>}
               <span className="pa-sub">{s.rest_kind === 'weekly2' ? tr(`每週休 2 天${(s.rest_weekdays || []).length ? '：週' + s.rest_weekdays.map(w => WD[w]).join('、週') : ''}`, `2 days off weekly${(s.rest_weekdays || []).length ? ': ' + s.rest_weekdays.map(w => WD_EN[w]).join(', ') : ''}`) : s.rest_kind === 'monthly1' ? tr(`每月休 1 天${(s.rest_dates || []).length ? '：' + s.rest_dates.slice(-1)[0] : ''}`, `1 day off monthly${(s.rest_dates || []).length ? ': ' + s.rest_dates.slice(-1)[0] : ''}`) : ''}</span>
             </span>
           </button>
