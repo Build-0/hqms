@@ -165,7 +165,7 @@ function Posts({ d, load, log, staffOf, canEdit }) {
             <div className="f-row"><label>{tr('負責區域（English）', 'Area (English)')}</label><input value={edit.work_area_en || ''} onChange={e => setEdit({ ...edit, work_area_en: e.target.value })} /></div>
             <div className="f-row"><label>{tr('備註', 'Notes')}</label><input value={edit.notes} onChange={e => setEdit({ ...edit, notes: e.target.value })} /></div>
             {edit.flag && <button className="btn alt" onClick={() => setEdit({ ...edit, flag: '' })}>✓ {tr('已確認，取消「', 'Confirmed — clear “')}{edit.flag}{tr('」標記', '” flag')}</button>}
-            {edit.id && <button className="btn danger" onClick={stop}>{tr('停用這個崗位', 'Disable this post')}</button>}
+            {edit.id && <button className="btn danger sm-quiet" onClick={stop}>{tr('停用這個崗位', 'Disable this post')}</button>}
           </div>
         </div>
       )}
@@ -390,7 +390,7 @@ function Tasks({ d, load, log, canEdit }) {
             <div className="f-row"><label>{tr('詳細內容及標準（English）', 'Detail (English)')}</label><textarea rows={3} value={edit.detail_en || ''} onChange={e => setEdit({ ...edit, detail_en: e.target.value })} /></div>
             {edit.note && <p className="pa-warn">{edit.note}</p>}
             {edit.flag && <button className="btn alt" onClick={() => setEdit({ ...edit, flag: '', note: '' })}>✓ {tr('已確認，取消「', 'Confirmed — clear “')}{edit.flag}{tr('」標記', '” flag')}</button>}
-            <button className="btn ghost" onClick={() => setEdit({ ...edit, active: !edit.active })}>{edit.active ? tr('停用此任務', 'Disable this task') : tr('重新啟用', 'Re-enable')}</button>
+            <button className="btn ghost sm-quiet" onClick={() => setEdit({ ...edit, active: !edit.active })}>{edit.active ? tr('停用此任務', 'Disable this task') : tr('重新啟用', 'Re-enable')}</button>
           </div>
         </div>
       )}
@@ -478,7 +478,7 @@ function StaffView({ d, load, log, canEdit }) {
                 <div className="chips wrap" style={{ marginTop: 6 }}>{edit.rest_dates.map(x => <button key={x} className="chip on" onClick={() => setEdit({ ...edit, rest_dates: edit.rest_dates.filter(y => y !== x) })}>{x} ✕</button>)}</div></div>}
             <div className="f-row"><label>{tr('電話', 'Phone')}</label><input inputMode="tel" value={edit.phone} onChange={e => setEdit({ ...edit, phone: e.target.value })} /></div>
             <div className="f-row"><label>{tr('備註', 'Notes')}</label><input value={edit.notes} onChange={e => setEdit({ ...edit, notes: e.target.value })} /></div>
-            <button className="btn ghost" onClick={() => setEdit({ ...edit, active: !edit.active })}>{edit.active ? tr('標記為已離職／停用', 'Mark as left / inactive') : tr('重新啟用', 'Re-enable')}</button>
+            <button className="btn ghost sm-quiet" onClick={() => setEdit({ ...edit, active: !edit.active })}>{edit.active ? tr('標記為已離職／停用', 'Mark as left / inactive') : tr('重新啟用', 'Re-enable')}</button>
           </div>
         </div>
       )}
