@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import * as api from '../lib/api'
 import Icon from '../components/Icon'
-import { ToolBar, ToolBtn, ExportBtn } from '../components/ui'
+import { ToolBar, ExportBtn } from '../components/ui'
 import { ReportModal, ListReport } from '../components/Reports'
 import { useBack } from '../lib/nav'
 import { publicPerm } from '../lib/accounts'
@@ -238,7 +238,8 @@ function Board({ d, load, log, staffOf, canEdit }) {
   const [pid, setPid] = useState(posts[0] ? posts[0].id : '')
   const [edit, setEdit] = useState(null)
   const [report, setReport] = useState(false)
-  const [names, setNames] = useState(true)       // 總覽：格內顯示任務名稱
+  const [ov, setOv] = useState('names')       // 總覽顯示：names 顯示名稱／codes 只顯示代碼／sheet 橫向總表
+  const names = ov === 'names'
   const slotsOf = useMemo(() => {
     const m = {}
     d.slots.forEach(s => { (m[s.post_id] = m[s.post_id] || Array(48).fill(null))[s.slot] = s })
@@ -319,7 +320,7 @@ function Board({ d, load, log, staffOf, canEdit }) {
   const openSeg = (post_id, s) => { if (!canEdit || !s) return; const [a, b] = taskParts(s.task); setEdit({ post_id, from: s.from, to: s.to, t1: a || '', t2: b || '' }) }
   return (
     <>
-      <ToolBar label={mode === 'post' ? tr('目前崗位', 'Current post') : tr(`${posts.length} 個崗位`, `${posts.length} posts`)}><ExportBtn onClick={() => setReport(true)} /><ToolBtn onClick={() => setReport('matrix')}>▦ {tr('橫向總表', 'Matrix')}</ToolBtn></ToolBar>
+      <ToolBar label={mode === 'post' ? tr('目前崗位', 'Current post') : tr(`${posts.length} 個崗位`, `${posts.length} posts`)}><ExportBtn onClick={() => setReport(true)} /></ToolBar>
       <div className="seg" style={{ margin: '0 0 10px' }}>
         <button className={mode === 'post' ? 'on' : ''} onClick={() => setMode('post')}>{tr('按崗位', 'By post')}</button>
         <button className={mode === 'all' ? 'on' : ''} onClick={() => setMode('all')}>{tr(`總覽（${posts.length} 崗）`, `Overview (${posts.length} posts)`)}</button>
@@ -346,9 +347,16 @@ function Board({ d, load, log, staffOf, canEdit }) {
       {mode === 'all' && (
         <>
         <div className="seg" style={{ margin: '0 0 8px' }}>
-          <button className={names ? 'on' : ''} onClick={() => setNames(true)}>{tr('顯示名稱', 'Names')}</button>
-          <button className={!names ? 'on' : ''} onClick={() => setNames(false)}>{tr('只顯示代碼', 'Codes only')}</button>
+          <button className={ov === 'names' ? 'on' : ''} onClick={() => setOv('names')}>{tr('顯示名稱', 'Names')}</button>
+          <button className={ov === 'codes' ? 'on' : ''} onClick={() => setOv('codes')}>{tr('只顯示代碼', 'Codes only')}</button>
+          <button className={ov === 'sheet' ? 'on' : ''} onClick={() => setOv('sheet')}>{tr('橫向總表', 'Wide sheet')}</button>
         </div>
+        {ov === 'sheet' ? (
+          <>
+            <button className="btn" style={{ marginBottom: 10 }} onClick={() => setReport('matrix')}>{tr('儲存 A3 橫向 PDF', 'Save A3 landscape PDF')}</button>
+            <div className="pa-sheet-wrap"><div className="rpt-print rpt-wide">{matrixPages()}</div></div>
+          </>
+        ) : (
         <div className="pa-mx-wrap">
           <table className={'pa-mx' + (names ? ' pa-mx-n' : '')}>
             <thead><tr><th className="pa-t">{tr('時間', 'Time')}</th>{posts.map(p => <th key={p.id}>{p.code.replace('崗', '')}<small>{(staffOf(p.staff_id) || {}).name || ''}</small></th>)}</tr></thead>
@@ -366,6 +374,7 @@ function Board({ d, load, log, staffOf, canEdit }) {
             </tbody>
           </table>
         </div>
+        )}
         </>
       )}
       {report === true && <ReportModal title={tr('24 小時看板', '24-Hour Board')} sub={todayStr()} onClose={() => setReport(false)}><ListReport data={boardReport()} /></ReportModal>}

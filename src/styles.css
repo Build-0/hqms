@@ -1074,3 +1074,6 @@ html.rpt-open #root{visibility:hidden}
 /* 編輯視窗分區標題：實色深綠（同選中掣一致） */
 .pa-sep{background:var(--accent);color:#fff;border:none}
 .pa-sep.first{margin-top:6px;padding:10px 12px}
+
+.pa-sheet-wrap{overflow:auto;max-height:70vh;border:1px solid var(--line);border-radius:12px;background:#fff}
+.pa-sheet-wrap .rpt-print{box-shadow:none;border-radius:0}
