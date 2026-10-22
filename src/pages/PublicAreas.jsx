@@ -33,6 +33,9 @@ const hoursOf = (p, slots) => {
   return { gross, brk, net: Math.max(0, gross - brk) }
 }
 const hoursText = (en, h) => (en ? `${num(h.gross)} h total · ${num(h.net)} h net of break` : `全日 ${num(h.gross)} 小時 · 扣休息淨 ${num(h.net)} 小時`)
+// 崗位編號：英文版顯示 Post 1／Relief 1
+const codeLabel = (en, c) => (en ? String(c).replace(/^崗/, 'Post ').replace(/^替/, 'Relief ') : c)
+const codeShort = (en, c) => (en ? String(c).replace(/^崗/, '').replace(/^替/, 'R') : String(c).replace('崗', ''))
 const taskParts = t => String(t || '').split('+').map(x => x.trim()).filter(Boolean)
 
 const LangCtx = createContext({ en: false, tr: a => a })
@@ -121,7 +124,7 @@ function Roster({ d, load, log, staffOf, canEdit }) {
     cols: [tr('崗位', 'Post'), tr('姓名', 'Name'), tr('類別', 'Type'), tr('性別', 'Gender'), tr('國籍', 'Nationality'), tr('上班—收工', 'Shift'), tr('工時 總／淨', 'Hours total / net'), tr('主要負責區域', 'Main area')],
     groups: groups.map(g => ({ name: grpName(en, g.g), rows: g.items.map(p => {
       const s = staffOf(p.staff_id) || {}; const h = hrs(p)
-      return { cells: [p.code, s.name || '—', s.kind ? (en ? KIND_EN[s.kind] : s.kind) + (s.position ? ' · ' + (en ? POS_EN[s.position] || s.position : s.position) : '') : '—', gLabel(s.gender) || '—', (en ? NAT_EN[s.nationality] : s.nationality) || '—', p.start_time && p.end_time ? `${p.start_time}‑${p.end_time}` : '—', h ? `${num(h.gross)} / ${num(h.net)}` : '—', areaOf(en, p) || '—'] }
+      return { cells: [codeLabel(en, p.code), s.name || '—', s.kind ? (en ? KIND_EN[s.kind] : s.kind) + (s.position ? ' · ' + (en ? POS_EN[s.position] || s.position : s.position) : '') : '—', gLabel(s.gender) || '—', (en ? NAT_EN[s.nationality] : s.nationality) || '—', p.start_time && p.end_time ? `${p.start_time}‑${p.end_time}` : '—', h ? `${num(h.gross)} / ${num(h.net)}` : '—', areaOf(en, p) || '—'] }
     }) })),
   })
 
@@ -170,7 +173,7 @@ function Roster({ d, load, log, staffOf, canEdit }) {
               const person = s ? [gLabel(s.gender), en ? NAT_EN[s.nationality] || s.nationality : s.nationality].filter(Boolean).join(' · ') : ''
               return (
                 <button className="pa-sq" key={p.id} onClick={() => canEdit && open(p)} style={canEdit ? undefined : { cursor: 'default' }}>
-                  <span className="pa-sq-top"><em>{p.code}</em>{p.flag && <small className="pa-flag">{flagText(p)}</small>}</span>
+                  <span className="pa-sq-top"><em>{codeLabel(en, p.code)}</em>{p.flag && <small className="pa-flag">{flagText(p)}</small>}</span>
                   <b className="pa-sq-name">{s ? s.name : tr('（未指派）', '(unassigned)')}</b>
                   <span className="pa-sq-tags">{s && <small className={`pa-kind k-${s.kind}`}>{en ? KIND_EN[s.kind] : s.kind}</small>}{s && s.position && <small className="pa-kind k-pos">{en ? POS_EN[s.position] || s.position : s.position}</small>}</span>
                   {person && <span className="pa-sq-person">{person}</span>}
@@ -282,7 +285,7 @@ function Board({ d, load, log, staffOf, canEdit }) {
     return {
       filterText: mode === 'post' && post ? post.code : tr('全部崗位', 'All posts'),
       cols: [tr('時間', 'Time'), tr('任務', 'Task')],
-      groups: list.map(p => ({ name: `${p.code} · ${(staffOf(p.staff_id) || {}).name || tr('未指派', 'unassigned')}（${p.start_time}‑${p.end_time}）`, rows: segs(p.id).map(x => ({ cells: [`${hm(x.from)}‑${endLabel(x.to)}`, taskText(x)] })) })),
+      groups: list.map(p => ({ name: `${codeLabel(en, p.code)} · ${(staffOf(p.staff_id) || {}).name || tr('未指派', 'unassigned')}（${p.start_time}‑${p.end_time}）`, rows: segs(p.id).map(x => ({ cells: [`${hm(x.from)}‑${endLabel(x.to)}`, taskText(x)] })) })),
     }
   }
   // 橫向總表：崗位分兩批、時間分上下半日，共 4 頁；同一任務連續時間合併成一格
@@ -295,7 +298,7 @@ function Board({ d, load, log, staffOf, canEdit }) {
       return (
         <div key={k} className={'mxr' + (k ? ' sf-page' : '')}>
           <table className={'mxr-t' + (codesOnly ? ' mxr-codes' : ' mxr-names')}>
-            <thead><tr><th>{tr('時間', 'Time')}</th>{pg.ps.map(p => <th key={p.id}><b>{p.code}</b><span>{(staffOf(p.staff_id) || {}).name || ''}</span><small>{p.start_time}‑{p.end_time}</small></th>)}</tr></thead>
+            <thead><tr><th>{tr('時間', 'Time')}</th>{pg.ps.map(p => <th key={p.id}><b>{codeLabel(en, p.code)}</b><span>{(staffOf(p.staff_id) || {}).name || ''}</span><small>{p.start_time}‑{p.end_time}</small></th>)}</tr></thead>
             <tbody>
               {Array.from({ length: pg.b - pg.a }, (_, j) => pg.a + j).map(i => (
                 <tr key={i}>
@@ -328,7 +331,7 @@ function Board({ d, load, log, staffOf, canEdit }) {
         <>
           <div className="fstk">
             <select className="df-sel" value={pid} onChange={e => setPid(e.target.value)} style={{ width: '100%' }}>
-              {posts.map(p => <option key={p.id} value={p.id}>{p.code} · {(staffOf(p.staff_id) || {}).name || tr('未指派', 'unassigned')}（{p.start_time}—{p.end_time}）</option>)}
+              {posts.map(p => <option key={p.id} value={p.id}>{codeLabel(en, p.code)} · {(staffOf(p.staff_id) || {}).name || tr('未指派', 'unassigned')}（{p.start_time}—{p.end_time}）</option>)}
             </select>
           </div>
           {segs(pid).map(s => {
@@ -356,7 +359,7 @@ function Board({ d, load, log, staffOf, canEdit }) {
         ) : (
         <div className="pa-mx-wrap">
           <table className="pa-mx">
-            <thead><tr><th className="pa-t">{tr('時間', 'Time')}</th>{posts.map(p => <th key={p.id}>{p.code.replace('崗', '')}<small>{(staffOf(p.staff_id) || {}).name || ''}</small></th>)}</tr></thead>
+            <thead><tr><th className="pa-t">{tr('時間', 'Time')}</th>{posts.map(p => <th key={p.id}>{codeShort(en, p.code)}<small>{(staffOf(p.staff_id) || {}).name || ''}</small></th>)}</tr></thead>
             <tbody>
               {Array.from({ length: 48 }, (_, i) => (
                 <tr key={i}>
@@ -379,7 +382,7 @@ function Board({ d, load, log, staffOf, canEdit }) {
       {canEdit && edit && (
         <div className="modal" onClick={e => { if (e.target === e.currentTarget) setEdit(null) }}>
           <div className="sheet">
-            <div className="sheet-hd"><h2>{(posts.find(p => p.id === edit.post_id) || {}).code} {tr('安排', 'schedule')}</h2>
+            <div className="sheet-hd"><h2>{codeLabel(en, (posts.find(p => p.id === edit.post_id) || {}).code)} {tr('安排', 'schedule')}</h2>
               <span className="sheet-hd-acts"><button className="mini" onClick={() => setEdit(null)}>{tr('取消', 'Cancel')}</button><button className="mini pri" onClick={apply}>{tr('套用', 'Apply')}</button></span></div>
             <div style={{ display: 'flex', gap: 10 }}>
               <div className="f-row" style={{ flex: 1 }}><label>{tr('由', 'From')}</label>
