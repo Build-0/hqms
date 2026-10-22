@@ -1094,3 +1094,8 @@ html.rpt-open #root{visibility:hidden}
 /* 分段控制：選中項用實色深綠＋白字，一眼睇得出邊個被揀 */
 .seg button.on{background:var(--accent) !important;color:#fff !important;box-shadow:0 2px 6px rgba(31,122,109,.35)}
 .seg button{min-height:44px}
+/* 列印橫向總表：縮放至一頁 A3 橫向內（不再溢出到第二頁） */
+@media print{
+  .rpt-print.rpt-wide{zoom:.7;min-width:0 !important;width:1400px !important;max-width:1400px !important;margin:0 auto !important}
+  .rpt-wide .mxr-t{page-break-inside:avoid;break-inside:avoid}
+}
