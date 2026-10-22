@@ -32,7 +32,7 @@ export function ReportModal({ title, sub, onClose, children, landscape, a3 }) {
     setBusy(true)
     try {
       const el = document.querySelector('.rpt-print')
-      const how = await savePdf(el, document.title || 'report', { landscape, a3 })
+      const how = await savePdf(el, document.title || 'report', { landscape, a3, fitOne: !!a3 })
       if (how === 'download') alert('PDF 已下載。若沒有出現，請到「檔案」App → 下載項目查看。')
     } catch (e) { alert('產生 PDF 失敗：' + (e && e.message ? e.message : e)); window.print() }
     setBusy(false)

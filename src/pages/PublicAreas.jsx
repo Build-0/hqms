@@ -295,7 +295,7 @@ function Board({ d, load, log, staffOf, canEdit }) {
       pg.ps.forEach(p => segIn(p.id, pg.a, pg.b).forEach(x => { starts[p.id + ':' + x.from] = x }))
       return (
         <div key={k} className={'mxr' + (k ? ' sf-page' : '')}>
-          <table className="mxr-t">
+          <table className={'mxr-t' + (codesOnly ? ' mxr-codes' : ' mxr-names')}>
             <thead><tr><th>{tr('時間', 'Time')}</th>{pg.ps.map(p => <th key={p.id}><b>{p.code}</b><span>{(staffOf(p.staff_id) || {}).name || ''}</span><small>{p.start_time}‑{p.end_time}</small></th>)}</tr></thead>
             <tbody>
               {Array.from({ length: pg.b - pg.a }, (_, j) => pg.a + j).map(i => (
@@ -305,7 +305,7 @@ function Board({ d, load, log, staffOf, canEdit }) {
                     const x = starts[p.id + ':' + i]
                     if (!x) return (segIn(p.id, pg.a, pg.b).some(y => i > y.from && i < y.to)) ? null : <td key={p.id} />
                     const [bg, fg] = x.task && x.task !== '休息' ? catColor(taskParts(x.task)[0]) : x.task === '休息' ? ['#eceff2', '#5b6773'] : ['#fff', '#aab']
-                    const long = !codesOnly && x.to - x.from >= 2
+                    const long = !codesOnly
                     const text = x.off ? '' : x.task === '休息' ? tr('休息', 'Break') : x.task ? taskParts(x.task).map(c => c + (long && taskName(c) ? ' ' + taskName(c) : '')).join(' ＋ ') : ''
                     return <td key={p.id} rowSpan={x.to - x.from} style={{ background: x.off ? '#f6f7f8' : bg, color: fg }}>{text}</td>
                   })}

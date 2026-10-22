@@ -10,6 +10,23 @@ export async function savePdf(rootEl, fileName, opts = {}) {
   const [{ default: html2canvas }, { jsPDF }] = await Promise.all([import('html2canvas'), import('jspdf')])
   const doc = new jsPDF({ unit: 'mm', format: opts.a3 ? 'a3' : 'a4', orientation: opts.landscape ? 'landscape' : 'portrait' })
   const innerW = A4.w - M * 2, innerH = A4.h - M * 2 - 6
+  if (opts.fitOne) {
+    // 一頁式：整份報告轉成一張圖，縮放至剛好放入一頁（保持比例、置中）
+    const canvas = await html2canvas(rootEl, { scale: 2, backgroundColor: '#ffffff', useCORS: true, logging: false })
+    const bw = A4.w - M * 2, bh = A4.h - M * 2
+    const k = Math.min(bw / canvas.width, bh / canvas.height)
+    const w = canvas.width * k, h = canvas.height * k
+    doc.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', (A4.w - w) / 2, M, w, h)
+    const bl = doc.output('blob')
+    const fl = new File([bl], fileName.replace(/[\\/:*?"<>|]/g, '-') + '.pdf', { type: 'application/pdf' })
+    if (navigator.canShare && navigator.canShare({ files: [fl] })) {
+      try { await navigator.share({ files: [fl], title: fileName }); return 'shared' } catch (e) { if (e && e.name === 'AbortError') return 'cancel' }
+    }
+    const u = URL.createObjectURL(bl)
+    const a = document.createElement('a'); a.href = u; a.download = fl.name; document.body.appendChild(a); a.click(); a.remove()
+    setTimeout(() => URL.revokeObjectURL(u), 60000)
+    return 'download'
+  }
   const blocks = [...rootEl.children].filter(el => !el.classList.contains('rpt-noprint') && el.offsetHeight > 0)
   let y = M, first = true, pages = 1
   const addCanvas = (canvas, forceNew) => {
