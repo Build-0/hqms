@@ -38,7 +38,7 @@ export function ReportModal({ title, sub, onClose, children, landscape, a3 }) {
     if (busy) return
     setBusy(true)
     try {
-      const el = document.querySelector('.rpt-print')
+      const el = document.querySelector('.rpt-overlay .rpt-print')
       const how = await savePdf(el, document.title || 'report', { landscape, a3, fitOne: !!a3 })
       if (how === 'download') alert('PDF 已下載。若沒有出現，請到「檔案」App → 下載項目查看。')
     } catch (e) {
