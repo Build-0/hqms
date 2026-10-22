@@ -131,7 +131,7 @@ export default function App() {
     setRefreshing(false)
   }
   const goBack = () => setTab(cur && !cur.embed && !cur.top ? 'quality' : 'home')
-  const title = cur ? cur.label : inQuality ? '房間品質' : '酒店客房管理系統'
+  const title = cur ? cur.label : inQuality ? '房間品質' : '客房公區管理系統'
   return (
     <div className={`phone ${session && PERMS[session.role].quality !== 'edit' && (inQuality || (cur && !cur.embed && !cur.top)) && !(cur && cur.id === 'findings' && PERMS[session.role].findings === 'add') ? 'ro' : ''}`}>
       <header className={tab === 'home' ? 'hdr-home' : ''}>

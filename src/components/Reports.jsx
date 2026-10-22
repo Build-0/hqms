@@ -45,7 +45,7 @@ export function ReportModal({ title, sub, onClose, children, landscape, a3 }) {
         <div className={'rpt-print' + (landscape ? ' rpt-wide' : '')}>
           <div className="rpt-hd"><b>{title}</b><span>{sub}</span></div>
           {children}
-          <div className="rpt-ft"><span>酒店客房管理系統</span><span>匯出時間 {stamp}</span></div>
+          <div className="rpt-ft"><span>客房公區管理系統</span><span>匯出時間 {stamp}</span></div>
         </div>
       </div>
       <div className="rpt-foot rpt-noprint">

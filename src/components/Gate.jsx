@@ -23,7 +23,7 @@ export default function Gate({ onOk, big, onBig }) {
       <button type="button" className="gate-big" onClick={onBig}>{big ? '標準字' : '大字'}</button>
       <form className="card login-card" onSubmit={submit}>
         <div className="login-logo"><img src="./icons/icon-192.png" alt="" width="64" height="64" style={{ borderRadius: 16 }} /></div>
-        <h2 style={{ textAlign: 'center' }}>酒店客房管理系統</h2>
+        <h2 style={{ textAlign: 'center' }}>客房公區管理系統</h2>
         <div className="f-row"><label>帳號</label><input value={u} onChange={e => { setU(e.target.value); setErr('') }} autoComplete="username" autoCapitalize="none" placeholder="員工編號或英文名" autoFocus /></div>
         <div className="f-row"><label>密碼</label><PasswordInput value={p} onChange={e => { setP(e.target.value); setErr('') }} /></div>
         {err && <p className="login-err">{err}</p>}
