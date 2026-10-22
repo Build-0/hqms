@@ -13,6 +13,13 @@ export function ReportModal({ title, sub, onClose, children, landscape, a3 }) {
     document.documentElement.classList.add('rpt-open')   // 報告開啟時隱藏背後頁面（避免玻璃模糊層蓋住報告頂部掣）
     return () => { document.title = old; document.documentElement.classList.remove('rpt-open') }
   }, [title, sub])
+  useEffect(() => {
+    if (!landscape) return undefined
+    const st = document.createElement('style')
+    st.textContent = '@page{size:' + (a3 ? 'A3' : 'A4') + ' landscape;margin:8mm}'
+    document.head.appendChild(st)
+    return () => st.remove()
+  }, [landscape, a3])
   // 只有管理員可以匯出；其他帳號只顯示提示
   if (!canExport()) {
     return createPortal(
@@ -34,7 +41,17 @@ export function ReportModal({ title, sub, onClose, children, landscape, a3 }) {
       const el = document.querySelector('.rpt-print')
       const how = await savePdf(el, document.title || 'report', { landscape, a3, fitOne: !!a3 })
       if (how === 'download') alert('PDF 已下載。若沒有出現，請到「檔案」App → 下載項目查看。')
-    } catch (e) { alert('產生 PDF 失敗：' + (e && e.message ? e.message : e)); window.print() }
+    } catch (e) {
+      const msg = e && e.message ? e.message : String(e)
+      // 網頁剛更新過、舊頁面搵唔到新檔案：重新載入最新版本，再試一次
+      if (/dynamically imported|Importing a module|Loading chunk/i.test(msg)) {
+        alert('系統剛更新，會自動重新載入最新版本，之後請再撳一次「儲存為 PDF」。')
+        location.href = location.pathname + '?v=' + Date.now()
+        return
+      }
+      alert('產生 PDF 失敗：' + msg)
+      window.print()
+    }
     setBusy(false)
   }
   const now = new Date()
