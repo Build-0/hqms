@@ -47,6 +47,8 @@ export default function App() {
   const [init, setInit] = useState(null)   // 從首頁摘要跳入時的預設篩選
   const go = (t, i) => { setInit(i || null); setTab(t) }
   // 大字版：長者或視力較弱的同事可以放大整個介面，記住選擇
+  const [paEn, setPaEn] = useState(() => { try { return localStorage.getItem('pa_lang') === 'en' } catch { return false } })
+  const setPaLang = v => { setPaEn(v); try { localStorage.setItem('pa_lang', v ? 'en' : 'zh') } catch { /* 無法儲存時照常使用 */ } window.dispatchEvent(new Event('pa-lang')) }
   const [big, setBig] = useState(() => { try { return localStorage.getItem('hotel_big') === '1' } catch { return false } })
   useEffect(() => {
     document.documentElement.classList.toggle('big', big)
@@ -183,6 +185,11 @@ export default function App() {
           <div className="sheet st-sheet">
             <h2 className="st-title">設定</h2>
             {session && <p className="st-who">{session.name} · {ROLE_LABEL[session.role]}</p>}
+            <div className="st-lab">語言 Language（公共地區）</div>
+            <div className="st-seg">
+              <button className={!paEn ? 'on' : ''} onClick={() => setPaLang(false)}>中文</button>
+              <button className={paEn ? 'on' : ''} onClick={() => setPaLang(true)}>English</button>
+            </div>
             <div className="st-lab">字體大小</div>
             <div className="st-seg">
               <button className={!big ? 'on' : ''} onClick={() => setBig(false)}>標準字</button>

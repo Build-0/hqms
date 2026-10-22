@@ -45,7 +45,12 @@ export default function PublicAreas({ session }) {
   const [d, setD] = useState(null)
   const [err, setErr] = useState('')
   const [en, setEn] = useState(() => { try { return localStorage.getItem('pa_lang') === 'en' } catch { return false } })
-  const setLang = v => { setEn(v); try { localStorage.setItem('pa_lang', v ? 'en' : 'zh') } catch { /* 無法儲存時照常使用 */ } }
+  // 語言喺「設定」撳：設定視窗寫入 localStorage 再發出 pa-lang 事件
+  useEffect(() => {
+    const fn = () => { try { setEn(localStorage.getItem('pa_lang') === 'en') } catch { /* 讀唔到就保持現狀 */ } }
+    window.addEventListener('pa-lang', fn)
+    return () => window.removeEventListener('pa-lang', fn)
+  }, [])
   const tr = (zh, e) => (en ? e : zh)
   const canEdit = publicPerm(session) === 'edit'
   useBack(!!view, () => setView(null))
@@ -68,10 +73,6 @@ export default function PublicAreas({ session }) {
   return (
     <LangCtx.Provider value={{ en, tr }}>
       <div className="df-wrap pa-wrap">
-        <div className="pa-lang">
-          <button className={!en ? 'on' : ''} onClick={() => setLang(false)}>中文</button>
-          <button className={en ? 'on' : ''} onClick={() => setLang(true)}>EN</button>
-        </div>
         {err && <div className="card" style={{ borderColor: 'var(--red)' }}><p style={{ fontSize: 13, lineHeight: 1.7 }}>{tr('讀取失敗：', 'Failed to load: ')}{err}</p></div>}
         {!view && (
           <div className="home-grid">
