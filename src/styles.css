@@ -1054,3 +1054,18 @@ html.rpt-open #root{visibility:hidden}
 .pa-card .pa-post b{font-weight:700}
 .pa-sep.first{margin-top:4px;padding-top:0;border-top:none}
 .pa-sep{padding:6px 10px;border-radius:9px;background:rgba(31,122,109,.1);border-top:none}
+
+/* 人員崗位：正方形卡片 */
+.pa-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:14px}
+@media (min-width:600px){.pa-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (min-width:900px){.pa-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.pa-sq{aspect-ratio:1/1;display:flex;flex-direction:column;align-items:flex-start;gap:3px;padding:10px 11px;text-align:left;border-radius:20px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow-card);cursor:pointer;font-family:inherit;color:var(--ink);overflow:hidden;min-width:0}
+.pa-sq-top{display:flex;align-items:center;gap:6px;width:100%;min-width:0}
+.pa-sq-top em{font-style:normal;font-weight:800;font-size:12px;color:var(--accent);background:var(--accent-soft);border-radius:8px;padding:2px 8px;white-space:nowrap}
+.pa-sq-name{font-size:17px;line-height:1.2;max-width:100%;overflow-wrap:anywhere}
+.pa-sq-tags{display:flex;gap:4px;flex-wrap:wrap}
+.pa-sq-person{font-size:12px;color:var(--sub)}
+.pa-sq-post{margin-top:auto;width:100%;display:flex;flex-direction:column;gap:1px;padding:6px 8px;border-radius:12px;background:rgba(31,122,109,.09);font-size:12px;min-width:0}
+.pa-sq-post b{font-size:13px}
+.pa-sq-post .pa-hrs{font-size:11.5px}
+.pa-sq-area{color:var(--sub);font-size:11.5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}

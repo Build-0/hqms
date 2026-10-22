@@ -38,7 +38,7 @@ const taskParts = t => String(t || '').split('+').map(x => x.trim()).filter(Bool
 const LangCtx = createContext({ en: false, tr: a => a })
 
 export default function PublicAreas({ session }) {
-  const [view, setView] = useState(null)       // null 選單／roster／board／tasks／log
+  const [view, setView] = useState(null)       // null 選單／roster／board／tasks
   const [d, setD] = useState(null)
   const [err, setErr] = useState('')
   const [en, setEn] = useState(() => { try { return localStorage.getItem('pa_lang') === 'en' } catch { return false } })
@@ -75,7 +75,7 @@ export default function PublicAreas({ session }) {
             {[['roster', tr('人員崗位', 'Staff & posts'), 'people', '#1f7a6d', tr(`${d.staff.filter(x => x.active).length} 位在職 · ${d.posts.filter(p => p.active).length} 個崗位`, `${d.staff.filter(x => x.active).length} staff · ${d.posts.filter(p => p.active).length} posts`)],
               ['board', tr('24 小時看板', '24-hour board'), 'calendar', '#4a6fa5', tr('每崗每半小時', 'Every 30 min per post')],
               ['tasks', tr('任務代碼', 'Task codes'), 'book', '#b5603a', tr(`${d.tasks.length} 個任務`, `${d.tasks.length} tasks`)],
-              ...(canEdit ? [['log', tr('改動紀錄', 'Change log'), 'search', '#7a6a4f', tr('誰改過咩', 'Who changed what')]] : [])].map(([k, t, ic, co, sb]) => (
+            ].map(([k, t, ic, co, sb]) => (
               <button className="home-item" key={k} onClick={() => setView(k)}>
                 <span className="hi-circle" style={{ background: co + '26', borderColor: 'transparent' }}><Icon name={ic} size={33} color={co} width={2.2} /></span>
                 <span className="hi-label">{t}</span>
@@ -87,7 +87,6 @@ export default function PublicAreas({ session }) {
         {view === 'roster' && <Roster {...ctx} />}
         {view === 'board' && <Board {...ctx} />}
         {view === 'tasks' && <Tasks {...ctx} />}
-        {view === 'log' && canEdit && <LogView />}
       </div>
     </LangCtx.Provider>
   )
@@ -165,25 +164,25 @@ function Roster({ d, load, log, staffOf, canEdit }) {
       {groups.map(g => (
         <div key={g.g}>
           <div className="bh-grp">{grpName(en, g.g)}<span>{g.items.length}</span></div>
-          {g.items.map(p => {
-            const s = staffOf(p.staff_id); const h = hrs(p)
-            return (
-              <button className="pa-card" key={p.id} onClick={() => canEdit && open(p)} style={canEdit ? undefined : { cursor: 'default' }}>
-                <span className="pa-code">{p.code}</span>
-                <span className="pa-main">
-                  <b>{s ? s.name : tr('（未指派）', '(unassigned)')}{s && <small className={`pa-kind k-${s.kind}`}>{en ? KIND_EN[s.kind] : s.kind}</small>}{s && s.position && <small className="pa-kind k-pos">{en ? POS_EN[s.position] || s.position : s.position}</small>}{p.flag && <small className="pa-flag">{flagText(p)}</small>}</b>
-                  {s && <span className="pa-person">{[gLabel(s.gender), en ? NAT_EN[s.nationality] || s.nationality : s.nationality, (s.langs || []).map(l => (en ? LANG_EN[l] : l)).join(en ? ' / ' : '／')].filter(Boolean).join(' · ') || tr('（未填：性別、國籍、語言）', '(gender, nationality, language not filled)')}</span>}
-                  <span className="pa-post">
-                    <i>{tr('崗位', 'Post')} {p.code}</i>
-                    {p.start_time && p.end_time ? <span><b>{p.start_time} — {p.end_time}</b>{p.break_text ? ` · ${tr('休', 'Break')} ${p.break_text}` : ''}</span> : <span className="pa-sub">{tr('（未設定上班時間）', '(no shift set)')}</span>}
-                    {h && <span className="pa-hrs">⏱ {hoursText(en, h)}</span>}
-                    <span>{areaOf(en, p) || '—'}</span>
-                    {s && s.kind !== 'HSKP' && s.rest_kind === 'monthly1' && (s.rest_dates || []).length > 0 && <span className="pa-sub">{tr('每月休 1 天：', '1 day off monthly: ')}{s.rest_dates.slice(-1)[0]}</span>}
+          <div className="pa-grid">
+            {g.items.map(p => {
+              const s = staffOf(p.staff_id); const h = hrs(p)
+              const person = s ? [gLabel(s.gender), en ? NAT_EN[s.nationality] || s.nationality : s.nationality].filter(Boolean).join(' · ') : ''
+              return (
+                <button className="pa-sq" key={p.id} onClick={() => canEdit && open(p)} style={canEdit ? undefined : { cursor: 'default' }}>
+                  <span className="pa-sq-top"><em>{p.code}</em>{p.flag && <small className="pa-flag">{flagText(p)}</small>}</span>
+                  <b className="pa-sq-name">{s ? s.name : tr('（未指派）', '(unassigned)')}</b>
+                  <span className="pa-sq-tags">{s && <small className={`pa-kind k-${s.kind}`}>{en ? KIND_EN[s.kind] : s.kind}</small>}{s && s.position && <small className="pa-kind k-pos">{en ? POS_EN[s.position] || s.position : s.position}</small>}</span>
+                  {person && <span className="pa-sq-person">{person}</span>}
+                  <span className="pa-sq-post">
+                    {p.start_time && p.end_time ? <b>{p.start_time}–{p.end_time}</b> : <span>{tr('未設定時間', 'No shift set')}</span>}
+                    {h && <span className="pa-hrs">⏱ {num(h.gross)}h · {tr('淨', 'net')} {num(h.net)}h</span>}
+                    <span className="pa-sq-area">{areaOf(en, p) || '—'}</span>
                   </span>
-                </span>
-              </button>
-            )
-          })}
+                </button>
+              )
+            })}
+          </div>
         </div>
       ))}
       {gone.length > 0 && <p className="src-note" style={{ margin: '10px 4px' }}>{tr('已離職／停用：', 'Inactive: ')}{gone.map(s => s.name).join('、')}</p>}
@@ -451,22 +450,6 @@ function Tasks({ d, load, log, canEdit }) {
           </div>
         </div>
       )}
-    </>
-  )
-}
-
-/* ───────── 改動紀錄 ───────── */
-function LogView() {
-  const { tr } = useL()
-  const [rows, setRows] = useState(null)
-  useEffect(() => { api.dbSelect('pa_log', { order: 'id', asc: false }).then(r => setRows(r.slice(0, 100))).catch(() => setRows([])) }, [])
-  if (!rows) return <div className="note">{tr('載入中…', 'Loading…')}</div>
-  return (
-    <>
-      {rows.length === 0 && <div className="note">{tr('暫時冇改動紀錄', 'No changes recorded yet')}</div>}
-      {rows.map(r => (
-        <div className="pa-log" key={r.id}><b>{r.what}</b><span>{r.by_name || '—'} · {String(r.at).replace('T', ' ').slice(0, 16)}</span></div>
-      ))}
     </>
   )
 }
