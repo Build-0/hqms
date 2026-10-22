@@ -68,7 +68,7 @@ export function ReportModal({ title, sub, onClose, children, landscape, a3 }) {
       <div className="rpt-foot rpt-noprint">
         <button className="btn ghost" onClick={onClose}>‹ 返回</button>
         <button className="btn ghost rpt-printbtn" style={{ flex: '0 0 26%' }} onClick={() => window.print()}>列印</button>
-        <button className="btn" disabled={busy} onClick={toPdf}>{busy ? '產生中…' : '儲存為 PDF'}</button>
+        <button className="btn rpt-pdfbtn" disabled={busy} onClick={toPdf}>{busy ? '產生中…' : '儲存為 PDF'}</button>
       </div>
     </div>,
     document.body

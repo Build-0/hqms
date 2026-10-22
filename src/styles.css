@@ -1102,3 +1102,8 @@ html.rpt-open #root{visibility:hidden}
 
 /* 分段控制選中項：淺綠底＋深綠粗框＋深綠字（同頂部深綠標題列分開） */
 .seg button.on{background:#d3eee7 !important;color:#0d5c50 !important;box-shadow:inset 0 0 0 2px var(--accent) !important;font-weight:800}
+/* 電腦版：只留「列印」（瀏覽器列印視窗已可揀打印機或另存 PDF）；手機版只留「儲存為 PDF」 */
+@media (min-width:900px){
+  .rpt-pdfbtn{display:none}
+  .rpt-foot .rpt-printbtn{display:block;flex:1 !important;background:var(--accent);border-color:var(--accent);color:#fff}
+}
