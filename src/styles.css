@@ -1046,3 +1046,11 @@ html.rpt-open #root{visibility:hidden}
 .pa-hrs{font-size:12.5px;font-weight:700;color:var(--accent)}
 
 .pa-sep{margin:16px 0 8px;padding-top:12px;border-top:1px solid var(--line);font-size:13px;font-weight:800;color:var(--accent)}
+
+/* 人員崗位卡：人員（上）同崗位（下，獨立底色框） */
+.pa-person{font-size:13px;color:var(--sub);margin-bottom:4px}
+.pa-card .pa-post{display:flex;flex-direction:column;gap:2px;margin-top:2px;padding:7px 10px 8px;border-radius:12px;background:rgba(31,122,109,.09);border:1px solid rgba(31,122,109,.18);font-size:13px;color:var(--ink)}
+.pa-card .pa-post i{font-style:normal;font-size:11px;font-weight:800;color:var(--accent);letter-spacing:.3px}
+.pa-card .pa-post b{font-weight:700}
+.pa-sep.first{margin-top:4px;padding-top:0;border-top:none}
+.pa-sep{padding:6px 10px;border-radius:9px;background:rgba(31,122,109,.1);border-top:none}
