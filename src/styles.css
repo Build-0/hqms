@@ -1096,7 +1096,7 @@ html.rpt-open #root{visibility:hidden}
 .seg button{min-height:44px}
 /* 列印橫向總表：縮放至一頁 A3 橫向內（不再溢出到第二頁） */
 @media print{
-  .rpt-print.rpt-wide{zoom:1.04;min-width:0 !important;width:1400px !important;max-width:1400px !important;margin:0 auto !important}
+  .rpt-print.rpt-wide{zoom:.8;min-width:0 !important;width:1700px !important;max-width:1700px !important;margin:0 auto !important}
   .rpt-wide .mxr-t{page-break-inside:avoid;break-inside:avoid}
 }
 
