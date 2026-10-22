@@ -1091,3 +1091,6 @@ html.rpt-open #root{visibility:hidden}
   .pa-wrap .pa-grid{grid-template-columns:repeat(auto-fill,minmax(210px,1fr))}
   .pa-wrap .pa-sheet-wrap{max-height:calc(100vh - 300px)}
 }
+/* 分段控制：選中項用實色深綠＋白字，一眼睇得出邊個被揀 */
+.seg button.on{background:var(--accent) !important;color:#fff !important;box-shadow:0 2px 6px rgba(31,122,109,.35)}
+.seg button{min-height:44px}
