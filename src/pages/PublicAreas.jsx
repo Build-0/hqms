@@ -11,8 +11,8 @@ import { todayStr } from '../lib/dates'
 // 公共地區管理（管理員可改；公眾主管可查看）。右上角可切換 中文／English。
 const GRPS = ['商場', '前區', '後區', '深度清潔', '管理支援']   // 「替補」另外加喺 Roster，唔放喺新增崗位預設
 const GRP_EN = { 商場: 'Mall', 前區: 'Front of house', 後區: 'Back of house', 深度清潔: 'Deep cleaning', 管理支援: 'Supervisors & Captains', 替補: 'Relief', 其他: 'Other' }
-const KINDS = ['HSKP', '外判', '主管']
-const POS_EN = { 組長: 'Captain' }
+const KINDS = ['HSKP', '外判']
+const POS_EN = { 組長: 'Captain', 主管: 'Supervisor' }
 const KIND_EN = { HSKP: 'HSKP', 外判: 'Pro-Cleaning', 主管: 'Supervisor' }
 const NATS = ['中國', '菲律賓', '越南', '緬甸', '印尼', '尼泊爾', '泰國', '其他']
 const NAT_EN = { 中國: 'China', 菲律賓: 'Philippines', 越南: 'Vietnam', 緬甸: 'Myanmar', 印尼: 'Indonesia', 尼泊爾: 'Nepal', 泰國: 'Thailand', 其他: 'Other' }
@@ -197,7 +197,7 @@ function Roster({ d, load, log, staffOf, canEdit }) {
             {edit.old_name && <p className="src-note">{tr('舊名單名稱：', 'Previous name: ')}{edit.old_name}</p>}
             <div style={{ display: 'flex', gap: 10 }}>
               <div className="f-row" style={{ flex: 1 }}><label>{tr('類別', 'Type')}</label><select value={edit.kind} onChange={e => setEdit({ ...edit, kind: e.target.value, rest_kind: e.target.value === 'HSKP' ? 'weekly2' : 'monthly1' })}>{KINDS.map(k => <option key={k} value={k}>{en ? KIND_EN[k] : k}</option>)}</select></div>
-              <div className="f-row" style={{ flex: 1 }}><label>{tr('職級', 'Position')}</label><select value={edit.position || ''} onChange={e => setEdit({ ...edit, position: e.target.value })}><option value="">{tr('（一般）', '(none)')}</option><option value="組長">{tr('組長', 'Captain')}</option></select></div>
+              <div className="f-row" style={{ flex: 1 }}><label>{tr('職級', 'Position')}</label><select value={edit.position || ''} onChange={e => setEdit({ ...edit, position: e.target.value })}><option value="">{tr('（一般）', '(none)')}</option><option value="組長">{tr('組長', 'Captain')}</option><option value="主管">{tr('主管', 'Supervisor')}</option></select></div>
               <div className="f-row" style={{ flex: 1 }}><label>{tr('性別', 'Gender')}</label><select value={edit.gender} onChange={e => setEdit({ ...edit, gender: e.target.value })}><option value="">{tr('（未填）', '(not set)')}</option><option value="男">{tr('男', 'Male')}</option><option value="女">{tr('女', 'Female')}</option></select></div>
             </div>
             <div className="f-row"><label>{tr('國籍', 'Nationality')}</label><select value={edit.nationality} onChange={e => setEdit({ ...edit, nationality: e.target.value })}><option value="">{tr('（未填）', '(not set)')}</option>{NATS.map(n => <option key={n} value={n}>{en ? NAT_EN[n] : n}</option>)}</select></div>
