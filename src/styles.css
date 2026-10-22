@@ -1113,3 +1113,4 @@ html.rpt-open #root{visibility:hidden}
 .rpt-foot .btn.ghost{flex:1 !important;background:#fff;color:var(--accent);border:2px solid var(--accent)}
 .rpt-foot .btn:not(.ghost){flex:1}
 @media (min-width:900px){.rpt-foot{justify-content:center}.rpt-foot .btn{max-width:260px}}
+@media (min-width:900px){.rpt-foot .btn.ghost.rpt-printbtn{background:var(--accent);color:#fff;border-color:var(--accent)}}
