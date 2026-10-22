@@ -103,10 +103,10 @@ function Roster({ d, load, log, staffOf, canEdit }) {
   const { en, tr } = useL()
   const [edit, setEdit] = useState(null)
   const [report, setReport] = useState(false)
-  const [f, setF] = useState({ kind: '', gender: '', nat: '', lang: '' })
+  const [f, setF] = useState({ kind: '', pos: '', gender: '', nat: '', lang: '' })
   const posts = d.posts.filter(p => p.active).sort((a, b) => a.sort_order - b.sort_order)
   const gLabel = g => (en ? ({ 男: 'Male', 女: 'Female' }[g] || '') : g)
-  const pass = s => !s ? !(f.kind || f.gender || f.nat || f.lang) : (!f.kind || s.kind === f.kind) && (!f.gender || s.gender === f.gender) && (!f.nat || s.nationality === f.nat) && (!f.lang || (s.langs || []).includes(f.lang))
+  const pass = s => !s ? !(f.kind || f.pos || f.gender || f.nat || f.lang) : (!f.kind || s.kind === f.kind) && (!f.pos || (f.pos === 'none' ? !s.position : s.position === f.pos)) && (!f.gender || s.gender === f.gender) && (!f.nat || s.nationality === f.nat) && (!f.lang || (s.langs || []).includes(f.lang))
   const shown = posts.filter(p => pass(staffOf(p.staff_id)))
   const grpOrder = [...GRPS, '替補']
   const groups = [...grpOrder, ...new Set(shown.map(p => p.grp).filter(g => !grpOrder.includes(g)))].map(g => ({ g, items: shown.filter(p => p.grp === g) })).filter(x => x.items.length)
@@ -157,8 +157,8 @@ function Roster({ d, load, log, staffOf, canEdit }) {
     <>
       <ToolBar label={tr(`共 ${shown.length} 個崗位`, `${shown.length} posts`)}><ExportBtn onClick={() => setReport(true)} /></ToolBar>
       <div className="fstk">
-        <div className="df-grid df-grid4">
-          {sel('kind', tr('類別', 'Type'), KINDS, k => (en ? KIND_EN[k] : k))}{sel('gender', tr('性別', 'Gender'), ['男', '女'], gLabel)}{sel('nat', tr('國籍', 'Nationality'), NATS, n => (en ? NAT_EN[n] : n))}{sel('lang', tr('語言', 'Language'), LANGS, l => (en ? LANG_EN[l] : l))}
+        <div className="df-grid3">
+          {sel('kind', tr('類別', 'Type'), KINDS, k => (en ? KIND_EN[k] : k))}{sel('pos', tr('職級', 'Position'), ['none', '組長', '主管', '替補'], p => (p === 'none' ? tr('一般', 'Regular') : en ? POS_EN[p] : p))}{sel('gender', tr('性別', 'Gender'), ['男', '女'], gLabel)}{sel('nat', tr('國籍', 'Nationality'), NATS, n => (en ? NAT_EN[n] : n))}{sel('lang', tr('語言', 'Language'), LANGS, l => (en ? LANG_EN[l] : l))}
         </div>
       </div>
       {groups.map(g => (
