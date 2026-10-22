@@ -238,8 +238,7 @@ function Board({ d, load, log, staffOf, canEdit }) {
   const [pid, setPid] = useState(posts[0] ? posts[0].id : '')
   const [edit, setEdit] = useState(null)
   const [report, setReport] = useState(false)
-  const [ov, setOv] = useState('names')       // 總覽顯示：names 顯示名稱／codes 只顯示代碼／sheet 橫向總表
-  const names = ov === 'names'
+  const [ov, setOv] = useState('sheet')       // 總覽顯示：sheet 橫向總表／codes 只顯示代碼
   const slotsOf = useMemo(() => {
     const m = {}
     d.slots.forEach(s => { (m[s.post_id] = m[s.post_id] || Array(48).fill(null))[s.slot] = s })
@@ -347,9 +346,8 @@ function Board({ d, load, log, staffOf, canEdit }) {
       {mode === 'all' && (
         <>
         <div className="seg" style={{ margin: '0 0 8px' }}>
-          <button className={ov === 'names' ? 'on' : ''} onClick={() => setOv('names')}>{tr('顯示名稱', 'Names')}</button>
-          <button className={ov === 'codes' ? 'on' : ''} onClick={() => setOv('codes')}>{tr('只顯示代碼', 'Codes only')}</button>
           <button className={ov === 'sheet' ? 'on' : ''} onClick={() => setOv('sheet')}>{tr('橫向總表', 'Wide sheet')}</button>
+          <button className={ov === 'codes' ? 'on' : ''} onClick={() => setOv('codes')}>{tr('只顯示代碼', 'Codes only')}</button>
         </div>
         {ov === 'sheet' ? (
           <>
@@ -357,7 +355,7 @@ function Board({ d, load, log, staffOf, canEdit }) {
           </>
         ) : (
         <div className="pa-mx-wrap">
-          <table className={'pa-mx' + (names ? ' pa-mx-n' : '')}>
+          <table className="pa-mx">
             <thead><tr><th className="pa-t">{tr('時間', 'Time')}</th>{posts.map(p => <th key={p.id}>{p.code.replace('崗', '')}<small>{(staffOf(p.staff_id) || {}).name || ''}</small></th>)}</tr></thead>
             <tbody>
               {Array.from({ length: 48 }, (_, i) => (
@@ -366,7 +364,7 @@ function Board({ d, load, log, staffOf, canEdit }) {
                   {posts.map(p => {
                     const t = ((slotsOf[p.id] || [])[i] || {}).task || ''
                     const [bg, fg] = t ? catColor(taskParts(t)[0]) : ['transparent', '#aab']
-                    return <td key={p.id} style={{ background: bg, color: fg }} onClick={() => openSeg(p.id, segs(p.id).find(x => i >= x.from && i < x.to))}>{t === '休息' ? (en ? 'Br' : '休') : names && t ? taskParts(t).map(c => <div key={c}>{c}<small>{taskName(c)}</small></div>) : t}</td>
+                    return <td key={p.id} style={{ background: bg, color: fg }} onClick={() => openSeg(p.id, segs(p.id).find(x => i >= x.from && i < x.to))}>{t === '休息' ? (en ? 'Br' : '休') : t}</td>
                   })}
                 </tr>
               ))}
