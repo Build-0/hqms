@@ -24,7 +24,7 @@ const MODULES = [
   { id: 'findings', sub: '問題、表揚與人員表現', icon: 'camera', label: '查房記錄', color: '#d07a2c', Page: Findings },
   { id: 'topics', sub: '分類教材與正確做法', icon: 'book', label: '培訓主題庫', color: '#4a6fa5', Page: Topics },
   { id: 'cyclic', sub: '每日、循環、深度清潔', icon: 'clean', label: '清潔要點', color: '#54808c', Page: CyclicClean },
-  { id: 'public', sub: '崗位、看板、任務、員工', icon: 'hotel', label: '公共地區', color: '#8a6d3b', Page: PublicAreas },
+  { id: 'public', sub: '崗位、看板、任務、員工', icon: 'people', label: '公共地區', color: '#8a6d3b', top: true, Page: PublicAreas },
   // 嵌入的舊系統（與品質系統同網站、各自保留原有資料庫）
   { id: 'boh', icon: 'box', label: '後勤管理', color: '#7a6a4f', top: true, Page: Boh },
   { id: 'defect', icon: 'wrench', label: '缺陷管理', color: '#b5603a', top: true, Page: Defects },
@@ -35,6 +35,7 @@ const SYSTEMS = [
   { id: 'quality', icon: 'clipcheck', label: '房間品質', sub: '檢查、評分、報告', color: '#1f7a6d' },
   { id: 'boh', icon: 'box', label: '後勤管理', sub: '物資、庫存、設備', color: '#4a6fa5' },
   { id: 'defect', icon: 'wrench', label: '缺陷管理', sub: '登記、跟進、統計', color: '#c0564f' },
+  { id: 'public', icon: 'people', label: '公共地區', sub: '崗位、看板、員工', color: '#8a6d3b' },
 ]
 const WD = ['日', '一', '二', '三', '四', '五', '六']
 
@@ -110,12 +111,12 @@ export default function App() {
   const cur = MODULES.find(m => m.id === tab)
   const inQuality = tab === 'quality'
   // 房間品質：有「品質」權限或「查房記錄」權限（樓層主管）都可進入；樓層主管進去只見查房記錄
-  const locked = id => !!session && (id === 'quality' ? (PERMS[session.role].quality || 'none') === 'none' && (PERMS[session.role].findings || 'none') === 'none' : (PERMS[session.role][id] || 'none') === 'none')
+  const locked = id => !!session && (id === 'public' ? publicPerm(session) === 'none' : id === 'quality' ? (PERMS[session.role].quality || 'none') === 'none' && (PERMS[session.role].findings || 'none') === 'none' : (PERMS[session.role][id] || 'none') === 'none')
   const qFull = !session || PERMS[session.role].quality === 'edit'
   // 即使被封鎖的頁面（例如舊分頁狀態）也一律退回首頁
-  if (tab !== 'home' && session && (((cur && cur.id === 'boh') && locked('boh')) || ((cur && cur.id === 'defect') && locked('defect')) || ((tab === 'quality' || (cur && !cur.embed && !cur.top)) && locked('quality')))) setTimeout(() => setTab('home'), 0)
+  if (tab !== 'home' && session && (((cur && cur.id === 'boh') && locked('boh')) || ((cur && cur.id === 'defect') && locked('defect')) || ((cur && cur.id === 'public') && locked('public')) || ((tab === 'quality' || (cur && !cur.embed && !cur.top)) && locked('quality')))) setTimeout(() => setTab('home'), 0)
   // 只有查房記錄權限（樓層主管）的帳號：其他品質模組一律退回首頁
-  if (session && !qFull && cur && !cur.embed && !cur.top && cur.id !== 'findings' && !(cur.id === 'public' && publicPerm(session) !== 'none')) setTimeout(() => setTab('home'), 0)
+  if (session && !qFull && cur && !cur.embed && !cur.top && cur.id !== 'findings') setTimeout(() => setTab('home'), 0)
   const hardReload = () => { location.href = location.pathname + '?v=' + Date.now() }
   async function doRefresh() {
     if (refreshing) return
@@ -151,7 +152,7 @@ export default function App() {
       <main className={cur?.embed ? 'embed-main' : ''}>
         {cur ? <cur.Page key={tab + ':' + rk} session={session} init={init} /> : inQuality ? (
           <div className="home-grid">
-            {MODULES.filter(m => !m.embed && !m.top && (qFull || m.id === 'findings' || m.id === 'public') && (m.id !== 'public' || publicPerm(session) !== 'none')).map(m => (
+            {MODULES.filter(m => !m.embed && !m.top && (qFull || m.id === 'findings')).map(m => (
               <button className="home-item" key={m.id} onClick={() => setTab(m.id)}>
                 <span className="hi-circle" style={{ background: m.color + '26', borderColor: 'transparent' }}><Icon name={m.icon} size={33} color={m.color} width={2.2} /></span>
                 <span className="hi-label">{m.label}</span>
@@ -209,8 +210,8 @@ export default function App() {
           }} />
       )}
       <nav className="gnav" aria-label="主導覽">
-        {[['home', '首頁', 'hotel'], ['quality', '品質', 'clipcheck'], ['boh', '後勤', 'box'], ['defect', '缺陷', 'wrench']].map(([id, label, ic]) => {
-          const area = tab === 'home' ? 'home' : tab === 'boh' ? 'boh' : tab === 'defect' ? 'defect' : 'quality'
+        {[['home', '首頁', 'hotel'], ['quality', '品質', 'clipcheck'], ['boh', '後勤', 'box'], ['defect', '缺陷', 'wrench'], ['public', '公共', 'people']].map(([id, label, ic]) => {
+          const area = tab === 'home' ? 'home' : tab === 'boh' ? 'boh' : tab === 'defect' ? 'defect' : tab === 'public' ? 'public' : 'quality'
           const lock = id !== 'home' && locked(id)
           return (
             <button key={id} className={`gnav-i ${area === id ? 'on' : ''} ${lock ? 'lock' : ''}`}
