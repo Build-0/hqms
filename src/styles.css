@@ -1071,3 +1071,6 @@ html.rpt-open #root{visibility:hidden}
 .pa-sq-area{color:var(--sub);font-size:11.5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .pa-sep{font-size:17px;padding:10px 12px;border-radius:12px}
 .pa-card .pa-post i{font-size:14px}
+/* 編輯視窗分區標題：實色深綠（同選中掣一致） */
+.pa-sep{background:var(--accent);color:#fff;border:none}
+.pa-sep.first{margin-top:6px;padding:10px 12px}
