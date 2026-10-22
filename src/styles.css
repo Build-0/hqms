@@ -1081,3 +1081,13 @@ html.rpt-open #root{visibility:hidden}
 /* 橫向總表：名稱版行高較高（可寫兩行），代碼版較密 */
 .rpt-wide .mxr-names tbody td{height:27px;font-size:8.5px;line-height:1.15}
 .rpt-wide .mxr-codes tbody td{height:17px;font-size:11px;font-weight:700;text-align:center;vertical-align:middle}
+/* 公共地區：電腦版用滿視窗闊度（總覽表、人員卡片） */
+@media (min-width:900px){
+  .df-wrap.pa-wrap{max-width:none}
+  .pa-wrap .pa-mx-wrap{max-height:calc(100vh - 300px)}
+  .pa-wrap .pa-mx{width:100%}
+  .pa-wrap .pa-mx th,.pa-wrap .pa-mx td{min-width:0}
+  .pa-wrap .pa-mx:not(.pa-mx-n) th,.pa-wrap .pa-mx:not(.pa-mx-n) td{min-width:48px}
+  .pa-wrap .pa-grid{grid-template-columns:repeat(auto-fill,minmax(210px,1fr))}
+  .pa-wrap .pa-sheet-wrap{max-height:calc(100vh - 300px)}
+}

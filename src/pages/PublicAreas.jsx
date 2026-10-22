@@ -64,7 +64,7 @@ export default function PublicAreas({ session }) {
 
   return (
     <LangCtx.Provider value={{ en, tr }}>
-      <div className="df-wrap">
+      <div className="df-wrap pa-wrap">
         <div className="pa-lang">
           <button className={!en ? 'on' : ''} onClick={() => setLang(false)}>中文</button>
           <button className={en ? 'on' : ''} onClick={() => setLang(true)}>EN</button>
