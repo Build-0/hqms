@@ -155,7 +155,7 @@ function Roster({ d, load, log, staffOf, canEdit }) {
   }
   return (
     <>
-      <ToolBar label={tr(`共 ${shown.length} 個崗位`, `${shown.length} posts`)}><ExportBtn onClick={() => setReport(true)} /></ToolBar>
+      <ToolBar label={tr(`共 ${shown.length} 個崗位`, `${shown.length} posts`)}><ExportBtn onClick={() => setReport(mode === 'all' ? 'matrix' : true)} /></ToolBar>
       <div className="fstk">
         <div className="df-grid3">
           {sel('kind', tr('類別', 'Type'), KINDS, k => (en ? KIND_EN[k] : k))}{sel('pos', tr('職級', 'Position'), ['none', '組長', '主管', '替補'], p => (p === 'none' ? tr('一般', 'Regular') : en ? POS_EN[p] : p))}{sel('gender', tr('性別', 'Gender'), ['男', '女'], gLabel)}{sel('nat', tr('國籍', 'Nationality'), NATS, n => (en ? NAT_EN[n] : n))}{sel('lang', tr('語言', 'Language'), LANGS, l => (en ? LANG_EN[l] : l))}
@@ -288,7 +288,7 @@ function Board({ d, load, log, staffOf, canEdit }) {
   }
   // 橫向總表：崗位分兩批、時間分上下半日，共 4 頁；同一任務連續時間合併成一格
   const segIn = (pid, a, b) => { const out = []; segs(pid).forEach(x => { const f = Math.max(x.from, a), t = Math.min(x.to, b); if (t > f) out.push({ ...x, from: f, to: t }) }); return out }
-  const matrixPages = () => {
+  const matrixPages = (codesOnly = false) => {
     const pages = [{ ps: posts, a: 0, b: 48 }]
     return pages.map((pg, k) => {
       const starts = {}
@@ -305,7 +305,7 @@ function Board({ d, load, log, staffOf, canEdit }) {
                     const x = starts[p.id + ':' + i]
                     if (!x) return (segIn(p.id, pg.a, pg.b).some(y => i > y.from && i < y.to)) ? null : <td key={p.id} />
                     const [bg, fg] = x.task && x.task !== '休息' ? catColor(taskParts(x.task)[0]) : x.task === '休息' ? ['#eceff2', '#5b6773'] : ['#fff', '#aab']
-                    const long = x.to - x.from >= 2
+                    const long = !codesOnly && x.to - x.from >= 2
                     const text = x.off ? '' : x.task === '休息' ? tr('休息', 'Break') : x.task ? taskParts(x.task).map(c => c + (long && taskName(c) ? ' ' + taskName(c) : '')).join(' ＋ ') : ''
                     return <td key={p.id} rowSpan={x.to - x.from} style={{ background: x.off ? '#f6f7f8' : bg, color: fg }}>{text}</td>
                   })}
@@ -353,8 +353,7 @@ function Board({ d, load, log, staffOf, canEdit }) {
         </div>
         {ov === 'sheet' ? (
           <>
-            <button className="btn" style={{ marginBottom: 10 }} onClick={() => setReport('matrix')}>{tr('儲存 A3 橫向 PDF', 'Save A3 landscape PDF')}</button>
-            <div className="pa-sheet-wrap"><div className="rpt-print rpt-wide">{matrixPages()}</div></div>
+            <div className="pa-sheet-wrap"><div className="rpt-print rpt-wide">{matrixPages(false)}</div></div>
           </>
         ) : (
         <div className="pa-mx-wrap">
@@ -378,7 +377,7 @@ function Board({ d, load, log, staffOf, canEdit }) {
         </>
       )}
       {report === true && <ReportModal title={tr('24 小時看板', '24-Hour Board')} sub={todayStr()} onClose={() => setReport(false)}><ListReport data={boardReport()} /></ReportModal>}
-      {report === 'matrix' && <ReportModal landscape a3 title={tr('24 小時看板總表', '24-Hour Board Matrix')} sub={todayStr()} onClose={() => setReport(false)}>{matrixPages()}</ReportModal>}
+      {report === 'matrix' && <ReportModal landscape a3 title={tr('24 小時看板總表', '24-Hour Board Matrix')} sub={todayStr()} onClose={() => setReport(false)}>{matrixPages(ov === 'codes')}</ReportModal>}
       {canEdit && edit && (
         <div className="modal" onClick={e => { if (e.target === e.currentTarget) setEdit(null) }}>
           <div className="sheet">
