@@ -73,8 +73,8 @@ export default function PublicAreas({ session }) {
         {!view && (
           <div className="home-grid">
             {[['roster', tr('人員崗位', 'Staff & posts'), 'people', '#1f7a6d', tr(`${d.staff.filter(x => x.active).length} 位在職 · ${d.posts.filter(p => p.active).length} 個崗位`, `${d.staff.filter(x => x.active).length} staff · ${d.posts.filter(p => p.active).length} posts`)],
-              ['board', tr('24 小時看板', '24-hour board'), 'calendar', '#4a6fa5', tr('每崗每半小時', 'Every 30 min per post')],
               ['tasks', tr('任務代碼', 'Task codes'), 'book', '#b5603a', tr(`${d.tasks.length} 個任務`, `${d.tasks.length} tasks`)],
+              ['board', tr('24 小時看板', '24-hour board'), 'calendar', '#4a6fa5', tr('每崗每半小時', 'Every 30 min per post')],
             ].map(([k, t, ic, co, sb]) => (
               <button className="home-item" key={k} onClick={() => setView(k)}>
                 <span className="hi-circle" style={{ background: co + '26', borderColor: 'transparent' }}><Icon name={ic} size={33} color={co} width={2.2} /></span>
