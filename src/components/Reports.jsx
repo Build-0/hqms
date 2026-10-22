@@ -58,6 +58,11 @@ export function ReportModal({ title, sub, onClose, children, landscape, a3 }) {
   const stamp = `${todayStr()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
   return createPortal(
     <div className="rpt-overlay">
+      <div className="rpt-bar rpt-deskbar rpt-noprint">
+        <button className="rpt-btn ghost" onClick={onClose}>取消</button>
+        <span className="rpt-bar-t">{title}</span>
+        <button className="rpt-btn" onClick={() => window.print()}>保存</button>
+      </div>
       <div className="rpt-scroll">
         <div className={'rpt-print' + (landscape ? ' rpt-wide' : '')}>
           <div className="rpt-hd"><b>{title}</b><span>{sub}</span></div>
