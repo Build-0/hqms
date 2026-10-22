@@ -1069,3 +1069,5 @@ html.rpt-open #root{visibility:hidden}
 .pa-sq-post b{font-size:13px}
 .pa-sq-post .pa-hrs{font-size:11.5px}
 .pa-sq-area{color:var(--sub);font-size:11.5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.pa-sep{font-size:17px;padding:10px 12px;border-radius:12px}
+.pa-card .pa-post i{font-size:14px}
