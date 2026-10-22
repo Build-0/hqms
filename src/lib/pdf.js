@@ -3,6 +3,8 @@
 const A4P = { w: 210, h: 297 }
 const M = 10          // 頁邊距 mm
 
+// 分享選單只喺手機／平板用（電腦版直接下載，唔好彈 Windows「分享」視窗）
+const IS_MOBILE = typeof navigator !== 'undefined' && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
 const PAGE_BREAK_CLASS = 'sf-page'   // 沙發檢查表：每層一頁
 
 export async function savePdf(rootEl, fileName, opts = {}) {
@@ -19,7 +21,7 @@ export async function savePdf(rootEl, fileName, opts = {}) {
     doc.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', (A4.w - w) / 2, M, w, h)
     const bl = doc.output('blob')
     const fl = new File([bl], fileName.replace(/[\\/:*?"<>|]/g, '-') + '.pdf', { type: 'application/pdf' })
-    if (navigator.canShare && navigator.canShare({ files: [fl] })) {
+    if (IS_MOBILE && navigator.canShare && navigator.canShare({ files: [fl] })) {
       try { await navigator.share({ files: [fl], title: fileName }); return 'shared' } catch (e) { if (e && e.name === 'AbortError') return 'cancel' }
     }
     const u = URL.createObjectURL(bl)
@@ -56,7 +58,7 @@ export async function savePdf(rootEl, fileName, opts = {}) {
   for (let i = 1; i <= pages; i++) { doc.setPage(i); doc.text(`${i} / ${pages}`, A4.w / 2, A4.h - 6, { align: 'center' }) }
   const blob = doc.output('blob')
   const file = new File([blob], fileName.replace(/[\\/:*?"<>|]/g, '-') + '.pdf', { type: 'application/pdf' })
-  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+  if (IS_MOBILE && navigator.canShare && navigator.canShare({ files: [file] })) {
     try { await navigator.share({ files: [file], title: fileName }); return 'shared' } catch (e) { if (e && e.name === 'AbortError') return 'cancel' }
   }
   const url = URL.createObjectURL(blob)
