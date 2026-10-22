@@ -9,8 +9,8 @@ import { toast } from '../lib/toast'
 import { todayStr } from '../lib/dates'
 
 // 公共地區管理（管理員可改；公眾主管可查看）。右上角可切換 中文／English。
-const GRPS = ['商場', '前區', '後區', '深度清潔', '管理支援']
-const GRP_EN = { 商場: 'Mall', 前區: 'Front of house', 後區: 'Back of house', 深度清潔: 'Deep cleaning', 管理支援: 'Supervisors & Captains', 其他: 'Other' }
+const GRPS = ['商場', '前區', '後區', '深度清潔', '管理支援']   // 「替補」另外加喺 Roster，唔放喺新增崗位預設
+const GRP_EN = { 商場: 'Mall', 前區: 'Front of house', 後區: 'Back of house', 深度清潔: 'Deep cleaning', 管理支援: 'Supervisors & Captains', 替補: 'Relief', 其他: 'Other' }
 const KINDS = ['HSKP', '外判', '主管']
 const POS_EN = { 組長: 'Captain' }
 const KIND_EN = { HSKP: 'HSKP', 外判: 'Pro-Cleaning', 主管: 'Supervisor' }
@@ -38,7 +38,7 @@ const taskParts = t => String(t || '').split('+').map(x => x.trim()).filter(Bool
 const LangCtx = createContext({ en: false, tr: a => a })
 
 export default function PublicAreas({ session }) {
-  const [view, setView] = useState(null)       // null 選單／posts／board／tasks／staff／log
+  const [view, setView] = useState(null)       // null 選單／roster／board／tasks／log
   const [d, setD] = useState(null)
   const [err, setErr] = useState('')
   const [en, setEn] = useState(() => { try { return localStorage.getItem('pa_lang') === 'en' } catch { return false } })
@@ -72,10 +72,9 @@ export default function PublicAreas({ session }) {
         {err && <div className="card" style={{ borderColor: 'var(--red)' }}><p style={{ fontSize: 13, lineHeight: 1.7 }}>{tr('讀取失敗：', 'Failed to load: ')}{err}</p></div>}
         {!view && (
           <div className="home-grid">
-            {[['posts', tr('崗位表', 'Posts'), 'clipcheck', '#1f7a6d', tr(`${d.posts.filter(p => p.active).length} 個崗位`, `${d.posts.filter(p => p.active).length} posts`)],
+            {[['roster', tr('人員崗位', 'Staff & posts'), 'people', '#1f7a6d', tr(`${d.staff.filter(x => x.active).length} 位在職 · ${d.posts.filter(p => p.active).length} 個崗位`, `${d.staff.filter(x => x.active).length} staff · ${d.posts.filter(p => p.active).length} posts`)],
               ['board', tr('24 小時看板', '24-hour board'), 'calendar', '#4a6fa5', tr('每崗每半小時', 'Every 30 min per post')],
               ['tasks', tr('任務代碼', 'Task codes'), 'book', '#b5603a', tr(`${d.tasks.length} 個任務`, `${d.tasks.length} tasks`)],
-              ['staff', tr('員工資料', 'Staff'), 'cap', '#8f7ac9', tr(`${d.staff.filter(s => s.active).length} 位在職`, `${d.staff.filter(s => s.active).length} active`)],
               ...(canEdit ? [['log', tr('改動紀錄', 'Change log'), 'search', '#7a6a4f', tr('誰改過咩', 'Who changed what')]] : [])].map(([k, t, ic, co, sb]) => (
               <button className="home-item" key={k} onClick={() => setView(k)}>
                 <span className="hi-circle" style={{ background: co + '26', borderColor: 'transparent' }}><Icon name={ic} size={33} color={co} width={2.2} /></span>
@@ -85,10 +84,9 @@ export default function PublicAreas({ session }) {
             ))}
           </div>
         )}
-        {view === 'posts' && <Posts {...ctx} />}
+        {view === 'roster' && <Roster {...ctx} />}
         {view === 'board' && <Board {...ctx} />}
         {view === 'tasks' && <Tasks {...ctx} />}
-        {view === 'staff' && <StaffView {...ctx} />}
         {view === 'log' && canEdit && <LogView />}
       </div>
     </LangCtx.Provider>
@@ -101,72 +99,119 @@ const areaOf = (en, p) => (en && p.work_area_en ? p.work_area_en : p.work_area)
 const taskShort = (en, t) => (en && t.short_en ? t.short_en : t.short)
 const taskDetail = (en, t) => (en && t.detail_en ? t.detail_en : t.detail)
 
-/* ───────── 崗位表 ───────── */
-function Posts({ d, load, log, staffOf, canEdit }) {
+/* ───────── 人員崗位（人 + 崗位合併；一人一崗，冇崗位嘅人放「替補」） ───────── */
+function Roster({ d, load, log, staffOf, canEdit }) {
   const { en, tr } = useL()
   const [edit, setEdit] = useState(null)
   const [report, setReport] = useState(false)
+  const [f, setF] = useState({ kind: '', gender: '', nat: '', lang: '' })
   const posts = d.posts.filter(p => p.active).sort((a, b) => a.sort_order - b.sort_order)
-  const groups = GRPS.map(g => ({ g, items: posts.filter(p => p.grp === g) })).filter(x => x.items.length)
-  const other = posts.filter(p => !GRPS.includes(p.grp))
-  if (other.length) groups.push({ g: '其他', items: other })
+  const gLabel = g => (en ? ({ 男: 'Male', 女: 'Female' }[g] || '') : g)
+  const pass = s => !s ? !(f.kind || f.gender || f.nat || f.lang) : (!f.kind || s.kind === f.kind) && (!f.gender || s.gender === f.gender) && (!f.nat || s.nationality === f.nat) && (!f.lang || (s.langs || []).includes(f.lang))
+  const shown = posts.filter(p => pass(staffOf(p.staff_id)))
+  const grpOrder = [...GRPS, '替補']
+  const groups = [...grpOrder, ...new Set(shown.map(p => p.grp).filter(g => !grpOrder.includes(g)))].map(g => ({ g, items: shown.filter(p => p.grp === g) })).filter(x => x.items.length)
+  const gone = d.staff.filter(s => !s.active)
+  const tg = (arr, v) => (arr.includes(v) ? arr.filter(x => x !== v) : [...arr, v])
+  const sel = (key, label, opts, lab) => <select className="df-sel" value={f[key]} onChange={e => setF({ ...f, [key]: e.target.value })}><option value="">{label}</option>{opts.map(o => <option key={o} value={o}>{lab ? lab(o) : o}</option>)}</select>
+  const hrs = p => (p.start_time && p.end_time ? hoursOf(p, d.slots) : null)
+  const flagText = p => (en ? ({ 替班: 'Relief', 外判替代中: 'Covered by Pro-Cleaning', 替班待確認: 'Relief TBC' }[p.flag] || 'To confirm') : p.flag)
+
+  const reportData = () => ({
+    filterText: tr('在職員工', 'Active staff'),
+    cols: [tr('崗位', 'Post'), tr('姓名', 'Name'), tr('類別', 'Type'), tr('性別', 'Gender'), tr('國籍', 'Nationality'), tr('上班—收工', 'Shift'), tr('工時 總／淨', 'Hours total / net'), tr('主要負責區域', 'Main area')],
+    groups: groups.map(g => ({ name: grpName(en, g.g), rows: g.items.map(p => {
+      const s = staffOf(p.staff_id) || {}; const h = hrs(p)
+      return { cells: [p.code, s.name || '—', s.kind ? (en ? KIND_EN[s.kind] : s.kind) + (s.position ? ' · ' + (en ? POS_EN[s.position] || s.position : s.position) : '') : '—', gLabel(s.gender) || '—', (en ? NAT_EN[s.nationality] : s.nationality) || '—', p.start_time && p.end_time ? `${p.start_time}‑${p.end_time}` : '—', h ? `${num(h.gross)} / ${num(h.net)}` : '—', areaOf(en, p) || '—'] }
+    }) })),
+  })
+
+  const blank = { id: null, post_id: null, name: '', kind: '外判', position: '', gender: '', nationality: '', langs: [], phone: '', notes: '', old_name: '', rest_kind: 'monthly1', rest_weekdays: [], rest_dates: [], active: true, code: `崗${d.posts.length + 1}`, grp: GRPS[0], start_time: '09:00', end_time: '18:00', break_text: '', work_area: '', work_area_en: '', pnotes: '', flag: '' }
+  const open = p => {
+    const s = staffOf(p.staff_id)
+    setEdit(s
+      ? { ...s, langs: s.langs || [], rest_weekdays: s.rest_weekdays || [], rest_dates: s.rest_dates || [], post_id: p.id, code: p.code, grp: p.grp, start_time: p.start_time, end_time: p.end_time, break_text: p.break_text, work_area: p.work_area, work_area_en: p.work_area_en || '', pnotes: p.notes, flag: p.flag }
+      : { ...blank, id: null, post_id: p.id, code: p.code, grp: p.grp, start_time: p.start_time, end_time: p.end_time, break_text: p.break_text, work_area: p.work_area, work_area_en: p.work_area_en || '', pnotes: p.notes, flag: p.flag })
+  }
   async function save() {
-    const f = edit
-    const row = { staff_id: f.staff_id || null, grp: f.grp, work_area: f.work_area.trim(), work_area_en: f.work_area_en || '', start_time: f.start_time, end_time: f.end_time, break_text: f.break_text.trim(), notes: f.notes.trim(), flag: f.flag }
+    const e = edit
+    if (!e.name.trim()) { toast(tr('請填姓名', 'Name required')); return }
+    const srow = { name: e.name.trim(), kind: e.kind, gender: e.gender, nationality: e.nationality, position: e.position || '', langs: e.langs, phone: e.phone.trim(), notes: e.notes.trim(), old_name: e.old_name, rest_kind: e.rest_kind, rest_weekdays: e.rest_weekdays, rest_dates: e.rest_dates, active: e.active }
+    const prow = { grp: e.grp, work_area: e.work_area.trim(), work_area_en: e.work_area_en || '', start_time: e.start_time || '', end_time: e.end_time || '', break_text: e.break_text.trim(), notes: (e.pnotes || '').trim(), flag: e.flag }
     try {
-      if (f.id) { await api.dbUpdate('pa_posts', f.id, row); await log('修改崗位 ' + f.code, { after: row }) }
+      let sid = e.id
+      if (sid) { await api.dbUpdate('pa_staff', sid, srow); await log('修改員工 ' + srow.name) }
+      else { const s = await api.dbInsert('pa_staff', { ...srow, sort_order: d.staff.length + 1 }); sid = s.id; await log('新增員工 ' + srow.name) }
+      if (e.post_id) await api.dbUpdate('pa_posts', e.post_id, { ...prow, staff_id: sid })
       else {
-        const p = await api.dbInsert('pa_posts', { ...row, code: f.code.trim(), sort_order: d.posts.length + 1 })
+        const p = await api.dbInsert('pa_posts', { ...prow, staff_id: sid, code: e.code.trim(), sort_order: d.posts.length + 1 })
         await api.dbInsertMany('pa_slots', Array.from({ length: 48 }, (_, i) => ({ post_id: p.id, slot: i, task: '' })))
-        await log('新增崗位 ' + f.code, { after: row })
+        await log('新增崗位 ' + e.code.trim())
       }
       toast(tr('已儲存', 'Saved')); setEdit(null); load()
     } catch (ex) { toast(tr('儲存失敗：', 'Save failed: ') + ex.message) }
   }
-  async function stop() {
-    try { await api.dbUpdate('pa_posts', edit.id, { active: false }); await log('停用崗位 ' + edit.code); toast(tr('已停用', 'Disabled')); setEdit(null); load() } catch (ex) { toast(ex.message) }
+  async function stopPost() {
+    try { await api.dbUpdate('pa_posts', edit.post_id, { active: false }); await log('停用崗位 ' + edit.code); toast(tr('已停用崗位', 'Post disabled')); setEdit(null); load() } catch (ex) { toast(ex.message) }
   }
-  const nm = p => { const s = staffOf(p.staff_id); return s ? `${s.name}（${en ? KIND_EN[s.kind] : s.kind}）` : '—' }
-  const reportData = () => ({
-    filterText: tr('全部崗位', 'All posts'), cols: [tr('崗位', 'Post'), tr('員工', 'Staff'), tr('性別', 'Gender'), tr('國籍', 'Nationality'), tr('上班—收工', 'Shift'), tr('休息', 'Break'), tr('工時 總／淨', 'Hours total / net'), tr('負責區域', 'Area')],
-    groups: groups.map(g => ({ name: grpName(en, g.g), rows: g.items.map(p => { const h = hoursOf(p, d.slots); const st = staffOf(p.staff_id) || {}; return { cells: [p.code, nm(p), st.gender ? (en ? ({ 男: 'M', 女: 'F' }[st.gender]) : st.gender) : '—', (en ? NAT_EN[st.nationality] : st.nationality) || '—', `${p.start_time}‑${p.end_time}`, p.break_text || '—', `${num(h.gross)} / ${num(h.net)}`, areaOf(en, p) || '—'] } }) })),
-  })
   return (
     <>
-      <ToolBar label={tr(`共 ${posts.length} 個崗位`, `${posts.length} posts`)}><ExportBtn onClick={() => setReport(true)} /></ToolBar>
+      <ToolBar label={tr(`共 ${shown.length} 個崗位`, `${shown.length} posts`)}><ExportBtn onClick={() => setReport(true)} /></ToolBar>
+      <div className="fstk">
+        <div className="df-grid df-grid4">
+          {sel('kind', tr('類別', 'Type'), KINDS, k => (en ? KIND_EN[k] : k))}{sel('gender', tr('性別', 'Gender'), ['男', '女'], gLabel)}{sel('nat', tr('國籍', 'Nationality'), NATS, n => (en ? NAT_EN[n] : n))}{sel('lang', tr('語言', 'Language'), LANGS, l => (en ? LANG_EN[l] : l))}
+        </div>
+      </div>
       {groups.map(g => (
         <div key={g.g}>
           <div className="bh-grp">{grpName(en, g.g)}<span>{g.items.length}</span></div>
           {g.items.map(p => {
-            const s = staffOf(p.staff_id)
+            const s = staffOf(p.staff_id); const h = hrs(p)
             return (
-              <button className="pa-card" key={p.id} onClick={() => canEdit && setEdit({ ...p })} style={canEdit ? undefined : { cursor: 'default' }}>
+              <button className="pa-card" key={p.id} onClick={() => canEdit && open(p)} style={canEdit ? undefined : { cursor: 'default' }}>
                 <span className="pa-code">{p.code}</span>
                 <span className="pa-main">
-                  <b>{s ? s.name : tr('（未指派）', '(unassigned)')}{s && <small className={`pa-kind k-${s.kind}`}>{en ? KIND_EN[s.kind] : s.kind}</small>}{s && s.position && <small className="pa-kind k-pos">{en ? POS_EN[s.position] || s.position : s.position}</small>}{p.flag && <small className="pa-flag">{en ? ({ 替班: 'Relief', 外判替代中: 'Covered by Pro-Cleaning', 替班待確認: 'Relief TBC' }[p.flag] || 'To confirm') : p.flag}</small>}</b>
-                  <span>{p.start_time} — {p.end_time}{p.break_text ? ` · ${tr('休', 'Break')} ${p.break_text}` : ''}</span>
-                  <span className="pa-hrs">⏱ {hoursText(en, hoursOf(p, d.slots))}</span>
+                  <b>{s ? s.name : tr('（未指派）', '(unassigned)')}{s && <small className={`pa-kind k-${s.kind}`}>{en ? KIND_EN[s.kind] : s.kind}</small>}{s && s.position && <small className="pa-kind k-pos">{en ? POS_EN[s.position] || s.position : s.position}</small>}{p.flag && <small className="pa-flag">{flagText(p)}</small>}</b>
+                  {s && <span>{[gLabel(s.gender), en ? NAT_EN[s.nationality] || s.nationality : s.nationality, (s.langs || []).map(l => (en ? LANG_EN[l] : l)).join(en ? ' / ' : '／')].filter(Boolean).join(' · ') || tr('（未填：性別、國籍、語言）', '(gender, nationality, language not filled)')}</span>}
+                  {p.start_time && p.end_time ? <span>{p.start_time} — {p.end_time}{p.break_text ? ` · ${tr('休', 'Break')} ${p.break_text}` : ''}</span> : <span className="pa-sub">{tr('（未設定上班時間）', '(no shift set)')}</span>}
+                  {h && <span className="pa-hrs">⏱ {hoursText(en, h)}</span>}
                   <span className="pa-sub">{areaOf(en, p) || '—'}</span>
+                  {s && <span className="pa-sub">{s.rest_kind === 'weekly2' ? tr(`每週休 2 天${(s.rest_weekdays || []).length ? '：週' + s.rest_weekdays.map(w => WD[w]).join('、週') : ''}`, `2 days off weekly${(s.rest_weekdays || []).length ? ': ' + s.rest_weekdays.map(w => WD_EN[w]).join(', ') : ''}`) : s.rest_kind === 'monthly1' ? tr(`每月休 1 天${(s.rest_dates || []).length ? '：' + s.rest_dates.slice(-1)[0] : ''}`, `1 day off monthly${(s.rest_dates || []).length ? ': ' + s.rest_dates.slice(-1)[0] : ''}`) : ''}</span>}
                 </span>
               </button>
             )
           })}
         </div>
       ))}
-      {canEdit && <button className="fab" onClick={() => setEdit({ id: null, code: `崗${d.posts.length + 1}`, staff_id: '', grp: GRPS[0], work_area: '', work_area_en: '', start_time: '09:00', end_time: '18:00', break_text: '', notes: '', flag: '' })}>＋</button>}
+      {gone.length > 0 && <p className="src-note" style={{ margin: '10px 4px' }}>{tr('已離職／停用：', 'Inactive: ')}{gone.map(s => s.name).join('、')}</p>}
+      {canEdit && <button className="fab" onClick={() => setEdit({ ...blank })}>＋</button>}
       {canEdit && edit && (
         <div className="modal" onClick={e => { if (e.target === e.currentTarget) setEdit(null) }}>
           <div className="sheet">
-            <div className="sheet-hd"><h2>{edit.id ? `${tr('編輯', 'Edit')} ${edit.code}` : tr('新增崗位', 'New post')}</h2>
+            <div className="sheet-hd"><h2>{edit.id ? edit.name : tr('新增人員／崗位', 'New staff / post')}</h2>
               <span className="sheet-hd-acts"><button className="mini" onClick={() => setEdit(null)}>{tr('取消', 'Cancel')}</button><button className="mini pri" onClick={save}>{tr('儲存', 'Save')}</button></span></div>
-            {!edit.id && <div className="f-row"><label>{tr('崗位編號', 'Post code')}</label><input value={edit.code} onChange={e => setEdit({ ...edit, code: e.target.value })} /></div>}
-            <div className="f-row"><label>{tr('員工', 'Staff')}</label>
-              <select value={edit.staff_id || ''} onChange={e => setEdit({ ...edit, staff_id: e.target.value })}>
-                <option value="">{tr('（未指派）', '(unassigned)')}</option>
-                {d.staff.filter(s => s.active || s.id === edit.staff_id).map(s => <option key={s.id} value={s.id}>{s.name}（{en ? KIND_EN[s.kind] : s.kind}）</option>)}
-              </select></div>
+            <div className="f-row"><label>{tr('姓名', 'Name')}</label><input value={edit.name} onChange={e => setEdit({ ...edit, name: e.target.value })} /></div>
+            {edit.old_name && <p className="src-note">{tr('舊名單名稱：', 'Previous name: ')}{edit.old_name}</p>}
+            <div style={{ display: 'flex', gap: 10 }}>
+              <div className="f-row" style={{ flex: 1 }}><label>{tr('類別', 'Type')}</label><select value={edit.kind} onChange={e => setEdit({ ...edit, kind: e.target.value, rest_kind: e.target.value === 'HSKP' ? 'weekly2' : 'monthly1' })}>{KINDS.map(k => <option key={k} value={k}>{en ? KIND_EN[k] : k}</option>)}</select></div>
+              <div className="f-row" style={{ flex: 1 }}><label>{tr('職級', 'Position')}</label><select value={edit.position || ''} onChange={e => setEdit({ ...edit, position: e.target.value })}><option value="">{tr('（一般）', '(none)')}</option><option value="組長">{tr('組長', 'Captain')}</option></select></div>
+              <div className="f-row" style={{ flex: 1 }}><label>{tr('性別', 'Gender')}</label><select value={edit.gender} onChange={e => setEdit({ ...edit, gender: e.target.value })}><option value="">{tr('（未填）', '(not set)')}</option><option value="男">{tr('男', 'Male')}</option><option value="女">{tr('女', 'Female')}</option></select></div>
+            </div>
+            <div className="f-row"><label>{tr('國籍', 'Nationality')}</label><select value={edit.nationality} onChange={e => setEdit({ ...edit, nationality: e.target.value })}><option value="">{tr('（未填）', '(not set)')}</option>{NATS.map(n => <option key={n} value={n}>{en ? NAT_EN[n] : n}</option>)}</select></div>
+            <div className="f-row"><label>{tr('識講（可多選）', 'Languages spoken')}</label>
+              <div className="chips wrap">{LANGS.map(l => <button key={l} className={`chip ${edit.langs.includes(l) ? 'on' : ''}`} onClick={() => setEdit({ ...edit, langs: tg(edit.langs, l) })}>{en ? LANG_EN[l] : l}</button>)}</div></div>
+            {edit.kind === 'HSKP'
+              ? <div className="f-row"><label>{tr('固定周假（HSKP 每週 2 天）', 'Weekly days off (HSKP: 2 days)')}</label>
+                <div className="chips wrap">{WD.map((w, i) => <button key={i} className={`chip ${edit.rest_weekdays.includes(i) ? 'on' : ''}`} onClick={() => setEdit({ ...edit, rest_weekdays: tg(edit.rest_weekdays, i) })}>{en ? WD_EN[i] : '週' + w}</button>)}</div></div>
+              : <div className="f-row"><label>{tr('休息日期（外判每月休 1 天）', 'Days off (outsourced: 1 per month)')}</label>
+                <input type="date" value="" onChange={e => e.target.value && setEdit({ ...edit, rest_dates: [...edit.rest_dates, e.target.value].sort() })} />
+                <div className="chips wrap" style={{ marginTop: 6 }}>{edit.rest_dates.map(x => <button key={x} className="chip on" onClick={() => setEdit({ ...edit, rest_dates: edit.rest_dates.filter(y => y !== x) })}>{x} ✕</button>)}</div></div>}
+            <div className="f-row"><label>{tr('電話', 'Phone')}</label><input inputMode="tel" value={edit.phone} onChange={e => setEdit({ ...edit, phone: e.target.value })} /></div>
+            <div className="f-row"><label>{tr('人員備註', 'Staff notes')}</label><input value={edit.notes} onChange={e => setEdit({ ...edit, notes: e.target.value })} /></div>
+            <div className="pa-sep">{tr('崗位', 'Post')}</div>
+            {!edit.post_id && <div className="f-row"><label>{tr('崗位編號', 'Post code')}</label><input value={edit.code} onChange={e => setEdit({ ...edit, code: e.target.value })} /></div>}
             <div className="f-row"><label>{tr('分類', 'Group')}</label>
-              <select value={edit.grp} onChange={e => setEdit({ ...edit, grp: e.target.value })}>{GRPS.map(g => <option key={g} value={g}>{grpName(en, g)}</option>)}</select></div>
+              <select value={edit.grp} onChange={e => setEdit({ ...edit, grp: e.target.value })}>{[...GRPS, '替補'].map(g => <option key={g} value={g}>{grpName(en, g)}</option>)}</select></div>
             <div style={{ display: 'flex', gap: 10 }}>
               <div className="f-row" style={{ flex: 1 }}><label>{tr('上班', 'Start')}</label><input type="time" value={edit.start_time} onChange={e => setEdit({ ...edit, start_time: e.target.value })} /></div>
               <div className="f-row" style={{ flex: 1 }}><label>{tr('收工', 'End')}</label><input type="time" value={edit.end_time} onChange={e => setEdit({ ...edit, end_time: e.target.value })} /></div>
@@ -174,13 +219,14 @@ function Posts({ d, load, log, staffOf, canEdit }) {
             <div className="f-row"><label>{tr('休息時間', 'Break')}</label><input value={edit.break_text} onChange={e => setEdit({ ...edit, break_text: e.target.value })} placeholder="13:00–13:30, 18:30–19:00" /></div>
             <div className="f-row"><label>{tr('負責區域（中文）', 'Area (Chinese)')}</label><input value={edit.work_area} onChange={e => setEdit({ ...edit, work_area: e.target.value })} /></div>
             <div className="f-row"><label>{tr('負責區域（English）', 'Area (English)')}</label><input value={edit.work_area_en || ''} onChange={e => setEdit({ ...edit, work_area_en: e.target.value })} /></div>
-            <div className="f-row"><label>{tr('備註', 'Notes')}</label><input value={edit.notes} onChange={e => setEdit({ ...edit, notes: e.target.value })} /></div>
+            <div className="f-row"><label>{tr('崗位備註', 'Post notes')}</label><input value={edit.pnotes || ''} onChange={e => setEdit({ ...edit, pnotes: e.target.value })} /></div>
             {edit.flag && <button className="btn alt" onClick={() => setEdit({ ...edit, flag: '' })}>✓ {tr('已確認，取消「', 'Confirmed — clear “')}{edit.flag}{tr('」標記', '” flag')}</button>}
-            {edit.id && <button className="btn danger sm-quiet" onClick={stop}>{tr('停用這個崗位', 'Disable this post')}</button>}
+            {edit.post_id && <button className="btn danger sm-quiet" onClick={stopPost}>{tr('停用這個崗位', 'Disable this post')}</button>}
+            {edit.id && <button className="btn ghost sm-quiet" onClick={() => setEdit({ ...edit, active: !edit.active })}>{edit.active ? tr('標記為已離職／停用', 'Mark as left / inactive') : tr('重新啟用', 'Re-enable')}</button>}
           </div>
         </div>
       )}
-      {report && <ReportModal title={tr('公共地區崗位表', 'Public Area Post Roster')} sub={todayStr()} onClose={() => setReport(false)}><ListReport data={reportData()} /></ReportModal>}
+      {report && <ReportModal title={tr('公共地區人員崗位表', 'Public Area Staff & Post Roster')} sub={todayStr()} onClose={() => setReport(false)}><ListReport data={reportData()} /></ReportModal>}
     </>
   )
 }
@@ -405,96 +451,6 @@ function Tasks({ d, load, log, canEdit }) {
           </div>
         </div>
       )}
-    </>
-  )
-}
-
-/* ───────── 員工資料 ───────── */
-function StaffView({ d, load, log, canEdit }) {
-  const { en, tr } = useL()
-  const [edit, setEdit] = useState(null)
-  const [report, setReport] = useState(false)
-  const [f, setF] = useState({ kind: '', gender: '', nat: '', lang: '' })
-  const list = d.staff.filter(s => s.active && (!f.kind || s.kind === f.kind) && (!f.gender || s.gender === f.gender) && (!f.nat || s.nationality === f.nat) && (!f.lang || (s.langs || []).includes(f.lang)))
-  const gone = d.staff.filter(s => !s.active)
-  const gLabel = g => (en ? ({ 男: 'Male', 女: 'Female' }[g] || '') : g)
-  async function save() {
-    const e = edit
-    const row = { name: e.name.trim(), kind: e.kind, gender: e.gender, nationality: e.nationality, position: e.position || '', langs: e.langs, phone: e.phone.trim(), notes: e.notes.trim(), old_name: e.old_name, rest_kind: e.rest_kind, rest_weekdays: e.rest_weekdays, rest_dates: e.rest_dates, active: e.active }
-    if (!row.name) { toast(tr('請填姓名', 'Name required')); return }
-    try {
-      if (e.id) { await api.dbUpdate('pa_staff', e.id, row); await log('修改員工 ' + row.name) }
-      else { await api.dbInsert('pa_staff', { ...row, sort_order: d.staff.length + 1 }); await log('新增員工 ' + row.name) }
-      toast(tr('已儲存', 'Saved')); setEdit(null); load()
-    } catch (ex) { toast(tr('儲存失敗：', 'Save failed: ') + ex.message) }
-  }
-  const tg = (arr, v) => (arr.includes(v) ? arr.filter(x => x !== v) : [...arr, v])
-  const sel = (key, label, opts, lab) => <select className="df-sel" value={f[key]} onChange={e => setF({ ...f, [key]: e.target.value })}><option value="">{label}</option>{opts.map(o => <option key={o} value={o}>{lab ? lab(o) : o}</option>)}</select>
-  // 匯出：姓名、類別、性別、上班—收工、主要負責區域（按崗位分類）
-  const postsOf = s => d.posts.filter(p => p.active && p.staff_id === s.id)
-  const reportData = () => {
-    const rows = d.staff.filter(s => s.active).map(s => { const p = postsOf(s)[0]; return { s, p } })
-    const grp = x => (x.p ? x.p.grp : '未分配崗位')
-    const names = [...GRPS, '未分配崗位']
-    return {
-      filterText: tr('在職員工', 'Active staff'),
-      cols: [tr('姓名', 'Name'), tr('類別', 'Type'), tr('性別', 'Gender'), tr('國籍', 'Nationality'), tr('上班—收工', 'Shift'), tr('工時 總／淨', 'Hours total / net'), tr('主要負責區域', 'Main area')],
-      groups: names.map(n => ({ name: n === '未分配崗位' ? tr('未分配崗位', 'No post assigned') : grpName(en, n), rows: rows.filter(x => grp(x) === n).map(({ s, p }) => ({ cells: [s.name, (en ? KIND_EN[s.kind] : s.kind) + (s.position ? (en ? ' · ' + (POS_EN[s.position] || s.position) : ' · ' + s.position) : ''), gLabel(s.gender) || '—', (en ? NAT_EN[s.nationality] : s.nationality) || '—', p ? `${p.start_time}‑${p.end_time}` : '—', p ? `${num(hoursOf(p, d.slots).gross)} / ${num(hoursOf(p, d.slots).net)}` : '—', p ? (areaOf(en, p) || p.code) : '—'] })) })).filter(g => g.rows.length),
-    }
-  }
-  return (
-    <>
-      <ToolBar label={tr(`共 ${list.length} 人`, `${list.length} staff`)}><ExportBtn onClick={() => setReport(true)} /></ToolBar>
-      <div className="fstk">
-        <div className="df-grid df-grid4">
-          {sel('kind', tr('類別', 'Type'), KINDS, k => (en ? KIND_EN[k] : k))}{sel('gender', tr('性別', 'Gender'), ['男', '女'], gLabel)}{sel('nat', tr('國籍', 'Nationality'), NATS, n => (en ? NAT_EN[n] : n))}{sel('lang', tr('語言', 'Language'), LANGS, l => (en ? LANG_EN[l] : l))}
-        </div>
-      </div>
-      {list.map(s => {
-        const p = postsOf(s)[0]
-        return (
-          <button className="pa-card" key={s.id} onClick={() => canEdit && setEdit({ ...s, langs: s.langs || [], rest_weekdays: s.rest_weekdays || [], rest_dates: s.rest_dates || [] })} style={canEdit ? undefined : { cursor: 'default' }}>
-            <span className="pa-code" style={{ fontSize: 15 }}>{s.name.slice(0, 2)}</span>
-            <span className="pa-main">
-              <b>{s.name}<small className={`pa-kind k-${s.kind}`}>{en ? KIND_EN[s.kind] : s.kind}</small>{s.position && <small className="pa-kind k-pos">{en ? POS_EN[s.position] || s.position : s.position}</small>}</b>
-              <span>{[gLabel(s.gender), en ? NAT_EN[s.nationality] || s.nationality : s.nationality, (s.langs || []).map(l => (en ? LANG_EN[l] : l)).join(en ? ' / ' : '／')].filter(Boolean).join(' · ') || tr('（未填：性別、國籍、語言）', '(gender, nationality, language not filled)')}</span>
-              {p && <span className="pa-sub">{p.code} · {p.start_time}—{p.end_time} · {areaOf(en, p) || '—'}</span>}
-              {p && <span className="pa-hrs">⏱ {hoursText(en, hoursOf(p, d.slots))}</span>}
-              <span className="pa-sub">{s.rest_kind === 'weekly2' ? tr(`每週休 2 天${(s.rest_weekdays || []).length ? '：週' + s.rest_weekdays.map(w => WD[w]).join('、週') : ''}`, `2 days off weekly${(s.rest_weekdays || []).length ? ': ' + s.rest_weekdays.map(w => WD_EN[w]).join(', ') : ''}`) : s.rest_kind === 'monthly1' ? tr(`每月休 1 天${(s.rest_dates || []).length ? '：' + s.rest_dates.slice(-1)[0] : ''}`, `1 day off monthly${(s.rest_dates || []).length ? ': ' + s.rest_dates.slice(-1)[0] : ''}`) : ''}</span>
-            </span>
-          </button>
-        )
-      })}
-      {gone.length > 0 && <p className="src-note" style={{ margin: '10px 4px' }}>{tr('已停用：', 'Inactive: ')}{gone.map(s => s.name).join('、')}</p>}
-      {canEdit && <button className="fab" onClick={() => setEdit({ id: null, name: '', kind: '外判', gender: '', nationality: '', langs: [], phone: '', notes: '', old_name: '', rest_kind: 'monthly1', rest_weekdays: [], rest_dates: [], active: true })}>＋</button>}
-      {canEdit && edit && (
-        <div className="modal" onClick={e => { if (e.target === e.currentTarget) setEdit(null) }}>
-          <div className="sheet">
-            <div className="sheet-hd"><h2>{edit.id ? edit.name : tr('新增員工', 'New staff')}</h2>
-              <span className="sheet-hd-acts"><button className="mini" onClick={() => setEdit(null)}>{tr('取消', 'Cancel')}</button><button className="mini pri" onClick={save}>{tr('儲存', 'Save')}</button></span></div>
-            <div className="f-row"><label>{tr('姓名', 'Name')}</label><input value={edit.name} onChange={e => setEdit({ ...edit, name: e.target.value })} /></div>
-            {edit.old_name && <p className="src-note">{tr('舊名單名稱：', 'Previous name: ')}{edit.old_name}</p>}
-            <div style={{ display: 'flex', gap: 10 }}>
-              <div className="f-row" style={{ flex: 1 }}><label>{tr('類別', 'Type')}</label><select value={edit.kind} onChange={e => setEdit({ ...edit, kind: e.target.value, rest_kind: e.target.value === 'HSKP' ? 'weekly2' : 'monthly1' })}>{KINDS.map(k => <option key={k} value={k}>{en ? KIND_EN[k] : k}</option>)}</select></div>
-              <div className="f-row" style={{ flex: 1 }}><label>{tr('職級', 'Position')}</label><select value={edit.position || ''} onChange={e => setEdit({ ...edit, position: e.target.value })}><option value="">{tr('（一般）', '(none)')}</option><option value="組長">{tr('組長', 'Captain')}</option></select></div>
-              <div className="f-row" style={{ flex: 1 }}><label>{tr('性別', 'Gender')}</label><select value={edit.gender} onChange={e => setEdit({ ...edit, gender: e.target.value })}><option value="">{tr('（未填）', '(not set)')}</option><option value="男">{tr('男', 'Male')}</option><option value="女">{tr('女', 'Female')}</option></select></div>
-            </div>
-            <div className="f-row"><label>{tr('國籍', 'Nationality')}</label><select value={edit.nationality} onChange={e => setEdit({ ...edit, nationality: e.target.value })}><option value="">{tr('（未填）', '(not set)')}</option>{NATS.map(n => <option key={n} value={n}>{en ? NAT_EN[n] : n}</option>)}</select></div>
-            <div className="f-row"><label>{tr('識講（可多選）', 'Languages spoken')}</label>
-              <div className="chips wrap">{LANGS.map(l => <button key={l} className={`chip ${edit.langs.includes(l) ? 'on' : ''}`} onClick={() => setEdit({ ...edit, langs: tg(edit.langs, l) })}>{en ? LANG_EN[l] : l}</button>)}</div></div>
-            {edit.kind === 'HSKP'
-              ? <div className="f-row"><label>{tr('固定周假（HSKP 每週 2 天）', 'Weekly days off (HSKP: 2 days)')}</label>
-                <div className="chips wrap">{WD.map((w, i) => <button key={i} className={`chip ${edit.rest_weekdays.includes(i) ? 'on' : ''}`} onClick={() => setEdit({ ...edit, rest_weekdays: tg(edit.rest_weekdays, i) })}>{en ? WD_EN[i] : '週' + w}</button>)}</div></div>
-              : <div className="f-row"><label>{tr('休息日期（外判每月休 1 天）', 'Days off (outsourced: 1 per month)')}</label>
-                <input type="date" value="" onChange={e => e.target.value && setEdit({ ...edit, rest_dates: [...edit.rest_dates, e.target.value].sort() })} />
-                <div className="chips wrap" style={{ marginTop: 6 }}>{edit.rest_dates.map(x => <button key={x} className="chip on" onClick={() => setEdit({ ...edit, rest_dates: edit.rest_dates.filter(y => y !== x) })}>{x} ✕</button>)}</div></div>}
-            <div className="f-row"><label>{tr('電話', 'Phone')}</label><input inputMode="tel" value={edit.phone} onChange={e => setEdit({ ...edit, phone: e.target.value })} /></div>
-            <div className="f-row"><label>{tr('備註', 'Notes')}</label><input value={edit.notes} onChange={e => setEdit({ ...edit, notes: e.target.value })} /></div>
-            <button className="btn ghost sm-quiet" onClick={() => setEdit({ ...edit, active: !edit.active })}>{edit.active ? tr('標記為已離職／停用', 'Mark as left / inactive') : tr('重新啟用', 'Re-enable')}</button>
-          </div>
-        </div>
-      )}
-      {report && <ReportModal title={tr('公共地區員工名單', 'Public Area Staff Roster')} sub={todayStr()} onClose={() => setReport(false)}><ListReport data={reportData()} /></ReportModal>}
     </>
   )
 }
