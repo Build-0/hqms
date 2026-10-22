@@ -322,8 +322,8 @@ function Board({ d, load, log, staffOf, canEdit }) {
     <>
       <ToolBar label={mode === 'post' ? tr('目前崗位', 'Current post') : tr(`${posts.length} 個崗位`, `${posts.length} posts`)}><ExportBtn onClick={() => setReport(mode === 'all' ? 'matrix' : true)} /></ToolBar>
       <div className="seg" style={{ margin: '0 0 10px' }}>
-        <button className={mode === 'post' ? 'on' : ''} onClick={() => setMode('post')}>{tr('按崗位', 'By post')}</button>
         <button className={mode === 'all' ? 'on' : ''} onClick={() => setMode('all')}>{tr(`總覽（${posts.length} 崗）`, `Overview (${posts.length} posts)`)}</button>
+        <button className={mode === 'post' ? 'on' : ''} onClick={() => setMode('post')}>{tr('按崗位', 'By post')}</button>
       </div>
       {mode === 'post' && post && (
         <>
