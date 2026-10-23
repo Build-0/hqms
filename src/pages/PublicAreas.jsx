@@ -68,7 +68,7 @@ export default function PublicAreas({ session }) {
   async function log(what, detail) { try { await api.dbInsert('pa_log', { by_name: who, what, detail: detail || null }) } catch { /* 紀錄失敗不影響主要操作 */ } }
   if (!d) return <div className="note">{tr('載入中…', 'Loading…')}</div>
   const staffOf = id => d.staff.find(s => s.id === id)
-  const ctx = { d, load, log, staffOf, canEdit }
+  const ctx = { d, load, log, staffOf, canEdit, who }
 
   return (
     <LangCtx.Provider value={{ en, tr }}>
@@ -247,7 +247,7 @@ const ANNUAL_FREQ = [['定期', 'Regular'], ['不定期', 'Irregular']]
 const ANNUAL_STATUS = ['待辦', '進行中', '已完成']
 const ANNUAL_STATUS_EN = { 待辦: 'To do', 進行中: 'In progress', 已完成: 'Done' }
 
-function Annual({ log, canEdit }) {
+function Annual({ log, canEdit, who }) {
   const { en, tr } = useL()
   const [rows, setRows] = useState(null)
   const [cat, setCat] = useState(null)       // null：三張分類卡；否則顯示該分類項目
@@ -255,7 +255,13 @@ function Annual({ log, canEdit }) {
   const [edit, setEdit] = useState(null)
   const [report, setReport] = useState(false)
   const [err, setErr] = useState('')
-  const load = () => api.dbSelect('pa_annual', { order: 'sort_order' }).then(r => { setRows(r); setErr('') }).catch(ex => { setErr(ex.message); setRows(prev => prev || []) })
+  const [logs, setLogs] = useState([])           // 清潔紀錄（全部項目）
+  const [rec, setRec] = useState(null)           // 開緊邊個項目嘅紀錄視窗
+  const [nr, setNr] = useState({ done_date: todayStr(), notes: '' })
+  const load = () => {
+    api.dbSelect('pa_annual', { order: 'sort_order' }).then(r => { setRows(r); setErr('') }).catch(ex => { setErr(ex.message); setRows(prev => prev || []) })
+    api.dbSelect('pa_annual_log', { order: 'done_date', asc: false }).then(setLogs).catch(() => setLogs([]))
+  }
   useEffect(() => { load() }, [])
   if (!rows) return <div className="note">{tr('載入中…', 'Loading…')}</div>
   const catName = c => { const x = ANNUAL_CATS.find(a => a[0] === c); return en ? x[2] : x[1] }
@@ -294,6 +300,16 @@ function Annual({ log, canEdit }) {
   async function del() {
     try { await api.dbDelete('pa_annual', edit.id); await log('刪除年度清潔 ' + edit.title); toast(tr('已刪除', 'Deleted')); setEdit(null); load() } catch (ex) { toast(ex.message) }
   }
+  async function addRec() {
+    try {
+      await api.dbInsert('pa_annual_log', { annual_id: rec.id, done_date: nr.done_date || todayStr(), by_name: who || '', notes: nr.notes.trim() })
+      await log('記錄年度清潔 ' + rec.title)
+      toast(tr('已記錄', 'Recorded')); setNr({ done_date: todayStr(), notes: '' }); load()
+    } catch (ex) { toast(tr('儲存失敗：', 'Save failed: ') + ex.message) }
+  }
+  async function delRec(id) {
+    try { await api.dbDelete('pa_annual_log', id); toast(tr('已刪除', 'Deleted')); load() } catch (ex) { toast(ex.message) }
+  }
   const reportData = () => ({
     filterText: catName(cat),
     cols: [tr('項目', 'Item'), tr('區域', 'Area'), tr('頻率', 'Frequency'), tr('日期（開始至結束）', 'Date (start – end)'), tr('狀態', 'Status'), tr('標準做法', 'Standard method'), tr('備註', 'Notes')],
@@ -307,7 +323,7 @@ function Annual({ log, canEdit }) {
       {list.length === 0 && !err && <p className="src-note" style={{ margin: '14px 4px' }}>{tr('暫時未有項目。', 'No items yet.')}{canEdit ? tr('撳右下角「＋」新增。', ' Tap “＋” to add.') : ''}</p>}
       <div className="pa-grid">
         {list.map(r => (
-          <button className="pa-sq pa-an" key={r.id} onClick={() => canEdit && setEdit({ ...r, plan_date: r.plan_date || '', end_date: r.end_date || '' })} style={canEdit ? undefined : { cursor: 'default' }}>
+          <div className="pa-sq pa-an" key={r.id} role="button" tabIndex={0} onClick={() => canEdit && setEdit({ ...r, plan_date: r.plan_date || '', end_date: r.end_date || '' })} style={canEdit ? undefined : { cursor: 'default' }}>
             <span className="pa-sq-top"><em>{rangeText(r) || tr('未定日期', 'No date')}</em>{r.status && <small className={`pa-flag an-${r.status === '已完成' ? 'done' : 'todo'}`}>{stLabel(r.status)}</small>}</span>
             <b className="pa-sq-name">{r.title}</b>
             <span className="pa-sq-post">
@@ -316,7 +332,11 @@ function Annual({ log, canEdit }) {
               {r.method && <span className="an-method"><i className="an-lab">{tr('標準做法', 'Standard method')}</i>{r.method}</span>}
               {r.notes && <span className="pa-sq-area">{r.notes}</span>}
             </span>
-          </button>
+            <button className="an-rec" onClick={e => { e.stopPropagation(); setRec(r); setNr({ done_date: todayStr(), notes: '' }) }}>
+              📋 {tr('清潔紀錄', 'Records')} · {logs.filter(l => l.annual_id === r.id).length}
+              {logs.some(l => l.annual_id === r.id) && <small>{tr('最近 ', 'Last ')}{logs.find(l => l.annual_id === r.id).done_date}</small>}
+            </button>
+          </div>
         ))}
       </div>
       {canEdit && <button className="fab" onClick={() => setEdit({ id: null, cat, title: '', area: '', freq: '', plan_date: '', end_date: '', status: '待辦', method: '', notes: '' })}>＋</button>}
@@ -341,6 +361,31 @@ function Annual({ log, canEdit }) {
             <div className="f-row"><label>{tr('標準做法', 'Standard method')}</label><textarea rows={4} value={edit.method || ''} onChange={e => setEdit({ ...edit, method: e.target.value })} placeholder={tr('例：1. 用起漬劑浸 10 分鐘　2. 刷洗坐廁底　3. 清水沖淨', 'e.g. 1. soak with descaler 10 min  2. scrub under the seat  3. rinse')} /></div>
             <div className="f-row"><label>{tr('備註', 'Notes')}</label><input value={edit.notes} onChange={e => setEdit({ ...edit, notes: e.target.value })} /></div>
             {edit.id && <button className="btn danger sm-quiet" onClick={del}>{tr('刪除這項', 'Delete this item')}</button>}
+          </div>
+        </div>
+      )}
+      {rec && (
+        <div className="modal" onClick={e => { if (e.target === e.currentTarget) setRec(null) }}>
+          <div className="sheet">
+            <div className="sheet-hd"><h2>{rec.title} · {tr('清潔紀錄', 'Records')}</h2>
+              <span className="sheet-hd-acts"><button className="mini pri" onClick={() => setRec(null)}>{tr('關閉', 'Close')}</button></span></div>
+            {canEdit && (
+              <div className="an-new">
+                <div className="pa-sep first">{tr('記錄今次清潔', 'Record a cleaning')}</div>
+                <div className="f-row"><label>{tr('清潔日期', 'Date done')}</label><input type="date" value={nr.done_date} onChange={e => setNr({ ...nr, done_date: e.target.value })} /></div>
+                <div className="f-row"><label>{tr('備註（可留空）', 'Notes (optional)')}</label><input value={nr.notes} onChange={e => setNr({ ...nr, notes: e.target.value })} /></div>
+                <button className="btn" onClick={addRec}>{tr('＋ 記錄', '＋ Record')}</button>
+              </div>
+            )}
+            <div className="pa-sep">{tr('過往紀錄', 'Past records')}</div>
+            {logs.filter(l => l.annual_id === rec.id).length === 0 && <p className="src-note" style={{ margin: '8px 4px' }}>{tr('暫時未有紀錄。', 'No records yet.')}</p>}
+            {logs.filter(l => l.annual_id === rec.id).map(l => (
+              <div className="pa-log" key={l.id}>
+                <b>{l.done_date}</b>
+                <span>{l.by_name || '—'}{l.notes ? ' · ' + l.notes : ''}</span>
+                {canEdit && <button className="mini danger" onClick={() => delRec(l.id)}>{tr('刪除', 'Delete')}</button>}
+              </div>
+            ))}
           </div>
         </div>
       )}
