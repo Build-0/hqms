@@ -497,3 +497,26 @@ export async function updateStaffPerm(empId, patch) {
   throwIf(error)
   if (!data || !data.length) throw new Error('沒有權限修改，或找不到帳號')
 }
+
+export async function myItems() {
+  needDb()
+  const { data, error } = await sb.from('perm_items').select('item,level')
+  throwIf(error)
+  return Object.fromEntries((data || []).map(r => [r.item, r.level]))
+}
+export async function listPermItems() {
+  needDb()
+  const { data, error } = await sb.from('perm_items').select('emp_id,item,level')
+  throwIf(error)
+  return data || []
+}
+export async function setPermItem(empId, item, level) {
+  needDb()
+  if (!level) {
+    const { error } = await sb.from('perm_items').delete().eq('emp_id', empId).eq('item', item)
+    throwIf(error)
+  } else {
+    const { error } = await sb.from('perm_items').upsert({ emp_id: empId, item, level }, { onConflict: 'emp_id,item' })
+    throwIf(error)
+  }
+}

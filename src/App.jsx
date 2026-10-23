@@ -15,7 +15,7 @@ import Gate from './components/Gate'
 import PublicAreas from './pages/PublicAreas'
 import { runBack } from './lib/nav'
 import Confirm from './components/Confirm'
-import { getSession, clearSession, applyOverride, PERMS, ROLE_LABEL, publicPerm } from './lib/accounts'
+import { getSession, clearSession, applyOverride, permsOf, itemLevel, ITEMS, ROLE_LABEL } from './lib/accounts'
 import PermAdmin from './components/PermAdmin'
 import { toast } from './lib/toast'
 
@@ -72,10 +72,10 @@ export default function App() {
   useEffect(() => {
     if (!api.isOpen || !session) return undefined
     let on = true
-    api.myStaff().then(r => {
+    Promise.all([api.myStaff(), api.myItems().catch(() => ({}))]).then(([r, items]) => {
       if (!on || !r) return
-      const f = { role: r.role, pub: !!r.pub_sup, dev: !!r.is_dev }
-      if (session.role === f.role && !!session.pub === f.pub && !!session.dev === f.dev) return
+      const f = { role: r.role, pub: !!r.pub_sup, dev: !!r.is_dev, items }
+      if (session.role === f.role && !!session.pub === f.pub && !!session.dev === f.dev && JSON.stringify(session.items || {}) === JSON.stringify(items)) return
       applyOverride(session.key, f); setSessionState(getSession())
     }).catch(() => {})
     return () => { on = false }
@@ -119,7 +119,8 @@ export default function App() {
   }, [])
 
   if (api.isOpen && !session) return <Gate onOk={setSessionState} big={big} onBig={() => setBig(b => !b)} />
-  api.setReadOnly(!!session && PERMS[session.role].quality !== 'edit')
+  const cur0 = MODULES.find(m => m.id === tab)
+  api.setReadOnly(!!session && (cur0 ? (cur0.id !== 'public' && itemLevel(session, cur0.id) !== 'edit') : permsOf(session).quality !== 'edit'))
   if (user === undefined) return null
   if (!user) return <Login onLogin={setUser} />
 
@@ -127,12 +128,13 @@ export default function App() {
   const cur = MODULES.find(m => m.id === tab)
   const inQuality = tab === 'quality'
   // 房間品質：有「品質」權限或「查房記錄」權限（樓層主管）都可進入；樓層主管進去只見查房記錄
-  const locked = id => !!session && (id === 'public' ? publicPerm(session) === 'none' : id === 'quality' ? (PERMS[session.role].quality || 'none') === 'none' && (PERMS[session.role].findings || 'none') === 'none' : (PERMS[session.role][id] || 'none') === 'none')
-  const qFull = !session || PERMS[session.role].quality === 'edit'
+  const lvl = id => itemLevel(session, id)
+  const qMods = MODULES.filter(m => !m.embed && !m.top)
+  const locked = id => !!session && (id === 'public' ? ITEMS.filter(i => i.id.startsWith('pa_')).every(i => lvl(i.id) === 'none') : id === 'quality' ? qMods.every(m => lvl(m.id) === 'none') : lvl(id) === 'none')
   // 即使被封鎖的頁面（例如舊分頁狀態）也一律退回首頁
   if (tab !== 'home' && session && (((cur && cur.id === 'boh') && locked('boh')) || ((cur && cur.id === 'defect') && locked('defect')) || ((cur && cur.id === 'public') && locked('public')) || ((tab === 'quality' || (cur && !cur.embed && !cur.top)) && locked('quality')))) setTimeout(() => setTab('home'), 0)
   // 只有查房記錄權限（樓層主管）的帳號：其他品質模組一律退回首頁
-  if (session && !qFull && cur && !cur.embed && !cur.top && cur.id !== 'findings') setTimeout(() => setTab('home'), 0)
+  if (session && cur && !cur.embed && !cur.top && lvl(cur.id) === 'none') setTimeout(() => setTab('home'), 0)
   const hardReload = () => { location.href = location.pathname + '?v=' + Date.now() }
   async function doRefresh() {
     if (refreshing) return
@@ -149,7 +151,7 @@ export default function App() {
   const goBack = () => setTab(cur && !cur.embed && !cur.top ? 'quality' : 'home')
   const title = cur ? cur.label : inQuality ? '房間品質' : '客房公區管理系統'
   return (
-    <div className={`phone ${session && PERMS[session.role].quality !== 'edit' && (inQuality || (cur && !cur.embed && !cur.top)) && !(cur && cur.id === 'findings' && PERMS[session.role].findings === 'add') ? 'ro' : ''}`}>
+    <div className={`phone ${session && cur && !cur.embed && !cur.top && lvl(cur.id) !== 'edit' && lvl(cur.id) !== 'add' ? 'ro' : ''}`}>
       <header className={tab === 'home' ? 'hdr-home' : ''}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           {(cur || inQuality) && <button className="back-btn" onClick={() => { if (!runBack()) { cur ? goBack() : setTab('home') } }}>‹</button>}
@@ -168,7 +170,7 @@ export default function App() {
       <main className={cur?.embed ? 'embed-main' : ''}>
         {cur ? <cur.Page key={tab + ':' + rk} session={session} init={init} /> : inQuality ? (
           <div className="home-grid">
-            {MODULES.filter(m => !m.embed && !m.top && (qFull || m.id === 'findings')).map(m => (
+            {qMods.filter(m => lvl(m.id) !== 'none').map(m => (
               <button className="home-item" key={m.id} onClick={() => setTab(m.id)}>
                 <span className="hi-circle" style={{ background: m.color + '26', borderColor: 'transparent' }}><Icon name={m.icon} size={33} color={m.color} width={2.2} /></span>
                 <span className="hi-label">{m.label}</span>

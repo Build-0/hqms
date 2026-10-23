@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import * as api from '../lib/api'
 import { ToolBar, ToolBtn, ExportBtn } from '../components/ui'
-import { PERMS } from '../lib/accounts'
+import { permsOf } from '../lib/accounts'
 import { SCORE_DIMS } from '../data/seedData'
 import { todayStr, addDaysStr } from '../lib/dates'
 import { toast } from '../lib/toast'
@@ -37,8 +37,8 @@ const REPEAT_DAYS = 30
 const REPEAT_MIN = 2
 
 export default function Findings({ session }) {
-  const full = !session || PERMS[session.role].findings === 'edit'   // 管理員：名單、標籤、匯出、人員表現、刪除
-  const canEdit = !session || PERMS[session.role].findings !== 'none'   // 管理員與樓層主管：查看全部、新增、編輯（公開透明）
+  const full = permsOf(session).findings === 'edit'   // 管理員：名單、標籤、匯出、人員表現、刪除
+  const canEdit = ['add', 'edit'].includes(permsOf(session).findings)   // 管理員與樓層主管：查看全部、新增、編輯（公開透明）
   const [atts, setAtts] = useState([])
   const [tags, setTags] = useState([])
   const [topics, setTopics] = useState([])

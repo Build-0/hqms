@@ -6,7 +6,7 @@ import { toast } from '../lib/toast'
 import { PhotoGrid, PhotoField } from '../components/Photos'
 import Confirm from '../components/Confirm'
 import { ReportModal, DefectReport } from '../components/Reports'
-import { PERMS, canExport, EXPORT_MSG } from '../lib/accounts'
+import { permsOf, canExport, EXPORT_MSG } from '../lib/accounts'
 import Icon from '../components/Icon'
 import { useBack } from '../lib/nav'
 import Sofa from './Sofa'
@@ -31,7 +31,7 @@ const EMPTY = () => ({ floor: '3', roomNum: '01', type: '', severity: 'medium', 
 
 export default function Defects({ session, init }) {
   // edit＝可編輯全部；register＝只可新增登記與查看
-  const full = !session || PERMS[session.role].defect === 'edit'
+  const full = permsOf(session).defect === 'edit'
   const [list, setList] = useState(null)
   const [types, setTypes] = useState([])
   const [err, setErr] = useState('')

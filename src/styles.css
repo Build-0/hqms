@@ -1194,3 +1194,24 @@ html.rpt-open #root{visibility:hidden}
 .st2-ico{font-size:20px;width:20px;text-align:center}
 .st2-out{color:var(--red)}.st2-out .st2-lab{color:var(--red)}
 .st2-act svg.spin{animation:rfspin .8s linear infinite}
+/* 權限總表（開發者） */
+.pm-sheet.pm-wide{max-width:min(96vw,1500px);width:96vw}
+.pm-scroll{overflow:auto;max-height:68vh;border:1px solid var(--line);border-radius:12px;background:#fff}
+.pm-t{border-collapse:separate;border-spacing:0;font-size:12px}
+.pm-t th,.pm-t td{border-bottom:1px solid #e8edf0;border-right:1px solid #eef1f3;padding:4px 6px;text-align:center;white-space:nowrap}
+.pm-t thead th{position:sticky;top:0;background:#f1f4f6;z-index:3;min-width:84px}
+.pm-t thead tr:nth-child(2) th{top:54px}
+.pm-t th b{display:block;font-size:12px}.pm-t th small{display:block;font-size:10px;color:var(--sub);font-weight:500}
+.pm-t th.me{background:#e4efe9}
+.pm-corner{position:sticky;left:0;z-index:5 !important;min-width:150px !important;text-align:left !important;background:#e9edf0 !important}
+.pm-item{position:sticky;left:0;background:#fff;z-index:2;text-align:left !important;font-weight:700;min-width:150px}
+.pm-grp td{background:#d3eee7;color:#0d5c50;font-weight:800;text-align:left;font-size:12.5px;position:sticky;left:0}
+.pm-role select{font-size:11.5px;padding:3px;border-radius:7px;border:1px solid var(--line);max-width:78px}
+.pm-c{position:relative;padding:0 !important;height:34px}
+.pm-c select{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+.pm-lv{display:flex;align-items:center;justify-content:center;height:100%;font-weight:800;font-size:14px;pointer-events:none}
+.pm-c.lv-edit{background:#dcefea;color:#17624f}.pm-c.lv-add{background:#e8f1d8;color:#4a6b1c}.pm-c.lv-view{background:#e8eef6;color:#245a9e}.pm-c.lv-none{background:#f5f6f7;color:#b5bcc3}
+.pm-c.ov::after{content:'';position:absolute;top:3px;right:3px;width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 2px #fff}
+.pm-c.me{opacity:.55}
+.pm-legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:10px;font-size:12px;color:var(--sub)}
+.pm-legend span{padding:2px 8px;border-radius:8px}.pm-legend .lv-edit{background:#dcefea;color:#17624f}.pm-legend .lv-add{background:#e8f1d8;color:#4a6b1c}.pm-legend .lv-view{background:#e8eef6;color:#245a9e}.pm-legend .lv-none{background:#f5f6f7;color:#8a949c}

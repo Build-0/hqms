@@ -5,7 +5,7 @@ import { ToolBar, ExportBtn } from '../components/ui'
 import { ReportModal, ListReport } from '../components/Reports'
 import { PhotoField, PhotoGrid } from '../components/Photos'
 import { useBack } from '../lib/nav'
-import { publicPerm } from '../lib/accounts'
+import { itemLevel } from '../lib/accounts'
 import { toast } from '../lib/toast'
 import { todayStr } from '../lib/dates'
 
@@ -56,7 +56,9 @@ export default function PublicAreas({ session }) {
     return () => window.removeEventListener('pa-lang', fn)
   }, [])
   const tr = (zh, e) => (en ? e : zh)
-  const canEdit = publicPerm(session) === 'edit'
+  const lv = id => itemLevel(session, id)
+  const ce = id => lv(id) === 'edit'
+  const canEdit = false
   useBack(!!view, () => setView(null))
   useEffect(() => { if (!view) load() }, [view])   // 回到首頁選單時重新讀取（年度清潔最近紀錄日期會更新）
   async function load() {
@@ -88,7 +90,7 @@ export default function PublicAreas({ session }) {
               ['board', tr('24 小時看板', '24-hour board'), 'calendar', '#4a6fa5', tr('每崗每半小時', 'Every 30 min per post')],
               ['annual', tr('年度清潔', 'Annual cleaning'), 'drop', '#3a8fb5', (() => { const fmt = v => { const [y, m, dd] = v.split('-').map(Number); return tr(`${y}年${m}月${dd}日`, `${dd}/${m}/${y}`) }; if (lastRec) return tr('相關紀錄 ', 'Records: ') + fmt(lastRec); if (nextPlan) return tr('資料起始：', 'Data from: ') + fmt(nextPlan); return tr('相關紀錄：暫無', 'Records: none') })()],
               ['stock', tr('物資清點', 'Stock count'), 'box', '#b5603a', tr(`${stockN} 項物資`, `${stockN} items`)],
-            ].map(([k, t, ic, co, sb]) => (
+            ].filter(a => lv('pa_' + a[0]) !== 'none').map(([k, t, ic, co, sb]) => (
               <button className="home-item" key={k} onClick={() => setView(k)}>
                 <span className="hi-circle" style={{ background: co + '26', borderColor: 'transparent' }}><Icon name={ic} size={33} color={co} width={2.2} /></span>
                 <span className="hi-label">{t}</span>
@@ -97,11 +99,11 @@ export default function PublicAreas({ session }) {
             ))}
           </div>
         )}
-        {view === 'roster' && <Roster {...ctx} />}
-        {view === 'board' && <Board {...ctx} />}
-        {view === 'annual' && <Annual {...ctx} />}
-        {view === 'stock' && <Stock {...ctx} />}
-        {view === 'tasks' && <Tasks {...ctx} />}
+        {view === 'roster' && <Roster {...ctx} canEdit={ce('pa_roster')} />}
+        {view === 'board' && <Board {...ctx} canEdit={ce('pa_board')} />}
+        {view === 'annual' && <Annual {...ctx} canEdit={ce('pa_annual')} />}
+        {view === 'stock' && <Stock {...ctx} canEdit={ce('pa_stock')} />}
+        {view === 'tasks' && <Tasks {...ctx} canEdit={ce('pa_tasks')} />}
       </div>
     </LangCtx.Provider>
   )

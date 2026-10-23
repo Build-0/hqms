@@ -3,7 +3,7 @@ import { useBack } from '../lib/nav'
 import { useEffect, useRef, useState } from 'react'
 import * as api from '../lib/api'
 import { todayStr } from '../lib/dates'
-import { PERMS } from '../lib/accounts'
+import { permsOf } from '../lib/accounts'
 import { ReportModal, ListReport } from '../components/Reports'
 import Icon from '../components/Icon'
 import Chemicals from './boh/Chemicals'
@@ -22,7 +22,7 @@ const TABS = [['chem', '清潔劑', 'drop', '#2f8f9d'], ['vac', '吸塵機', 'cl
 const EMPTY = { products: [], batches: [], cats: [], vacuums: [], vacMaint: [], floors: [], tools: [], toolCats: [], equipment: [], equipMaint: [], types: [] }
 
 export default function Boh({ session, init }) {
-  const edit = !session || PERMS[session.role].boh === 'edit'
+  const edit = permsOf(session).boh === 'edit'
   const [tab, setTab] = useState(init ? 'chem' : null)   // null ＝ 圓形入口選單；從首頁摘要跳入（補貨／臨期）直接開清潔劑
   const [d, setD] = useState(null)
   const [err, setErr] = useState('')

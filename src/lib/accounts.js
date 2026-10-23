@@ -27,6 +27,50 @@ export const SUP_FLOORS = {
 // 公共地區：管理員可改；公眾主管（帳號有 pub 旗標）可查看；其他帳號沒有
 export const publicPerm = s => (!s ? 'edit' : s.role === 'admin' ? 'edit' : s.pub ? 'view' : 'none')
 
+// 逐項權限：每個「卡片」都可獨立設定 無／查看／新增／編輯（開發者喺「權限管理」設定，資料庫 perm_items 為準）
+export const ITEMS = [
+  { id: 'daily', group: '房間品質', label: '今日重點' },
+  { id: 'findings', group: '房間品質', label: '查房記錄', add: true },
+  { id: 'topics', group: '房間品質', label: '培訓主題庫' },
+  { id: 'cyclic', group: '房間品質', label: '清潔要點' },
+  { id: 'complaint', group: '房間品質', label: '客訴管理' },
+  { id: 'boh', group: '後勤管理', label: '後勤管理（整個模組）' },
+  { id: 'defect', group: '缺陷管理', label: '缺陷管理（整個模組）', add: true },
+  { id: 'pa_roster', group: '公共地區', label: '人員崗位' },
+  { id: 'pa_tasks', group: '公共地區', label: '任務代碼' },
+  { id: 'pa_board', group: '公共地區', label: '24 小時看板' },
+  { id: 'pa_annual', group: '公共地區', label: '年度清潔' },
+  { id: 'pa_stock', group: '公共地區', label: '物資清點' },
+]
+export const LEVEL_LABEL = { none: '無', view: '查看', add: '新增', edit: '編輯' }
+// 角色預設（未有逐項設定時）
+export function itemDefault(s, id) {
+  if (!s) return 'edit'
+  const r = s.role
+  if (r === 'admin') return 'edit'
+  if (r === 'store') return id === 'boh' || id === 'defect' ? 'edit' : 'none'
+  if (r === 'clerk') return id === 'defect' ? 'edit' : 'none'
+  if (r === 'supervisor') {
+    if (id === 'findings' || id === 'defect') return 'add'
+    if (id.startsWith('pa_')) return s.pub ? 'view' : 'none'
+  }
+  return 'none'
+}
+export const itemLevel = (s, id) => (!s ? 'edit' : (s.items && s.items[id]) || itemDefault(s, id))
+// 舊式「PERMS」形狀（Home／Boh／Defects／Findings 等頁面沿用），由逐項等級計算
+export function permsOf(s) {
+  if (!s) return { quality: 'edit', findings: 'edit', boh: 'edit', defect: 'edit', public: 'edit' }
+  const q = ['daily', 'topics', 'cyclic', 'complaint'].map(i => itemLevel(s, i))
+  const d = itemLevel(s, 'defect')
+  return {
+    quality: q.every(x => x === 'edit') ? 'edit' : q.some(x => x !== 'none') ? 'view' : 'none',
+    findings: itemLevel(s, 'findings'),
+    boh: itemLevel(s, 'boh'),
+    defect: d === 'add' ? 'register' : d,
+    public: ITEMS.filter(i => i.id.startsWith('pa_')).some(i => itemLevel(s, i.id) !== 'none') ? 'view' : 'none',
+  }
+}
+
 export const ACCOUNTS = [
   { key: '101428', id: '101428', name: 'Benny Liang', role: 'admin' },
   { key: '100663', id: '100663', name: 'Winnie Weng', role: 'admin' },

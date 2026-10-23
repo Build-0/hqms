@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import * as api from '../lib/api'
 import { addDaysStr, todayStr } from '../lib/dates'
-import { PERMS, SUP_FLOORS } from '../lib/accounts'
+import { permsOf, SUP_FLOORS } from '../lib/accounts'
 import { SOFA_ROOMS, SOFA_TYPE } from '../data/sofaRooms'
 
 const num = v => parseInt(v, 10) || 0
@@ -9,7 +9,7 @@ const dleft = d => Math.round((new Date(d + 'T00:00:00') - new Date(todayStr() +
 
 // 首頁「今日概覽」：只顯示此帳號有權限查看的系統數字，撳一下直接跳去對應頁面
 export default function Home({ session, go }) {
-  const perm = session ? PERMS[session.role] : { quality: 'edit', boh: 'edit', defect: 'edit' }
+  const perm = permsOf(session)
   const [d, setD] = useState({})
 
   useEffect(() => {
