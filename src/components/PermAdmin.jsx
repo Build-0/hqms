@@ -33,7 +33,7 @@ export default function PermAdmin({ session, onClose }) {
       <div className="sheet pm-sheet">
         <div className="sheet-hd"><h2>權限管理（開發者）</h2><span className="sheet-hd-acts"><button className="mini pri" onClick={onClose}>關閉</button></span></div>
         <p className="src-note" style={{ margin: '0 0 8px', lineHeight: 1.6 }}>
-          共 {rows ? rows.length : '…'} 個帳號。修改後，對方下次登入或刷新頁面即生效。權限以「角色」為單位，由資料庫把關；本人帳號的角色及開發者權限不可在此修改，避免鎖死自己。
+          共 {rows ? rows.length : '…'} 個帳號。修改後，對方下次登入或刷新頁面即生效。權限以「角色」為單位，由資料庫把關；本人帳號的角色不可在此修改，避免鎖死自己。
         </p>
         <input className="search-inp" placeholder="搜尋姓名或員工編號" value={q} onChange={e => setQ(e.target.value)} style={{ marginBottom: 8 }} />
         {err && <div className="card" style={{ borderColor: 'var(--red)' }}><p style={{ fontSize: 13, lineHeight: 1.7 }}>讀取失敗：{err}</p></div>}
@@ -46,7 +46,7 @@ export default function PermAdmin({ session, onClose }) {
               <div className="pm-ctl">
                 <select value={r.role} disabled={me} onChange={e => change(r, { role: e.target.value })}>{ROLES.map(x => <option key={x} value={x}>{ROLE_LABEL[x]}</option>)}</select>
                 <label className={'pm-chk' + (r.role === 'admin' ? ' off' : '')}><input type="checkbox" checked={r.role === 'admin' ? true : !!r.pub_sup} disabled={r.role === 'admin'} onChange={e => change(r, { pub_sup: e.target.checked })} />公共地區可查看</label>
-                <label className={'pm-chk'}><input type="checkbox" checked={!!r.is_dev} disabled={me} onChange={e => change(r, { is_dev: e.target.checked })} />開發者</label>
+                {r.is_dev && <span className="pm-dev">開發者</span>}
               </div>
               <div className="pm-seen">{seen(r.role, r.pub_sup, r.is_dev).map(t => <span key={t}>{t}</span>)}</div>
             </div>
