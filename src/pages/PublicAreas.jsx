@@ -275,11 +275,12 @@ function Annual({ log, canEdit }) {
     )
   }
   const list = rows.filter(r => r.cat === cat).sort((a, b) => String(a.plan_date || '9999').localeCompare(String(b.plan_date || '9999')) || a.sort_order - b.sort_order)
+  const rangeText = r => (r.plan_date ? (r.end_date && r.end_date !== r.plan_date ? r.plan_date + ' → ' + r.end_date : r.plan_date) : '')
   const stLabel = s => (en ? ANNUAL_STATUS_EN[s] || s : s)
   async function save() {
     const e = edit
     if (!e.title.trim()) { toast(tr('請填項目', 'Item required')); return }
-    const row = { cat: e.cat, title: e.title.trim(), area: e.area.trim(), freq: e.freq.trim(), plan_date: e.plan_date || null, status: e.status, notes: e.notes.trim() }
+    const row = { cat: e.cat, title: e.title.trim(), area: e.area.trim(), freq: e.freq.trim(), plan_date: e.plan_date || null, end_date: e.end_date || null, status: e.status, notes: e.notes.trim() }
     try {
       if (e.id) { await api.dbUpdate('pa_annual', e.id, row); await log('修改年度清潔 ' + row.title) }
       else { await api.dbInsert('pa_annual', { ...row, sort_order: rows.length + 1 }); await log('新增年度清潔 ' + row.title) }
@@ -291,8 +292,8 @@ function Annual({ log, canEdit }) {
   }
   const reportData = () => ({
     filterText: catName(cat),
-    cols: [tr('項目', 'Item'), tr('區域', 'Area'), tr('頻率', 'Frequency'), tr('日期', 'Date'), tr('狀態', 'Status'), tr('備註', 'Notes')],
-    groups: [{ name: catName(cat), rows: list.map(r => ({ cells: [r.title, r.area || '—', r.freq || '—', r.plan_date || '—', stLabel(r.status) || '—', r.notes || '—'] })) }],
+    cols: [tr('項目', 'Item'), tr('區域', 'Area'), tr('頻率', 'Frequency'), tr('日期（開始至結束）', 'Date (start – end)'), tr('狀態', 'Status'), tr('備註', 'Notes')],
+    groups: [{ name: catName(cat), rows: list.map(r => ({ cells: [r.title, r.area || '—', r.freq || '—', rangeText(r) || '—', stLabel(r.status) || '—', r.notes || '—'] })) }],
   })
   return (
     <>
@@ -302,8 +303,8 @@ function Annual({ log, canEdit }) {
       {list.length === 0 && !err && <p className="src-note" style={{ margin: '14px 4px' }}>{tr('暫時未有項目。', 'No items yet.')}{canEdit ? tr('撳右下角「＋」新增。', ' Tap “＋” to add.') : ''}</p>}
       <div className="pa-grid">
         {list.map(r => (
-          <button className="pa-sq pa-an" key={r.id} onClick={() => canEdit && setEdit({ ...r, plan_date: r.plan_date || '' })} style={canEdit ? undefined : { cursor: 'default' }}>
-            <span className="pa-sq-top">{r.plan_date ? <em>{r.plan_date}</em> : <em>{tr('未定日期', 'No date')}</em>}{r.status && <small className={`pa-flag an-${r.status === '已完成' ? 'done' : 'todo'}`}>{stLabel(r.status)}</small>}</span>
+          <button className="pa-sq pa-an" key={r.id} onClick={() => canEdit && setEdit({ ...r, plan_date: r.plan_date || '', end_date: r.end_date || '' })} style={canEdit ? undefined : { cursor: 'default' }}>
+            <span className="pa-sq-top"><em>{rangeText(r) || tr('未定日期', 'No date')}</em>{r.status && <small className={`pa-flag an-${r.status === '已完成' ? 'done' : 'todo'}`}>{stLabel(r.status)}</small>}</span>
             <b className="pa-sq-name">{r.title}</b>
             <span className="pa-sq-post">
               {r.area && <span>{r.area}</span>}
@@ -313,7 +314,7 @@ function Annual({ log, canEdit }) {
           </button>
         ))}
       </div>
-      {canEdit && <button className="fab" onClick={() => setEdit({ id: null, cat, title: '', area: '', freq: '', plan_date: '', status: '待辦', notes: '' })}>＋</button>}
+      {canEdit && <button className="fab" onClick={() => setEdit({ id: null, cat, title: '', area: '', freq: '', plan_date: '', end_date: '', status: '待辦', notes: '' })}>＋</button>}
       {canEdit && edit && (
         <div className="modal" onClick={e => { if (e.target === e.currentTarget) setEdit(null) }}>
           <div className="sheet">
@@ -325,7 +326,10 @@ function Annual({ log, canEdit }) {
             <div className="f-row"><label>{tr('區域', 'Area')}</label><input value={edit.area} onChange={e => setEdit({ ...edit, area: e.target.value })} /></div>
             <div style={{ display: 'flex', gap: 10 }}>
               <div className="f-row" style={{ flex: 1 }}><label>{tr('頻率', 'Frequency')}</label><input value={edit.freq} onChange={e => setEdit({ ...edit, freq: e.target.value })} placeholder={tr('例：每月一次', 'e.g. monthly')} /></div>
-              <div className="f-row" style={{ flex: 1 }}><label>{tr('日期', 'Date')}</label><input type="date" value={edit.plan_date} onChange={e => setEdit({ ...edit, plan_date: e.target.value })} /></div>
+            </div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <div className="f-row" style={{ flex: 1 }}><label>{tr('開始日期', 'Start date')}</label><input type="date" value={edit.plan_date} onChange={e => setEdit({ ...edit, plan_date: e.target.value, end_date: edit.end_date && edit.end_date < e.target.value ? e.target.value : edit.end_date })} /></div>
+              <div className="f-row" style={{ flex: 1 }}><label>{tr('結束日期', 'End date')}</label><input type="date" value={edit.end_date} min={edit.plan_date || undefined} onChange={e => setEdit({ ...edit, end_date: e.target.value })} /></div>
             </div>
             <div className="f-row"><label>{tr('狀態', 'Status')}</label>
               <select value={edit.status} onChange={e => setEdit({ ...edit, status: e.target.value })}><option value="">{tr('（未設定）', '(none)')}</option>{ANNUAL_STATUS.map(s => <option key={s} value={s}>{stLabel(s)}</option>)}</select></div>
