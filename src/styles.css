@@ -1134,3 +1134,8 @@ html.rpt-open #root{visibility:hidden}
 .pa-an .pa-sq-post{gap:4px}
 .an-lab{display:block;font-style:normal;font-size:10.5px;font-weight:800;color:var(--accent);letter-spacing:.3px}
 .an-method{display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-line}
+/* 公共地區電腦版首頁：卡片闊度跟欄、唔好疊埋 */
+@media (min-width:900px){
+  .pa-wrap .home-grid,.pa-wrap .home-grid.sub-grid{grid-template-columns:repeat(3,210px);gap:26px 24px;padding:48px 30px}
+  .pa-wrap .home-grid .home-item{width:100% !important;min-width:0}
+}
