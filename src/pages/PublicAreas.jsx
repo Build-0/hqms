@@ -258,7 +258,16 @@ async function zhToEn(texts) {
   if (typeof self === 'undefined' || !('Translator' in self)) throw new Error('NOSUPPORT')
   const tr = await self.Translator.create({ sourceLanguage: 'zh-Hant', targetLanguage: 'en' })
   const out = []
-  for (const t of texts) out.push(t && t.trim() ? await tr.translate(t) : '')
+  // 逐行翻譯，保留換行；再將「…… 3. 」呢類同一行嘅步驟編號拆行
+  for (const t of texts) {
+    if (!t || !t.trim()) { out.push(''); continue }
+    const lines = []
+    for (const ln of t.split('
+')) lines.push(ln.trim() ? await tr.translate(ln) : '')
+    out.push(lines.join('
+').replace(/[ 	]+(?=d+.[ 	])/g, '
+'))
+  }
   return out
 }
 const ANNUAL_STATUS = ['待辦', '進行中', '已完成']
