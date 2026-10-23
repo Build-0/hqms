@@ -1152,3 +1152,5 @@ html.rpt-open #root{visibility:hidden}
 .pa-ba{margin-top:8px}
 
 .st-qty{font-size:20px;font-weight:800;color:var(--accent)}.st-qty small{font-size:12px;font-weight:600;color:var(--sub)}.st-qty.low{color:#b3342a}
+/* 報告表格：保留輸入時嘅換行（例如標準做法嘅 1. 2. 3. 步驟） */
+.rpt-t td{white-space:pre-line}
