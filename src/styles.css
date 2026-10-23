@@ -1225,3 +1225,15 @@ html.rpt-open #root{visibility:hidden}
 .mxr-ft td{background:#f1f4f6;font-weight:800;text-align:center;border-top:1.5px solid #9aa7b1}
 .mxr-ft td small{display:block;font-size:8px;font-weight:600;color:#6b7785}
 @media print{.rpt-print.rpt-wide{zoom:.82}}
+/* 權限總表：分組摺疊 */
+.pm-tools{display:flex;gap:8px;align-items:center;margin-bottom:8px}.pm-tools .search-inp{flex:1}
+.pm-t thead tr.pm-ghd th{top:0}
+.pm-t thead tr:nth-child(2) th{top:34px}
+.pm-g{padding:0 !important;height:34px}
+.pm-g button{width:100%;height:34px;border:none;background:transparent;font:800 12.5px/1 inherit;font-family:inherit;color:#fff;cursor:pointer;white-space:nowrap;padding:0 10px;text-align:left}
+.pm-g-dev{background:#2a2f36 !important}.pm-g-admin{background:#0d5c50 !important}.pm-g-store{background:#4a6fa5 !important}.pm-g-clerk{background:#7a6a4f !important}.pm-g-pubsup{background:#8a6d3b !important}.pm-g-supervisor{background:#6a7782 !important}
+.pm-p select{display:block;margin:3px auto 0;font-size:10.5px;padding:2px;border-radius:6px;border:1px solid var(--line);max-width:78px}
+.pm-sum{background:#eef3f1 !important}
+.pm-sumc{box-shadow:inset 0 0 0 1px #c9d3cf}
+.pm-c.lv-mix{background:#fdf1d6;color:#8a5a00}
+.pm-legend .lv-mix{background:#fdf1d6;color:#8a5a00}
