@@ -280,7 +280,7 @@ function Annual({ log, canEdit }) {
   async function save() {
     const e = edit
     if (!e.title.trim()) { toast(tr('請填項目', 'Item required')); return }
-    const row = { cat: e.cat, title: e.title.trim(), area: e.area.trim(), freq: e.freq.trim(), plan_date: e.plan_date || null, end_date: e.end_date || null, status: e.status, notes: e.notes.trim() }
+    const row = { cat: e.cat, title: e.title.trim(), area: e.area.trim(), freq: e.freq.trim(), method: (e.method || '').trim(), plan_date: e.plan_date || null, end_date: e.end_date || null, status: e.status, notes: e.notes.trim() }
     try {
       if (e.id) { await api.dbUpdate('pa_annual', e.id, row); await log('修改年度清潔 ' + row.title) }
       else { await api.dbInsert('pa_annual', { ...row, sort_order: rows.length + 1 }); await log('新增年度清潔 ' + row.title) }
@@ -292,8 +292,8 @@ function Annual({ log, canEdit }) {
   }
   const reportData = () => ({
     filterText: catName(cat),
-    cols: [tr('項目', 'Item'), tr('區域', 'Area'), tr('頻率', 'Frequency'), tr('日期（開始至結束）', 'Date (start – end)'), tr('狀態', 'Status'), tr('備註', 'Notes')],
-    groups: [{ name: catName(cat), rows: list.map(r => ({ cells: [r.title, r.area || '—', r.freq || '—', rangeText(r) || '—', stLabel(r.status) || '—', r.notes || '—'] })) }],
+    cols: [tr('項目', 'Item'), tr('區域', 'Area'), tr('頻率', 'Frequency'), tr('日期（開始至結束）', 'Date (start – end)'), tr('狀態', 'Status'), tr('標準做法', 'Standard method'), tr('備註', 'Notes')],
+    groups: [{ name: catName(cat), rows: list.map(r => ({ cells: [r.title, r.area || '—', r.freq || '—', rangeText(r) || '—', stLabel(r.status) || '—', r.method || '—', r.notes || '—'] })) }],
   })
   return (
     <>
@@ -307,14 +307,15 @@ function Annual({ log, canEdit }) {
             <span className="pa-sq-top"><em>{rangeText(r) || tr('未定日期', 'No date')}</em>{r.status && <small className={`pa-flag an-${r.status === '已完成' ? 'done' : 'todo'}`}>{stLabel(r.status)}</small>}</span>
             <b className="pa-sq-name">{r.title}</b>
             <span className="pa-sq-post">
-              {r.area && <span>{r.area}</span>}
-              {r.freq && <span className="pa-hrs">{r.freq}</span>}
+              {r.area && <span><i className="an-lab">{tr('區域', 'Area')}</i>{r.area}</span>}
+              {r.freq && <span className="pa-hrs"><i className="an-lab">{tr('頻率', 'Frequency')}</i>{r.freq}</span>}
+              {r.method && <span className="an-method"><i className="an-lab">{tr('標準做法', 'Standard method')}</i>{r.method}</span>}
               {r.notes && <span className="pa-sq-area">{r.notes}</span>}
             </span>
           </button>
         ))}
       </div>
-      {canEdit && <button className="fab" onClick={() => setEdit({ id: null, cat, title: '', area: '', freq: '', plan_date: '', end_date: '', status: '待辦', notes: '' })}>＋</button>}
+      {canEdit && <button className="fab" onClick={() => setEdit({ id: null, cat, title: '', area: '', freq: '', plan_date: '', end_date: '', status: '待辦', method: '', notes: '' })}>＋</button>}
       {canEdit && edit && (
         <div className="modal" onClick={e => { if (e.target === e.currentTarget) setEdit(null) }}>
           <div className="sheet">
@@ -333,6 +334,7 @@ function Annual({ log, canEdit }) {
             </div>
             <div className="f-row"><label>{tr('狀態', 'Status')}</label>
               <select value={edit.status} onChange={e => setEdit({ ...edit, status: e.target.value })}><option value="">{tr('（未設定）', '(none)')}</option>{ANNUAL_STATUS.map(s => <option key={s} value={s}>{stLabel(s)}</option>)}</select></div>
+            <div className="f-row"><label>{tr('標準做法', 'Standard method')}</label><textarea rows={4} value={edit.method || ''} onChange={e => setEdit({ ...edit, method: e.target.value })} placeholder={tr('例：1. 用起漬劑浸 10 分鐘　2. 刷洗坐廁底　3. 清水沖淨', 'e.g. 1. soak with descaler 10 min  2. scrub under the seat  3. rinse')} /></div>
             <div className="f-row"><label>{tr('備註', 'Notes')}</label><input value={edit.notes} onChange={e => setEdit({ ...edit, notes: e.target.value })} /></div>
             {edit.id && <button className="btn danger sm-quiet" onClick={del}>{tr('刪除這項', 'Delete this item')}</button>}
           </div>

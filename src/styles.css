@@ -1130,3 +1130,7 @@ html.rpt-open #root{visibility:hidden}
 @media (min-width:900px){
   .pa-wrap .home-grid,.pa-wrap .home-grid.sub-grid{display:grid;grid-template-columns:repeat(3,132px);justify-content:center;gap:36px 32px}
 }
+/* 年度清潔卡：每行有標籤，睇得明邊個係咩 */
+.pa-an .pa-sq-post{gap:4px}
+.an-lab{display:block;font-style:normal;font-size:10.5px;font-weight:800;color:var(--accent);letter-spacing:.3px}
+.an-method{display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-line}
