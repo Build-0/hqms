@@ -7,6 +7,8 @@ import { toast } from '../lib/toast'
 // 每格 = 預設（跟角色）／無／查看／新增／編輯。有改過（同角色預設唔同）嘅格有記號。
 // 資料庫（RLS）會跟住逐項權限：授權即可讀取／新增／編輯；設為「無」即收回。
 const ROLES = ['admin', 'store', 'clerk', 'supervisor']
+// 排序：開發者 → 管理員 → 倉管員 → 文員 → 樓層主管（同組按員工編號）
+const rank = r => (r.is_dev ? 0 : 1 + ROLES.indexOf(r.role))
 const SHORT = { none: '無', view: '看', add: '增', edit: '改' }
 
 export default function PermAdmin({ session, onClose }) {
@@ -20,7 +22,7 @@ export default function PermAdmin({ session, onClose }) {
     setStaff(s); setOv(m); setErr('')
   }).catch(ex => { setErr(ex.message); setStaff(prev => prev || []) })
   useEffect(() => { load() }, [])
-  const people = useMemo(() => (staff || []).filter(r => !q.trim() || (r.name + r.emp_id).toLowerCase().includes(q.trim().toLowerCase())), [staff, q])
+  const people = useMemo(() => (staff || []).filter(r => !q.trim() || (r.name + r.emp_id).toLowerCase().includes(q.trim().toLowerCase())).sort((a, b) => rank(a) - rank(b) || String(a.emp_id).localeCompare(String(b.emp_id))), [staff, q])
   const eff = (r, id) => (ov[r.emp_id] && ov[r.emp_id][id]) || itemDefault({ role: r.role, pub: r.pub_sup }, id)
 
   async function setLevel(r, id, level) {
