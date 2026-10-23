@@ -68,7 +68,7 @@ export default function PublicAreas({ session }) {
       setD({ staff, posts, tasks, slots }); setErr('')
       api.dbSelect('pa_annual_log', { order: 'done_date', asc: false }).then(r => setLastRec((r[0] && r[0].done_date) || '')).catch(() => setLastRec(''))
       api.dbSelect('pa_stock', { order: 'sort_order' }).then(r => setStockN(r.length)).catch(() => setStockN(0))
-      api.dbSelect('pa_annual', { order: 'plan_date' }).then(r => { const t = todayStr(); const ds = r.map(x => x.plan_date).filter(Boolean).sort(); setNextPlan(ds.find(x => x >= t) || ds[ds.length - 1] || '') }).catch(() => setNextPlan(''))
+      api.dbSelect('pa_annual', { order: 'plan_date' }).then(r => { const t = todayStr(); const ds = r.map(x => x.plan_date).filter(Boolean).sort(); setNextPlan(ds[0] || '') }).catch(() => setNextPlan(''))
     } catch (ex) { setErr(ex.message); setD(prev => prev || { staff: [], posts: [], tasks: [], slots: [] }) }
   }
   const who = session ? session.name : ''
@@ -86,7 +86,7 @@ export default function PublicAreas({ session }) {
             {[['roster', tr('人員崗位', 'Staff & posts'), 'people', '#1f7a6d', tr(`${d.staff.filter(x => x.active).length} 位在職 · ${d.posts.filter(p => p.active).length} 個崗位`, `${d.staff.filter(x => x.active).length} staff · ${d.posts.filter(p => p.active).length} posts`)],
               ['tasks', tr('任務代碼', 'Task codes'), 'book', '#b5603a', tr(`${d.tasks.length} 個任務`, `${d.tasks.length} tasks`)],
               ['board', tr('24 小時看板', '24-hour board'), 'calendar', '#4a6fa5', tr('每崗每半小時', 'Every 30 min per post')],
-              ['annual', tr('年度清潔', 'Annual cleaning'), 'drop', '#3a8fb5', (() => { const fmt = v => { const [y, m, dd] = v.split('-').map(Number); return tr(`${y}年${m}月${dd}號`, `${dd}/${m}/${y}`) }; if (lastRec) return tr('相關紀錄 ', 'Records: ') + fmt(lastRec); if (nextPlan) return tr('計劃清潔 ', 'Planned: ') + fmt(nextPlan); return tr('相關紀錄：暫無', 'Records: none') })()],
+              ['annual', tr('年度清潔', 'Annual cleaning'), 'drop', '#3a8fb5', (() => { const fmt = v => { const [y, m, dd] = v.split('-').map(Number); return tr(`${y}年${m}月${dd}日`, `${dd}/${m}/${y}`) }; if (lastRec) return tr('相關紀錄 ', 'Records: ') + fmt(lastRec); if (nextPlan) return tr('資料起始：', 'Data from: ') + fmt(nextPlan); return tr('相關紀錄：暫無', 'Records: none') })()],
               ['stock', tr('物資清點', 'Stock count'), 'box', '#b5603a', tr(`${stockN} 項物資`, `${stockN} items`)],
             ].map(([k, t, ic, co, sb]) => (
               <button className="home-item" key={k} onClick={() => setView(k)}>
