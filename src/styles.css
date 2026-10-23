@@ -1123,3 +1123,6 @@ html.rpt-open #root{visibility:hidden}
   .rpt-deskbar .rpt-btn.ghost{background:rgba(255,255,255,.18);color:#fff;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.6)}
   .rpt-foot{display:none !important}
 }
+
+.pa-flag.an-done{background:#dcefea;color:#17624f}.pa-flag.an-todo{background:#f6e7c6;color:#8a5a00}
+.pa-an{aspect-ratio:auto;min-height:150px}

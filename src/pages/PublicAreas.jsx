@@ -79,6 +79,7 @@ export default function PublicAreas({ session }) {
             {[['roster', tr('人員崗位', 'Staff & posts'), 'people', '#1f7a6d', tr(`${d.staff.filter(x => x.active).length} 位在職 · ${d.posts.filter(p => p.active).length} 個崗位`, `${d.staff.filter(x => x.active).length} staff · ${d.posts.filter(p => p.active).length} posts`)],
               ['tasks', tr('任務代碼', 'Task codes'), 'book', '#b5603a', tr(`${d.tasks.length} 個任務`, `${d.tasks.length} tasks`)],
               ['board', tr('24 小時看板', '24-hour board'), 'calendar', '#4a6fa5', tr('每崗每半小時', 'Every 30 min per post')],
+              ['annual', tr('年度清潔', 'Annual cleaning'), 'drop', '#3a8fb5', tr('水池、寫字樓、跟進表', 'Pond, offices, follow-up')],
             ].map(([k, t, ic, co, sb]) => (
               <button className="home-item" key={k} onClick={() => setView(k)}>
                 <span className="hi-circle" style={{ background: co + '26', borderColor: 'transparent' }}><Icon name={ic} size={33} color={co} width={2.2} /></span>
@@ -90,6 +91,7 @@ export default function PublicAreas({ session }) {
         )}
         {view === 'roster' && <Roster {...ctx} />}
         {view === 'board' && <Board {...ctx} />}
+        {view === 'annual' && <Annual {...ctx} />}
         {view === 'tasks' && <Tasks {...ctx} />}
       </div>
     </LangCtx.Provider>
@@ -234,11 +236,98 @@ function Roster({ d, load, log, staffOf, canEdit }) {
   )
 }
 
+/* ───────── 年度清潔（皇宮水池、後勤寫字樓、非日常清潔跟進） ───────── */
+const ANNUAL_CATS = [
+  ['pool', '皇宮水池清潔時間', 'Palace pond cleaning times'],
+  ['office', '後勤寫字樓清潔時間表', 'Back-office cleaning schedule'],
+  ['offroutine', '非日常清潔衛生跟進表', 'Non-routine cleaning follow-up'],
+]
+const ANNUAL_STATUS = ['待辦', '進行中', '已完成']
+const ANNUAL_STATUS_EN = { 待辦: 'To do', 進行中: 'In progress', 已完成: 'Done' }
+
+function Annual({ log, canEdit }) {
+  const { en, tr } = useL()
+  const [rows, setRows] = useState(null)
+  const [cat, setCat] = useState('pool')
+  const [edit, setEdit] = useState(null)
+  const [report, setReport] = useState(false)
+  const [err, setErr] = useState('')
+  const load = () => api.dbSelect('pa_annual', { order: 'sort_order' }).then(r => { setRows(r); setErr('') }).catch(ex => { setErr(ex.message); setRows(prev => prev || []) })
+  useEffect(() => { load() }, [])
+  if (!rows) return <div className="note">{tr('載入中…', 'Loading…')}</div>
+  const catName = c => { const x = ANNUAL_CATS.find(a => a[0] === c); return en ? x[2] : x[1] }
+  const list = rows.filter(r => r.cat === cat).sort((a, b) => String(a.plan_date || '9999').localeCompare(String(b.plan_date || '9999')) || a.sort_order - b.sort_order)
+  const stLabel = s => (en ? ANNUAL_STATUS_EN[s] || s : s)
+  async function save() {
+    const e = edit
+    if (!e.title.trim()) { toast(tr('請填項目', 'Item required')); return }
+    const row = { cat: e.cat, title: e.title.trim(), area: e.area.trim(), freq: e.freq.trim(), plan_date: e.plan_date || null, status: e.status, notes: e.notes.trim() }
+    try {
+      if (e.id) { await api.dbUpdate('pa_annual', e.id, row); await log('修改年度清潔 ' + row.title) }
+      else { await api.dbInsert('pa_annual', { ...row, sort_order: rows.length + 1 }); await log('新增年度清潔 ' + row.title) }
+      toast(tr('已儲存', 'Saved')); setEdit(null); load()
+    } catch (ex) { toast(tr('儲存失敗：', 'Save failed: ') + ex.message) }
+  }
+  async function del() {
+    try { await api.dbDelete('pa_annual', edit.id); await log('刪除年度清潔 ' + edit.title); toast(tr('已刪除', 'Deleted')); setEdit(null); load() } catch (ex) { toast(ex.message) }
+  }
+  const reportData = () => ({
+    filterText: catName(cat),
+    cols: [tr('項目', 'Item'), tr('區域', 'Area'), tr('頻率', 'Frequency'), tr('日期', 'Date'), tr('狀態', 'Status'), tr('備註', 'Notes')],
+    groups: [{ name: catName(cat), rows: list.map(r => ({ cells: [r.title, r.area || '—', r.freq || '—', r.plan_date || '—', stLabel(r.status) || '—', r.notes || '—'] })) }],
+  })
+  return (
+    <>
+      <ToolBar label={tr(`共 ${list.length} 項`, `${list.length} items`)}><ExportBtn onClick={() => setReport(true)} /></ToolBar>
+      <div className="seg" style={{ margin: '0 0 10px', flexDirection: 'column' }}>
+        {ANNUAL_CATS.map(([k, zh, e]) => <button key={k} className={cat === k ? 'on' : ''} onClick={() => setCat(k)}>{en ? e : zh}</button>)}
+      </div>
+      {err && <div className="card" style={{ borderColor: 'var(--red)' }}><p style={{ fontSize: 13, lineHeight: 1.7 }}>{tr('讀取失敗：', 'Failed to load: ')}{err}</p></div>}
+      {list.length === 0 && !err && <p className="src-note" style={{ margin: '14px 4px' }}>{tr('暫時未有項目。', 'No items yet.')}{canEdit ? tr('撳右下角「＋」新增。', ' Tap “＋” to add.') : ''}</p>}
+      <div className="pa-grid">
+        {list.map(r => (
+          <button className="pa-sq pa-an" key={r.id} onClick={() => canEdit && setEdit({ ...r, plan_date: r.plan_date || '' })} style={canEdit ? undefined : { cursor: 'default' }}>
+            <span className="pa-sq-top">{r.plan_date ? <em>{r.plan_date}</em> : <em>{tr('未定日期', 'No date')}</em>}{r.status && <small className={`pa-flag an-${r.status === '已完成' ? 'done' : 'todo'}`}>{stLabel(r.status)}</small>}</span>
+            <b className="pa-sq-name">{r.title}</b>
+            <span className="pa-sq-post">
+              {r.area && <span>{r.area}</span>}
+              {r.freq && <span className="pa-hrs">{r.freq}</span>}
+              {r.notes && <span className="pa-sq-area">{r.notes}</span>}
+            </span>
+          </button>
+        ))}
+      </div>
+      {canEdit && <button className="fab" onClick={() => setEdit({ id: null, cat, title: '', area: '', freq: '', plan_date: '', status: '待辦', notes: '' })}>＋</button>}
+      {canEdit && edit && (
+        <div className="modal" onClick={e => { if (e.target === e.currentTarget) setEdit(null) }}>
+          <div className="sheet">
+            <div className="sheet-hd"><h2>{edit.id ? edit.title : tr('新增項目', 'New item')}</h2>
+              <span className="sheet-hd-acts"><button className="mini" onClick={() => setEdit(null)}>{tr('取消', 'Cancel')}</button><button className="mini pri" onClick={save}>{tr('儲存', 'Save')}</button></span></div>
+            <div className="f-row"><label>{tr('類別', 'Category')}</label>
+              <select value={edit.cat} onChange={e => setEdit({ ...edit, cat: e.target.value })}>{ANNUAL_CATS.map(([k, zh, e2]) => <option key={k} value={k}>{en ? e2 : zh}</option>)}</select></div>
+            <div className="f-row"><label>{tr('項目', 'Item')}</label><input value={edit.title} onChange={e => setEdit({ ...edit, title: e.target.value })} /></div>
+            <div className="f-row"><label>{tr('區域', 'Area')}</label><input value={edit.area} onChange={e => setEdit({ ...edit, area: e.target.value })} /></div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <div className="f-row" style={{ flex: 1 }}><label>{tr('頻率', 'Frequency')}</label><input value={edit.freq} onChange={e => setEdit({ ...edit, freq: e.target.value })} placeholder={tr('例：每月一次', 'e.g. monthly')} /></div>
+              <div className="f-row" style={{ flex: 1 }}><label>{tr('日期', 'Date')}</label><input type="date" value={edit.plan_date} onChange={e => setEdit({ ...edit, plan_date: e.target.value })} /></div>
+            </div>
+            <div className="f-row"><label>{tr('狀態', 'Status')}</label>
+              <select value={edit.status} onChange={e => setEdit({ ...edit, status: e.target.value })}><option value="">{tr('（未設定）', '(none)')}</option>{ANNUAL_STATUS.map(s => <option key={s} value={s}>{stLabel(s)}</option>)}</select></div>
+            <div className="f-row"><label>{tr('備註', 'Notes')}</label><input value={edit.notes} onChange={e => setEdit({ ...edit, notes: e.target.value })} /></div>
+            {edit.id && <button className="btn danger sm-quiet" onClick={del}>{tr('刪除這項', 'Delete this item')}</button>}
+          </div>
+        </div>
+      )}
+      {report && <ReportModal title={tr('年度清潔', 'Annual cleaning') + ' · ' + catName(cat)} sub={todayStr()} onClose={() => setReport(false)}><ListReport data={reportData()} /></ReportModal>}
+    </>
+  )
+}
+
 /* ───────── 24 小時看板 ───────── */
 function Board({ d, load, log, staffOf, canEdit }) {
   const { en, tr } = useL()
   const posts = d.posts.filter(p => p.active).sort((a, b) => a.sort_order - b.sort_order)
-  const [mode, setMode] = useState('post')       // post 按崗位／all 總覽
+  const [mode, setMode] = useState('all')       // all 總覽（預設）／post 按崗位
   const [pid, setPid] = useState(posts[0] ? posts[0].id : '')
   const [edit, setEdit] = useState(null)
   const [report, setReport] = useState(false)
