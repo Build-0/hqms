@@ -284,13 +284,13 @@ function Annual({ log, canEdit, who }) {
     )
   }
   const list = rows.filter(r => r.cat === cat).sort((a, b) => String(a.plan_date || '9999').localeCompare(String(b.plan_date || '9999')) || a.sort_order - b.sort_order)
+  const itemName = r => r.title || areaLabel(r.area) || tr('（未命名）', '(Untitled)')
   const rangeText = r => (r.plan_date ? (r.end_date && r.end_date !== r.plan_date ? r.plan_date + ' → ' + r.end_date : r.plan_date) : '')
   const areaLabel = a => String(a || '').split('、').filter(Boolean).map(x => { const m = ANNUAL_AREAS.find(y => y[0] === x); return m ? (en ? m[1] : m[0]) : x }).join(en ? ', ' : '、')
   const freqLabel = fq => { const m = ANNUAL_FREQ.find(y => y[0] === fq); return m ? (en ? m[1] : m[0]) : fq }
   const stLabel = s => (en ? ANNUAL_STATUS_EN[s] || s : s)
   async function save() {
     const e = edit
-    if (!e.title.trim()) { toast(tr('請填項目', 'Item required')); return }
     const row = { cat: e.cat, title: e.title.trim(), area: e.area.trim(), freq: e.freq.trim(), method: (e.method || '').trim(), plan_date: e.plan_date || null, end_date: e.end_date || null, status: e.status, notes: e.notes.trim() }
     try {
       if (e.id) { await api.dbUpdate('pa_annual', e.id, row); await log('修改年度清潔 ' + row.title) }
@@ -304,7 +304,7 @@ function Annual({ log, canEdit, who }) {
   async function addRec() {
     try {
       await api.dbInsert('pa_annual_log', { annual_id: rec.id, done_date: nr.done_date || todayStr(), by_name: who || '', notes: nr.notes.trim(), before_photos: nr.before, after_photos: nr.after })
-      await log('記錄年度清潔 ' + rec.title)
+      await log('記錄年度清潔 ' + itemName(rec))
       toast(tr('已記錄', 'Recorded')); setNr({ done_date: todayStr(), notes: '', before: [], after: [] }); load()
     } catch (ex) { toast(tr('儲存失敗：', 'Save failed: ') + ex.message) }
   }
@@ -314,7 +314,7 @@ function Annual({ log, canEdit, who }) {
   const reportData = () => ({
     filterText: catName(cat),
     cols: [tr('項目', 'Item'), tr('區域', 'Area'), tr('頻率', 'Frequency'), tr('日期（開始至結束）', 'Date (start – end)'), tr('狀態', 'Status'), tr('標準做法', 'Standard method'), tr('備註', 'Notes')],
-    groups: [{ name: catName(cat), rows: list.map(r => ({ cells: [r.title, areaLabel(r.area) || '—', freqLabel(r.freq) || '—', rangeText(r) || '—', stLabel(r.status) || '—', r.method || '—', r.notes || '—'] })) }],
+    groups: [{ name: catName(cat), rows: list.map(r => ({ cells: [itemName(r), areaLabel(r.area) || '—', freqLabel(r.freq) || '—', rangeText(r) || '—', stLabel(r.status) || '—', r.method || '—', r.notes || '—'] })) }],
   })
   return (
     <>
@@ -326,7 +326,7 @@ function Annual({ log, canEdit, who }) {
         {list.map(r => (
           <div className="pa-sq pa-an" key={r.id} role="button" tabIndex={0} onClick={() => canEdit && setEdit({ ...r, plan_date: r.plan_date || '', end_date: r.end_date || '' })} style={canEdit ? undefined : { cursor: 'default' }}>
             <span className="pa-sq-top"><em>{rangeText(r) || tr('未定日期', 'No date')}</em>{r.status && <small className={`pa-flag an-${r.status === '已完成' ? 'done' : 'todo'}`}>{stLabel(r.status)}</small>}</span>
-            <b className="pa-sq-name">{r.title}</b>
+            <b className="pa-sq-name">{itemName(r)}</b>
             <span className="pa-sq-post">
               {r.area && <span><i className="an-lab">{tr('區域', 'Area')}</i>{areaLabel(r.area)}</span>}
               {r.freq && <span className="pa-hrs"><i className="an-lab">{tr('類型', 'Type')}</i>{freqLabel(r.freq)}</span>}
@@ -344,11 +344,11 @@ function Annual({ log, canEdit, who }) {
       {canEdit && edit && (
         <div className="modal" onClick={e => { if (e.target === e.currentTarget) setEdit(null) }}>
           <div className="sheet">
-            <div className="sheet-hd"><h2>{edit.id ? edit.title : tr('新增項目', 'New item')}</h2>
+            <div className="sheet-hd"><h2>{edit.id ? itemName(edit) : tr('新增項目', 'New item')}</h2>
               <span className="sheet-hd-acts"><button className="mini" onClick={() => setEdit(null)}>{tr('取消', 'Cancel')}</button><button className="mini pri" onClick={save}>{tr('儲存', 'Save')}</button></span></div>
             <div className="f-row"><label>{tr('類別', 'Category')}</label>
               <select value={edit.cat} onChange={e => setEdit({ ...edit, cat: e.target.value })}>{ANNUAL_CATS.map(([k, zh, e2]) => <option key={k} value={k}>{en ? e2 : zh}</option>)}</select></div>
-            <div className="f-row"><label>{tr('項目', 'Item')}</label><input value={edit.title} onChange={e => setEdit({ ...edit, title: e.target.value })} /></div>
+            <div className="f-row"><label>{tr('項目（可留空）', 'Item (optional)')}</label><input value={edit.title} onChange={e => setEdit({ ...edit, title: e.target.value })} /></div>
             <div className="f-row"><label>{tr('區域（可多選）', 'Area (multi-select)')}</label>
               <div className="chips wrap">{ANNUAL_AREAS.map(([zh, e2]) => { const on = String(edit.area || '').split('、').includes(zh); return <button key={zh} className={`chip ${on ? 'on' : ''}`} onClick={() => { const cur = String(edit.area || '').split('、').filter(Boolean); const nxt = on ? cur.filter(x => x !== zh) : [...cur, zh]; setEdit({ ...edit, area: ANNUAL_AREAS.map(a => a[0]).filter(a => nxt.includes(a)).concat(nxt.filter(a => !ANNUAL_AREAS.some(b => b[0] === a))).join('、') }) }}>{en ? e2 : zh}</button> })}</div></div>
             <div className="f-row"><label>{tr('類型', 'Type')}</label>
@@ -368,7 +368,7 @@ function Annual({ log, canEdit, who }) {
       {rec && (
         <div className="modal" onClick={e => { if (e.target === e.currentTarget) setRec(null) }}>
           <div className="sheet">
-            <div className="sheet-hd"><h2>{rec.title} · {tr('清潔紀錄', 'Records')}</h2>
+            <div className="sheet-hd"><h2>{itemName(rec)} · {tr('清潔紀錄', 'Records')}</h2>
               <span className="sheet-hd-acts"><button className="mini pri" onClick={() => setRec(null)}>{tr('關閉', 'Close')}</button></span></div>
             {canEdit && (
               <div className="an-new">
