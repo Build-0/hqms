@@ -238,8 +238,8 @@ function Roster({ d, load, log, staffOf, canEdit }) {
 
 /* ───────── 年度清潔（皇宮水池、後勤寫字樓、非日常清潔跟進） ───────── */
 const ANNUAL_CATS = [
-  ['pool', '皇宮水池清潔時間', 'Palace pond cleaning times'],
-  ['office', '後勤寫字樓清潔時間表', 'Back-office cleaning schedule'],
+  ['pool', '皇宮水池清潔', 'Palace pond cleaning'],
+  ['office', '後勤寫字樓清潔', 'Back-office cleaning'],
   ['offroutine', '非日常清潔衛生跟進表', 'Non-routine cleaning follow-up'],
 ]
 const ANNUAL_AREAS = [['商場內', 'Inside mall'], ['商場外', 'Outside mall'], ['舊街', 'Old Street'], ['停車場', 'Car park'], ['皇宮前地', 'Palace forecourt'], ['外圍', 'Perimeter']]
