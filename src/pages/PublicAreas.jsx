@@ -45,6 +45,7 @@ export default function PublicAreas({ session }) {
   const [view, setView] = useState(null)       // null 選單／roster／board／tasks
   const [d, setD] = useState(null)
   const [lastRec, setLastRec] = useState('')       // 年度清潔最近一次清潔紀錄日期
+  const [nextPlan, setNextPlan] = useState('')     // 未有紀錄時：最近一個計劃清潔日期
   const [err, setErr] = useState('')
   const [en, setEn] = useState(() => { try { return localStorage.getItem('pa_lang') === 'en' } catch { return false } })
   // 語言喺「設定」撳：設定視窗寫入 localStorage 再發出 pa-lang 事件
@@ -65,6 +66,7 @@ export default function PublicAreas({ session }) {
       ])
       setD({ staff, posts, tasks, slots }); setErr('')
       api.dbSelect('pa_annual_log', { order: 'done_date', asc: false }).then(r => setLastRec((r[0] && r[0].done_date) || '')).catch(() => setLastRec(''))
+      api.dbSelect('pa_annual', { order: 'plan_date' }).then(r => { const t = todayStr(); const ds = r.map(x => x.plan_date).filter(Boolean).sort(); setNextPlan(ds.find(x => x >= t) || ds[ds.length - 1] || '') }).catch(() => setNextPlan(''))
     } catch (ex) { setErr(ex.message); setD(prev => prev || { staff: [], posts: [], tasks: [], slots: [] }) }
   }
   const who = session ? session.name : ''
@@ -82,7 +84,7 @@ export default function PublicAreas({ session }) {
             {[['roster', tr('人員崗位', 'Staff & posts'), 'people', '#1f7a6d', tr(`${d.staff.filter(x => x.active).length} 位在職 · ${d.posts.filter(p => p.active).length} 個崗位`, `${d.staff.filter(x => x.active).length} staff · ${d.posts.filter(p => p.active).length} posts`)],
               ['tasks', tr('任務代碼', 'Task codes'), 'book', '#b5603a', tr(`${d.tasks.length} 個任務`, `${d.tasks.length} tasks`)],
               ['board', tr('24 小時看板', '24-hour board'), 'calendar', '#4a6fa5', tr('每崗每半小時', 'Every 30 min per post')],
-              ['annual', tr('年度清潔', 'Annual cleaning'), 'drop', '#3a8fb5', (() => { if (!lastRec) return tr('相關紀錄：暫無', 'Records: none'); const [y, m, dd] = lastRec.split('-').map(Number); return tr(`相關紀錄 ${y}年${m}月${dd}號`, `Records: ${dd}/${m}/${y}`) })()],
+              ['annual', tr('年度清潔', 'Annual cleaning'), 'drop', '#3a8fb5', (() => { const fmt = v => { const [y, m, dd] = v.split('-').map(Number); return tr(`${y}年${m}月${dd}號`, `${dd}/${m}/${y}`) }; if (lastRec) return tr('相關紀錄 ', 'Records: ') + fmt(lastRec); if (nextPlan) return tr('計劃清潔 ', 'Planned: ') + fmt(nextPlan); return tr('相關紀錄：暫無', 'Records: none') })()],
             ].map(([k, t, ic, co, sb]) => (
               <button className="home-item" key={k} onClick={() => setView(k)}>
                 <span className="hi-circle" style={{ background: co + '26', borderColor: 'transparent' }}><Icon name={ic} size={33} color={co} width={2.2} /></span>
