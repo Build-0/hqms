@@ -609,6 +609,13 @@ function Board({ d, load, log, staffOf, canEdit }) {
   }
   // 橫向總表：崗位分兩批、時間分上下半日，共 4 頁；同一任務連續時間合併成一格
   const segIn = (pid, a, b) => { const out = []; segs(pid).forEach(x => { const f = Math.max(x.from, a), t = Math.min(x.to, b); if (t > f) out.push({ ...x, from: f, to: t }) }); return out }
+  // 全日工時統計：每崗總工時／淨工時（扣休息）、合計；每個半小時嘅在崗人數（唔計休息中）
+  const timed = posts.filter(p => p.start_time && p.end_time)
+  const hrs = timed.map(p => ({ id: p.id, ...hoursOf(p, d.slots) }))
+  const hOf = id => hrs.find(h => h.id === id)
+  const totG = hrs.reduce((a, h) => a + h.gross, 0), totN = hrs.reduce((a, h) => a + h.net, 0)
+  const onCount = i => posts.filter(p => p.start_time && p.end_time && onDuty(p, i) && (((slotsOf[p.id] || [])[i] || {}).task || '') !== '休息').length
+  const statLine = tr(`全日合計（${timed.length} 個崗位）：總工時 ${num(totG)} 小時　·　淨工時 ${num(totN)} 小時（已扣休息）`, `Daily total (${timed.length} posts): ${num(totG)} h worked in total · ${num(totN)} h net of breaks`)
   const matrixPages = (codesOnly = false) => {
     const pages = [{ ps: posts, a: 0, b: 48 }]
     return pages.map((pg, k) => {
@@ -617,11 +624,12 @@ function Board({ d, load, log, staffOf, canEdit }) {
       return (
         <div key={k} className={'mxr' + (k ? ' sf-page' : '')}>
           <table className={'mxr-t' + (codesOnly ? ' mxr-codes' : ' mxr-names')}>
-            <thead><tr><th>{tr('時間', 'Time')}</th>{pg.ps.map(p => <th key={p.id}><b>{codeLabel(en, p.code)}</b><span>{(staffOf(p.staff_id) || {}).name || ''}</span><small>{p.start_time}‑{p.end_time}</small></th>)}</tr></thead>
+            <thead><tr><th>{tr('時間', 'Time')}</th><th className="mxr-n">{tr('人數', 'Staff')}</th>{pg.ps.map(p => <th key={p.id}><b>{codeLabel(en, p.code)}</b><span>{(staffOf(p.staff_id) || {}).name || ''}</span><small>{p.start_time}‑{p.end_time}</small></th>)}</tr></thead>
             <tbody>
               {Array.from({ length: pg.b - pg.a }, (_, j) => pg.a + j).map(i => (
                 <tr key={i}>
                   <td className="mxr-tm">{hm(i)}</td>
+                  <td className="mxr-n">{onCount(i) || ''}</td>
                   {pg.ps.map(p => {
                     const x = starts[p.id + ':' + i]
                     if (!x) return (segIn(p.id, pg.a, pg.b).some(y => i > y.from && i < y.to)) ? null : <td key={p.id} />
@@ -633,6 +641,10 @@ function Board({ d, load, log, staffOf, canEdit }) {
                 </tr>
               ))}
             </tbody>
+            <tfoot>
+              <tr className="mxr-ft"><td colSpan={2}>{tr('總工時', 'Total h')}<small>{tr('合計 ', 'Σ ')}{num(totG)}</small></td>{pg.ps.map(p => <td key={p.id}>{hOf(p.id) ? num(hOf(p.id).gross) : '—'}</td>)}</tr>
+              <tr className="mxr-ft"><td colSpan={2}>{tr('淨工時', 'Net h')}<small>{tr('合計 ', 'Σ ')}{num(totN)}</small></td>{pg.ps.map(p => <td key={p.id}>{hOf(p.id) ? num(hOf(p.id).net) : '—'}</td>)}</tr>
+            </tfoot>
           </table>
         </div>
       )
@@ -671,6 +683,7 @@ function Board({ d, load, log, staffOf, canEdit }) {
           <button className={ov === 'sheet' ? 'on' : ''} onClick={() => setOv('sheet')}>{tr('橫向總表', 'Wide sheet')}</button>
           <button className={ov === 'codes' ? 'on' : ''} onClick={() => setOv('codes')}>{tr('只顯示代碼', 'Codes only')}</button>
         </div>
+        <p className="pa-stat">{statLine}</p>
         {ov === 'sheet' ? (
           <>
             <div className="pa-sheet-wrap"><div className="rpt-print rpt-wide">{matrixPages(false)}</div></div>
@@ -678,11 +691,12 @@ function Board({ d, load, log, staffOf, canEdit }) {
         ) : (
         <div className="pa-mx-wrap">
           <table className="pa-mx">
-            <thead><tr><th className="pa-t">{tr('時間', 'Time')}</th>{posts.map(p => <th key={p.id}>{codeShort(en, p.code)}<small>{(staffOf(p.staff_id) || {}).name || ''}</small></th>)}</tr></thead>
+            <thead><tr><th className="pa-t">{tr('時間', 'Time')}</th><th className="pa-n">{tr('人數', 'Staff')}</th>{posts.map(p => <th key={p.id}>{codeShort(en, p.code)}<small>{(staffOf(p.staff_id) || {}).name || ''}</small></th>)}</tr></thead>
             <tbody>
               {Array.from({ length: 48 }, (_, i) => (
                 <tr key={i}>
                   <td className="pa-t">{hm(i)}</td>
+                  <td className="pa-n">{onCount(i) || ''}</td>
                   {posts.map(p => {
                     const t = ((slotsOf[p.id] || [])[i] || {}).task || ''
                     const [bg, fg] = t ? catColor(taskParts(t)[0]) : ['transparent', '#aab']
@@ -691,6 +705,10 @@ function Board({ d, load, log, staffOf, canEdit }) {
                 </tr>
               ))}
             </tbody>
+            <tfoot>
+              <tr className="pa-ft"><td className="pa-t" colSpan={2}>{tr('總工時', 'Total h')}</td>{posts.map(p => <td key={p.id}>{hOf(p.id) ? num(hOf(p.id).gross) : '—'}</td>)}</tr>
+              <tr className="pa-ft"><td className="pa-t" colSpan={2}>{tr('淨工時', 'Net h')}</td>{posts.map(p => <td key={p.id}>{hOf(p.id) ? num(hOf(p.id).net) : '—'}</td>)}</tr>
+            </tfoot>
           </table>
         </div>
         )}
