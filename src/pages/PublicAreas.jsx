@@ -247,6 +247,14 @@ const ANNUAL_CATS = [
 ]
 const ANNUAL_AREAS = [['商場內', 'Inside mall'], ['商場外', 'Outside mall'], ['舊街', 'Old Street'], ['停車場', 'Car park'], ['皇宮前地', 'Palace forecourt'], ['外圍', 'Perimeter']]
 const ANNUAL_FREQ = [['定期', 'Regular'], ['不定期', 'Irregular']]
+// 中文 → 英文：用瀏覽器內建翻譯（Chrome 138+ 電腦版），本機處理，內容唔會傳出去
+async function zhToEn(texts) {
+  if (typeof self === 'undefined' || !('Translator' in self)) throw new Error('NOSUPPORT')
+  const tr = await self.Translator.create({ sourceLanguage: 'zh-Hant', targetLanguage: 'en' })
+  const out = []
+  for (const t of texts) out.push(t && t.trim() ? await tr.translate(t) : '')
+  return out
+}
 const ANNUAL_STATUS = ['待辦', '進行中', '已完成']
 const ANNUAL_STATUS_EN = { 待辦: 'To do', 進行中: 'In progress', 已完成: 'Done' }
 
@@ -259,6 +267,7 @@ function Annual({ log, canEdit, who }) {
   const [report, setReport] = useState(false)
   const [err, setErr] = useState('')
   const [logs, setLogs] = useState([])           // 清潔紀錄（全部項目）
+  const [tbusy, setTbusy] = useState(false)
   const [rec, setRec] = useState(null)           // 開緊邊個項目嘅紀錄視窗
   const [nr, setNr] = useState({ done_date: todayStr(), notes: '', before: [], after: [] })
   const load = () => {
@@ -286,14 +295,15 @@ function Annual({ log, canEdit, who }) {
     )
   }
   const list = rows.filter(r => r.cat === cat).sort((a, b) => String(a.plan_date || '9999').localeCompare(String(b.plan_date || '9999')) || a.sort_order - b.sort_order)
-  const itemName = r => r.title || areaLabel(r.area) || tr('（未命名）', '(Untitled)')
+  const loc = (r, k) => (en && r[k + '_en']) || r[k]
+  const itemName = r => (en && r.title_en) || r.title || areaLabel(r.area) || tr('（未命名）', '(Untitled)')
   const rangeText = r => (r.plan_date ? (r.end_date && r.end_date !== r.plan_date ? r.plan_date + ' → ' + r.end_date : r.plan_date) : '')
   const areaLabel = a => String(a || '').split('、').filter(Boolean).map(x => { const m = ANNUAL_AREAS.find(y => y[0] === x); return m ? (en ? m[1] : m[0]) : x }).join(en ? ', ' : '、')
   const freqLabel = fq => { const m = ANNUAL_FREQ.find(y => y[0] === fq); return m ? (en ? m[1] : m[0]) : fq }
   const stLabel = s => (en ? ANNUAL_STATUS_EN[s] || s : s)
   async function save() {
     const e = edit
-    const row = { cat: e.cat, title: e.title.trim(), area: e.area.trim(), freq: e.freq.trim(), method: (e.method || '').trim(), plan_date: e.plan_date || null, end_date: e.end_date || null, status: e.status, notes: e.notes.trim() }
+    const row = { cat: e.cat, title: e.title.trim(), area: e.area.trim(), freq: e.freq.trim(), method: (e.method || '').trim(), title_en: (e.title_en || '').trim(), method_en: (e.method_en || '').trim(), notes_en: (e.notes_en || '').trim(), plan_date: e.plan_date || null, end_date: e.end_date || null, status: e.status, notes: e.notes.trim() }
     try {
       if (e.id) { await api.dbUpdate('pa_annual', e.id, row); await log('修改年度清潔 ' + row.title) }
       else { await api.dbInsert('pa_annual', { ...row, sort_order: rows.length + 1 }); await log('新增年度清潔 ' + row.title) }
@@ -316,7 +326,7 @@ function Annual({ log, canEdit, who }) {
   const reportData = () => ({
     filterText: catName(cat),
     cols: [tr('項目', 'Item'), tr('區域', 'Area'), tr('頻率', 'Frequency'), tr('日期（開始至結束）', 'Date (start – end)'), tr('狀態', 'Status'), tr('標準做法', 'Standard method'), tr('備註', 'Notes')],
-    groups: [{ name: catName(cat), rows: list.map(r => ({ cells: [itemName(r), areaLabel(r.area) || '—', freqLabel(r.freq) || '—', rangeText(r) || '—', stLabel(r.status) || '—', r.method || '—', r.notes || '—'] })) }],
+    groups: [{ name: catName(cat), rows: list.map(r => ({ cells: [itemName(r), areaLabel(r.area) || '—', freqLabel(r.freq) || '—', rangeText(r) || '—', stLabel(r.status) || '—', loc(r, 'method') || '—', loc(r, 'notes') || '—'] })) }],
   })
   return (
     <>
@@ -332,8 +342,8 @@ function Annual({ log, canEdit, who }) {
             <span className="pa-sq-post">
               {r.area && <span><i className="an-lab">{tr('區域', 'Area')}</i>{areaLabel(r.area)}</span>}
               {r.freq && <span className="pa-hrs"><i className="an-lab">{tr('類型', 'Type')}</i>{freqLabel(r.freq)}</span>}
-              {r.method && <span className="an-method"><i className="an-lab">{tr('標準做法', 'Standard method')}</i>{r.method}</span>}
-              {r.notes && <span className="pa-sq-area">{r.notes}</span>}
+              {r.method && <span className="an-method"><i className="an-lab">{tr('標準做法', 'Standard method')}</i>{loc(r, 'method')}</span>}
+              {r.notes && <span className="pa-sq-area">{loc(r, 'notes')}</span>}
             </span>
             <button className="an-rec" onClick={e => { e.stopPropagation(); setRec(r); setNr({ done_date: todayStr(), notes: '', before: [], after: [] }) }}>
               📋 {tr('清潔紀錄', 'Records')} · {logs.filter(l => l.annual_id === r.id).length}
@@ -342,7 +352,7 @@ function Annual({ log, canEdit, who }) {
           </div>
         ))}
       </div>
-      {canEdit && <button className="fab" onClick={() => setEdit({ id: null, cat, title: '', area: '', freq: '', plan_date: '', end_date: '', status: '待辦', method: '', notes: '' })}>＋</button>}
+      {canEdit && <button className="fab" onClick={() => setEdit({ id: null, cat, title: '', area: '', freq: '', plan_date: '', end_date: '', status: '待辦', method: '', notes: '', title_en: '', method_en: '', notes_en: '' })}>＋</button>}
       {canEdit && edit && (
         <div className="modal" onClick={e => { if (e.target === e.currentTarget) setEdit(null) }}>
           <div className="sheet">
@@ -363,6 +373,18 @@ function Annual({ log, canEdit, who }) {
               <select value={edit.status} onChange={e => setEdit({ ...edit, status: e.target.value })}><option value="">{tr('（未設定）', '(none)')}</option>{ANNUAL_STATUS.map(s => <option key={s} value={s}>{stLabel(s)}</option>)}</select></div>
             <div className="f-row"><label>{tr('標準做法', 'Standard method')}</label><textarea rows={4} value={edit.method || ''} onChange={e => setEdit({ ...edit, method: e.target.value })} placeholder={tr('例：1. 用起漬劑浸 10 分鐘　2. 刷洗坐廁底　3. 清水沖淨', 'e.g. 1. soak with descaler 10 min  2. scrub under the seat  3. rinse')} /></div>
             <div className="f-row"><label>{tr('備註', 'Notes')}</label><input value={edit.notes} onChange={e => setEdit({ ...edit, notes: e.target.value })} /></div>
+            <div className="pa-sep">{tr('English（英文版顯示）', 'English (shown in EN mode)')}</div>
+            <button className="btn alt" disabled={tbusy} onClick={async () => {
+              setTbusy(true)
+              try {
+                const [a, b, c] = await zhToEn([edit.title, edit.method, edit.notes])
+                setEdit({ ...edit, title_en: a, method_en: b, notes_en: c }); toast(tr('已翻譯，請檢查', 'Translated — please check'))
+              } catch (ex) { toast(ex.message === 'NOSUPPORT' ? tr('呢個瀏覽器唔支援自動翻譯：請用電腦版 Chrome，或者叫 Claude 幫你翻', 'Auto-translate not supported in this browser: use desktop Chrome') : tr('翻譯失敗：', 'Translate failed: ') + ex.message) }
+              setTbusy(false)
+            }}>{tbusy ? tr('翻譯中…', 'Translating…') : '🌐 ' + tr('自動翻譯成英文', 'Auto-translate to English')}</button>
+            <div className="f-row"><label>{tr('項目（英文）', 'Item (English)')}</label><input value={edit.title_en || ''} onChange={e => setEdit({ ...edit, title_en: e.target.value })} /></div>
+            <div className="f-row"><label>{tr('標準做法（英文）', 'Standard method (English)')}</label><textarea rows={3} value={edit.method_en || ''} onChange={e => setEdit({ ...edit, method_en: e.target.value })} /></div>
+            <div className="f-row"><label>{tr('備註（英文）', 'Notes (English)')}</label><input value={edit.notes_en || ''} onChange={e => setEdit({ ...edit, notes_en: e.target.value })} /></div>
             {edit.id && <button className="btn danger sm-quiet" onClick={del}>{tr('刪除這項', 'Delete this item')}</button>}
           </div>
         </div>
