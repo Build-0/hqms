@@ -248,7 +248,8 @@ const ANNUAL_STATUS_EN = { 待辦: 'To do', 進行中: 'In progress', 已完成:
 function Annual({ log, canEdit }) {
   const { en, tr } = useL()
   const [rows, setRows] = useState(null)
-  const [cat, setCat] = useState('pool')
+  const [cat, setCat] = useState(null)       // null：三張分類卡；否則顯示該分類項目
+  useBack(!!cat, () => setCat(null), 2)
   const [edit, setEdit] = useState(null)
   const [report, setReport] = useState(false)
   const [err, setErr] = useState('')
@@ -256,6 +257,23 @@ function Annual({ log, canEdit }) {
   useEffect(() => { load() }, [])
   if (!rows) return <div className="note">{tr('載入中…', 'Loading…')}</div>
   const catName = c => { const x = ANNUAL_CATS.find(a => a[0] === c); return en ? x[2] : x[1] }
+  const ICONS = { pool: ['drop', '#3a8fb5'], office: ['hotel', '#7a6a4f'], offroutine: ['clean', '#8f7ac9'] }
+  if (!cat) {
+    return (
+      <>
+        {err && <div className="card" style={{ borderColor: 'var(--red)' }}><p style={{ fontSize: 13, lineHeight: 1.7 }}>{tr('讀取失敗：', 'Failed to load: ')}{err}</p></div>}
+        <div className="home-grid">
+          {ANNUAL_CATS.map(([k, zh, e]) => (
+            <button className="home-item" key={k} onClick={() => setCat(k)}>
+              <span className="hi-circle" style={{ background: ICONS[k][1] + '26', borderColor: 'transparent' }}><Icon name={ICONS[k][0]} size={33} color={ICONS[k][1]} width={2.2} /></span>
+              <span className="hi-label">{en ? e : zh}</span>
+              <span className="hi-sub">{tr(`${rows.filter(r => r.cat === k).length} 項`, `${rows.filter(r => r.cat === k).length} items`)}</span>
+            </button>
+          ))}
+        </div>
+      </>
+    )
+  }
   const list = rows.filter(r => r.cat === cat).sort((a, b) => String(a.plan_date || '9999').localeCompare(String(b.plan_date || '9999')) || a.sort_order - b.sort_order)
   const stLabel = s => (en ? ANNUAL_STATUS_EN[s] || s : s)
   async function save() {
@@ -279,9 +297,7 @@ function Annual({ log, canEdit }) {
   return (
     <>
       <ToolBar label={tr(`共 ${list.length} 項`, `${list.length} items`)}><ExportBtn onClick={() => setReport(true)} /></ToolBar>
-      <div className="seg" style={{ margin: '0 0 10px', flexDirection: 'column' }}>
-        {ANNUAL_CATS.map(([k, zh, e]) => <button key={k} className={cat === k ? 'on' : ''} onClick={() => setCat(k)}>{en ? e : zh}</button>)}
-      </div>
+      <div className="bh-grp">{catName(cat)}<span>{list.length}</span></div>
       {err && <div className="card" style={{ borderColor: 'var(--red)' }}><p style={{ fontSize: 13, lineHeight: 1.7 }}>{tr('讀取失敗：', 'Failed to load: ')}{err}</p></div>}
       {list.length === 0 && !err && <p className="src-note" style={{ margin: '14px 4px' }}>{tr('暫時未有項目。', 'No items yet.')}{canEdit ? tr('撳右下角「＋」新增。', ' Tap “＋” to add.') : ''}</p>}
       <div className="pa-grid">
