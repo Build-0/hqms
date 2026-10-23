@@ -196,30 +196,48 @@ export default function App() {
       {newVer && <button className="newver" onClick={hardReload}>🔄 有新版本，點此更新</button>}
       {settings && (
         <div className="modal" onClick={e => { if (e.target === e.currentTarget) setSettings(false) }}>
-          <div className="sheet st-sheet">
-            <h2 className="st-title">設定</h2>
-            {session && <p className="st-who">{session.name} · {ROLE_LABEL[session.role]}</p>}
-            <div className="st-lab">語言 Language（公共地區）</div>
-            <div className="st-seg">
-              <button className={!paEn ? 'on' : ''} onClick={() => setPaLang(false)}>中文</button>
-              <button className={paEn ? 'on' : ''} onClick={() => setPaLang(true)}>English</button>
+          <div className="sheet st-sheet st2">
+            <div className="st2-hd">
+              <div><h2 className="st-title">設定</h2>{session && <p className="st-who" style={{ margin: 0 }}>{session.name} · {ROLE_LABEL[session.role]}</p>}</div>
+              <button className="mini" onClick={() => setSettings(false)}>關閉</button>
             </div>
-            <div className="st-lab">字體大小</div>
-            <div className="st-seg">
-              <button className={!big ? 'on' : ''} onClick={() => setBig(false)}>標準字</button>
-              <button className={big ? 'on' : ''} onClick={() => setBig(true)}><span style={{ fontSize: '1.2em' }}>大字</span></button>
+
+            <div className="st2-sec">顯示</div>
+            <div className="st2-card">
+              <div className="st2-row"><span className="st2-lab">字體大小</span>
+                <div className="st2-seg"><button className={!big ? 'on' : ''} onClick={() => setBig(false)}>標準</button><button className={big ? 'on' : ''} onClick={() => setBig(true)}>大字</button></div></div>
+              <div className="st2-row"><span className="st2-lab">語言<small>公共地區</small></span>
+                <div className="st2-seg"><button className={!paEn ? 'on' : ''} onClick={() => setPaLang(false)}>中文</button><button className={paEn ? 'on' : ''} onClick={() => setPaLang(true)}>English</button></div></div>
             </div>
-            <button className="st-btn" onClick={async () => { await doRefresh(); setSettings(false) }}>
-              <svg className={refreshing ? 'spin' : ''} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5" /></svg>
-              <span>{refreshing ? '更新中…' : '刷新資料'}</span>
-            </button>
-            {session && session.dev && <button className="st-btn" onClick={() => { setSettings(false); setPermOpen(true) }}><span>🔐 權限管理（開發者）</span></button>}
-            <button className="st-btn out" onClick={() => { setSettings(false); setAskLogout(true) }}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" /></svg>
-              <span>登出</span>
-            </button>
-            <button className="btn ghost" onClick={() => setSettings(false)}>關閉</button>
-            <div className="ver-line" style={{ margin: '10px 0 0' }}>版本 {__BUILD__}</div>
+
+            <div className="st2-sec">資料</div>
+            <div className="st2-card">
+              <button className="st2-row st2-act" onClick={async () => { await doRefresh(); setSettings(false) }}>
+                <svg className={refreshing ? 'spin' : ''} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5" /></svg>
+                <span className="st2-lab">{refreshing ? '更新中…' : '刷新資料'}<small>載入最新資料及版本</small></span><span className="st2-go">›</span>
+              </button>
+            </div>
+
+            {session && session.dev && (
+              <>
+                <div className="st2-sec">開發者</div>
+                <div className="st2-card">
+                  <button className="st2-row st2-act" onClick={() => { setSettings(false); setPermOpen(true) }}>
+                    <span className="st2-ico">🔐</span>
+                    <span className="st2-lab">權限管理<small>查看及修改全部帳號權限</small></span><span className="st2-go">›</span>
+                  </button>
+                </div>
+              </>
+            )}
+
+            <div className="st2-sec">帳號</div>
+            <div className="st2-card">
+              <button className="st2-row st2-act st2-out" onClick={() => { setSettings(false); setAskLogout(true) }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" /></svg>
+                <span className="st2-lab">登出</span><span className="st2-go">›</span>
+              </button>
+            </div>
+            <div className="ver-line" style={{ margin: '14px 0 0' }}>版本 {__BUILD__}</div>
           </div>
         </div>
       )}
