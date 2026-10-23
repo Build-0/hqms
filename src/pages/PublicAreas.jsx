@@ -45,6 +45,7 @@ export default function PublicAreas({ session }) {
   const [view, setView] = useState(null)       // null 選單／roster／board／tasks
   const [d, setD] = useState(null)
   const [lastRec, setLastRec] = useState('')       // 年度清潔最近一次清潔紀錄日期
+  const [stockN, setStockN] = useState(0)        // 物資數量（首頁卡片用）
   const [nextPlan, setNextPlan] = useState('')     // 未有紀錄時：最近一個計劃清潔日期
   const [err, setErr] = useState('')
   const [en, setEn] = useState(() => { try { return localStorage.getItem('pa_lang') === 'en' } catch { return false } })
@@ -66,6 +67,7 @@ export default function PublicAreas({ session }) {
       ])
       setD({ staff, posts, tasks, slots }); setErr('')
       api.dbSelect('pa_annual_log', { order: 'done_date', asc: false }).then(r => setLastRec((r[0] && r[0].done_date) || '')).catch(() => setLastRec(''))
+      api.dbSelect('pa_stock', { order: 'sort_order' }).then(r => setStockN(r.length)).catch(() => setStockN(0))
       api.dbSelect('pa_annual', { order: 'plan_date' }).then(r => { const t = todayStr(); const ds = r.map(x => x.plan_date).filter(Boolean).sort(); setNextPlan(ds.find(x => x >= t) || ds[ds.length - 1] || '') }).catch(() => setNextPlan(''))
     } catch (ex) { setErr(ex.message); setD(prev => prev || { staff: [], posts: [], tasks: [], slots: [] }) }
   }
@@ -85,6 +87,7 @@ export default function PublicAreas({ session }) {
               ['tasks', tr('任務代碼', 'Task codes'), 'book', '#b5603a', tr(`${d.tasks.length} 個任務`, `${d.tasks.length} tasks`)],
               ['board', tr('24 小時看板', '24-hour board'), 'calendar', '#4a6fa5', tr('每崗每半小時', 'Every 30 min per post')],
               ['annual', tr('年度清潔', 'Annual cleaning'), 'drop', '#3a8fb5', (() => { const fmt = v => { const [y, m, dd] = v.split('-').map(Number); return tr(`${y}年${m}月${dd}號`, `${dd}/${m}/${y}`) }; if (lastRec) return tr('相關紀錄 ', 'Records: ') + fmt(lastRec); if (nextPlan) return tr('計劃清潔 ', 'Planned: ') + fmt(nextPlan); return tr('相關紀錄：暫無', 'Records: none') })()],
+              ['stock', tr('物資清點', 'Stock count'), 'box', '#b5603a', tr(`${stockN} 項物資`, `${stockN} items`)],
             ].map(([k, t, ic, co, sb]) => (
               <button className="home-item" key={k} onClick={() => setView(k)}>
                 <span className="hi-circle" style={{ background: co + '26', borderColor: 'transparent' }}><Icon name={ic} size={33} color={co} width={2.2} /></span>
@@ -97,6 +100,7 @@ export default function PublicAreas({ session }) {
         {view === 'roster' && <Roster {...ctx} />}
         {view === 'board' && <Board {...ctx} />}
         {view === 'annual' && <Annual {...ctx} />}
+        {view === 'stock' && <Stock {...ctx} />}
         {view === 'tasks' && <Tasks {...ctx} />}
       </div>
     </LangCtx.Provider>
@@ -423,6 +427,119 @@ function Annual({ log, canEdit, who }) {
         </div>
       )}
       {report && <ReportModal title={tr('年度清潔', 'Annual cleaning') + ' · ' + catName(cat)} sub={todayStr()} onClose={() => setReport(false)}><ListReport data={reportData()} /></ReportModal>}
+    </>
+  )
+}
+
+/* ───────── 物資清點 ───────── */
+function Stock({ log, canEdit, who }) {
+  const { en, tr } = useL()
+  const [rows, setRows] = useState(null)
+  const [logs, setLogs] = useState([])
+  const [edit, setEdit] = useState(null)
+  const [report, setReport] = useState(false)
+  const [err, setErr] = useState('')
+  const [nc, setNc] = useState({ count_date: todayStr(), qty: '', notes: '' })
+  const load = () => {
+    api.dbSelect('pa_stock', { order: 'sort_order' }).then(r => { setRows(r); setErr('') }).catch(ex => { setErr(ex.message); setRows(prev => prev || []) })
+    api.dbSelect('pa_stock_log', { order: 'count_date', asc: false }).then(setLogs).catch(() => setLogs([]))
+  }
+  useEffect(() => { load() }, [])
+  if (!rows) return <div className="note">{tr('載入中…', 'Loading…')}</div>
+  const nm = r => r.name || tr('（未命名）', '(Untitled)')
+  const low = r => r.par != null && r.qty != null && Number(r.qty) < Number(r.par)
+  const list = [...rows].sort((a, b) => a.sort_order - b.sort_order)
+  const numOrNull = v => (v === '' || v == null ? null : Number(v))
+  async function save() {
+    const e = edit
+    const row = { name: e.name.trim(), location: e.location.trim(), unit: e.unit.trim(), par: numOrNull(e.par), qty: numOrNull(e.qty), notes: e.notes.trim() }
+    try {
+      if (e.id) { await api.dbUpdate('pa_stock', e.id, row); await log('修改物資 ' + (row.name || '')) }
+      else { await api.dbInsert('pa_stock', { ...row, sort_order: rows.length + 1 }); await log('新增物資 ' + (row.name || '')) }
+      toast(tr('已儲存', 'Saved')); setEdit(null); load()
+    } catch (ex) { toast(tr('儲存失敗：', 'Save failed: ') + ex.message) }
+  }
+  async function del() {
+    try { await api.dbDelete('pa_stock', edit.id); await log('刪除物資 ' + nm(edit)); toast(tr('已刪除', 'Deleted')); setEdit(null); load() } catch (ex) { toast(ex.message) }
+  }
+  async function count() {
+    if (nc.qty === '') { toast(tr('請填今次清點數量', 'Enter the counted quantity')); return }
+    try {
+      const date = nc.count_date || todayStr()
+      await api.dbInsert('pa_stock_log', { stock_id: edit.id, count_date: date, qty: Number(nc.qty), by_name: who || '', notes: nc.notes.trim() })
+      await api.dbUpdate('pa_stock', edit.id, { qty: Number(nc.qty), last_date: date })
+      await log(`清點物資 ${nm(edit)} = ${nc.qty}`)
+      toast(tr('已記錄清點', 'Count recorded')); setEdit({ ...edit, qty: String(nc.qty), last_date: date }); setNc({ count_date: todayStr(), qty: '', notes: '' }); load()
+    } catch (ex) { toast(tr('儲存失敗：', 'Save failed: ') + ex.message) }
+  }
+  async function delLog(id) { try { await api.dbDelete('pa_stock_log', id); toast(tr('已刪除', 'Deleted')); load() } catch (ex) { toast(ex.message) } }
+  const reportData = () => ({
+    filterText: tr('全部物資', 'All stock'),
+    cols: [tr('物資', 'Item'), tr('位置', 'Location'), tr('單位', 'Unit'), tr('標準數量', 'Par'), tr('現有數量', 'On hand'), tr('最近清點', 'Last count'), tr('備註', 'Notes')],
+    groups: [{ name: tr('物資清點', 'Stock count'), rows: list.map(r => ({ cells: [nm(r), r.location || '—', r.unit || '—', r.par ?? '—', r.qty ?? '—', r.last_date || '—', r.notes || '—'], cls: low(r) ? { 4: 'rpt-red' } : undefined })) }],
+  })
+  const open = r => { setEdit({ ...r, par: r.par ?? '', qty: r.qty ?? '', last_date: r.last_date || '' }); setNc({ count_date: todayStr(), qty: '', notes: '' }) }
+  return (
+    <>
+      <ToolBar label={tr(`共 ${list.length} 項物資`, `${list.length} items`)}><ExportBtn onClick={() => setReport(true)} /></ToolBar>
+      {err && <div className="card" style={{ borderColor: 'var(--red)' }}><p style={{ fontSize: 13, lineHeight: 1.7 }}>{tr('讀取失敗：', 'Failed to load: ')}{err}</p></div>}
+      {list.length === 0 && !err && <p className="src-note" style={{ margin: '14px 4px' }}>{tr('暫時未有物資。', 'No items yet.')}{canEdit ? tr('撳右下角「＋」新增。', ' Tap “＋” to add.') : ''}</p>}
+      <div className="pa-grid">
+        {list.map(r => (
+          <button className="pa-sq pa-an" key={r.id} onClick={() => open(r)}>
+            <span className="pa-sq-top"><em>{r.location || tr('未設位置', 'No location')}</em>{low(r) && <small className="pa-flag">{tr('不足', 'Low')}</small>}</span>
+            <b className="pa-sq-name">{nm(r)}</b>
+            <span className="pa-sq-post">
+              <span className={'st-qty' + (low(r) ? ' low' : '')}>{r.qty ?? '—'}<small> / {r.par ?? '—'} {r.unit}</small></span>
+              <span className="pa-sq-area">{r.last_date ? tr('最近清點 ', 'Last count ') + r.last_date : tr('未有清點紀錄', 'Not counted yet')}</span>
+            </span>
+          </button>
+        ))}
+      </div>
+      {canEdit && <button className="fab" onClick={() => { setEdit({ id: null, name: '', location: '', unit: '', par: '', qty: '', notes: '' }) }}>＋</button>}
+      {edit && (
+        <div className="modal" onClick={e => { if (e.target === e.currentTarget) setEdit(null) }}>
+          <div className="sheet">
+            <div className="sheet-hd"><h2>{edit.id ? nm(edit) : tr('新增物資', 'New item')}</h2>
+              <span className="sheet-hd-acts"><button className="mini" onClick={() => setEdit(null)}>{canEdit ? tr('取消', 'Cancel') : tr('關閉', 'Close')}</button>{canEdit && <button className="mini pri" onClick={save}>{tr('儲存', 'Save')}</button>}</span></div>
+            {canEdit ? (
+              <>
+                <div className="pa-sep first">{tr('物資資料', 'Item')}</div>
+                <div className="f-row"><label>{tr('物資名稱', 'Item name')}</label><input value={edit.name} onChange={e => setEdit({ ...edit, name: e.target.value })} /></div>
+                <div className="f-row"><label>{tr('存放位置', 'Location')}</label><input value={edit.location} onChange={e => setEdit({ ...edit, location: e.target.value })} /></div>
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <div className="f-row" style={{ flex: 1 }}><label>{tr('單位', 'Unit')}</label><input value={edit.unit} onChange={e => setEdit({ ...edit, unit: e.target.value })} placeholder={tr('支／個／箱', 'pcs / box')} /></div>
+                  <div className="f-row" style={{ flex: 1 }}><label>{tr('標準數量', 'Par')}</label><input inputMode="decimal" value={edit.par} onChange={e => setEdit({ ...edit, par: e.target.value })} /></div>
+                  <div className="f-row" style={{ flex: 1 }}><label>{tr('現有數量', 'On hand')}</label><input inputMode="decimal" value={edit.qty} onChange={e => setEdit({ ...edit, qty: e.target.value })} /></div>
+                </div>
+                <div className="f-row"><label>{tr('備註', 'Notes')}</label><input value={edit.notes} onChange={e => setEdit({ ...edit, notes: e.target.value })} /></div>
+              </>
+            ) : <p className="src-note" style={{ margin: '4px 0 10px' }}>{[edit.location, `${edit.qty ?? '—'} / ${edit.par ?? '—'} ${edit.unit}`, edit.notes].filter(Boolean).join(' · ')}</p>}
+            {edit.id && (
+              <>
+                {canEdit && (
+                  <>
+                    <div className="pa-sep">{tr('記錄今次清點', 'Record a count')}</div>
+                    <div style={{ display: 'flex', gap: 10 }}>
+                      <div className="f-row" style={{ flex: 1 }}><label>{tr('清點日期', 'Date')}</label><input type="date" value={nc.count_date} onChange={e => setNc({ ...nc, count_date: e.target.value })} /></div>
+                      <div className="f-row" style={{ flex: 1 }}><label>{tr('清點數量', 'Counted')}</label><input inputMode="decimal" value={nc.qty} onChange={e => setNc({ ...nc, qty: e.target.value })} /></div>
+                    </div>
+                    <div className="f-row"><label>{tr('備註（可留空）', 'Notes (optional)')}</label><input value={nc.notes} onChange={e => setNc({ ...nc, notes: e.target.value })} /></div>
+                    <button className="btn" onClick={count}>{tr('＋ 記錄清點', '＋ Record count')}</button>
+                  </>
+                )}
+                <div className="pa-sep">{tr('過往清點', 'Past counts')}</div>
+                {logs.filter(l => l.stock_id === edit.id).length === 0 && <p className="src-note" style={{ margin: '8px 4px' }}>{tr('暫時未有清點紀錄。', 'No counts yet.')}</p>}
+                {logs.filter(l => l.stock_id === edit.id).map(l => (
+                  <div className="pa-log" key={l.id}><b>{l.count_date}</b><span>{l.qty} {edit.unit} · {l.by_name || '—'}{l.notes ? ' · ' + l.notes : ''}</span>{canEdit && <button className="mini danger" onClick={() => delLog(l.id)}>{tr('刪除', 'Delete')}</button>}</div>
+                ))}
+              </>
+            )}
+            {canEdit && edit.id && <button className="btn danger sm-quiet" onClick={del}>{tr('刪除這項物資', 'Delete this item')}</button>}
+          </div>
+        </div>
+      )}
+      {report && <ReportModal title={tr('物資清點', 'Stock count')} sub={todayStr()} onClose={() => setReport(false)}><ListReport data={reportData()} /></ReportModal>}
     </>
   )
 }

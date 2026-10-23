@@ -1150,3 +1150,5 @@ html.rpt-open #root{visibility:hidden}
 .pa-log.pa-log-col{display:block}
 .pa-log-row{display:flex;justify-content:space-between;gap:10px;align-items:center}
 .pa-ba{margin-top:8px}
+
+.st-qty{font-size:20px;font-weight:800;color:var(--accent)}.st-qty small{font-size:12px;font-weight:600;color:var(--sub)}.st-qty.low{color:#b3342a}
