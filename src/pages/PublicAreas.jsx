@@ -346,7 +346,7 @@ function Annual({ log, canEdit, who }) {
       <div className="bh-grp">{catName(cat)}<span>{list.length}</span></div>
       {err && <div className="card" style={{ borderColor: 'var(--red)' }}><p style={{ fontSize: 13, lineHeight: 1.7 }}>{tr('讀取失敗：', 'Failed to load: ')}{err}</p></div>}
       {list.length === 0 && !err && <p className="src-note" style={{ margin: '14px 4px' }}>{tr('暫時未有項目。', 'No items yet.')}{canEdit ? tr('撳右下角「＋」新增。', ' Tap “＋” to add.') : ''}</p>}
-      <div className="pa-grid">
+      <div className="pa-grid pa-grid-an">
         {list.map(r => (
           <div className="pa-sq pa-an" key={r.id} role="button" tabIndex={0} onClick={() => canEdit && setEdit({ ...r, plan_date: r.plan_date || '', end_date: r.end_date || '' })} style={canEdit ? undefined : { cursor: 'default' }}>
             <span className="pa-sq-top"><em>{rangeText(r) || tr('未定日期', 'No date')}</em>{r.status && <small className={`pa-flag an-${r.status === '已完成' ? 'done' : 'todo'}`}>{stLabel(r.status)}</small>}</span>
@@ -490,7 +490,7 @@ function Stock({ log, canEdit, who }) {
       <ToolBar label={tr(`共 ${list.length} 項物資`, `${list.length} items`)}><ExportBtn onClick={() => setReport(true)} /></ToolBar>
       {err && <div className="card" style={{ borderColor: 'var(--red)' }}><p style={{ fontSize: 13, lineHeight: 1.7 }}>{tr('讀取失敗：', 'Failed to load: ')}{err}</p></div>}
       {list.length === 0 && !err && <p className="src-note" style={{ margin: '14px 4px' }}>{tr('暫時未有物資。', 'No items yet.')}{canEdit ? tr('撳右下角「＋」新增。', ' Tap “＋” to add.') : ''}</p>}
-      <div className="pa-grid">
+      <div className="pa-grid pa-grid-an">
         {list.map(r => (
           <button className="pa-sq pa-an" key={r.id} onClick={() => open(r)}>
             <span className="pa-sq-top"><em>{r.location || tr('未設位置', 'No location')}</em>{low(r) && <small className="pa-flag">{tr('不足', 'Low')}</small>}</span>

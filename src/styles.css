@@ -1154,3 +1154,15 @@ html.rpt-open #root{visibility:hidden}
 .st-qty{font-size:20px;font-weight:800;color:var(--accent)}.st-qty small{font-size:12px;font-weight:600;color:var(--sub)}.st-qty.low{color:#b3342a}
 /* 報告表格：保留輸入時嘅換行（例如標準做法嘅 1. 2. 3. 步驟） */
 .rpt-t td{white-space:pre-line}
+/* 電腦版：年度清潔／物資清點卡片放大（更闊、字體更大） */
+@media (min-width:900px){
+  .pa-wrap .pa-grid.pa-grid-an{grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:18px}
+  .pa-grid-an .pa-sq.pa-an{padding:18px 20px;gap:8px;min-height:230px;border-radius:24px}
+  .pa-grid-an .pa-sq-top em{font-size:14px;padding:3px 12px}
+  .pa-grid-an .pa-sq-name{font-size:22px}
+  .pa-grid-an .pa-sq-post{padding:12px 14px;font-size:15px;gap:6px;border-radius:16px}
+  .pa-grid-an .an-lab{font-size:12px}
+  .pa-grid-an .an-method{-webkit-line-clamp:6}
+  .pa-grid-an .an-rec{font-size:15px;padding:11px 14px}
+  .pa-grid-an .st-qty{font-size:28px}
+}
