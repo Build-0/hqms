@@ -1146,3 +1146,7 @@ html.rpt-open #root{visibility:hidden}
 .an-rec small{font-size:11px;font-weight:600;color:var(--sub)}
 .pa-log{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:10px 12px;margin-bottom:6px;border:1px solid var(--line);border-radius:12px;background:var(--card);font-size:13.5px}
 .pa-log b{white-space:nowrap}.pa-log span{flex:1;color:var(--sub);font-size:12.5px}
+
+.pa-log.pa-log-col{display:block}
+.pa-log-row{display:flex;justify-content:space-between;gap:10px;align-items:center}
+.pa-ba{margin-top:8px}

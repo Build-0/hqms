@@ -3,6 +3,7 @@ import * as api from '../lib/api'
 import Icon from '../components/Icon'
 import { ToolBar, ExportBtn } from '../components/ui'
 import { ReportModal, ListReport } from '../components/Reports'
+import { PhotoField, PhotoGrid } from '../components/Photos'
 import { useBack } from '../lib/nav'
 import { publicPerm } from '../lib/accounts'
 import { toast } from '../lib/toast'
@@ -257,7 +258,7 @@ function Annual({ log, canEdit, who }) {
   const [err, setErr] = useState('')
   const [logs, setLogs] = useState([])           // 清潔紀錄（全部項目）
   const [rec, setRec] = useState(null)           // 開緊邊個項目嘅紀錄視窗
-  const [nr, setNr] = useState({ done_date: todayStr(), notes: '' })
+  const [nr, setNr] = useState({ done_date: todayStr(), notes: '', before: [], after: [] })
   const load = () => {
     api.dbSelect('pa_annual', { order: 'sort_order' }).then(r => { setRows(r); setErr('') }).catch(ex => { setErr(ex.message); setRows(prev => prev || []) })
     api.dbSelect('pa_annual_log', { order: 'done_date', asc: false }).then(setLogs).catch(() => setLogs([]))
@@ -302,9 +303,9 @@ function Annual({ log, canEdit, who }) {
   }
   async function addRec() {
     try {
-      await api.dbInsert('pa_annual_log', { annual_id: rec.id, done_date: nr.done_date || todayStr(), by_name: who || '', notes: nr.notes.trim() })
+      await api.dbInsert('pa_annual_log', { annual_id: rec.id, done_date: nr.done_date || todayStr(), by_name: who || '', notes: nr.notes.trim(), before_photos: nr.before, after_photos: nr.after })
       await log('記錄年度清潔 ' + rec.title)
-      toast(tr('已記錄', 'Recorded')); setNr({ done_date: todayStr(), notes: '' }); load()
+      toast(tr('已記錄', 'Recorded')); setNr({ done_date: todayStr(), notes: '', before: [], after: [] }); load()
     } catch (ex) { toast(tr('儲存失敗：', 'Save failed: ') + ex.message) }
   }
   async function delRec(id) {
@@ -332,7 +333,7 @@ function Annual({ log, canEdit, who }) {
               {r.method && <span className="an-method"><i className="an-lab">{tr('標準做法', 'Standard method')}</i>{r.method}</span>}
               {r.notes && <span className="pa-sq-area">{r.notes}</span>}
             </span>
-            <button className="an-rec" onClick={e => { e.stopPropagation(); setRec(r); setNr({ done_date: todayStr(), notes: '' }) }}>
+            <button className="an-rec" onClick={e => { e.stopPropagation(); setRec(r); setNr({ done_date: todayStr(), notes: '', before: [], after: [] }) }}>
               📋 {tr('清潔紀錄', 'Records')} · {logs.filter(l => l.annual_id === r.id).length}
               {logs.some(l => l.annual_id === r.id) && <small>{tr('最近 ', 'Last ')}{logs.find(l => l.annual_id === r.id).done_date}</small>}
             </button>
@@ -373,6 +374,8 @@ function Annual({ log, canEdit, who }) {
               <div className="an-new">
                 <div className="pa-sep first">{tr('記錄今次清潔', 'Record a cleaning')}</div>
                 <div className="f-row"><label>{tr('清潔日期', 'Date done')}</label><input type="date" value={nr.done_date} onChange={e => setNr({ ...nr, done_date: e.target.value })} /></div>
+                <PhotoField label={tr('清潔前相片', 'Before photos')} photos={nr.before} max={2} onChange={v => setNr({ ...nr, before: v })} />
+                <PhotoField label={tr('清潔後相片', 'After photos')} photos={nr.after} max={2} onChange={v => setNr({ ...nr, after: v })} />
                 <div className="f-row"><label>{tr('備註（可留空）', 'Notes (optional)')}</label><input value={nr.notes} onChange={e => setNr({ ...nr, notes: e.target.value })} /></div>
                 <button className="btn" onClick={addRec}>{tr('＋ 記錄', '＋ Record')}</button>
               </div>
@@ -380,10 +383,14 @@ function Annual({ log, canEdit, who }) {
             <div className="pa-sep">{tr('過往紀錄', 'Past records')}</div>
             {logs.filter(l => l.annual_id === rec.id).length === 0 && <p className="src-note" style={{ margin: '8px 4px' }}>{tr('暫時未有紀錄。', 'No records yet.')}</p>}
             {logs.filter(l => l.annual_id === rec.id).map(l => (
-              <div className="pa-log" key={l.id}>
-                <b>{l.done_date}</b>
-                <span>{l.by_name || '—'}{l.notes ? ' · ' + l.notes : ''}</span>
-                {canEdit && <button className="mini danger" onClick={() => delRec(l.id)}>{tr('刪除', 'Delete')}</button>}
+              <div className="pa-log pa-log-col" key={l.id}>
+                <div className="pa-log-row">
+                  <b>{l.done_date}</b>
+                  <span>{l.by_name || '—'}{l.notes ? ' · ' + l.notes : ''}</span>
+                  {canEdit && <button className="mini danger" onClick={() => delRec(l.id)}>{tr('刪除', 'Delete')}</button>}
+                </div>
+                {(l.before_photos || []).length > 0 && <div className="pa-ba"><i className="an-lab">{tr('清潔前', 'Before')}</i><PhotoGrid photos={l.before_photos} /></div>}
+                {(l.after_photos || []).length > 0 && <div className="pa-ba"><i className="an-lab">{tr('清潔後', 'After')}</i><PhotoGrid photos={l.after_photos} /></div>}
               </div>
             ))}
           </div>
