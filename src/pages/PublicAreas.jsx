@@ -262,11 +262,8 @@ async function zhToEn(texts) {
   for (const t of texts) {
     if (!t || !t.trim()) { out.push(''); continue }
     const lines = []
-    for (const ln of t.split('
-')) lines.push(ln.trim() ? await tr.translate(ln) : '')
-    out.push(lines.join('
-').replace(/[ 	]+(?=d+.[ 	])/g, '
-'))
+    for (const ln of t.split('\n')) lines.push(ln.trim() ? await tr.translate(ln) : '')
+    out.push(lines.join('\n').replace(/[ \t]+(?=\d+\.[ \t])/g, '\n'))
   }
   return out
 }
