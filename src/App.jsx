@@ -15,7 +15,8 @@ import Gate from './components/Gate'
 import PublicAreas from './pages/PublicAreas'
 import { runBack } from './lib/nav'
 import Confirm from './components/Confirm'
-import { getSession, clearSession, PERMS, ROLE_LABEL, publicPerm } from './lib/accounts'
+import { getSession, clearSession, applyOverride, PERMS, ROLE_LABEL, publicPerm } from './lib/accounts'
+import PermAdmin from './components/PermAdmin'
 import { toast } from './lib/toast'
 
 // 首頁圓形入口：之後加新模組（清潔劑、機器…）直接在這裡加一行
@@ -54,6 +55,7 @@ export default function App() {
     document.documentElement.classList.toggle('big', big)
     try { localStorage.setItem('hotel_big', big ? '1' : '0') } catch { /* 無法儲存時照常使用 */ }
   }, [big])
+  const [permOpen, setPermOpen] = useState(false)   // 權限管理（開發者）
   const [settings, setSettings] = useState(false)   // 設定面板（大字、刷新、登出）
   const [refreshing, setRefreshing] = useState(false)  // 刷新中（轉圈）
   const [rk, setRk] = useState(0)                        // 刷新計數：改變即重新載入目前頁面資料
@@ -66,6 +68,18 @@ export default function App() {
     api.hasAuth().then(ok => { if (!ok) { clearSession(); setSessionState(null) } })
     return api.onSignedOut(() => { clearSession(); setSessionState(null) })
   }, [])
+  // 以資料庫內嘅角色／旗標為準（開發者可以喺權限管理改），登入後同步到畫面
+  useEffect(() => {
+    if (!api.isOpen || !session) return undefined
+    let on = true
+    api.myStaff().then(r => {
+      if (!on || !r) return
+      const f = { role: r.role, pub: !!r.pub_sup, dev: !!r.is_dev }
+      if (session.role === f.role && !!session.pub === f.pub && !!session.dev === f.dev) return
+      applyOverride(session.key, f); setSessionState(getSession())
+    }).catch(() => {})
+    return () => { on = false }
+  }, [session && session.key])
   useEffect(() => {
     api.getUser().then(setUser)
     return api.onAuthChange(setUser)
@@ -199,6 +213,7 @@ export default function App() {
               <svg className={refreshing ? 'spin' : ''} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5" /></svg>
               <span>{refreshing ? '更新中…' : '刷新資料'}</span>
             </button>
+            {session && session.dev && <button className="st-btn" onClick={() => { setSettings(false); setPermOpen(true) }}><span>🔐 權限管理（開發者）</span></button>}
             <button className="st-btn out" onClick={() => { setSettings(false); setAskLogout(true) }}>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" /></svg>
               <span>登出</span>
@@ -208,6 +223,7 @@ export default function App() {
           </div>
         </div>
       )}
+      {permOpen && session && session.dev && <PermAdmin session={session} onClose={() => setPermOpen(false)} />}
       {askLogout && (
         <Confirm confirmLabel="登出" text={session ? `會登出「${session.name}」，之後要重新輸入密碼先可以再用。` : '會登出目前帳號。'}
           onCancel={() => setAskLogout(false)}

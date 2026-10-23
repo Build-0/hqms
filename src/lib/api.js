@@ -474,3 +474,26 @@ export async function dbRpc(fn, args) {
   throwIf(error)
   return data
 }
+
+// ── 權限管理（開發者）──
+export async function myStaff() {
+  needDb()
+  const { data } = await sb.auth.getSession()
+  const uid = data.session && data.session.user && data.session.user.id
+  if (!uid) return null
+  const { data: row, error } = await sb.from('staff').select('emp_id,role,pub_sup,is_dev').eq('user_id', uid).maybeSingle()
+  throwIf(error)
+  return row
+}
+export async function listStaffPerms() {
+  needDb()
+  const { data, error } = await sb.from('staff').select('emp_id,name,role,pub_sup,is_dev').order('emp_id')
+  throwIf(error)
+  return data
+}
+export async function updateStaffPerm(empId, patch) {
+  needDb()
+  const { data, error } = await sb.from('staff').update(patch).eq('emp_id', empId).select('emp_id')
+  throwIf(error)
+  if (!data || !data.length) throw new Error('沒有權限修改，或找不到帳號')
+}

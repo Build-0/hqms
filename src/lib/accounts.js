@@ -67,8 +67,14 @@ export function findAccount(input) {
 }
 
 const SKEY = 'hotel_session'
+// 資料庫內的最新角色／旗標（登入後讀取）蓋過程式內的預設值，令開發者可以在系統內改權限
+let OV = null
+export const applyOverride = (key, fields) => { OV = { key, fields } }
 export const getSession = () => {
-  try { const k = localStorage.getItem(SKEY); return ACCOUNTS.find(a => a.key === k) || null } catch { return null }
+  try {
+    const k = localStorage.getItem(SKEY); const a = ACCOUNTS.find(x => x.key === k) || null
+    return a && OV && OV.key === a.key ? { ...a, ...OV.fields } : a
+  } catch { return null }
 }
 export const setSession = acc => { try { localStorage.setItem(SKEY, acc.key) } catch {} }
 export const clearSession = () => { try { localStorage.removeItem(SKEY) } catch {} }
