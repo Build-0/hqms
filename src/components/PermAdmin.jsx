@@ -30,7 +30,7 @@ export default function PermAdmin({ session, onClose }) {
     setStaff(s); setOv(m); setErr('')
   }).catch(ex => { setErr(ex.message); setStaff(prev => prev || []) })
   useEffect(() => { load() }, [])
-  const eff = (r, id) => (ov[r.emp_id] && ov[r.emp_id][id]) || itemDefault({ role: r.role, pub: r.pub_sup }, id)
+  const eff = (r, id) => (ov[r.emp_id] && ov[r.emp_id][id]) || itemDefault({ role: r.role, pub: r.pub_sup, dev: r.is_dev }, id)
   const paItems = ITEMS.filter(i => i.id.startsWith('pa_'))
   const groupOf = r => (r.is_dev ? 'dev' : r.role === 'supervisor' && paItems.some(i => eff(r, i.id) !== 'none') ? 'pubsup' : r.role)
 
