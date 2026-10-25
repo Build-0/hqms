@@ -1239,3 +1239,5 @@ html.rpt-open #root{visibility:hidden}
 .pm-legend .lv-mix{background:#fdf1d6;color:#8a5a00}
 
 .pm-lockcard{opacity:.55}.pm-lockcard .hi-sub{color:#b3342a;font-weight:700}
+
+.dev-strip{margin-top:6px}.dev-grid{padding:6px 0 0 !important;margin:0 !important;justify-content:flex-start !important}

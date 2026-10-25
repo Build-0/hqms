@@ -10,7 +10,6 @@ import Icon from '../components/Icon'
 import Chemicals from './boh/Chemicals'
 import Machines from './boh/Machines'
 import Tools from './boh/Tools'
-import Uniform from './boh/Uniform'
 import WriteOff from './boh/WriteOff'
 import { daysUntil, num } from './boh/shared'
 
@@ -22,7 +21,7 @@ const COLS = {
   equipment: 'id,type,model,brand,floor_code,status,notes,sort_order,label,serial,accessories',
 }
 // 開發中模組：預設只有開發者可入；管理員見到卡片但標「開發中」、入唔到；其他人唔顯示
-const DEV_TABS = [['uni', '制服房管理', 'shirt', '#8f7ac9', 'uniform'], ['wo', '報銷與遺失管理', 'search', '#c0564f', 'writeoff']]
+const DEV_TABS = [['wo', '報銷與遺失管理', 'search', '#c0564f', 'writeoff']]
 const TABS = [['chem', '清潔劑', 'drop', '#2f8f9d'], ['vac', '吸塵機', 'clean', '#54808c'], ['tool', '清潔工具', 'wrench', '#b5603a'], ['eq', '設備', 'gear', '#7a6a4f']]
 const EMPTY = { products: [], batches: [], cats: [], vacuums: [], vacMaint: [], floors: [], tools: [], toolCats: [], equipment: [], equipMaint: [], types: [] }
 
@@ -77,13 +76,12 @@ export default function Boh({ session, init }) {
           })}
         </div>
       )}
-      {tab && !['uni', 'wo'].includes(tab) && <ToolBar sticky label={TABS.find(x => x[0] === tab)[1]}><ExportBtn onClick={() => setReport((reg.current && reg.current()) || { title: '', filterText: '', cols: [], groups: [] })} /></ToolBar>}
-      {!edit && !['uni', 'wo'].includes(tab) && <p className="note" style={{ textAlign: 'left', margin: '0 4px 6px' }}>目前帳號只可查看</p>}
+      {tab && tab !== 'wo' && <ToolBar sticky label={TABS.find(x => x[0] === tab)[1]}><ExportBtn onClick={() => setReport((reg.current && reg.current()) || { title: '', filterText: '', cols: [], groups: [] })} /></ToolBar>}
+      {!edit && tab !== 'wo' && <p className="note" style={{ textAlign: 'left', margin: '0 4px 6px' }}>目前帳號只可查看</p>}
       {tab === 'chem' && <Chemicals d={d} edit={edit} reload={load} init={init} reg={reg} />}
       {tab === 'vac' && <Machines kind="vacuum" d={d} edit={edit} reload={load} reg={reg} />}
       {tab === 'tool' && <Tools d={d} edit={edit} reload={load} reg={reg} />}
       {tab === 'eq' && <Machines kind="equipment" d={d} edit={edit} reload={load} reg={reg} />}
-      {tab === 'uni' && <Uniform edit={itemLevel(session, 'uniform') === 'edit'} who={session ? session.name : ''} />}
       {tab === 'wo' && <WriteOff edit={itemLevel(session, 'writeoff') === 'edit'} who={session ? session.name : ''} />}
       {report && (
         <ReportModal title={`後勤管理 · ${report.title}`} sub={`${report.filterText} · ${todayStr()}`} onClose={() => setReport(null)}>
