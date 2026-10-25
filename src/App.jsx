@@ -41,6 +41,8 @@ const SYSTEMS = [
   { id: 'boh', icon: 'box', label: '後勤管理', sub: '物資、庫存、設備', color: '#4a6fa5' },
   { id: 'defect', icon: 'wrench', label: '缺陷管理', sub: '登記、跟進、統計', color: '#c0564f' },
   { id: 'public', icon: 'people', label: '公共地區', sub: '崗位、看板、員工', color: '#8a6d3b' },
+  { id: 'uniform', icon: 'shirt', label: '制服房管理', sub: '制服庫存、領用、歸還', color: '#8f7ac9', dev: true },
+  { id: 'writeoff', icon: 'search', label: '報銷與遺失管理', sub: '報銷、遺失、跟進', color: '#c0564f', dev: true },
 ]
 const WD = ['日', '一', '二', '三', '四', '五', '六']
 
@@ -133,6 +135,7 @@ export default function App() {
   const inQuality = tab === 'quality'
   // 房間品質：有「品質」權限或「查房記錄」權限（樓層主管）都可進入；樓層主管進去只見查房記錄
   const lvl = id => itemLevel(session, id)
+  const showSys = sy => !sy.dev || lvl(sy.id) !== 'none' || (!!session && session.role === 'admin')
   const qMods = MODULES.filter(m => !m.embed && !m.top)
   const locked = id => !!session && (id === 'public' ? ITEMS.filter(i => i.id.startsWith('pa_')).every(i => lvl(i.id) === 'none') : id === 'quality' ? qMods.every(m => lvl(m.id) === 'none') : lvl(id) === 'none')
   // 即使被封鎖的頁面（例如舊分頁狀態）也一律退回首頁
@@ -185,33 +188,17 @@ export default function App() {
         ) : (
           <div className="sys-home">
             <div className="sys-grid">
-              {SYSTEMS.map(sy => (
-                <button className={`sys-card ${locked(sy.id) ? 'locked' : ''}`} key={sy.id} onClick={() => (locked(sy.id) ? toast('此帳號沒有權限進入「' + sy.label + '」') : go(sy.id))}>
+              {SYSTEMS.filter(sy => showSys(sy)).map(sy => (
+                <button className={`sys-card ${locked(sy.id) ? 'locked' : ''}`} key={sy.id} onClick={() => (locked(sy.id) ? toast(sy.dev ? '開發中，暫時未開放' : '此帳號沒有權限進入「' + sy.label + '」') : go(sy.id))}>
                   <Icon name={sy.icon} size={46} color={sy.color} width={2} />
                   <b>{sy.label}</b>
                   <span>{sy.sub}</span>
-                  {locked(sy.id) && <i>🔒 無權限</i>}
+                  {locked(sy.id) && <i>{sy.dev ? '開發中' : '🔒 無權限'}</i>}
+                  {sy.dev && !locked(sy.id) && <i style={{ color: 'var(--accent)' }}>開發中・只限開發者</i>}
                 </button>
               ))}
             </div>
             <Home key={rk} session={session} go={go} />
-            {MODULES.filter(m => m.dev && (lvl(m.id) !== 'none' || (session && session.role === 'admin'))).length > 0 && (
-              <div className="dev-strip">
-                <div className="st2-sec">其他模組</div>
-                <div className="home-grid dev-grid">
-                  {MODULES.filter(m => m.dev && (lvl(m.id) !== 'none' || (session && session.role === 'admin'))).map(m => {
-                    const lock = lvl(m.id) === 'none'
-                    return (
-                      <button className={'home-item' + (lock ? ' pm-lockcard' : '')} key={m.id} onClick={() => (lock ? toast('開發中，暫時未開放') : go(m.id))}>
-                        <span className="hi-circle" style={{ background: m.color + '26', borderColor: 'transparent' }}><Icon name={m.icon} size={33} color={m.color} width={2.2} /></span>
-                        <span className="hi-label">{m.label}</span>
-                        <span className="hi-sub">{lock ? '開發中' : '開發中・只限開發者'}</span>
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-            )}
             <div className="ver-line">版本 {__BUILD__}</div>
           </div>
         )}
@@ -273,13 +260,13 @@ export default function App() {
             if (api.isOpen) { await api.signOut(); clearSession(); setTab('home'); setSessionState(null) } else { await api.signOut(); setUser(null) }
           }} />
       )}
-      <nav className="gnav" aria-label="主導覽">
-        {[['home', '首頁', 'hotel'], ['quality', '品質', 'clipcheck'], ['boh', '後勤', 'box'], ['defect', '缺陷', 'wrench'], ['public', '公共', 'people']].map(([id, label, ic]) => {
-          const area = tab === 'home' ? 'home' : tab === 'boh' ? 'boh' : tab === 'defect' ? 'defect' : tab === 'public' ? 'public' : 'quality'
+      <nav className={'gnav' + (['uniform', 'writeoff'].some(i => showSys({ id: i, dev: true })) ? ' gnav-7' : '')} aria-label="主導覽">
+        {[['home', '首頁', 'hotel'], ['quality', '品質', 'clipcheck'], ['boh', '後勤', 'box'], ['defect', '缺陷', 'wrench'], ['public', '公共', 'people'], ['uniform', '制服', 'shirt'], ['writeoff', '報銷', 'search']].filter(([id]) => !['uniform', 'writeoff'].includes(id) || showSys({ id, dev: true })).map(([id, label, ic], _i, arr) => {
+          const area = ['boh', 'defect', 'public', 'uniform', 'writeoff'].includes(tab) ? tab : tab === 'home' ? 'home' : 'quality'
           const lock = id !== 'home' && locked(id)
           return (
             <button key={id} className={`gnav-i ${area === id ? 'on' : ''} ${lock ? 'lock' : ''}`}
-              onClick={() => (lock ? toast('此帳號沒有權限進入「' + label + '」') : go(id))}>
+              onClick={() => (lock ? toast(['uniform', 'writeoff'].includes(id) ? '開發中，暫時未開放' : '此帳號沒有權限進入「' + label + '」') : go(id))}>
               <Icon name={ic} size={22} width={2} />
               <span>{label}</span>
             </button>

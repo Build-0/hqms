@@ -1241,3 +1241,7 @@ html.rpt-open #root{visibility:hidden}
 .pm-lockcard{opacity:.55}.pm-lockcard .hi-sub{color:#b3342a;font-weight:700}
 
 .dev-strip{margin-top:6px}.dev-grid{padding:6px 0 0 !important;margin:0 !important;justify-content:flex-start !important}
+
+/* 底部導覽 7 格時收窄 */
+@media (max-width:899px){.gnav-7 .gnav-i{padding:8px 0 6px}.gnav-7 .gnav-i span{font-size:10.5px;letter-spacing:-.2px}.gnav-7 .gnav-i svg{width:20px;height:20px}}
+.sys-grid{grid-template-columns:repeat(3,1fr)}
