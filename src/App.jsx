@@ -31,7 +31,7 @@ const MODULES = [
   // 嵌入的舊系統（與品質系統同網站、各自保留原有資料庫）
   { id: 'boh', icon: 'box', label: '後勤管理', color: '#7a6a4f', top: true, Page: Boh },
   { id: 'defect', icon: 'wrench', label: '缺陷管理', color: '#b5603a', top: true, Page: Defects },
-  { id: 'uniform', sub: '制服庫存', icon: 'shirt', label: '制服庫存管理', color: '#8f7ac9', top: true, dev: true, Page: UniformPage },
+  { id: 'uniform', sub: '制服庫存', icon: 'shirt', label: '制服布草管理', color: '#8f7ac9', top: true, dev: true, Page: UniformPage },
   { id: 'writeoff', sub: '報銷、遺失、狀態跟進', icon: 'search', label: '報銷與遺失管理', color: '#c0564f', top: true, dev: true, Page: WriteOffPage },
   { id: 'complaint', sub: '記錄、統計與月報', icon: 'chat', label: '客訴管理', color: '#c0564f', Page: Complaints },
 ]
@@ -41,7 +41,7 @@ const SYSTEMS = [
   { id: 'boh', icon: 'box', label: '後勤管理', sub: '物資、庫存、設備', color: '#4a6fa5' },
   { id: 'defect', icon: 'wrench', label: '缺陷管理', sub: '登記、跟進、統計', color: '#c0564f' },
   { id: 'public', icon: 'people', label: '公共地區', sub: '崗位、看板、員工', color: '#8a6d3b' },
-  { id: 'uniform', icon: 'shirt', label: '制服庫存管理', sub: '制服庫存', color: '#8f7ac9', dev: true },
+  { id: 'uniform', icon: 'shirt', label: '制服布草管理', sub: '制服庫存', color: '#8f7ac9', dev: true },
   { id: 'writeoff', icon: 'search', label: '報銷與遺失管理', sub: '報銷、遺失、跟進', color: '#c0564f', dev: true },
 ]
 const WD = ['日', '一', '二', '三', '四', '五', '六']
@@ -263,7 +263,7 @@ export default function App() {
       )}
       {(() => {
         // 底部導覽最多 5 格：項目多過 5 個時，首頁／品質／公共／缺陷留低，其餘（後勤、開發中模組）收入「更多」
-        const all = [['home', '首頁', 'hotel'], ['quality', '品質', 'clipcheck'], ['boh', '後勤', 'box'], ['defect', '缺陷', 'wrench'], ['public', '公共', 'people'], ['uniform', '制服庫存管理', 'shirt'], ['writeoff', '報銷與遺失管理', 'search']]
+        const all = [['home', '首頁', 'hotel'], ['quality', '品質', 'clipcheck'], ['boh', '後勤', 'box'], ['defect', '缺陷', 'wrench'], ['public', '公共', 'people'], ['uniform', '制服布草管理', 'shirt'], ['writeoff', '報銷與遺失管理', 'search']]
           .filter(([id]) => !['uniform', 'writeoff'].includes(id) || showSys({ id, dev: true }))
         const many = all.length > 5
         const main = many ? all.filter(([id]) => ['home', 'quality', 'public', 'defect'].includes(id)) : all
