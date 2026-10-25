@@ -1255,3 +1255,4 @@ html.rpt-open #root{visibility:hidden}
   .hm{max-width:1000px}
   .hm-grid{grid-template-columns:repeat(4,1fr)}
 }
+.rs-ph{width:100%}.rs-ph .ph-grid{margin:0}
