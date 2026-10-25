@@ -18,6 +18,7 @@ import Confirm from './components/Confirm'
 import { getSession, clearSession, applyOverride, permsOf, itemLevel, ITEMS, ROLE_LABEL } from './lib/accounts'
 import PermAdmin from './components/PermAdmin'
 import UniformPage from './pages/UniformPage'
+import WriteOffPage from './pages/WriteOffPage'
 import { toast } from './lib/toast'
 
 // 首頁圓形入口：之後加新模組（清潔劑、機器…）直接在這裡加一行
@@ -31,6 +32,7 @@ const MODULES = [
   { id: 'boh', icon: 'box', label: '後勤管理', color: '#7a6a4f', top: true, Page: Boh },
   { id: 'defect', icon: 'wrench', label: '缺陷管理', color: '#b5603a', top: true, Page: Defects },
   { id: 'uniform', sub: '制服庫存、領用、歸還', icon: 'shirt', label: '制服房管理', color: '#8f7ac9', top: true, dev: true, Page: UniformPage },
+  { id: 'writeoff', sub: '報銷、遺失、狀態跟進', icon: 'search', label: '報銷與遺失管理', color: '#c0564f', top: true, dev: true, Page: WriteOffPage },
   { id: 'complaint', sub: '記錄、統計與月報', icon: 'chat', label: '客訴管理', color: '#c0564f', Page: Complaints },
 ]
 // 首頁三大系統卡：房間品質（內含上面各模組）／後勤管理（嵌入）／缺陷管理（待加入）
@@ -134,7 +136,7 @@ export default function App() {
   const qMods = MODULES.filter(m => !m.embed && !m.top)
   const locked = id => !!session && (id === 'public' ? ITEMS.filter(i => i.id.startsWith('pa_')).every(i => lvl(i.id) === 'none') : id === 'quality' ? qMods.every(m => lvl(m.id) === 'none') : lvl(id) === 'none')
   // 即使被封鎖的頁面（例如舊分頁狀態）也一律退回首頁
-  if (tab !== 'home' && session && (((cur && cur.id === 'boh') && locked('boh')) || ((cur && cur.id === 'defect') && locked('defect')) || ((cur && cur.id === 'public') && locked('public')) || ((cur && cur.id === 'uniform') && locked('uniform')) || ((tab === 'quality' || (cur && !cur.embed && !cur.top)) && locked('quality')))) setTimeout(() => setTab('home'), 0)
+  if (tab !== 'home' && session && (((cur && cur.id === 'boh') && locked('boh')) || ((cur && cur.id === 'defect') && locked('defect')) || ((cur && cur.id === 'public') && locked('public')) || ((cur && cur.id === 'uniform') && locked('uniform')) || ((cur && cur.id === 'writeoff') && locked('writeoff')) || ((tab === 'quality' || (cur && !cur.embed && !cur.top)) && locked('quality')))) setTimeout(() => setTab('home'), 0)
   // 只有查房記錄權限（樓層主管）的帳號：其他品質模組一律退回首頁
   if (session && cur && !cur.embed && !cur.top && lvl(cur.id) === 'none') setTimeout(() => setTab('home'), 0)
   const hardReload = () => { location.href = location.pathname + '?v=' + Date.now() }
