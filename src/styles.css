@@ -1248,3 +1248,10 @@ html.rpt-open #root{visibility:hidden}
 
 .more-sheet{padding-bottom:calc(18px + env(safe-area-inset-bottom,0px))}.more-grid{padding:6px 0 4px !important;margin:0 !important;justify-content:flex-start !important}
 .uni-adj{display:flex;gap:8px;margin-top:6px;width:100%}.uni-adj .mini{flex:1;height:38px}
+/* 電腦版首頁：模組卡一行四個，容器放闊（唔再兩邊浪費位） */
+@media (min-width:900px){
+  .sys-home{max-width:1000px;margin:30px auto 0}
+  .sys-grid{grid-template-columns:repeat(4,1fr);gap:14px}
+  .hm{max-width:1000px}
+  .hm-grid{grid-template-columns:repeat(4,1fr)}
+}
