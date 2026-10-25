@@ -19,6 +19,7 @@ import { getSession, clearSession, applyOverride, permsOf, itemLevel, ITEMS, ROL
 import PermAdmin from './components/PermAdmin'
 import UniformPage from './pages/UniformPage'
 import WriteOffPage from './pages/WriteOffPage'
+import RoomSalePage from './pages/RoomSalePage'
 import { toast } from './lib/toast'
 
 // 首頁圓形入口：之後加新模組（清潔劑、機器…）直接在這裡加一行
@@ -33,6 +34,7 @@ const MODULES = [
   { id: 'defect', icon: 'wrench', label: '缺陷管理', color: '#b5603a', top: true, Page: Defects },
   { id: 'uniform', sub: '制服庫存', icon: 'shirt', label: '制服布草管理', color: '#8f7ac9', top: true, dev: true, Page: UniformPage },
   { id: 'writeoff', sub: '報銷、遺失、狀態跟進', icon: 'search', label: '報銷與遺失管理', color: '#c0564f', top: true, dev: true, Page: WriteOffPage },
+  { id: 'roomsale', sub: '價錢、庫存', icon: 'tag', label: '房間可售物品', color: '#2f8f9d', top: true, dev: true, Page: RoomSalePage },
   { id: 'complaint', sub: '記錄、統計與月報', icon: 'chat', label: '客訴管理', color: '#c0564f', Page: Complaints },
 ]
 // 首頁三大系統卡：房間品質（內含上面各模組）／後勤管理（嵌入）／缺陷管理（待加入）
@@ -43,6 +45,7 @@ const SYSTEMS = [
   { id: 'public', icon: 'people', label: '公共地區', sub: '崗位、看板、員工', color: '#8a6d3b' },
   { id: 'uniform', icon: 'shirt', label: '制服布草管理', sub: '制服庫存', color: '#8f7ac9', dev: true },
   { id: 'writeoff', icon: 'search', label: '報銷與遺失管理', sub: '報銷、遺失、跟進', color: '#c0564f', dev: true, wip: true },
+  { id: 'roomsale', icon: 'tag', label: '房間可售物品', sub: '價錢／庫存表', color: '#2f8f9d', dev: true, wip: true },
 ]
 const WD = ['日', '一', '二', '三', '四', '五', '六']
 
@@ -140,7 +143,7 @@ export default function App() {
   const qMods = MODULES.filter(m => !m.embed && !m.top)
   const locked = id => !!session && (id === 'public' ? ITEMS.filter(i => i.id.startsWith('pa_')).every(i => lvl(i.id) === 'none') : id === 'quality' ? qMods.every(m => lvl(m.id) === 'none') : lvl(id) === 'none')
   // 即使被封鎖的頁面（例如舊分頁狀態）也一律退回首頁
-  if (tab !== 'home' && session && (((cur && cur.id === 'boh') && locked('boh')) || ((cur && cur.id === 'defect') && locked('defect')) || ((cur && cur.id === 'public') && locked('public')) || ((cur && cur.id === 'uniform') && locked('uniform')) || ((cur && cur.id === 'writeoff') && locked('writeoff')) || ((tab === 'quality' || (cur && !cur.embed && !cur.top)) && locked('quality')))) setTimeout(() => setTab('home'), 0)
+  if (tab !== 'home' && session && (((cur && cur.id === 'boh') && locked('boh')) || ((cur && cur.id === 'defect') && locked('defect')) || ((cur && cur.id === 'public') && locked('public')) || ((cur && cur.id === 'uniform') && locked('uniform')) || ((cur && cur.id === 'writeoff') && locked('writeoff')) || ((cur && cur.id === 'roomsale') && locked('roomsale')) || ((tab === 'quality' || (cur && !cur.embed && !cur.top)) && locked('quality')))) setTimeout(() => setTab('home'), 0)
   // 只有查房記錄權限（樓層主管）的帳號：其他品質模組一律退回首頁
   if (session && cur && !cur.embed && !cur.top && lvl(cur.id) === 'none') setTimeout(() => setTab('home'), 0)
   const hardReload = () => { location.href = location.pathname + '?v=' + Date.now() }
@@ -263,14 +266,14 @@ export default function App() {
       )}
       {(() => {
         // 底部導覽最多 5 格：項目多過 5 個時，首頁／品質／公共／缺陷留低，其餘（後勤、開發中模組）收入「更多」
-        const all = [['home', '首頁', 'hotel'], ['quality', '品質', 'clipcheck'], ['boh', '後勤', 'box'], ['defect', '缺陷', 'wrench'], ['public', '公共', 'people'], ['uniform', '制服布草管理', 'shirt'], ['writeoff', '報銷與遺失管理', 'search']]
-          .filter(([id]) => !['uniform', 'writeoff'].includes(id) || showSys({ id, dev: true }))
+        const all = [['home', '首頁', 'hotel'], ['quality', '品質', 'clipcheck'], ['boh', '後勤', 'box'], ['defect', '缺陷', 'wrench'], ['public', '公共', 'people'], ['uniform', '制服布草管理', 'shirt'], ['writeoff', '報銷與遺失管理', 'search'], ['roomsale', '房間可售物品', 'tag']]
+          .filter(([id]) => !['uniform', 'writeoff', 'roomsale'].includes(id) || showSys({ id, dev: true }))
         const many = all.length > 5
         const main = many ? all.filter(([id]) => ['home', 'quality', 'public', 'defect'].includes(id)) : all
         const more = many ? all.filter(([id]) => !['home', 'quality', 'public', 'defect'].includes(id)) : []
-        const devId = id => id === 'writeoff'
+        const devId = id => id === 'writeoff' || id === 'roomsale'
         const tapItem = (id, label) => { const lock = id !== 'home' && locked(id); if (lock) toast(devId(id) ? '開發中，暫時未開放' : '此帳號沒有權限進入「' + label + '」'); else { setMoreOpen(false); go(id) } }
-        const area = ['boh', 'defect', 'public', 'uniform', 'writeoff'].includes(tab) ? tab : tab === 'home' ? 'home' : 'quality'
+        const area = ['boh', 'defect', 'public', 'uniform', 'writeoff', 'roomsale'].includes(tab) ? tab : tab === 'home' ? 'home' : 'quality'
         return (
           <>
             <nav className="gnav" aria-label="主導覽">

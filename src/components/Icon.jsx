@@ -6,6 +6,7 @@ const PATHS = {
   shirt: <path d="M8.5 4 3 6.8l1.9 3.7 2.1-1V20h10V9.5l2.1 1L21 6.8 15.5 4a3.6 3.6 0 0 1-7 0z" />,
   more: <><circle cx="5" cy="12" r="1.7" /><circle cx="12" cy="12" r="1.7" /><circle cx="19" cy="12" r="1.7" /></>,
   bed: <><path d="M3 19V6" /><path d="M3 15h18v4" /><path d="M21 15v-3a3 3 0 0 0-3-3h-7v6" /><circle cx="7" cy="11.5" r="1.6" /></>,
+  tag: <><path d="M3 12V4h8l10 10-8 8z" /><circle cx="7.5" cy="8.5" r="1.3" /></>,
   hotel: <><rect x="5" y="3" width="14" height="18" rx="2" /><path d="M9 7.5h.01M12 7.5h.01M15 7.5h.01M9 11h.01M12 11h.01M15 11h.01M10 21v-4.5h4V21" /></>,
   clipcheck: <><rect x="5" y="4.5" width="14" height="16" rx="2" /><path d="M9.5 4.5V3.4h5v1.1M9 13l2.2 2.2L15.2 11" /></>,
   wrench: <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />,

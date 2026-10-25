@@ -36,7 +36,8 @@ export const ITEMS = [
   { id: 'complaint', group: '房間品質', label: '客訴管理' },
   { id: 'boh', group: '後勤管理', label: '後勤管理（整個模組）' },
   { id: 'uniform', group: '後勤管理', label: '制服布草管理' },
-  { id: 'writeoff', group: '後勤管理', label: '報銷與遺失管理（開發中）' },
+  { id: 'writeoff', group: '後勤管理', label: '報銷與遺失管理' },
+  { id: 'roomsale', group: '後勤管理', label: '房間可售物品價錢／庫存表（開發中）' },
   { id: 'defect', group: '缺陷管理', label: '缺陷管理（整個模組）', add: true },
   { id: 'pa_roster', group: '公共地區', label: '人員崗位' },
   { id: 'pa_tasks', group: '公共地區', label: '任務代碼' },
@@ -48,7 +49,7 @@ export const LEVEL_LABEL = { none: '無', view: '查看', add: '新增', edit: '
 // 角色預設（未有逐項設定時）
 export function itemDefault(s, id) {
   if (!s) return 'edit'
-  if (id === 'uniform' || id === 'writeoff') return s.dev ? 'edit' : 'none'   // 開發中：預設只有開發者可入
+  if (id === 'uniform' || id === 'writeoff' || id === 'roomsale') return s.dev ? 'edit' : 'none'   // 開發中：預設只有開發者可入
   const r = s.role
   if (r === 'admin') return 'edit'
   if (r === 'store') return id === 'boh' || id === 'defect' ? 'edit' : 'none'
