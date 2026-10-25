@@ -42,7 +42,8 @@ export default function Uniform({ edit }) {
 
   return (
     <>
-      <ToolBar label={`制服庫存 · ${items.length} 款 · 共 ${total} 件`}><ExportBtn onClick={() => setReport(true)} /></ToolBar>
+      <ToolBar label={`庫存 · ${items.length} 款 · 共 ${total} 件`}><ExportBtn onClick={() => setReport(true)} /></ToolBar>
+      <div className="seg" style={{ margin: '0 0 8px' }}>{['', '制服', '布草'].map(c => <button key={c} className={f.cat === c ? 'on' : ''} onClick={() => setF({ ...f, cat: c })}>{c || '全部'}</button>)}</div>
       <div className="fstk">
         <div className="df-grid3" style={{ gridTemplateColumns: 'minmax(0,2fr) minmax(0,1fr)' }}>
           <input className="search-inp" placeholder="搜尋款式／位置" value={f.q} onChange={e => setF({ ...f, q: e.target.value })} />
@@ -54,7 +55,7 @@ export default function Uniform({ edit }) {
       <div className="pa-grid pa-grid-an">
         {list.map(i => (
           <div className="pa-sq pa-an" key={i.id} role="button" tabIndex={0} onClick={() => edit && setSheet({ ...i })} style={edit ? undefined : { cursor: 'default' }}>
-            <span className="pa-sq-top"><em>{i.location || '未設位置'}</em>{low(i) && <small className="pa-flag">存量低</small>}</span>
+            <span className="pa-sq-top"><em>{i.cat || '制服'}</em><small className="pa-kind">{i.location || '未設位置'}</small>{low(i) && <small className="pa-flag">存量低</small>}</span>
             <b className="pa-sq-name">{nm(i)}</b>
             <span className="pa-sq-post">
               <span className={'st-qty' + (low(i) ? ' low' : '')}>{i.qty}<small> 件{i.min_qty ? ` ／ 最低 ${i.min_qty}` : ''}</small></span>
@@ -69,12 +70,13 @@ export default function Uniform({ edit }) {
           </div>
         ))}
       </div>
-      {edit && <button className="fab" onClick={() => setSheet({ id: null, name: '', size: '', qty: '', min_qty: '', location: '', notes: '' })}>＋</button>}
+      {edit && <button className="fab" onClick={() => setSheet({ id: null, cat: f.cat || '制服', name: '', size: '', qty: '', min_qty: '', location: '', notes: '' })}>＋</button>}
       {sheet && (
         <div className="modal" onClick={e => { if (e.target === e.currentTarget) setSheet(null) }}>
           <div className="sheet">
             <div className="sheet-hd"><h2>{sheet.id ? nm(sheet) : '新增制服'}</h2><span className="sheet-hd-acts"><button className="mini" onClick={() => setSheet(null)}>取消</button><button className="mini pri" onClick={save}>儲存</button></span></div>
-            <div className="f-row"><label>款式</label><input value={sheet.name} onChange={e => setSheet({ ...sheet, name: e.target.value })} placeholder="例：房務員上衣" /></div>
+            <div className="seg" style={{ margin: '0 0 10px' }}>{['制服', '布草'].map(c => <button key={c} className={(sheet.cat || '制服') === c ? 'on' : ''} onClick={() => setSheet({ ...sheet, cat: c })}>{c}</button>)}</div>
+            <div className="f-row"><label>品項／款式</label><input value={sheet.name} onChange={e => setSheet({ ...sheet, name: e.target.value })} placeholder={(sheet.cat || '制服') === '布草' ? '例：洗被袋、大被袋、床單' : '例：房務員上衣'} /></div>
             <div style={{ display: 'flex', gap: 10 }}>
               <div className="f-row" style={{ flex: 1 }}><label>尺碼</label><input value={sheet.size} onChange={e => setSheet({ ...sheet, size: e.target.value })} placeholder="S／M／L／42" /></div>
               <div className="f-row" style={{ flex: 1 }}><label>現有數量</label><input inputMode="numeric" value={sheet.qty} onChange={e => setSheet({ ...sheet, qty: e.target.value })} /></div>
