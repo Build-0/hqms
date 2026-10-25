@@ -1247,3 +1247,4 @@ html.rpt-open #root{visibility:hidden}
 .sys-grid{grid-template-columns:repeat(3,1fr)}
 
 .more-sheet{padding-bottom:calc(18px + env(safe-area-inset-bottom,0px))}.more-grid{padding:6px 0 4px !important;margin:0 !important;justify-content:flex-start !important}
+.uni-adj{display:flex;gap:8px;margin-top:6px;width:100%}.uni-adj .mini{flex:1;height:38px}
