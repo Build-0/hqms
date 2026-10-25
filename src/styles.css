@@ -1245,3 +1245,5 @@ html.rpt-open #root{visibility:hidden}
 /* 底部導覽 7 格時收窄 */
 @media (max-width:899px){.gnav-7 .gnav-i{padding:8px 0 6px}.gnav-7 .gnav-i span{font-size:10.5px;letter-spacing:-.2px}.gnav-7 .gnav-i svg{width:20px;height:20px}}
 .sys-grid{grid-template-columns:repeat(3,1fr)}
+
+.more-sheet{padding-bottom:calc(18px + env(safe-area-inset-bottom,0px))}.more-grid{padding:6px 0 4px !important;margin:0 !important;justify-content:flex-start !important}

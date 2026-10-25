@@ -61,6 +61,7 @@ export default function App() {
     document.documentElement.classList.toggle('big', big)
     try { localStorage.setItem('hotel_big', big ? '1' : '0') } catch { /* 無法儲存時照常使用 */ }
   }, [big])
+  const [moreOpen, setMoreOpen] = useState(false)   // 底部導覽「更多」
   const [permOpen, setPermOpen] = useState(false)   // 權限管理（開發者）
   const [settings, setSettings] = useState(false)   // 設定面板（大字、刷新、登出）
   const [refreshing, setRefreshing] = useState(false)  // 刷新中（轉圈）
@@ -260,19 +261,56 @@ export default function App() {
             if (api.isOpen) { await api.signOut(); clearSession(); setTab('home'); setSessionState(null) } else { await api.signOut(); setUser(null) }
           }} />
       )}
-      <nav className={'gnav' + (['uniform', 'writeoff'].some(i => showSys({ id: i, dev: true })) ? ' gnav-7' : '')} aria-label="主導覽">
-        {[['home', '首頁', 'hotel'], ['quality', '品質', 'clipcheck'], ['boh', '後勤', 'box'], ['defect', '缺陷', 'wrench'], ['public', '公共', 'people'], ['uniform', '制服', 'shirt'], ['writeoff', '報銷', 'search']].filter(([id]) => !['uniform', 'writeoff'].includes(id) || showSys({ id, dev: true })).map(([id, label, ic], _i, arr) => {
-          const area = ['boh', 'defect', 'public', 'uniform', 'writeoff'].includes(tab) ? tab : tab === 'home' ? 'home' : 'quality'
-          const lock = id !== 'home' && locked(id)
-          return (
-            <button key={id} className={`gnav-i ${area === id ? 'on' : ''} ${lock ? 'lock' : ''}`}
-              onClick={() => (lock ? toast(['uniform', 'writeoff'].includes(id) ? '開發中，暫時未開放' : '此帳號沒有權限進入「' + label + '」') : go(id))}>
-              <Icon name={ic} size={22} width={2} />
-              <span>{label}</span>
-            </button>
-          )
-        })}
-      </nav>
+      {(() => {
+        // 底部導覽最多 5 格：項目多過 5 個時，首頁／品質／公共／缺陷留低，其餘（後勤、開發中模組）收入「更多」
+        const all = [['home', '首頁', 'hotel'], ['quality', '品質', 'clipcheck'], ['boh', '後勤', 'box'], ['defect', '缺陷', 'wrench'], ['public', '公共', 'people'], ['uniform', '制服房管理', 'shirt'], ['writeoff', '報銷與遺失管理', 'search']]
+          .filter(([id]) => !['uniform', 'writeoff'].includes(id) || showSys({ id, dev: true }))
+        const many = all.length > 5
+        const main = many ? all.filter(([id]) => ['home', 'quality', 'public', 'defect'].includes(id)) : all
+        const more = many ? all.filter(([id]) => !['home', 'quality', 'public', 'defect'].includes(id)) : []
+        const devId = id => ['uniform', 'writeoff'].includes(id)
+        const tapItem = (id, label) => { const lock = id !== 'home' && locked(id); if (lock) toast(devId(id) ? '開發中，暫時未開放' : '此帳號沒有權限進入「' + label + '」'); else { setMoreOpen(false); go(id) } }
+        const area = ['boh', 'defect', 'public', 'uniform', 'writeoff'].includes(tab) ? tab : tab === 'home' ? 'home' : 'quality'
+        return (
+          <>
+            <nav className="gnav" aria-label="主導覽">
+              {main.map(([id, label, ic]) => {
+                const lock = id !== 'home' && locked(id)
+                return (
+                  <button key={id} className={`gnav-i ${area === id ? 'on' : ''} ${lock ? 'lock' : ''}`} onClick={() => tapItem(id, label)}>
+                    <Icon name={ic} size={22} width={2} /><span>{label}</span>
+                  </button>
+                )
+              })}
+              {many && (
+                <button className={`gnav-i ${more.some(([id]) => id === area) ? 'on' : ''}`} onClick={() => setMoreOpen(true)}>
+                  <Icon name="more" size={22} width={2} /><span>更多</span>
+                </button>
+              )}
+            </nav>
+            {moreOpen && (
+              <div className="modal" onClick={e => { if (e.target === e.currentTarget) setMoreOpen(false) }}>
+                <div className="sheet more-sheet">
+                  <div className="sheet-hd"><h2>更多模組</h2><span className="sheet-hd-acts"><button className="mini" onClick={() => setMoreOpen(false)}>關閉</button></span></div>
+                  <div className="home-grid more-grid">
+                    {more.map(([id, label, ic]) => {
+                      const sy = SYSTEMS.find(x => x.id === id) || {}
+                      const lock = locked(id)
+                      return (
+                        <button className={'home-item' + (lock ? ' pm-lockcard' : '')} key={id} onClick={() => tapItem(id, label)}>
+                          <span className="hi-circle" style={{ background: (sy.color || '#4a6fa5') + '26', borderColor: 'transparent' }}><Icon name={ic} size={33} color={sy.color || '#4a6fa5'} width={2.2} /></span>
+                          <span className="hi-label">{sy.label || label}</span>
+                          <span className="hi-sub">{lock ? (devId(id) ? '開發中' : '無權限') : (devId(id) ? '開發中・只限開發者' : sy.sub)}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
+        )
+      })()}
       {msg && <div className="toast">{msg}</div>}
     </div>
   )
