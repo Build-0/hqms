@@ -195,7 +195,7 @@ export default function App() {
                   <b>{sy.label}</b>
                   <span>{sy.sub}</span>
                   {locked(sy.id) && <i>{sy.wip ? '開發中' : '🔒 無權限'}</i>}
-                  {sy.wip && !locked(sy.id) && <i style={{ color: 'var(--accent)' }}>開發中・只限開發者</i>}
+                  {sy.wip && !locked(sy.id) && <i style={{ color: 'var(--accent)' }}>開發中</i>}
                 </button>
               ))}
             </div>
@@ -300,7 +300,7 @@ export default function App() {
                         <button className={'home-item' + (lock ? ' pm-lockcard' : '')} key={id} onClick={() => tapItem(id, label)}>
                           <span className="hi-circle" style={{ background: (sy.color || '#4a6fa5') + '26', borderColor: 'transparent' }}><Icon name={ic} size={33} color={sy.color || '#4a6fa5'} width={2.2} /></span>
                           <span className="hi-label">{sy.label || label}</span>
-                          <span className="hi-sub">{lock ? (devId(id) ? '開發中' : '無權限') : (devId(id) ? '開發中・只限開發者' : sy.sub)}</span>
+                          <span className="hi-sub">{lock ? (devId(id) ? '開發中' : '無權限') : (devId(id) ? '開發中' : sy.sub)}</span>
                         </button>
                       )
                     })}
