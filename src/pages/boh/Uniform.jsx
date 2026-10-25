@@ -5,7 +5,7 @@ import { todayStr } from '../../lib/dates'
 import { ToolBar, ExportBtn } from '../../components/ui'
 import { ReportModal, ListReport } from '../../components/Reports'
 
-// 制服房管理：只做庫存（領用／歸還由各部門自己嘅系統處理）
+// 制服庫存管理：只做庫存（領用／歸還由各部門自己嘅系統處理）
 // 每款制服：款式、尺碼、現有數量、最低存量（低於即標「存量低」）、存放位置、備註
 export default function Uniform({ edit }) {
   const [items, setItems] = useState(null)
@@ -86,7 +86,7 @@ export default function Uniform({ edit }) {
           </div>
         </div>
       )}
-      {report && <ReportModal title="制服房管理 · 庫存" sub={todayStr()} onClose={() => setReport(false)}><ListReport data={reportData()} /></ReportModal>}
+      {report && <ReportModal title="制服庫存管理" sub={todayStr()} onClose={() => setReport(false)}><ListReport data={reportData()} /></ReportModal>}
     </>
   )
 }

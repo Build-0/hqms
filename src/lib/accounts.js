@@ -35,7 +35,7 @@ export const ITEMS = [
   { id: 'cyclic', group: '房間品質', label: '清潔要點' },
   { id: 'complaint', group: '房間品質', label: '客訴管理' },
   { id: 'boh', group: '後勤管理', label: '後勤管理（整個模組）' },
-  { id: 'uniform', group: '後勤管理', label: '制服房管理（開發中）' },
+  { id: 'uniform', group: '後勤管理', label: '制服庫存管理（開發中）' },
   { id: 'writeoff', group: '後勤管理', label: '報銷與遺失管理（開發中）' },
   { id: 'defect', group: '缺陷管理', label: '缺陷管理（整個模組）', add: true },
   { id: 'pa_roster', group: '公共地區', label: '人員崗位' },
