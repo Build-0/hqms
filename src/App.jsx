@@ -42,7 +42,7 @@ const SYSTEMS = [
   { id: 'defect', icon: 'wrench', label: '缺陷管理', sub: '登記、跟進、統計', color: '#c0564f' },
   { id: 'public', icon: 'people', label: '公共地區', sub: '崗位、看板、員工', color: '#8a6d3b' },
   { id: 'uniform', icon: 'shirt', label: '制服布草管理', sub: '制服庫存', color: '#8f7ac9', dev: true },
-  { id: 'writeoff', icon: 'search', label: '報銷與遺失管理', sub: '報銷、遺失、跟進', color: '#c0564f', dev: true },
+  { id: 'writeoff', icon: 'search', label: '報銷與遺失管理', sub: '報銷、遺失、跟進', color: '#c0564f', dev: true, wip: true },
 ]
 const WD = ['日', '一', '二', '三', '四', '五', '六']
 
@@ -190,12 +190,12 @@ export default function App() {
           <div className="sys-home">
             <div className="sys-grid">
               {SYSTEMS.filter(sy => showSys(sy)).map(sy => (
-                <button className={`sys-card ${locked(sy.id) ? 'locked' : ''}`} key={sy.id} onClick={() => (locked(sy.id) ? toast(sy.dev ? '開發中，暫時未開放' : '此帳號沒有權限進入「' + sy.label + '」') : go(sy.id))}>
+                <button className={`sys-card ${locked(sy.id) ? 'locked' : ''}`} key={sy.id} onClick={() => (locked(sy.id) ? toast(sy.wip ? '開發中，暫時未開放' : '此帳號沒有權限進入「' + sy.label + '」') : go(sy.id))}>
                   <Icon name={sy.icon} size={46} color={sy.color} width={2} />
                   <b>{sy.label}</b>
                   <span>{sy.sub}</span>
-                  {locked(sy.id) && <i>{sy.dev ? '開發中' : '🔒 無權限'}</i>}
-                  {sy.dev && !locked(sy.id) && <i style={{ color: 'var(--accent)' }}>開發中・只限開發者</i>}
+                  {locked(sy.id) && <i>{sy.wip ? '開發中' : '🔒 無權限'}</i>}
+                  {sy.wip && !locked(sy.id) && <i style={{ color: 'var(--accent)' }}>開發中・只限開發者</i>}
                 </button>
               ))}
             </div>
@@ -268,7 +268,7 @@ export default function App() {
         const many = all.length > 5
         const main = many ? all.filter(([id]) => ['home', 'quality', 'public', 'defect'].includes(id)) : all
         const more = many ? all.filter(([id]) => !['home', 'quality', 'public', 'defect'].includes(id)) : []
-        const devId = id => ['uniform', 'writeoff'].includes(id)
+        const devId = id => id === 'writeoff'
         const tapItem = (id, label) => { const lock = id !== 'home' && locked(id); if (lock) toast(devId(id) ? '開發中，暫時未開放' : '此帳號沒有權限進入「' + label + '」'); else { setMoreOpen(false); go(id) } }
         const area = ['boh', 'defect', 'public', 'uniform', 'writeoff'].includes(tab) ? tab : tab === 'home' ? 'home' : 'quality'
         return (
