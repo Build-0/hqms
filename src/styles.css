@@ -1256,3 +1256,7 @@ html.rpt-open #root{visibility:hidden}
   .hm-grid{grid-template-columns:repeat(4,1fr)}
 }
 .rs-ph{width:100%}.rs-ph .ph-grid{margin:0}
+
+/* 清單報告：所有分組欄位對齊 */
+.rpt-t.rpt-fixed{table-layout:fixed;width:100%}
+.rpt-t.rpt-fixed th,.rpt-t.rpt-fixed td{overflow-wrap:anywhere;word-break:break-word}

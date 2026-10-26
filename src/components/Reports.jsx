@@ -457,6 +457,10 @@ export function ListReport({ data }) {
   const total = groups.reduce((n, g) => n + g.rows.length, 0)
   const hasPhoto = groups.some(g => g.rows.some(r => r.photo))
   const showPh = withPhotos && hasPhoto
+  // 所有分組共用同一組欄闊（按各欄最長內容比例），表格就會上下對齊，唔會每組各自歪
+  const wOf = v => [...String(v == null ? '' : v)].reduce((a, ch) => a + (ch.charCodeAt(0) > 255 ? 1.8 : 1), 0)
+  const colW = cols.map((c, k) => Math.min(26, Math.max(5, wOf(c), ...groups.flatMap(g => g.rows.map(r => wOf(r.cells[k]))))))
+  const colSum = colW.reduce((a, b) => a + b, 0)
   return (
     <>
       <p className="rpt-mut">篩選：{filterText}　·　共 {total} 項</p>
@@ -465,7 +469,8 @@ export function ListReport({ data }) {
       {groups.map(g => (
         <div key={g.name}>
           <Sub>{g.name} · {g.rows.length}</Sub>
-          <table className="rpt-t">
+          <table className="rpt-t rpt-fixed">
+            <colgroup>{showPh && <col style={{ width: 56 }} />}{colW.map((w, k) => <col key={k} style={{ width: (w / colSum * 100).toFixed(2) + '%' }} />)}</colgroup>
             <thead><tr>{showPh && <th style={{ width: 56 }}></th>}{cols.map(c => <th key={c}>{c}</th>)}</tr></thead>
             <tbody>
               {g.rows.map((r, i) => (
