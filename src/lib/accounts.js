@@ -37,7 +37,7 @@ export const ITEMS = [
   { id: 'boh', group: '後勤管理', label: '後勤管理（整個模組）' },
   { id: 'uniform', group: '後勤管理', label: '制服布草管理' },
   { id: 'writeoff', group: '後勤管理', label: '報銷與遺失管理' },
-  { id: 'roomsale', group: '後勤管理', label: '房間可售物品價錢／庫存表（開發中）' },
+  { id: 'roomsale', group: '後勤管理', label: '房間可售物品價錢／庫存表' },
   { id: 'defect', group: '缺陷管理', label: '缺陷管理（整個模組）', add: true },
   { id: 'pa_roster', group: '公共地區', label: '人員崗位' },
   { id: 'pa_tasks', group: '公共地區', label: '任務代碼' },

@@ -44,8 +44,8 @@ const SYSTEMS = [
   { id: 'defect', icon: 'wrench', label: '缺陷管理', sub: '登記、跟進、統計', color: '#c0564f' },
   { id: 'public', icon: 'people', label: '公共地區', sub: '崗位、看板、員工', color: '#8a6d3b' },
   { id: 'uniform', icon: 'shirt', label: '制服布草管理', sub: '制服庫存', color: '#8f7ac9', dev: true },
-  { id: 'writeoff', icon: 'search', label: '報銷與遺失管理', sub: '報銷、遺失、跟進', color: '#c0564f', dev: true, wip: true },
-  { id: 'roomsale', icon: 'tag', label: '房間可售物品', sub: '價錢／庫存表', color: '#2f8f9d', dev: true, wip: true },
+  { id: 'writeoff', icon: 'search', label: '報銷與遺失管理', sub: '報銷、遺失、跟進', color: '#c0564f', dev: true },
+  { id: 'roomsale', icon: 'tag', label: '房間可售物品', sub: '價錢／庫存表', color: '#2f8f9d', dev: true },
 ]
 const WD = ['日', '一', '二', '三', '四', '五', '六']
 
@@ -271,7 +271,7 @@ export default function App() {
         const many = all.length > 5
         const main = many ? all.filter(([id]) => ['home', 'quality', 'public', 'defect'].includes(id)) : all
         const more = many ? all.filter(([id]) => !['home', 'quality', 'public', 'defect'].includes(id)) : []
-        const devId = id => id === 'writeoff' || id === 'roomsale'
+        const devId = () => false
         const tapItem = (id, label) => { const lock = id !== 'home' && locked(id); if (lock) toast(devId(id) ? '開發中，暫時未開放' : '此帳號沒有權限進入「' + label + '」'); else { setMoreOpen(false); go(id) } }
         const area = ['boh', 'defect', 'public', 'uniform', 'writeoff', 'roomsale'].includes(tab) ? tab : tab === 'home' ? 'home' : 'quality'
         return (
