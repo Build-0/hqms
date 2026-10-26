@@ -1260,3 +1260,17 @@ html.rpt-open #root{visibility:hidden}
 /* 清單報告：所有分組欄位對齊 */
 .rpt-t.rpt-fixed{table-layout:fixed;width:100%}
 .rpt-t.rpt-fixed th,.rpt-t.rpt-fixed td{overflow-wrap:anywhere;word-break:break-word}
+/* 報損總表 */
+.wo-wrap{overflow:auto;max-height:68vh;border:1px solid var(--line);border-radius:12px;background:#fff}
+.wo-t{border-collapse:separate;border-spacing:0;font-size:13px;min-width:100%}
+.wo-t th,.wo-t td{border-bottom:1px solid #e8edf0;border-right:1px solid #eef1f3;padding:7px 8px;text-align:right;white-space:nowrap}
+.wo-t thead th{position:sticky;top:0;background:#f1f4f6;z-index:3;font-size:12px;text-align:center}
+.wo-t .wo-nm{position:sticky;left:0;background:#fff;z-index:2;text-align:left;white-space:normal;min-width:150px;max-width:210px}
+.wo-t thead .wo-nm{z-index:4;background:#e9edf0}
+.wo-nm b{display:block;font-size:13px}.wo-nm small{display:block;font-size:10.5px;color:var(--sub);line-height:1.25;margin-top:1px}
+.wo-t .c-wo{background:#fbe4d9}.wo-t thead .c-wo{background:#f5c9b5}
+.wo-t .c-sold{background:#dbeaf8}.wo-t thead .c-sold{background:#b9d6ef}
+.wo-t .c-calc{font-weight:800;background:#f6f7f8}.wo-t thead .c-calc{background:#e6e9ec}
+.wo-t .neg{color:#b3342a}
+.wo-t tr.click{cursor:pointer}.wo-t tr.click:active td{background:#eef6f3}
+.wo-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 10px}
