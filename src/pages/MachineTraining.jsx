@@ -11,9 +11,9 @@ import { ReportModal } from '../components/Reports'
 //  2) 培訓場次：簽到表印出嚟由大家手寫簽名；之後喺系統撳「已簽到」登記（可連結某部機器，登記即標「已掌握」）
 //  3) 人員名單
 // 簽到表：一頁（A4 橫向，兩欄，中英對照），簽名格留空，列印後手寫；唔用電子簽名
-const DEPTS = ['Sup', '倉', 'Linen', 'PA', 'PM', 'ON', 'RA']
+const DEPTS = ['經理', 'Sup', '倉', 'Linen', 'PA', 'PM', 'ON', 'RA']
 // 組別中英對照（簽到表同表格都用）
-const DEPT_NAME = { Sup: ['主管', 'Supervisor'], 倉: ['倉庫', 'Warehouse'], Linen: ['布草', 'Linen'], PA: ['公共區域', 'Public Area'], PM: ['中更', 'Mid Shift'], ON: ['通宵', 'Overnight'], RA: ['房務員', 'Room Attendant'], 其他: ['其他', 'Others'] }
+const DEPT_NAME = { 經理: ['經理', 'Manager'], Sup: ['主管', 'Supervisor'], 倉: ['倉庫', 'Warehouse'], Linen: ['布草', 'Linen'], PA: ['公共區域', 'Public Area'], PM: ['中更', 'Mid Shift'], ON: ['通宵', 'Overnight'], RA: ['房務員', 'Room Attendant'], 其他: ['其他', 'Others'] }
 const deptLabel = d => (DEPT_NAME[d] ? DEPT_NAME[d][0] + ' ' + DEPT_NAME[d][1] : d)
 
 export default function MachineTraining({ canEdit, who }) {
