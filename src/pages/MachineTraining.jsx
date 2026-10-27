@@ -98,17 +98,25 @@ export default function MachineTraining({ canEdit, who }) {
 
   // 一頁簽到表：兩欄並排（中英對照），簽名格留空畀大家手寫
   const SignSheet = ({ s }) => {
-    const half = Math.ceil(people.length / 2)
-    const cols = [people.slice(0, half), people.slice(half)]
+    // 三欄並排、組別用整行標題，令 50 人剛好一頁 A4 橫向放得落
+    const items = []
+    let no = 0
+    groups.forEach(g => { items.push({ hd: g.d }); g.members.forEach(p => { no += 1; items.push({ p, no }) }) })
+    const per = Math.ceil(items.length / 3)
+    const cols = [0, 1, 2].map(k => items.slice(k * per, (k + 1) * per))
+    // 每欄開頭如果唔係組別標題，補返所屬組別標題
+    cols.forEach((c, k) => { if (c.length && !c[0].hd) { const prev = items.slice(0, k * per).reverse().find(x => x.hd); c.unshift({ hd: prev ? prev.hd : c[0].p.dept, cont: true }) } })
     return (
       <>
         <p className="rpt-mut" style={{ margin: '0 0 6px' }}>共 {people.length} 人 Total {people.length} staff{s.trainer ? '　·　導師 Trainer：' + s.trainer : ''}</p>
-        <div className="sign-two">
+        <div className="sign-three">
           {cols.map((c, k) => (
             <table className="rpt-t rpt-fixed sign-t" key={k}>
-              <colgroup><col style={{ width: '17%' }} /><col style={{ width: '6%' }} /><col style={{ width: '14%' }} /><col style={{ width: '26%' }} /><col style={{ width: '37%' }} /></colgroup>
-              <thead><tr><th>組別<br />Dept</th><th>#</th><th>員工號碼<br />Staff No.</th><th>英文名／中文名<br />Name</th><th>簽名<br />Signature</th></tr></thead>
-              <tbody>{c.map((p, i) => <tr key={p.id}><td>{DEPT_NAME[p.dept] ? <>{DEPT_NAME[p.dept][0]}<br />{DEPT_NAME[p.dept][1]}</> : p.dept}</td><td>{k * half + i + 1}</td><td>{p.emp_no}</td><td>{p.name_en}<br />{p.name_zh}</td><td className="sign-box"></td></tr>)}</tbody>
+              <colgroup><col style={{ width: '8%' }} /><col style={{ width: '17%' }} /><col style={{ width: '31%' }} /><col style={{ width: '44%' }} /></colgroup>
+              <thead><tr><th>#</th><th>員工號碼<br />Staff No.</th><th>姓名<br />Name</th><th>簽名<br />Signature</th></tr></thead>
+              <tbody>{c.map((x, i) => x.hd !== undefined
+                ? <tr key={'h' + i} className="sign-hd"><td colSpan={4}>{deptLabel(x.hd)}{x.cont ? '（續）' : ''}</td></tr>
+                : <tr key={x.p.id}><td>{x.no}</td><td>{x.p.emp_no}</td><td className="sign-nm">{x.p.name_en}{x.p.name_zh ? ' ' + x.p.name_zh : ''}</td><td className="sign-box"></td></tr>)}</tbody>
             </table>
           ))}
         </div>

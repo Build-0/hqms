@@ -1290,9 +1290,17 @@ html.rpt-open #root{visibility:hidden}
 .sign-box{padding:0 !important}.sign-box img{display:block;height:23px;max-width:100%;margin:0 auto}
 .sk-t th{min-width:84px;white-space:normal}.sk-t .sk-c{text-align:center;font-size:16px;color:#17624f}.sk-t .sk-c.ok{background:#dcefea;font-weight:800}
 .sk-t .wo-nm{min-width:130px}
-@media print{.rpt-print.rpt-sign{zoom:.9}}
+@media print{.rpt-print.rpt-sign{zoom:.95}}
 .sign-t{border:1px solid #6b7785}.sign-t th,.sign-t td{border:1px solid #9aa7b1}.sign-t thead th{background:#eef1f3}
 .sign-t td:nth-child(4){white-space:nowrap;overflow:hidden;text-overflow:clip;font-size:10.5px}
 
 .mt-ok{font-size:12.5px;color:#17624f;font-weight:800;white-space:nowrap}
 .sign-t th{line-height:1.2}.sign-t td{line-height:1.15}
+
+/* 簽到表：三欄一頁 */
+.sign-three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;align-items:start}
+.sign-three .sign-t{font-size:10.5px}
+.sign-three .sign-t th{padding:2px 3px;line-height:1.15}
+.sign-three .sign-t td{padding:0 4px;height:27px;line-height:1.1}
+.sign-nm{white-space:nowrap;overflow:hidden}
+.sign-t tr.sign-hd td{height:20px;background:#d3eee7;color:#0d5c50;font-weight:800;font-size:10.5px;text-align:left}
