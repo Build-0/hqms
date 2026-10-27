@@ -5,7 +5,7 @@ import { canExport, EXPORT_MSG } from '../lib/accounts'
 import { savePdf } from '../lib/pdf'
 
 // 報告外殼：全螢幕預覽 + 「儲存為 PDF」（瀏覽器列印 → 另存 PDF；手機用分享 → 列印/存成 PDF）
-export function ReportModal({ title, sub, onClose, children, landscape, a3 }) {
+export function ReportModal({ title, sub, onClose, children, landscape: landscapeProp, a3, signPage }) {
   useEffect(() => {
     const old = document.title
     const clean = x => String(x || '').replace(/[\\/:*?"<>|]/g, '-').trim()
@@ -13,6 +13,7 @@ export function ReportModal({ title, sub, onClose, children, landscape, a3 }) {
     document.documentElement.classList.add('rpt-open')   // 報告開啟時隱藏背後頁面（避免玻璃模糊層蓋住報告頂部掣）
     return () => { document.title = old; document.documentElement.classList.remove('rpt-open') }
   }, [title, sub])
+  const landscape = landscapeProp || !!signPage
   useEffect(() => {
     if (!landscape) return undefined
     const st = document.createElement('style')
@@ -39,7 +40,7 @@ export function ReportModal({ title, sub, onClose, children, landscape, a3 }) {
     setBusy(true)
     try {
       const el = document.querySelector('.rpt-overlay .rpt-print')
-      const how = await savePdf(el, document.title || 'report', { landscape, a3, fitOne: !!a3 })
+      const how = await savePdf(el, document.title || 'report', { landscape, a3, fitOne: !!a3 || !!signPage })
       if (how === 'download') alert('PDF 已下載。若沒有出現，請到「檔案」App → 下載項目查看。')
     } catch (e) {
       const msg = e && e.message ? e.message : String(e)
@@ -64,7 +65,7 @@ export function ReportModal({ title, sub, onClose, children, landscape, a3 }) {
         <button className="rpt-btn" onClick={() => window.print()}>保存</button>
       </div>
       <div className="rpt-scroll">
-        <div className={'rpt-print' + (landscape ? ' rpt-wide' : '')}>
+        <div className={'rpt-print' + (signPage ? ' rpt-sign' : landscape ? ' rpt-wide' : '')}>
           <div className="rpt-hd"><b>{title}</b><span>{sub}</span></div>
           {children}
           <div className="rpt-ft"><span>客房公區管理系統</span><span>匯出時間 {stamp}</span></div>

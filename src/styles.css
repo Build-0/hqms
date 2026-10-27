@@ -1283,3 +1283,13 @@ html.rpt-open #root{visibility:hidden}
 .mt-sig{height:32px;max-width:90px;object-fit:contain;border-bottom:1px solid #ccd3d9}
 .mt-no-sig{font-size:12px;color:#b3342a;font-weight:700}
 .mt-row .mini{height:36px;padding:0 12px}
+/* 機器培訓：一頁簽到表（A4 橫向，兩欄） */
+.rpt-print.rpt-sign{min-width:1040px;max-width:1040px;padding:12px 14px 10px}
+.sign-two{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}
+.sign-t{font-size:11px}.sign-t th,.sign-t td{padding:2px 4px;height:25px}
+.sign-box{padding:0 !important}.sign-box img{display:block;height:23px;max-width:100%;margin:0 auto}
+.sk-t th{min-width:84px;white-space:normal}.sk-t .sk-c{text-align:center;font-size:16px;color:#17624f}.sk-t .sk-c.ok{background:#dcefea;font-weight:800}
+.sk-t .wo-nm{min-width:130px}
+@media print{.rpt-print.rpt-sign{zoom:.9}}
+.sign-t{border:1px solid #6b7785}.sign-t th,.sign-t td{border:1px solid #9aa7b1}.sign-t thead th{background:#eef1f3}
+.sign-t td:nth-child(4){white-space:nowrap;overflow:hidden;text-overflow:clip;font-size:10.5px}
