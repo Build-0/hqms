@@ -1306,3 +1306,5 @@ html.rpt-open #root{visibility:hidden}
 .sign-t tr.sign-hd td{height:20px;background:#d3eee7;color:#0d5c50;font-weight:800;font-size:10.5px;text-align:left}
 /* 簽到表：文字垂直置中（靠左中，唔係左上） */
 .sign-t th,.sign-t td{vertical-align:middle !important}
+/* 簽到表：「簽名 Signature」表頭水平置中 */
+.sign-t th:last-child{text-align:center !important}
