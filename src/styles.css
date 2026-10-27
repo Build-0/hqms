@@ -1293,3 +1293,6 @@ html.rpt-open #root{visibility:hidden}
 @media print{.rpt-print.rpt-sign{zoom:.9}}
 .sign-t{border:1px solid #6b7785}.sign-t th,.sign-t td{border:1px solid #9aa7b1}.sign-t thead th{background:#eef1f3}
 .sign-t td:nth-child(4){white-space:nowrap;overflow:hidden;text-overflow:clip;font-size:10.5px}
+
+.mt-ok{font-size:12.5px;color:#17624f;font-weight:800;white-space:nowrap}
+.sign-t th{line-height:1.2}.sign-t td{line-height:1.15}
