@@ -4,6 +4,7 @@ import Icon from '../components/Icon'
 import { ToolBar, ExportBtn } from '../components/ui'
 import { ReportModal, ListReport } from '../components/Reports'
 import { PhotoField, PhotoGrid } from '../components/Photos'
+import MachineTraining from './MachineTraining'
 import { useBack } from '../lib/nav'
 import { itemLevel } from '../lib/accounts'
 import { toast } from '../lib/toast'
@@ -90,6 +91,7 @@ export default function PublicAreas({ session }) {
               ['board', tr('24 小時看板', '24-hour board'), 'calendar', '#4a6fa5', tr('每崗每半小時', 'Every 30 min per post')],
               ['annual', tr('年度清潔', 'Annual cleaning'), 'drop', '#3a8fb5', (() => { const fmt = v => { const [y, m, dd] = v.split('-').map(Number); return tr(`${y}年${m}月${dd}日`, `${dd}/${m}/${y}`) }; if (lastRec) return tr('相關紀錄 ', 'Records: ') + fmt(lastRec); if (nextPlan) return tr('資料起始：', 'Data from: ') + fmt(nextPlan); return tr('相關紀錄：暫無', 'Records: none') })()],
               ['stock', tr('物資清點', 'Stock count'), 'box', '#b5603a', tr(`${stockN} 項物資`, `${stockN} items`)],
+              ['training', tr('機器培訓', 'Machine training'), 'cap', '#8f7ac9', tr('培訓場次、簽名', 'Sessions & sign-in')],
             ].filter(a => lv('pa_' + a[0]) !== 'none').map(([k, t, ic, co, sb]) => (
               <button className="home-item" key={k} onClick={() => setView(k)}>
                 <span className="hi-circle" style={{ background: co + '26', borderColor: 'transparent' }}><Icon name={ic} size={33} color={co} width={2.2} /></span>
@@ -103,6 +105,7 @@ export default function PublicAreas({ session }) {
         {view === 'board' && <Board {...ctx} canEdit={ce('pa_board')} />}
         {view === 'annual' && <Annual {...ctx} canEdit={ce('pa_annual')} />}
         {view === 'stock' && <Stock {...ctx} canEdit={ce('pa_stock')} />}
+        {view === 'training' && <MachineTraining {...ctx} canEdit={ce('pa_training')} />}
         {view === 'tasks' && <Tasks {...ctx} canEdit={ce('pa_tasks')} />}
       </div>
     </LangCtx.Provider>

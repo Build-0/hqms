@@ -1274,3 +1274,12 @@ html.rpt-open #root{visibility:hidden}
 .wo-t .neg{color:#b3342a}
 .wo-t tr.click{cursor:pointer}.wo-t tr.click:active td{background:#eef6f3}
 .wo-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 10px}
+
+/* 機器培訓 */
+.sig-pad{width:100%;max-width:560px;aspect-ratio:640/260;border:2px dashed var(--accent);border-radius:14px;background:#fff;touch-action:none;display:block;margin:6px auto 10px;cursor:crosshair}
+.mt-row{display:flex;align-items:center;gap:10px;padding:8px 10px;margin-bottom:6px;border:1px solid var(--line);border-radius:12px;background:var(--card);width:100%;text-align:left;font-family:inherit;color:var(--ink)}
+.mt-no{font-size:12px;color:var(--sub);min-width:52px}
+.mt-nm{flex:1;display:flex;flex-direction:column;gap:1px;min-width:0}.mt-nm b{font-size:15px}.mt-nm small{font-size:11.5px;color:var(--sub)}
+.mt-sig{height:32px;max-width:90px;object-fit:contain;border-bottom:1px solid #ccd3d9}
+.mt-no-sig{font-size:12px;color:#b3342a;font-weight:700}
+.mt-row .mini{height:36px;padding:0 12px}
