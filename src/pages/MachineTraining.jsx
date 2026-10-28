@@ -57,7 +57,7 @@ export default function MachineTraining({ canEdit, who }) {
   async function saveMachine() {
     const e = msheet
     if (!e.name.trim()) { toast('請填機器名稱'); return }
-    try { if (e.id) await api.dbUpdate('mt_machines', e.id, { name: e.name.trim(), name_en: (e.name_en || '').trim() }); else await api.dbInsert('mt_machines', { name: e.name.trim(), name_en: (e.name_en || '').trim(), sort_order: machines.length + 1 }); toast('已儲存'); setMsheet(null); load() } catch (ex) { toast('儲存失敗：' + ex.message) }
+    try { const row = { name: e.name.trim(), name_en: (e.name_en || '').trim(), brand: (e.brand || '').trim(), model: (e.model || '').trim(), serial: (e.serial || '').trim(), water_nofoam: e.water_nofoam == null ? null : !!e.water_nofoam, water_foam: e.water_foam == null ? null : !!e.water_foam }; if (e.id) await api.dbUpdate('mt_machines', e.id, row); else await api.dbInsert('mt_machines', { ...row, sort_order: machines.length + 1 }); toast('已儲存'); setMsheet(null); load() } catch (ex) { toast('儲存失敗：' + ex.message) }
   }
   async function delMachine() { try { await api.dbDelete('mt_machines', msheet.id); toast('已刪除'); setMsheet(null); load() } catch (ex) { toast(ex.message) } }
   async function saveSession() {
@@ -165,6 +165,7 @@ export default function MachineTraining({ canEdit, who }) {
     <>
       <div className="seg" style={{ margin: '0 0 10px' }}>
         <button className={tab === 'skill' ? 'on' : ''} onClick={() => setTab('skill')}>機器掌握</button>
+        <button className={tab === 'mach' ? 'on' : ''} onClick={() => setTab('mach')}>機器資料（{machines.length}）</button>
         <button className={tab === 'sess' ? 'on' : ''} onClick={() => setTab('sess')}>培訓場次（{sessions.length}）</button>
         <button className={tab === 'ppl' ? 'on' : ''} onClick={() => setTab('ppl')}>人員（{people.length}）</button>
       </div>
@@ -172,14 +173,14 @@ export default function MachineTraining({ canEdit, who }) {
       {tab === 'skill' && (
         <>
           <ToolBar label={`${people.length} 人 × ${machines.length} 部機器`}><ExportBtn onClick={() => setReport('skill')} /></ToolBar>
-          {canEdit && <button className="btn alt" style={{ marginBottom: 8 }} onClick={() => setMsheet({ id: null, name: '', name_en: '' })}>＋ 新增機器</button>}
+          {canEdit && <button className="btn alt" style={{ marginBottom: 8 }} onClick={() => setMsheet({ id: null, name: '', name_en: '', brand: '', model: '', serial: '', water_nofoam: null, water_foam: null })}>＋ 新增機器</button>}
           <p className="src-note" style={{ margin: '0 4px 8px' }}>{canEdit ? '撳格切換「已掌握」；撳機器名可改名或刪除。培訓場次連結機器後，登記「已簽到」會自動標已掌握。' : '✔ ＝已掌握。'}</p>
           <div className="wo-wrap">
             <table className="wo-t sk-t">
               <thead>
                 <tr>
                   <th className="wo-nm">人員</th>
-                  {machines.map(m => <th key={m.id} onClick={() => canEdit && setMsheet({ ...m })} style={canEdit ? { cursor: 'pointer' } : undefined}>{m.name}{m.name_en && <small style={{ display: 'block', fontWeight: 500, color: 'var(--sub)' }}>{m.name_en}</small>}</th>)}
+                  {machines.map(m => <th key={m.id} onClick={() => canEdit && setMsheet({ ...m })} style={canEdit ? { cursor: 'pointer' } : undefined}>{m.name}{m.name_en && <small style={{ display: 'block', fontWeight: 500, color: 'var(--sub)' }}>{m.name_en}</small>}{m.model && <small style={{ display: 'block', fontWeight: 700, color: 'var(--accent)' }}>{m.brand ? m.brand + ' ' : ''}{m.model}</small>}</th>)}
                   <th className="c-calc">已掌握</th>
                 </tr>
               </thead>
@@ -223,6 +224,26 @@ export default function MachineTraining({ canEdit, who }) {
           {canEdit && <button className="fab" onClick={() => setSheet({ title: '', title_en: '', train_date: todayStr(), trainer: '', notes: '', machine_id: '' })}>＋</button>}
         </>
       )}
+      {tab === 'mach' && (
+        <>
+          <ToolBar label={`機器地毯水適用表 · ${machines.length} 部`}><ExportBtn onClick={() => setReport('mach')} /></ToolBar>
+          <div className="wo-wrap">
+            <table className="wo-t">
+              <thead><tr><th className="wo-nm">機器名稱 Machine name</th><th>品牌 Brand</th><th>型號 Model</th><th>序號 Serial No.</th><th>無泡地毯水</th><th>有泡地毯水</th></tr></thead>
+              <tbody>
+                {machines.map(m => (
+                  <tr key={m.id} onClick={() => canEdit && setMsheet({ ...m })} className={canEdit ? 'click' : ''}>
+                    <td className="wo-nm"><b>{m.name}</b>{m.name_en && <small>{m.name_en}</small>}</td>
+                    <td style={{ textAlign: 'center' }}>{m.brand}</td><td style={{ textAlign: 'center', whiteSpace: 'normal' }}>{m.model}</td><td style={{ textAlign: 'center', whiteSpace: 'normal' }}>{m.serial}</td>
+                    <td style={{ textAlign: 'center', fontWeight: 800, color: m.water_nofoam ? '#17624f' : '#b3342a' }}>{m.water_nofoam == null ? '' : m.water_nofoam ? '✔' : '✖'}</td>
+                    <td style={{ textAlign: 'center', fontWeight: 800, color: m.water_foam ? '#17624f' : '#b3342a' }}>{m.water_foam == null ? '' : m.water_foam ? '✔' : '✖'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
       {tab === 'ppl' && (
         <>
           {groups.map(g => (
@@ -260,6 +281,17 @@ export default function MachineTraining({ canEdit, who }) {
             <div className="sheet-hd"><h2>{msheet.id ? '改機器名稱' : '新增機器'}</h2><span className="sheet-hd-acts"><button className="mini" onClick={() => setMsheet(null)}>取消</button><button className="mini pri" onClick={saveMachine}>儲存</button></span></div>
             <div className="f-row"><label>機器名稱</label><input value={msheet.name} onChange={e => setMsheet({ ...msheet, name: e.target.value })} placeholder="例：吸塵機、洗地機、高壓水槍" /></div>
             <div className="f-row"><label>英文名</label><input value={msheet.name_en || ''} onChange={e => setMsheet({ ...msheet, name_en: e.target.value })} placeholder="e.g. Floor scrubber" /></div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <div className="f-row" style={{ flex: 1 }}><label>品牌 Brand</label><input value={msheet.brand || ''} onChange={e => setMsheet({ ...msheet, brand: e.target.value })} /></div>
+              <div className="f-row" style={{ flex: 1 }}><label>型號 Model</label><input value={msheet.model || ''} onChange={e => setMsheet({ ...msheet, model: e.target.value })} /></div>
+            </div>
+            <div className="f-row"><label>序號 Serial No.</label><input value={msheet.serial || ''} onChange={e => setMsheet({ ...msheet, serial: e.target.value })} /></div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              {[['water_nofoam', '無泡地毯水'], ['water_foam', '有泡地毯水']].map(([k, t]) => (
+                <div className="f-row" style={{ flex: 1 }} key={k}><label>{t}</label>
+                  <div className="seg" style={{ margin: 0 }}>{[[true, '✔ 適用'], [false, '✖ 不適用']].map(([v, tt]) => <button key={String(v)} className={msheet[k] === v ? 'on' : ''} onClick={() => setMsheet({ ...msheet, [k]: v })}>{tt}</button>)}</div></div>
+              ))}
+            </div>
             {msheet.id && <button className="btn danger sm-quiet" onClick={() => window.confirm('刪除機器同佢嘅全部掌握紀錄？') && delMachine()}>刪除這部機器</button>}
           </div>
         </div>
@@ -276,10 +308,19 @@ export default function MachineTraining({ canEdit, who }) {
           </div>
         </div>
       )}
+      {report === 'mach' && (
+        <ReportModal landscape title="機器地毯水適用表 Machine & Carpet Water Table" sub={todayStr()} onClose={() => setReport(null)}>
+          <table className="rpt-t rpt-fixed">
+            <colgroup><col style={{ width: '25%' }} /><col style={{ width: '10%' }} /><col style={{ width: '20%' }} /><col style={{ width: '25%' }} /><col style={{ width: '10%' }} /><col style={{ width: '10%' }} /></colgroup>
+            <thead><tr><th>機器名稱 Machine name</th><th>品牌 Brand</th><th>型號 Model</th><th>序號 Serial No.</th><th>無泡地毯水</th><th>有泡地毯水</th></tr></thead>
+            <tbody>{machines.map(m => <tr key={m.id}><td>{m.name}<br /><small>{m.name_en}</small></td><td>{m.brand}</td><td>{m.model}</td><td>{m.serial}</td><td style={{ textAlign: 'center' }}>{m.water_nofoam == null ? '' : m.water_nofoam ? '✔' : '✖'}</td><td style={{ textAlign: 'center' }}>{m.water_foam == null ? '' : m.water_foam ? '✔' : '✖'}</td></tr>)}</tbody>
+          </table>
+        </ReportModal>
+      )}
       {report === 'skill' && (
         <ReportModal landscape title="機器培訓 · 機器掌握表 Machine Training Matrix" sub={todayStr()} onClose={() => setReport(null)}>
           <table className="rpt-t rpt-fixed">
-            <thead><tr><th style={{ width: '22%' }}>人員 Staff</th>{machines.map(m => <th key={m.id}>{m.name}{m.name_en && <><br />{m.name_en}</>}</th>)}<th>已掌握<br />Mastered</th></tr></thead>
+            <thead><tr><th style={{ width: '22%' }}>人員 Staff</th>{machines.map(m => <th key={m.id}>{m.name}{m.name_en && <><br />{m.name_en}</>}{m.model && <><br />{m.brand ? m.brand + ' ' : ''}{m.model}</>}</th>)}<th>已掌握<br />Mastered</th></tr></thead>
             <tbody>{groups.map(g => [<tr key={'g' + g.d}><td colSpan={machines.length + 2} style={{ fontWeight: 800, background: '#eef3f1' }}>{deptLabel(g.d)}</td></tr>, ...g.members.map(p => <tr key={p.id}><td>{pn(p)} <small>{p.emp_no}</small></td>{machines.map(m => <td key={m.id} style={{ textAlign: 'center' }}>{skillOf(m.id, p.emp_no) ? '✔' : ''}</td>)}<td>{machines.filter(m => skillOf(m.id, p.emp_no)).length}／{machines.length}</td></tr>)])}</tbody>
           </table>
         </ReportModal>
