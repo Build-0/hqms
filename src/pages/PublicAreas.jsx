@@ -578,7 +578,9 @@ function Board({ d, load, log, staffOf, canEdit }) {
   const onDuty = (p, i) => {
     const tm = x => { const [h, m] = x.split(':').map(Number); return h * 60 + m }
     const st = tm(p.start_time), e0 = tm(p.end_time), en = e0 <= st ? e0 + 1440 : e0
-    return [i * 30, i * 30 + 1440].some(x => x + 30 > st && x < en)
+    // 以整個半小時格計：上班時間向後取整（12:24 → 12:30 起），收工向前取整（17:36 → 17:30 止）；00:01 當 00:00
+    const s2 = st % 30 <= 1 ? st - st % 30 : st + 30 - st % 30, e2 = en - en % 30
+    return [i * 30, i * 30 + 1440].some(x => x >= s2 && x + 30 <= e2)
   }
   const segs = id => {
     const arr = slotsOf[id] || []; const out = []; const p = posts.find(x => x.id === id)
