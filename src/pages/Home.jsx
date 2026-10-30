@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import * as api from '../lib/api'
 import { addDaysStr, todayStr } from '../lib/dates'
 import { permsOf, SUP_FLOORS } from '../lib/accounts'
-import { SOFA_ROOMS, SOFA_TYPE } from '../data/sofaRooms'
 
 const num = v => parseInt(v, 10) || 0
 const dleft = d => Math.round((new Date(d + 'T00:00:00') - new Date(todayStr() + 'T00:00:00')) / 86400000)
@@ -28,15 +27,6 @@ export default function Home({ session, go }) {
           r.processing = rows.filter(x => x.status === 'processing').length
           if (session && session.role === 'supervisor') {
             r.floors = fl && fl.length ? fl : null
-            // 大床梳化：自己樓層仍未檢查的房間數
-            try {
-              const sc = await api.dbSelect('sofa_checks')
-              const okSet = new Set(sc.map(x => x.room))
-              const withDef = new Set(all.filter(x => SOFA_TYPE.test(x.type || '')).map(x => x.room))
-              const myRooms = SOFA_ROOMS.filter(x => (fl && fl.length ? fl.map(String).includes(String(x.floor)) : true))
-              r.sofaTodo = myRooms.filter(x => !okSet.has(x.room) && !withDef.has(x.room)).length
-              r.sofaAll = myRooms.length
-            } catch { /* 資料表未建立前不顯示 */ }
             const open = rows.filter(x => x.status !== 'done')
             r.mineOpenN = open.length
             const days = x => Math.round((new Date(todayStr() + 'T00:00:00') - new Date(String(x.register_date || x.created_at).slice(0, 10) + 'T00:00:00')) / 86400000)
@@ -109,13 +99,6 @@ export default function Home({ session, go }) {
             <button onClick={() => go('defect', { status: 'processing', floor: d.floors && d.floors.length === 1 ? d.floors[0] : '' })}><b style={{ color: d.processing ? '#e69500' : undefined }}>{d.processing}</b><span>處理中</span></button>
             <button onClick={() => go('defect', { floor: d.floors && d.floors.length === 1 ? d.floors[0] : '' })}><b>{d.new7}</b><span>近 7 日新增</span></button>
           </div>
-          {d.sofaTodo != null && d.sofaAll > 0 && (
-            <button className="hm-sofa" onClick={() => go('defect', { view: 'sofa' })}>
-              <span>🛋 大床梳化檢查</span>
-              <b>{d.sofaTodo > 0 ? `尚有 ${d.sofaTodo} 間待確認` : '全部已確認 ✓'}</b>
-              <i>›</i>
-            </button>
-          )}
           {d.aged && d.aged.m3 > 0 && (
             <div className="hm-aged">
               <span>未完成已拖延</span>

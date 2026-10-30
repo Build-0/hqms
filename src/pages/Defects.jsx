@@ -9,7 +9,6 @@ import { ReportModal, DefectReport } from '../components/Reports'
 import { permsOf, canExport, EXPORT_MSG } from '../lib/accounts'
 import Icon from '../components/Icon'
 import { useBack } from '../lib/nav'
-import Sofa from './Sofa'
 
 // 房間缺陷登記（原「房間缺陷登記系統」改寫為原生模組）
 const SEVERITY = [
@@ -35,7 +34,6 @@ export default function Defects({ session, init }) {
   const [list, setList] = useState(null)
   const [types, setTypes] = useState([])
   const [err, setErr] = useState('')
-  const [sofa, setSofa] = useState(init?.view === 'sofa')   // 大床梳化檢查總表
   const [tab, setTab] = useState(init ? 'list' : null)   // null ＝ 圓形入口選單（只有可編輯帳號；只可登記的帳號直接是列表）
   const [f, setF] = useState({ search: '', floor: init?.floor || '', status: init?.status || '', severity: '', type: init?.type || '' })
   const [sortBy, setSortBy] = useState('date-desc')
@@ -68,19 +66,10 @@ export default function Defects({ session, init }) {
     return sortBy === 'date-asc' ? x.localeCompare(y) : y.localeCompare(x)
   }), [list, f, sortBy])
 
-  useBack(full && !!tab && !sofa, () => setTab(null))
-  useBack(sofa, () => setSofa(false), 2)
+  useBack(full && !!tab, () => setTab(null))
   if (!list) return <div className="note">載入中…</div>
 
   function openNew() { setForm({ ...EMPTY(), id: null }) }
-  // 從沙發總表跳入：room＋'new' ＝ 登記該房缺陷（預填大床梳化）；只有 room ＝ 查看該房記錄
-  function fromSofa(room, mode) {
-    setSofa(false); setTab('list')
-    if (mode === 'new') {
-      const t = (types || []).find(x => /大床梳化|梳化甩皮/.test(x)) || ''
-      setForm({ ...EMPTY(), id: null, floor: room.slice(0, -2), roomNum: room.slice(-2), type: t })
-    } else setF({ search: room, floor: '', status: '', severity: '', type: '' })
-  }
   function openEdit(d) {
     setForm({ id: d.id, floor: d.floor || '3', roomNum: (d.room || '').slice(-2) || '01', type: d.type || '', severity: d.severity || 'medium', note: d.note || '', photos: d.photos || [], registerDate: d.register_date || '', fixedDate: d.fixed_date || '', status: d.status })
     setView(null)
@@ -126,16 +115,14 @@ export default function Defects({ session, init }) {
     </select>
   )
 
-  if (sofa) return <div className="df-wrap"><Sofa list={list} session={session} onList={fromSofa} /></div>
-
   return (
     <div className="df-wrap">
       {err && <div className="card" style={{ borderColor: 'var(--red)' }}><p style={{ fontSize: 13, lineHeight: 1.7 }}>讀取失敗：{err}</p></div>}
 
       {full && !tab && (
         <div className="home-grid">
-          {[['list', '缺陷列表', 'wrench', '#c0564f', `${list.length} 筆`], ['stats', '統計', 'search', '#4a6fa5', '分類、樓層'], ['types', '類型設定', 'gear', '#7a6a4f', `${types.length} 種`], ['sofa', '沙發檢查', 'clipcheck', '#8f7ac9', '大床梳化總表']].map(([k, t, ic, co, sb]) => (
-            <button className="home-item" key={k} onClick={() => { if (k === 'sofa') { setSofa(true); setTab('list') } else setTab(k) }}>
+          {[['list', '缺陷列表', 'wrench', '#c0564f', `${list.length} 筆`], ['stats', '統計', 'search', '#4a6fa5', '分類、樓層'], ['types', '類型設定', 'gear', '#7a6a4f', `${types.length} 種`]].map(([k, t, ic, co, sb]) => (
+            <button className="home-item" key={k} onClick={() => setTab(k)}>
               <span className="hi-circle" style={{ background: co + '26', borderColor: 'transparent' }}><Icon name={ic} size={33} color={co} width={2.2} /></span>
               <span className="hi-label">{t}</span>
               <span className="hi-sub">{sb}</span>
@@ -145,7 +132,7 @@ export default function Defects({ session, init }) {
       )}
       {full && tab && <ToolBar sticky label={tab === 'list' ? `共 ${shown.length} 筆` : tab === 'stats' ? '統計' : '類型設定'}><ExportBtn onClick={() => setReport(true)} /></ToolBar>}
 
-      {!full && <ToolBar label={`共 ${shown.length} 筆`}><ToolBtn onClick={() => setSofa(true)}>🛋 沙發檢查</ToolBtn></ToolBar>}
+      {!full && <ToolBar label={`共 ${shown.length} 筆`} />}
       {(full ? tab === 'list' : true) && (
         <>
           <div className="fstk">
