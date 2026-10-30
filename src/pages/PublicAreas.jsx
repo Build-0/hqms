@@ -748,7 +748,7 @@ function Board({ d, load, log, staffOf, canEdit }) {
           })}
         </ReportModal>
       )}
-      {report === 'matrix' && <ReportModal landscape a3 title={tr('24 小時看板總表', '24-Hour Board Matrix')} sub={todayStr()} onClose={() => setReport(false)}>{matrixPages(ov === 'codes')}</ReportModal>}
+      {report === 'matrix' && <ReportModal landscape a3 title={tr('24 小時看板總表', '24-Hour Board Matrix')} sub={todayStr()} onClose={() => setReport(false)}><p className="rpt-mut" style={{ margin: '0 0 4px', fontSize: 11, lineHeight: 1.5 }}>{statLine}{kindLines.map(t => <span key={t} style={{ display: 'block' }}>{t}</span>)}</p>{matrixPages(ov === 'codes')}</ReportModal>}
       {canEdit && edit && (
         <div className="modal" onClick={e => { if (e.target === e.currentTarget) setEdit(null) }}>
           <div className="sheet">
