@@ -624,6 +624,13 @@ function Board({ d, load, log, staffOf, canEdit }) {
   const totG = hrs.reduce((a, h) => a + h.gross, 0), totN = hrs.reduce((a, h) => a + h.net, 0)
   const onCount = i => posts.filter(p => p.start_time && p.end_time && onDuty(p, i) && (((slotsOf[p.id] || [])[i] || {}).task || '') !== '休息').length
   const statLine = tr(`全日合計（${timed.length} 個崗位）：總工時 ${num(totG)} 小時　·　淨工時 ${num(totN)} 小時（已扣休息）`, `Daily total (${timed.length} posts): ${num(totG)} h worked in total · ${num(totN)} h net of breaks`)
+  // 按類別（外判／HSKP）分開計算
+  const byKind = KINDS.map(k => {
+    const ids = timed.filter(p => (staffOf(p.staff_id) || {}).kind === k).map(p => p.id)
+    const hs = hrs.filter(h => ids.includes(h.id))
+    return { k, n: ids.length, g: hs.reduce((a, h) => a + h.gross, 0), nt: hs.reduce((a, h) => a + h.net, 0) }
+  }).filter(x => x.n)
+  const kindLines = byKind.map(x => tr(`${x.k}（${x.n} 崗）：總工時 ${num(x.g)} 小時　·　淨工時 ${num(x.nt)} 小時`, `${KIND_EN[x.k] || x.k} (${x.n} posts): ${num(x.g)} h total · ${num(x.nt)} h net`))
   const matrixPages = (codesOnly = false) => {
     const pages = [{ ps: posts, a: 0, b: 48 }]
     return pages.map((pg, k) => {
@@ -691,7 +698,7 @@ function Board({ d, load, log, staffOf, canEdit }) {
           <button className={ov === 'sheet' ? 'on' : ''} onClick={() => setOv('sheet')}>{tr('橫向總表', 'Wide sheet')}</button>
           <button className={ov === 'codes' ? 'on' : ''} onClick={() => setOv('codes')}>{tr('只顯示代碼', 'Codes only')}</button>
         </div>
-        <p className="pa-stat">{statLine}</p>
+        <p className="pa-stat">{statLine}{kindLines.map(t => <span key={t} style={{ display: 'block', marginTop: 3 }}>{t}</span>)}</p>
         {ov === 'sheet' ? (
           <>
             <div className="pa-sheet-wrap"><div className="rpt-print rpt-wide">{matrixPages(false)}</div></div>
