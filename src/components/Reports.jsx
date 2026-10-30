@@ -40,10 +40,13 @@ export function ReportModal({ title, sub, onClose, children, landscape: landscap
     const el = document.querySelector('.rpt-overlay .rpt-print')
     if (!el || !a3) { window.print(); return }
     const keep = el.getAttribute('style')
-    el.style.cssText += ';zoom:1;width:1700px;min-width:0;max-width:1700px'
-    const h = el.offsetHeight
-    const k = Math.min(1500 / 1700, 1030 / h)
-    el.style.zoom = String(k)
+    const put = (w, z) => { ['width', 'min-width', 'max-width'].forEach(k => el.style.setProperty(k, w + 'px', 'important')); el.style.zoom = String(z) }
+    // 紙張可印範圍約 1500×1030（96dpi）：先按高度求縮放，再將表格加闊到剛好填滿紙張闊度
+    let W = 1700
+    for (let i = 0; i < 3; i++) { put(W, 1); W = Math.min(3200, Math.max(1700, 1500 / (1030 / el.offsetHeight))) }
+    put(W, 1)
+    const k = Math.min(1500 / W, 1030 / el.offsetHeight)
+    put(W, k)
     const done = () => { if (keep == null) el.removeAttribute('style'); else el.setAttribute('style', keep); window.removeEventListener('afterprint', done) }
     window.addEventListener('afterprint', done)
     setTimeout(() => window.print(), 50)
