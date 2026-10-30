@@ -661,7 +661,7 @@ function Board({ d, load, log, staffOf, canEdit }) {
   const openSeg = (post_id, s) => { if (!canEdit || !s) return; const [a, b] = taskParts(s.task); setEdit({ post_id, from: s.from, to: s.to, t1: a || '', t2: b || '' }) }
   return (
     <>
-      <ToolBar sticky label={mode === 'post' ? tr('目前崗位', 'Current post') : tr(`${posts.length} 個崗位`, `${posts.length} posts`)}><ExportBtn onClick={() => setReport(mode === 'all' ? 'matrix' : true)} /></ToolBar>
+      <ToolBar sticky label={mode === 'post' ? tr('目前崗位', 'Current post') : tr(`${posts.length} 個崗位`, `${posts.length} posts`)}>{mode === 'post' && <ToolBtn onClick={() => setReport('allposts')}>{tr('📄 全部崗位（每崗一頁）', '📄 All posts (1 page each)')}</ToolBtn>}<ExportBtn onClick={() => setReport(mode === 'all' ? 'matrix' : true)} /></ToolBar>
       <div className="seg" style={{ margin: '0 0 10px' }}>
         <button className={mode === 'all' ? 'on' : ''} onClick={() => setMode('all')}>{tr(`總覽（${posts.length} 崗）`, `Overview (${posts.length} posts)`)}</button>
         <button className={mode === 'post' ? 'on' : ''} onClick={() => setMode('post')}>{tr('按崗位', 'By post')}</button>
@@ -723,6 +723,24 @@ function Board({ d, load, log, staffOf, canEdit }) {
         </>
       )}
       {report === true && <ReportModal title={tr('24 小時看板', '24-Hour Board')} sub={todayStr()} onClose={() => setReport(false)}><ListReport data={boardReport()} /></ReportModal>}
+      {report === 'allposts' && (
+        <ReportModal title={tr('24 小時看板 · 各崗位工作安排', '24-Hour Board · Post schedules')} sub={todayStr()} onClose={() => setReport(false)}>
+          {posts.map(p => {
+            const s = staffOf(p.staff_id) || {}; const h = hOf(p.id)
+            return (
+              <div key={p.id} className="sf-page pp-page">
+                <div className="pp-hd"><b>{codeLabel(en, p.code)}</b><span>{s.name || tr('未指派', 'unassigned')}</span></div>
+                <p className="rpt-mut" style={{ margin: '0 0 8px' }}>{tr('上班—收工', 'Shift')} {p.start_time || '—'}–{p.end_time || '—'}{h ? `　·　${tr('總工時', 'Total')} ${num(h.gross)}h　·　${tr('淨工時', 'Net')} ${num(h.net)}h` : ''}{p.break_text ? `　·　${tr('休息', 'Break')} ${p.break_text}` : ''}{areaOf(en, p) ? `　·　${tr('負責區域', 'Area')}：${areaOf(en, p)}` : ''}</p>
+                <table className="rpt-t rpt-fixed">
+                  <colgroup><col style={{ width: '22%' }} /><col style={{ width: '78%' }} /></colgroup>
+                  <thead><tr><th>{tr('時間', 'Time')}</th><th>{tr('任務', 'Task')}</th></tr></thead>
+                  <tbody>{segs(p.id).map(x => { const [bg, fg] = x.task && x.task !== '休息' ? catColor(taskParts(x.task)[0]) : ['#fff', '#667']; return <tr key={x.from} style={{ background: x.off ? '#f4f5f6' : bg, color: x.off ? '#99a' : fg }}><td>{hm(x.from)}‑{endLabel(x.to)}</td><td>{taskText(x)}</td></tr> })}</tbody>
+                </table>
+              </div>
+            )
+          })}
+        </ReportModal>
+      )}
       {report === 'matrix' && <ReportModal landscape a3 title={tr('24 小時看板總表', '24-Hour Board Matrix')} sub={todayStr()} onClose={() => setReport(false)}>{matrixPages(ov === 'codes')}</ReportModal>}
       {canEdit && edit && (
         <div className="modal" onClick={e => { if (e.target === e.currentTarget) setEdit(null) }}>

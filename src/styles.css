@@ -1323,3 +1323,9 @@ html.rpt-open #root{visibility:hidden}
 .pa-crumb button{border:none;background:none;padding:0;font:inherit;font-weight:600;color:var(--accent);cursor:pointer}
 .pa-crumb i{font-style:normal;color:var(--sub)}
 .pa-crumb b{font-weight:800;color:var(--ink)}
+
+/* 各崗位一頁 A4 */
+.pp-hd{display:flex;align-items:baseline;gap:12px;margin:0 0 4px}
+.pp-hd b{font-size:22px;color:#0d5c50}.pp-hd span{font-size:18px;font-weight:700}
+.pp-page .rpt-t td{padding:6px 8px;font-size:13px}
+@media print{.pp-page{break-after:auto !important;page-break-after:auto !important}.pp-page+.pp-page{break-before:page;page-break-before:always}}
