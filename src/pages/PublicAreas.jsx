@@ -641,7 +641,7 @@ function Board({ d, load, log, staffOf, canEdit }) {
                     if (!x) return (segIn(p.id, pg.a, pg.b).some(y => i > y.from && i < y.to)) ? null : <td key={p.id} />
                     const [bg, fg] = x.task && x.task !== '休息' ? catColor(taskParts(x.task)[0]) : x.task === '休息' ? ['#eceff2', '#5b6773'] : ['#fff', '#aab']
                     const long = !codesOnly
-                    const text = x.off ? '' : x.task === '休息' ? tr('休息', 'Break') : x.task ? taskParts(x.task).map(c => c + (long && taskName(c) ? ' ' + taskName(c) : '')).join(' ＋ ') : ''
+                    const text = x.off ? '' : x.task === '休息' ? tr('休息', 'Break') : x.task ? taskParts(x.task).map(c => (long && taskName(c) ? taskName(c) + ' ' : '') + c).join(' ＋ ') : ''
                     return <td key={p.id} rowSpan={x.to - x.from} style={{ background: x.off ? '#f6f7f8' : bg, color: fg }}>{text}</td>
                   })}
                 </tr>
