@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import * as api from '../lib/api'
 import Icon from '../components/Icon'
-import { ToolBar, ExportBtn } from '../components/ui'
+import { ToolBar, ToolBtn, ExportBtn } from '../components/ui'
 import { ReportModal, ListReport } from '../components/Reports'
 import { PhotoField, PhotoGrid } from '../components/Photos'
 import MachineTraining from './MachineTraining'
