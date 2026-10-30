@@ -176,7 +176,7 @@ function Roster({ d, load, log, staffOf, canEdit }) {
   }
   return (
     <>
-      <ToolBar label={tr(`共 ${shown.length} 個崗位`, `${shown.length} posts`)}><ExportBtn onClick={() => setReport(true)} /></ToolBar>
+      <ToolBar sticky label={tr(`共 ${shown.length} 個崗位`, `${shown.length} posts`)}><ExportBtn onClick={() => setReport(true)} /></ToolBar>
       <div className="fstk">
         <div className="df-grid3">
           {sel('kind', tr('類別', 'Type'), KINDS, k => (en ? KIND_EN[k] : k))}{sel('pos', tr('職級', 'Position'), ['none', '組長', '主管', '替補'], p => (p === 'none' ? tr('一般', 'Regular') : en ? POS_EN[p] : p))}{sel('gender', tr('性別', 'Gender'), ['男', '女'], gLabel)}{sel('nat', tr('國籍', 'Nationality'), NATS, n => (en ? NAT_EN[n] : n))}{sel('lang', tr('語言', 'Language'), LANGS, l => (en ? LANG_EN[l] : l))}
@@ -658,7 +658,7 @@ function Board({ d, load, log, staffOf, canEdit }) {
   const openSeg = (post_id, s) => { if (!canEdit || !s) return; const [a, b] = taskParts(s.task); setEdit({ post_id, from: s.from, to: s.to, t1: a || '', t2: b || '' }) }
   return (
     <>
-      <ToolBar label={mode === 'post' ? tr('目前崗位', 'Current post') : tr(`${posts.length} 個崗位`, `${posts.length} posts`)}><ExportBtn onClick={() => setReport(mode === 'all' ? 'matrix' : true)} /></ToolBar>
+      <ToolBar sticky label={mode === 'post' ? tr('目前崗位', 'Current post') : tr(`${posts.length} 個崗位`, `${posts.length} posts`)}><ExportBtn onClick={() => setReport(mode === 'all' ? 'matrix' : true)} /></ToolBar>
       <div className="seg" style={{ margin: '0 0 10px' }}>
         <button className={mode === 'all' ? 'on' : ''} onClick={() => setMode('all')}>{tr(`總覽（${posts.length} 崗）`, `Overview (${posts.length} posts)`)}</button>
         <button className={mode === 'post' ? 'on' : ''} onClick={() => setMode('post')}>{tr('按崗位', 'By post')}</button>
@@ -768,7 +768,7 @@ function Tasks({ d, load, log, canEdit }) {
   }
   return (
     <>
-      <div className="fstk"><input className="search-inp" placeholder={tr('🔍 搜尋任務代碼、名稱、內容', '🔍 Search code, name, detail')} value={q} onChange={e => setQ(e.target.value)} /></div>
+      <div className="fstk nt"><input className="search-inp" placeholder={tr('🔍 搜尋任務代碼、名稱、內容', '🔍 Search code, name, detail')} value={q} onChange={e => setQ(e.target.value)} /></div>
       {cats.map(c => (
         <div key={c}>
           <div className="bh-grp">{c}<span>{list.filter(t => (t.cat || '其他') === c).length}</span></div>

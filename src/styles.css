@@ -1315,5 +1315,5 @@ html.rpt-open #root{visibility:hidden}
 .pa-av.none{display:flex;align-items:center;justify-content:center;font-style:normal;font-weight:800;font-size:18px;color:var(--accent)}
 .pa-sq-who .pa-sq-name{min-width:0;flex:1}
 
-/* 公共地區：篩選列唔再凍結（佢頂住畫面、同卡片疊埋一齊），跟內容一齊捲走 */
-.pa-wrap .fstk{position:static;top:auto;background:none;-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:none;margin:0 0 8px;padding:0}
+/* 公共地區：冇釘住工具列嘅篩選列貼住標題 */
+.pa-wrap .fstk.nt{top:calc(72px + env(safe-area-inset-top,0px))}
