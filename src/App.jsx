@@ -174,7 +174,7 @@ export default function App() {
           <div className="hdr-sub">
             <span className="hdr-date">{now.getMonth() + 1}月{now.getDate()}日　星期{WD[now.getDay()]}</span>
             {api.isLocal && <span className="hdr-user">示範模式</span>}
-            {session && <span className="hdr-user">{session.name} · {ROLE_LABEL[session.role]}</span>}
+            {session && <span className="hdr-user">{session.name} · {session.dev ? '開發者' : ROLE_LABEL[session.role]}</span>}
           </div>
         )}
       </header>
@@ -212,7 +212,7 @@ export default function App() {
         <div className="modal" onClick={e => { if (e.target === e.currentTarget) setSettings(false) }}>
           <div className="sheet st-sheet st2">
             <div className="st2-hd">
-              <div><h2 className="st-title">設定</h2>{session && <p className="st-who" style={{ margin: 0 }}>{session.name} · {ROLE_LABEL[session.role]}</p>}</div>
+              <div><h2 className="st-title">設定</h2>{session && <p className="st-who" style={{ margin: 0 }}>{session.name} · {session.dev ? '開發者' : ROLE_LABEL[session.role]}</p>}</div>
               <button className="mini" onClick={() => setSettings(false)}>關閉</button>
             </div>
 
