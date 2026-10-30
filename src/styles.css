@@ -1317,3 +1317,9 @@ html.rpt-open #root{visibility:hidden}
 
 /* 公共地區：冇釘住工具列嘅篩選列貼住標題 */
 .pa-wrap .fstk.nt{top:calc(72px + env(safe-area-inset-top,0px))}
+
+/* 公共地區：頂部路徑（公共地區 › 子頁名稱） */
+.pa-crumb{display:flex;align-items:center;gap:8px;margin:0 4px 10px;font-size:16px}
+.pa-crumb button{border:none;background:none;padding:0;font:inherit;font-weight:600;color:var(--accent);cursor:pointer}
+.pa-crumb i{font-style:normal;color:var(--sub)}
+.pa-crumb b{font-weight:800;color:var(--ink)}

@@ -35,6 +35,19 @@ export function ReportModal({ title, sub, onClose, children, landscape: landscap
     )
   }
   const [busy, setBusy] = useState(false)
+  // 電腦列印：A3 一頁式總表按實際高度縮放，確保一頁放得落（唔再靠固定縮放比例）
+  function printNow() {
+    const el = document.querySelector('.rpt-overlay .rpt-print')
+    if (!el || !a3) { window.print(); return }
+    const keep = el.getAttribute('style')
+    el.style.cssText += ';zoom:1;width:1700px;min-width:0;max-width:1700px'
+    const h = el.offsetHeight
+    const k = Math.min(1500 / 1700, 1030 / h)
+    el.style.zoom = String(k)
+    const done = () => { if (keep == null) el.removeAttribute('style'); else el.setAttribute('style', keep); window.removeEventListener('afterprint', done) }
+    window.addEventListener('afterprint', done)
+    setTimeout(() => window.print(), 50)
+  }
   async function toPdf() {
     if (busy) return
     setBusy(true)
@@ -62,7 +75,7 @@ export function ReportModal({ title, sub, onClose, children, landscape: landscap
       <div className="rpt-bar rpt-deskbar rpt-noprint">
         <button className="rpt-btn ghost" onClick={onClose}>取消</button>
         <span className="rpt-bar-t">{title}</span>
-        <button className="rpt-btn" onClick={() => window.print()}>保存</button>
+        <button className="rpt-btn" onClick={printNow}>保存</button>
       </div>
       <div className="rpt-scroll">
         <div className={'rpt-print' + (signPage ? ' rpt-sign' : landscape ? ' rpt-wide' : '')}>
@@ -73,7 +86,7 @@ export function ReportModal({ title, sub, onClose, children, landscape: landscap
       </div>
       <div className="rpt-foot rpt-noprint">
         <button className="btn ghost" onClick={onClose}>‹ 返回</button>
-        <button className="btn ghost rpt-printbtn" style={{ flex: '0 0 26%' }} onClick={() => window.print()}>保存</button>
+        <button className="btn ghost rpt-printbtn" style={{ flex: '0 0 26%' }} onClick={printNow}>保存</button>
         <button className="btn rpt-pdfbtn" disabled={busy} onClick={toPdf}>{busy ? '產生中…' : '保存'}</button>
       </div>
     </div>,

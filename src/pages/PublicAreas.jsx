@@ -101,6 +101,7 @@ export default function PublicAreas({ session }) {
             ))}
           </div>
         )}
+        {view && <div className="pa-crumb"><button onClick={() => setView(null)}>{tr('公共地區', 'Public areas')}</button><i>›</i><b>{({ roster: tr('人員崗位', 'Staff & posts'), tasks: tr('任務代碼', 'Task codes'), board: tr('24 小時看板', '24-hour board'), annual: tr('年度清潔', 'Annual cleaning'), stock: tr('物資清點', 'Stock count'), training: tr('機器培訓', 'Machine training') })[view]}</b></div>}
         {view && !ce('pa_' + view) && <p className="note" style={{ textAlign: 'left', margin: '0 4px 8px' }}>{tr('目前帳號只可查看', 'View only')}（{session ? session.name : ''}）</p>}
         {view === 'roster' && <Roster {...ctx} canEdit={ce('pa_roster')} />}
         {view === 'board' && <Board {...ctx} canEdit={ce('pa_board')} />}
