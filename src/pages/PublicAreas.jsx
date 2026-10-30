@@ -146,7 +146,7 @@ function Roster({ d, load, log, staffOf, canEdit }) {
     }) })),
   })
 
-  const blank = { id: null, post_id: null, name: '', kind: '外判', position: '', gender: '', nationality: '', langs: [], phone: '', notes: '', old_name: '', rest_kind: 'monthly1', rest_weekdays: [], rest_dates: [], active: true, code: `崗${d.posts.length + 1}`, grp: GRPS[0], start_time: '09:00', end_time: '18:00', break_text: '', work_area: '', work_area_en: '', pnotes: '', flag: '' }
+  const blank = { id: null, post_id: null, name: '', photo: '', kind: '外判', position: '', gender: '', nationality: '', langs: [], phone: '', notes: '', old_name: '', rest_kind: 'monthly1', rest_weekdays: [], rest_dates: [], active: true, code: `崗${d.posts.length + 1}`, grp: GRPS[0], start_time: '09:00', end_time: '18:00', break_text: '', work_area: '', work_area_en: '', pnotes: '', flag: '' }
   const open = p => {
     const s = staffOf(p.staff_id)
     setEdit(s
@@ -156,7 +156,7 @@ function Roster({ d, load, log, staffOf, canEdit }) {
   async function save() {
     const e = edit
     if (!e.name.trim()) { toast(tr('請填姓名', 'Name required')); return }
-    const srow = { name: e.name.trim(), kind: e.kind, gender: e.gender, nationality: e.nationality, position: e.position || '', langs: e.langs, phone: e.phone.trim(), notes: e.notes.trim(), old_name: e.old_name, rest_kind: e.rest_kind, rest_weekdays: e.rest_weekdays, rest_dates: e.rest_dates, active: e.active }
+    const srow = { name: e.name.trim(), kind: e.kind, gender: e.gender, nationality: e.nationality, position: e.position || '', langs: e.langs, phone: e.phone.trim(), notes: e.notes.trim(), old_name: e.old_name, photo: (e.photo || ''), rest_kind: e.rest_kind, rest_weekdays: e.rest_weekdays, rest_dates: e.rest_dates, active: e.active }
     const prow = { grp: e.grp, work_area: e.work_area.trim(), work_area_en: e.work_area_en || '', start_time: e.start_time || '', end_time: e.end_time || '', break_text: e.break_text.trim(), notes: (e.pnotes || '').trim(), flag: e.flag }
     try {
       let sid = e.id
@@ -192,7 +192,7 @@ function Roster({ d, load, log, staffOf, canEdit }) {
               return (
                 <button className="pa-sq" key={p.id} onClick={() => canEdit && open(p)} style={canEdit ? undefined : { cursor: 'default' }}>
                   <span className="pa-sq-top"><em>{codeLabel(en, p.code)}</em>{p.flag && <small className="pa-flag">{flagText(p)}</small>}</span>
-                  <b className="pa-sq-name">{s ? s.name : tr('（未指派）', '(unassigned)')}</b>
+                  <span className="pa-sq-who">{s && s.photo ? <img className="pa-av" src={s.photo} alt="" loading="lazy" /> : <i className="pa-av none">{s ? (s.name || '?').slice(0, 1) : '?'}</i>}<b className="pa-sq-name">{s ? s.name : tr('（未指派）', '(unassigned)')}</b></span>
                   <span className="pa-sq-tags">{s && <small className={`pa-kind k-${s.kind}`}>{en ? KIND_EN[s.kind] : s.kind}</small>}{s && s.position && <small className="pa-kind k-pos">{en ? POS_EN[s.position] || s.position : s.position}</small>}</span>
                   {person && <span className="pa-sq-person">{person}</span>}
                   <span className="pa-sq-post">
@@ -214,6 +214,7 @@ function Roster({ d, load, log, staffOf, canEdit }) {
             <div className="sheet-hd"><h2>{edit.id ? edit.name : tr('新增人員／崗位', 'New staff / post')}</h2>
               <span className="sheet-hd-acts"><button className="mini" onClick={() => setEdit(null)}>{tr('取消', 'Cancel')}</button><button className="mini pri" onClick={save}>{tr('儲存', 'Save')}</button></span></div>
             <div className="pa-sep first">{tr('人員資料', 'Staff')}</div>
+            <PhotoField label={tr('相片（方便識人）', 'Photo (for identification)')} photos={edit.photo ? [edit.photo] : []} max={1} onChange={v => setEdit({ ...edit, photo: v[0] || '' })} />
             <div className="f-row"><label>{tr('姓名', 'Name')}</label><input value={edit.name} onChange={e => setEdit({ ...edit, name: e.target.value })} /></div>
             {edit.old_name && <p className="src-note">{tr('舊名單名稱：', 'Previous name: ')}{edit.old_name}</p>}
             <div style={{ display: 'flex', gap: 10 }}>

@@ -1308,3 +1308,9 @@ html.rpt-open #root{visibility:hidden}
 .sign-t th,.sign-t td{vertical-align:middle !important}
 /* 簽到表：「簽名 Signature」表頭水平置中 */
 .sign-t th:last-child{text-align:center !important}
+
+/* 公區人員：頭像 */
+.pa-sq-who{display:flex;align-items:center;gap:8px;width:100%;min-width:0}
+.pa-av{width:46px;height:46px;border-radius:50%;object-fit:cover;flex:none;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.18);background:var(--accent-soft)}
+.pa-av.none{display:flex;align-items:center;justify-content:center;font-style:normal;font-weight:800;font-size:18px;color:var(--accent)}
+.pa-sq-who .pa-sq-name{min-width:0;flex:1}
