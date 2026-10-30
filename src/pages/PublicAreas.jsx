@@ -101,6 +101,7 @@ export default function PublicAreas({ session }) {
             ))}
           </div>
         )}
+        {view && !ce('pa_' + view) && <p className="note" style={{ textAlign: 'left', margin: '0 4px 8px' }}>{tr('目前帳號只可查看', 'View only')}（{session ? session.name : ''}）</p>}
         {view === 'roster' && <Roster {...ctx} canEdit={ce('pa_roster')} />}
         {view === 'board' && <Board {...ctx} canEdit={ce('pa_board')} />}
         {view === 'annual' && <Annual {...ctx} canEdit={ce('pa_annual')} />}
