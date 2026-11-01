@@ -62,6 +62,12 @@ export default function Boh({ session, init }) {
       )}
       {tab && <ToolBar sticky label={TABS.find(x => x[0] === tab)[1]}><ExportBtn onClick={() => setReport((reg.current && reg.current()) || { title: '', filterText: '', cols: [], groups: [] })} /></ToolBar>}
       {!edit && <p className="note" style={{ textAlign: 'left', margin: '0 4px 6px' }}>目前帳號只可查看</p>}
+      {init?.fk === 'low' && (tab === 'chem' || tab === 'tool') && (() => {
+        const lw = (x, n) => x.status !== '停用' && num(x.min_stock) > 0 && num(x.stock) < num(x.min_stock) ? n : 0
+        const nChem = d.products.filter(x => lw(x, 1)).length, nTool = d.tools.filter(x => lw(x, 1)).length
+        const other = tab === 'chem' ? nTool : nChem
+        return other > 0 ? <button className="btn alt" style={{ margin: '0 0 8px', width: '100%' }} onClick={() => setTab(tab === 'chem' ? 'tool' : 'chem')}>{tab === 'chem' ? `🧹 另有 ${nTool} 項清潔工具需補貨 → 查看` : `🧴 另有 ${nChem} 項清潔劑需補貨 → 查看`}</button> : null
+      })()}
       {tab === 'chem' && <Chemicals d={d} edit={edit} reload={load} init={init} reg={reg} />}
       {tab === 'vac' && <Machines kind="vacuum" d={d} edit={edit} reload={load} reg={reg} />}
       {tab === 'tool' && <Tools d={d} edit={edit} reload={load} reg={reg} init={init} />}
