@@ -1362,3 +1362,12 @@ html.rpt-open #root{visibility:hidden}
 .dc-sum{padding:16px;border-radius:var(--r-inner,14px);background:var(--card);border:1px solid var(--line);margin-bottom:12px}
 .dc-sum b{font-size:28px;font-weight:800;margin-right:8px}
 .dc-sum span{font-size:13px;color:var(--sub)}
+
+/* 深度清潔記錄 v3：樓層卡 */
+.dc-flgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:12px}
+.dc-flc{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:18px 16px 20px;border-radius:var(--r-inner,14px);border:1px solid var(--line);background:var(--card);font-family:inherit;color:var(--ink);cursor:pointer;text-align:left}
+.dc-flc b{font-size:34px;font-weight:800;line-height:1;color:var(--accent)}
+.dc-flc b small{font-size:15px;margin-left:3px;color:var(--ink)}
+.dc-flc span:not(.dc-bar){font-size:13px;color:var(--sub)}
+.dc-flc .dc-bar{left:16px;right:16px;bottom:9px}
+.dc-flc .dc-bar i{background:var(--accent)}
