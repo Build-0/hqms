@@ -1382,3 +1382,11 @@ html.rpt-open #root{visibility:hidden}
 .dc-flc.fin b{color:var(--accent)}
 .dc-flc:not(.fin) b{color:var(--ink)}
 .dc-todo{font-size:13px;font-weight:800;color:#c0564f;background:#c0564f1a;padding:4px 10px;border-radius:999px;white-space:nowrap}
+
+.dc-ref{display:block;font-style:normal;font-size:12px;color:var(--sub);margin-top:4px}
+.dc-tile.sel{background:var(--accent);border-color:var(--accent)}
+.dc-tile.sel b,.dc-tile.sel span{color:#fff}
+.dc-prev{display:block;color:var(--sub);opacity:.75}
+.dc-batch{position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;gap:10px;padding:10px 16px calc(10px + env(safe-area-inset-bottom));background:var(--card);border-top:1px solid var(--line);max-width:420px;margin:0 auto}
+.dc-batch input{flex:0 0 150px;border:1px solid var(--line);border-radius:12px;padding:10px;font-family:inherit;background:var(--card);color:var(--ink)}
+.dc-batch .btn{flex:1;margin:0}

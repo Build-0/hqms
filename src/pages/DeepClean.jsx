@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import * as api from '../lib/api'
 import Icon from '../components/Icon'
-import { ToolBar, ExportBtn } from '../components/ui'
+import { ToolBar, ToolBtn, ExportBtn } from '../components/ui'
 import { ReportModal, ListReport } from '../components/Reports'
 import { toast } from '../lib/toast'
 import { todayStr } from '../lib/dates'
@@ -39,7 +39,7 @@ const ROOMS = (n, k) => Array.from({ length: k }, (_, i) => String(n * 100 + i +
 const T = 'deep_clean_records'
 const shortD = d => (d ? `${+d.slice(5, 7)}/${+d.slice(8, 10)}` : '')
 const longD = d => (d ? `${d.slice(0, 4)}-${d.slice(5, 7)}-${d.slice(8, 10)}` : '')
-const YEARS = ['2025', '2026']
+const YR = String(new Date().getFullYear())   // 今年先係工作年度；之前年份只作參考（自動跟年份更新）
 let cache = null   // 只讀一次，換頁返嚟唔使重新載入
 
 export default function DeepClean({ session }) {
@@ -49,7 +49,9 @@ export default function DeepClean({ session }) {
   const [err, setErr] = useState('')
   const [fl, setFl] = useState(0)            // 0 ＝ 樓層卡；否則該樓層嘅項目
   const [item, setItem] = useState(null)     // 揀咗項目 ＝ 該層該項目嘅房間格
-  const [yr, setYr] = useState(YEARS.includes(String(new Date().getFullYear())) ? String(new Date().getFullYear()) : YEARS[YEARS.length - 1])   // 預設今年
+  const yr = YR
+  const [pick, setPick] = useState(null)   // 批量登記：null ＝ 未開；否則 Set<房號>
+  const [pickDate, setPickDate] = useState(todayStr())
   const [todo, setTodo] = useState(true)     // 只睇今年未做（預設）
   const [sheet, setSheet] = useState(null)   // { room }
   const [form, setForm] = useState(null)     // 新增記錄
@@ -72,14 +74,16 @@ export default function DeepClean({ session }) {
   }, [rows])
   if (!rows) return <div className="note">載入中…</div>
 
-  const inYr = r => !yr || (r.done_on || '').startsWith(yr)
-  const recsOf = (it, f, room) => ((idx[it.id] && idx[it.id][f] && idx[it.id][f].get(room)) || []).filter(inYr)
+  const allOf = (it, f, room) => (idx[it.id] && idx[it.id][f] && idx[it.id][f].get(room)) || []
+  const recsOf = (it, f, room) => allOf(it, f, room).filter(r => (r.done_on || '').startsWith(yr))
+  const prevOf = (it, f, room) => allOf(it, f, room).find(r => r.done_on && r.done_on < yr + '-01-01')   // 今年之前最近一次（參考）
   const roomsOf = (it, f) => (it.mode === 'grid' ? ROOMS(f, nOf(it, f)) : [...((idx[it.id] && idx[it.id][f]) || new Map()).keys()].sort((a, b) => a.localeCompare(b, undefined, { numeric: true })))
   const stat = (it, f) => {
     const rs = roomsOf(it, f); let n = 0, last = ''
     for (const r of rs) { const e = recsOf(it, f, r); if (e.length) { n++; if (e[0].done_on && e[0].done_on > last) last = e[0].done_on } }
     return { n, t: rs.length, last }
   }
+  const prevStat = (it, f) => { if (it.mode !== 'grid') return ''; const rs = roomsOf(it, f); const n = rs.filter(r => prevOf(it, f, r)).length; return n ? `${n}/${rs.length}` : '' }
   const itemsOf = f => ITEMS.filter(it => (it.mode === 'grid' ? nOf(it, f) > 0 : roomsOf(it, f).length > 0))
 
   // 該年未做：客房類項目，該層房數 − 該年有記錄房數
@@ -92,8 +96,7 @@ export default function DeepClean({ session }) {
     return (
       <>
         {err && <div className="card" style={{ borderColor: 'var(--red)' }}><p style={{ fontSize: 13, lineHeight: 1.7 }}>讀取失敗：{err}</p></div>}
-        <div className="dc-yrs">{YEARS.map(y => <button key={y} className={yr === y ? 'on' : ''} onClick={() => setYr(y)}>{y} 年</button>)}</div>
-        <div className="dc-sum"><b>{left}</b><span>間次未做（{yr} 年，全部樓層）</span></div>
+        <div className="dc-sum"><b>{left}</b><span>間次 {yr} 年未做（全部樓層）</span><em className="dc-ref">去年及更早嘅記錄只作參考</em></div>
         <div className="dc-flgrid">
           {FLOORS.map((f, k) => {
             const l = all[k], n = l.reduce((p, x) => p + x.t - x.n, 0)
@@ -110,10 +113,6 @@ export default function DeepClean({ session }) {
     )
   }
 
-  const Years = () => (
-    <div className="dc-yrs">{YEARS.map(y => <button key={y} className={yr === y ? 'on' : ''} onClick={() => setYr(y)}>{y} 年</button>)}</div>
-  )
-
   // ── 該層項目清單：未做嘅排最前，已完成嘅收埋 ──
   if (!item) {
     const open = todoOf(fl).sort((p, q) => (q.t - q.n) - (p.t - p.n))
@@ -122,7 +121,7 @@ export default function DeepClean({ session }) {
     const row = (it, st, k) => (
       <button className="dc-item" key={it.id} onClick={() => { setItem(it); setTodo(it.mode === 'grid') }}>
         <span className="dc-ico" style={{ background: it.color + '26' }}><Icon name={it.icon} size={22} color={it.color} width={2.2} /></span>
-        <span className="dc-txt"><b>{it.label}</b><small>{k === 'open' ? `已做 ${st.n} / ${st.t}` : k === 'fin' ? '✓ 已全部完成' : `${st.t} 項記錄`}</small></span>
+        <span className="dc-txt"><b>{it.label}</b><small>{k === 'open' ? `${yr} 年已做 ${st.n} / ${st.t}` : k === 'fin' ? `✓ ${yr} 年已全部完成` : `${st.t} 項記錄`}{k !== 'oth' && prevStat(it, fl) ? ` · 去年 ${prevStat(it, fl)}` : ''}</small></span>
         {k === 'open' && <span className="dc-todo">未做 {st.t - st.n}</span>}
         <span className="dc-go">›</span>
         {k === 'open' && <span className="dc-bar"><i style={{ width: Math.round(st.n / Math.max(1, st.t) * 100) + '%', background: it.color }} /></span>}
@@ -131,7 +130,6 @@ export default function DeepClean({ session }) {
     return (
       <>
         <ToolBar sticky label={`${fl} 樓`} />
-        <Years />
         {err && <div className="card" style={{ borderColor: 'var(--red)' }}><p style={{ fontSize: 13, lineHeight: 1.7 }}>讀取失敗：{err}</p></div>}
         <div className="bh-grp">{yr} 年未完成<span>{open.length}</span></div>
         {open.length ? <div className="dc-menu">{open.map(x => row(x.it, x, 'open'))}</div> : <p className="src-note" style={{ margin: '8px 4px 14px' }}>{yr} 年全部項目都完成 👍</p>}
@@ -146,9 +144,9 @@ export default function DeepClean({ session }) {
   const st = stat(item, fl)
   const list = roomsOf(item, fl).filter(r => !todo || !recsOf(item, fl, r).length)
   const reportData = () => ({
-    filterText: [`${fl} 樓`, item.label, yr ? yr + ' 年' : '全部年份', todo ? '未做' : ''].filter(Boolean).join('、'),
-    cols: ['房號／區域', '最近日期', '次數', '全部日期'],
-    groups: [{ name: `${fl} 樓 · ${item.label}`, rows: list.map(r => { const e = recsOf(item, fl, r); return { cells: [r, e.length ? (longD(e[0].done_on) || e[0].note || '有記錄') : '未有', e.length, e.length ? e.map(z => longD(z.done_on) || z.note).join('、') : '—'] } }) }],
+    filterText: [`${fl} 樓`, item.label, yr + ' 年', todo ? '未做' : ''].filter(Boolean).join('、'),
+    cols: ['房號／區域', yr + ' 年完成日期', '上次（參考）'],
+    groups: [{ name: `${fl} 樓 · ${item.label}`, rows: list.map(r => { const e = recsOf(item, fl, r), p = prevOf(item, fl, r); return { cells: [r, e.length ? (longD(e[0].done_on) || e[0].note || '有記錄') : '未做', p ? longD(p.done_on) : '—'] } }) }],
   })
   async function save() {
     if (!form.date && !form.note.trim()) return toast('請填日期或備註')
@@ -159,29 +157,45 @@ export default function DeepClean({ session }) {
   }
   async function remove(r) { try { await api.dbDelete(T, r.id); toast('已刪除'); setDelRow(null); await load() } catch (ex) { toast(ex.message) } }
   const close = () => { setSheet(null); setForm(null) }
+  async function quick(date) {   // 一撳記錄完成（預設今日）
+    try { await api.dbInsert(T, { item: item.id, room: sheet.room, floor: fl, done_on: date, note: '', by_name: '', source: '系統登記' }); toast('已記錄 ' + sheet.room + ' 完成'); close(); await load() }
+    catch (ex) { toast(/duplicate|unique/i.test(ex.message) ? '同一日已經有記錄' : '儲存失敗：' + ex.message) }
+  }
+  async function batch() {
+    const rooms = [...pick]; if (!rooms.length) return toast('未揀房間')
+    try { await api.dbInsertMany(T, rooms.map(r => ({ item: item.id, room: r, floor: fl, done_on: pickDate, note: '', by_name: '', source: '系統登記（批量）' }))); toast('已記錄 ' + rooms.length + ' 間完成'); setPick(null); await load() }
+    catch (ex) { toast(/duplicate|unique/i.test(ex.message) ? '其中有房間同一日已經有記錄' : '儲存失敗：' + ex.message) }
+  }
   const sheetRecs = sheet ? ((idx[item.id] && idx[item.id][fl] && idx[item.id][fl].get(sheet.room)) || []) : []   // 彈窗睇晒所有年份
 
   return (
     <>
-      <ToolBar sticky label={`${fl} 樓 · ${item.label}${grid ? ` · ${yr} 年已做 ${st.n} / ${st.t}` : ''}`}><ExportBtn onClick={() => setReport(true)} /></ToolBar>
-      <div className="fstk"><div className="dc-yrs" style={{ margin: 0 }}>
-        {YEARS.map(y => <button key={y} className={yr === y ? 'on' : ''} onClick={() => setYr(y)}>{y} 年</button>)}
-        {grid && <><button className={todo ? 'on' : ''} onClick={() => setTodo(true)}>未做 {st.t - st.n}</button><button className={!todo ? 'on' : ''} onClick={() => setTodo(false)}>全部房</button></>}
-      </div></div>
+      <ToolBar sticky label={`${fl} 樓 · ${item.label}${grid ? ` · ${yr} 年 ${st.n}/${st.t}` : ''}`}><ExportBtn onClick={() => setReport(true)} />{canAdd && grid && <ToolBtn onClick={() => { setPick(pick ? null : new Set()); setTodo(true) }}>{pick ? '取消批量' : '批量登記'}</ToolBtn>}</ToolBar>
+      {grid && <div className="fstk"><div className="dc-yrs" style={{ margin: 0 }}>
+        <button className={todo ? 'on' : ''} onClick={() => setTodo(true)}>{yr} 年未做 {st.t - st.n}</button><button className={!todo ? 'on' : ''} onClick={() => setTodo(false)}>全部房</button>
+      </div></div>}
       {err && <div className="card" style={{ borderColor: 'var(--red)' }}><p style={{ fontSize: 13, lineHeight: 1.7 }}>讀取失敗：{err}</p></div>}
       {!list.length && <p className="src-note" style={{ margin: '14px 4px' }}>{todo ? `${yr} 年全部房都做完 👍` : '暫時未有記錄。'}</p>}
-      <div className={'dc-grid' + (grid ? '' : ' wide')}>
+      {pick && <p className="src-note" style={{ margin: '4px 4px 8px' }}>撳未做嘅房間揀選，再喺下面揀日期登記完成。</p>}
+      <div className={'dc-grid' + (grid ? '' : ' wide')} style={pick ? { paddingBottom: 70 } : undefined}>
         {list.map(r => {
-          const l = recsOf(item, fl, r)[0]
+          const l = recsOf(item, fl, r)[0], p = !l && prevOf(item, fl, r), on = pick && pick.has(r)
           return (
-            <button key={r} className={'dc-tile' + (l ? (l.done_on ? ' ok' : ' nt') : '')} onClick={() => setSheet({ room: r })}>
+            <button key={r} className={'dc-tile' + (l ? (l.done_on ? ' ok' : ' nt') : '') + (on ? ' sel' : '')} onClick={() => { if (pick && !l) { const n = new Set(pick); n.has(r) ? n.delete(r) : n.add(r); setPick(n) } else if (!pick) setSheet({ room: r }) }}>
               <b>{r}</b>
-              <span>{l ? (shortD(l.done_on) || '備註') : '—'}</span>
+              <span>{l ? (shortD(l.done_on) || '備註') : on ? '✓' : '未做'}</span>
               {l && l.done_on && <small>{l.done_on.slice(0, 4)}</small>}
+              {p && <small className="dc-prev">上次 {p.done_on.slice(2, 4)}/{+p.done_on.slice(5, 7)}</small>}
             </button>
           )
         })}
       </div>
+      {pick && (
+        <div className="dc-batch">
+          <input type="date" value={pickDate} onChange={ev => setPickDate(ev.target.value)} />
+          <button className="btn" onClick={batch}>登記 {pick.size} 間完成</button>
+        </div>
+      )}
       {sheet && (
         <div className="modal" onClick={ev => { if (ev.target === ev.currentTarget) close() }}>
           <div className="sheet">
@@ -194,13 +208,14 @@ export default function DeepClean({ session }) {
               </>
             ) : (
               <>
+                {canAdd && !recsOf(item, fl, sheet.room).length && grid && <button className="btn" style={{ marginBottom: 8 }} onClick={() => quick(todayStr())}>✓ 今日完成（{yr} 年未做）</button>}
                 {!sheetRecs.length && <p className="src-note" style={{ margin: '10px 2px' }}>未有記錄。</p>}
-                {YEARS.concat(['']).map(y => {
-                  const rs = sheetRecs.filter(r => (y ? (r.done_on || '').startsWith(y) : !r.done_on || !YEARS.includes((r.done_on || '').slice(0, 4))))
+                {[...new Set(sheetRecs.map(r => (r.done_on || '').slice(0, 4)))].sort().reverse().map(y => {
+                  const rs = sheetRecs.filter(r => (r.done_on || '').slice(0, 4) === y)
                   if (!rs.length) return null
                   return (
                     <div key={y || 'o'}>
-                      <div className="bh-grp">{y ? y + ' 年' : '其他'}</div>
+                      <div className="bh-grp">{y ? y + (y === yr ? ' 年（今年）' : ' 年（參考）') : '其他'}</div>
                       {rs.map(r => (
                         <div className="dc-rec" key={r.id}>
                           <b>{longD(r.done_on) || '（未有日期）'}</b>
@@ -211,7 +226,7 @@ export default function DeepClean({ session }) {
                     </div>
                   )
                 })}
-                {canAdd && <button className="btn" style={{ marginTop: 12 }} onClick={() => setForm({ date: todayStr(), by: '', note: '' })}>＋ 新增完成記錄</button>}
+                {canAdd && <button className="mini-btn" style={{ marginTop: 12, width: '100%' }} onClick={() => setForm({ date: todayStr(), by: '', note: '' })}>其他日期／加執行人或備註</button>}
               </>
             )}
           </div>
