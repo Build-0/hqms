@@ -51,7 +51,7 @@ export default function DeepClean({ session }) {
   const [err, setErr] = useState('')
   const [fl, setFl] = useState(0)            // 0 ＝ 樓層卡；否則該樓層嘅項目
   const [item, setItem] = useState(null)     // 揀咗項目 ＝ 該層該項目嘅房間格
-  const yr = YR
+  const [yr, setYr] = useState(null)      // 入嚟先揀年份：今年（跟進）／過往年份（參考）
   const [pick, setPick] = useState(null)   // 批量登記：null ＝ 未開；否則 Set<房號>
   const [pickDate, setPickDate] = useState(todayStr())
   const [todo, setTodo] = useState(true)     // 只睇今年未做（預設）
@@ -59,7 +59,7 @@ export default function DeepClean({ session }) {
   const [form, setForm] = useState(null)     // 新增記錄
   const [report, setReport] = useState(false)
   const [delRow, setDelRow] = useState(null)
-  useBack(!!fl, () => { if (item) setItem(null); else setFl(0) })
+  useBack(!!yr, () => { if (item) setItem(null); else if (fl) setFl(0); else setYr(null) })
   const load = () => api.dbSelectAll(T, 'id,item,room,floor,done_on,note,by_name').then(r => { cache = r; setRows(r); setErr('') }).catch(ex => { setErr(ex.message); setRows(prev => prev || []) })
   useEffect(() => { load() }, [])
 
@@ -75,6 +75,22 @@ export default function DeepClean({ session }) {
     return m
   }, [rows])
   if (!rows) return <div className="note">載入中…</div>
+  if (!yr) {
+    const ys = [YR, String(+YR - 1)]
+    return (
+      <>
+        {err && <div className="card" style={{ borderColor: 'var(--red)' }}><p style={{ fontSize: 13, lineHeight: 1.7 }}>讀取失敗：{err}</p></div>}
+        <div className="dc-sqgrid">
+          {ys.map(y => (
+            <button className={'dc-sq dc-yr' + (y === YR ? ' now' : '')} key={y} onClick={() => { setYr(y); setFl(0); setItem(null) }}>
+              <b className="dc-yr-n">{y}</b>
+              <span className="dc-left">{y === YR ? '今年 · 跟進、登記' : '過往記錄 · 參考'}</span>
+            </button>
+          ))}
+        </div>
+      </>
+    )
+  }
 
   const allOf = (it, f, room) => (idx[it.id] && idx[it.id][f] && idx[it.id][f].get(room)) || []
   const recsOf = (it, f, room) => allOf(it, f, room).filter(r => (r.done_on || '').startsWith(yr))
@@ -98,7 +114,7 @@ export default function DeepClean({ session }) {
     return (
       <>
         {err && <div className="card" style={{ borderColor: 'var(--red)' }}><p style={{ fontSize: 13, lineHeight: 1.7 }}>讀取失敗：{err}</p></div>}
-        <div className="dc-sum"><b>{left}</b><span>間次 {yr} 年未做（全部樓層）</span><em className="dc-ref">去年及更早嘅記錄只作參考</em></div>
+        <div className="dc-sum"><b>{left}</b><span>間次 {yr} 年未做（全部樓層）</span><em className="dc-ref">{yr === YR ? '過往年份嘅記錄只作參考' : '過往年份記錄（只作參考）'}</em></div>
         <div className="dc-flgrid">
           {FLOORS.map((f, k) => {
             const l = all[k], n = l.reduce((p, x) => p + x.t - x.n, 0)
@@ -125,7 +141,7 @@ export default function DeepClean({ session }) {
         <span className="dc-ico" style={{ background: it.color + '26' }}><Icon name={it.icon} size={24} color={it.color} width={2.2} /></span>
         <b className="dc-sq-name">{it.label}</b>
         {k === 'open' ? <span className="dc-todo">未做 {st.t - st.n}</span> : k === 'fin' ? <span className="dc-left ok">✓ 已完成</span> : <span className="dc-left">{st.t} 項記錄</span>}
-        <small>{k === 'open' ? `${yr} 年 ${st.n}/${st.t}` : k === 'fin' ? `${yr} 年 ${st.n}/${st.t}` : ''}{k !== 'oth' && prevStat(it, fl) ? ` · 去年 ${prevStat(it, fl)}` : ''}</small>
+        <small>{k === 'open' ? `${yr} 年 ${st.n}/${st.t}` : k === 'fin' ? `${yr} 年 ${st.n}/${st.t}` : ''}{k !== 'oth' && prevStat(it, fl) ? ` · 之前 ${prevStat(it, fl)}` : ''}</small>
         {k !== 'oth' && <span className="dc-bar"><i style={{ width: Math.round(st.n / Math.max(1, st.t) * 100) + '%', background: it.color }} /></span>}
       </button>
     )
@@ -172,7 +188,7 @@ export default function DeepClean({ session }) {
 
   return (
     <>
-      <ToolBar sticky label={`${fl} 樓 · ${item.label}${grid ? ` · ${yr} 年 ${st.n}/${st.t}` : ''}`}><ExportBtn onClick={() => setReport(true)} />{canAdd && grid && <ToolBtn onClick={() => { setPick(pick ? null : new Set()); setTodo(true) }}>{pick ? '取消批量' : '批量登記'}</ToolBtn>}</ToolBar>
+      <ToolBar sticky label={`${fl} 樓 · ${item.label}${grid ? ` · ${yr} 年 ${st.n}/${st.t}` : ''}`}><ExportBtn onClick={() => setReport(true)} />{canAdd && grid && yr === YR && <ToolBtn onClick={() => { setPick(pick ? null : new Set()); setTodo(true) }}>{pick ? '取消批量' : '批量登記'}</ToolBtn>}</ToolBar>
       {grid && <div className="fstk"><div className="dc-yrs" style={{ margin: 0 }}>
         <button className={todo ? 'on' : ''} onClick={() => setTodo(true)}>{yr} 年未做 {st.t - st.n}</button><button className={!todo ? 'on' : ''} onClick={() => setTodo(false)}>全部房</button>
       </div></div>}
@@ -210,7 +226,7 @@ export default function DeepClean({ session }) {
               </>
             ) : (
               <>
-                {canAdd && !recsOf(item, fl, sheet.room).length && grid && <button className="btn" style={{ marginBottom: 8 }} onClick={() => quick(todayStr())}>✓ 今日完成（{yr} 年未做）</button>}
+                {canAdd && yr === YR && !recsOf(item, fl, sheet.room).length && grid && <button className="btn" style={{ marginBottom: 8 }} onClick={() => quick(todayStr())}>✓ 今日完成（{yr} 年未做）</button>}
                 {!sheetRecs.length && <p className="src-note" style={{ margin: '10px 2px' }}>未有記錄。</p>}
                 {[...new Set(sheetRecs.map(r => (r.done_on || '').slice(0, 4)))].sort().reverse().map(y => {
                   const rs = sheetRecs.filter(r => (r.done_on || '').slice(0, 4) === y)
@@ -228,7 +244,7 @@ export default function DeepClean({ session }) {
                     </div>
                   )
                 })}
-                {canAdd && <button className="mini-btn" style={{ marginTop: 12, width: '100%' }} onClick={() => setForm({ date: todayStr(), by: '', note: '' })}>其他日期／加執行人或備註</button>}
+                {canAdd && <button className="mini-btn" style={{ marginTop: 12, width: '100%' }} onClick={() => setForm({ date: yr === YR ? todayStr() : yr + '-01-01', by: '', note: '' })}>其他日期／加執行人或備註</button>}
               </>
             )}
           </div>
