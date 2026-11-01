@@ -28,6 +28,7 @@ export default function Boh({ session, init }) {
   const [err, setErr] = useState('')
   const [report, setReport] = useState(null)   // 目前篩選結果的報告資料
   useBack(!!tab, () => setTab(null))
+  const toolReg = useRef(null)                // 「需補貨」同頁顯示的清潔工具報告（匯出時合併）
   const reg = useRef(null)                    // 目前分頁登記的「產生報告」函式
 
   useEffect(() => { load() }, [])
@@ -44,6 +45,16 @@ export default function Boh({ session, init }) {
     } catch (ex) { setErr(ex.message); setD(prev => prev || EMPTY) }
   }
   if (!d) return <div className="note">載入中…</div>
+  const lowTool = d.tools.some(t => t.status !== '停用' && num(t.min_stock) > 0 && num(t.stock) < num(t.min_stock))
+  const combined = tab === 'chem' && init?.fk === 'low' && lowTool
+  if (!combined) toolReg.current = null
+  // 清潔劑報告 + （同頁顯示時）需補貨清潔工具，合併成一份匯出
+  const makeReport = () => {
+    const r = (reg.current && reg.current()) || { title: '', filterText: '', cols: [], groups: [] }
+    const t = combined && toolReg.current ? toolReg.current() : null
+    if (!t || !t.groups.length) return r
+    return { ...r, title: '需補貨（清潔劑＋清潔工具）', filterText: '需補貨', groups: [...r.groups, ...t.groups.map(g => ({ name: '🧹 清潔工具 · ' + g.name, rows: g.rows.map(x => ({ ...x, cells: [x.cells[0], x.cells[1], x.cells[3], '—', x.cells[4]] })) }))] }
+  }
 
 
   return (
@@ -60,7 +71,7 @@ export default function Boh({ session, init }) {
           ))}
         </div>
       )}
-      {tab && <ToolBar sticky label={TABS.find(x => x[0] === tab)[1]}><ExportBtn onClick={() => setReport((reg.current && reg.current()) || { title: '', filterText: '', cols: [], groups: [] })} /></ToolBar>}
+      {tab && <ToolBar sticky label={TABS.find(x => x[0] === tab)[1]}><ExportBtn onClick={() => setReport(makeReport())} /></ToolBar>}
       {!edit && <p className="note" style={{ textAlign: 'left', margin: '0 4px 6px' }}>目前帳號只可查看</p>}
       {tab === 'chem' && init?.fk === 'low' && (() => {
         const lw = x => x.status !== '停用' && num(x.min_stock) > 0 && num(x.stock) < num(x.min_stock)
@@ -68,10 +79,10 @@ export default function Boh({ session, init }) {
         return nt > 0 ? <div style={{ margin: '0 0 8px', padding: '9px 14px', borderRadius: 12, background: '#fdecea', color: '#b3342a', fontWeight: 700, fontSize: 14 }}>🛒 需補貨共 {nc + nt} 項　<span style={{ fontWeight: 500 }}>清潔劑 {nc} ・ 清潔工具 {nt}</span></div> : null
       })()}
       {tab === 'chem' && <Chemicals d={d} edit={edit} reload={load} init={init} reg={reg} />}
-      {tab === 'chem' && init?.fk === 'low' && d.tools.some(t => t.status !== '停用' && num(t.min_stock) > 0 && num(t.stock) < num(t.min_stock)) && (
+      {combined && (
         <>
           <h2 style={{ fontSize: 15, margin: '18px 4px 6px' }}>🧹 清潔工具需補貨</h2>
-          <Tools d={d} edit={edit} reload={load} init={init} embedded />
+          <Tools d={d} edit={edit} reload={load} init={init} reg={toolReg} embedded />
         </>
       )}
       {tab === 'vac' && <Machines kind="vacuum" d={d} edit={edit} reload={load} reg={reg} />}

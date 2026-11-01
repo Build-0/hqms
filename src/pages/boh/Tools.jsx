@@ -53,7 +53,7 @@ export default function Tools({ d, edit, reload, reg, init, embedded }) {
     try { await api.dbDelete('tools', t.id); toast('已刪除'); setDel(null); setForm(null); reload() } catch (ex) { toast('刪除失敗：' + ex.message) }
   }
 
-  if (reg && !embedded) reg.current = () => ({
+  if (reg) reg.current = () => ({
     title: '清潔工具',
     filterText: [fk === 'low' ? '需補貨' : fk === 'off' ? '停用' : fk === 'on' ? '啟用' : '', ck, q.trim() && `搜尋「${q.trim()}」`].filter(Boolean).join(' · ') || '全部工具',
     cols: ['名稱', '庫存', '在用', '最低', '狀態'],
