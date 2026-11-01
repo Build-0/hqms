@@ -40,9 +40,11 @@ export default function Home({ session, go }) {
       } catch { /* 單項失敗不影響其他 */ }
       try {
         if (perm.boh !== 'none') {
-          const [products, batches] = await Promise.all([api.dbSelect('products', { cols: 'id,status,stock,min_stock' }), api.dbSelect('product_batches', { cols: 'id,product_id,expiry_date,qty_remaining' })])
+          const [products, batches, tools] = await Promise.all([api.dbSelect('products', { cols: 'id,status,stock,min_stock' }), api.dbSelect('product_batches', { cols: 'id,product_id,expiry_date,qty_remaining' }), api.dbSelect('tools', { cols: 'id,status,stock,min_stock' }).catch(() => [])])
           const act = new Map(products.filter(p => p.status !== '停用').map(p => [p.id, p]))
-          r.low = [...act.values()].filter(p => num(p.min_stock) > 0 && num(p.stock) < num(p.min_stock)).length
+          r.lowChem = [...act.values()].filter(p => num(p.min_stock) > 0 && num(p.stock) < num(p.min_stock)).length
+          r.lowTool = tools.filter(t => t.status !== '停用' && num(t.min_stock) > 0 && num(t.stock) < num(t.min_stock)).length
+          r.low = r.lowChem + r.lowTool
           r.exp = new Set(batches.filter(b => act.has(b.product_id) && b.expiry_date && num(b.qty_remaining) > 0 && dleft(b.expiry_date) <= 30).map(b => b.product_id)).size
         }
       } catch { /* */ }
@@ -80,7 +82,7 @@ export default function Home({ session, go }) {
   const ago = x => Math.max(0, Math.round((new Date(todayStr() + 'T00:00:00') - new Date(String(x.register_date || x.created_at).slice(0, 10) + 'T00:00:00')) / 86400000))
   if (perm.defect !== 'none' && !isSup) tiles.push(tile('p', '待處理缺陷', d.pending, d.processing != null ? `處理中 ${d.processing}` : ' ', '#c62828', () => go('defect', { status: 'pending' })))
   if (perm.boh !== 'none') {
-    tiles.push(tile('l', '需補貨', d.low, '清潔劑低於最低庫存', '#c62828', () => go('boh', { fk: 'low' })))
+    tiles.push(tile('l', '需補貨', d.low, d.lowTool ? `清潔劑 ${d.lowChem || 0}・工具 ${d.lowTool}` : '清潔劑低於最低庫存', '#c62828', () => go('boh', { fk: 'low', tab: d.lowChem || !d.lowTool ? 'chem' : 'tool' })))
     tiles.push(tile('e', '臨期批次', d.exp, '30 日內到期或已過期', '#e69500', () => go('boh', { fk: 'exp' })))
   }
   if (perm.quality !== 'none') {

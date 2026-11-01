@@ -7,9 +7,9 @@ import { Thumb, ImageField, useImages, setCachedImage, ListManager, num } from '
 
 const EMPTY = { name: '', category: '', stock: 0, in_use: 0, min_stock: 0, status: '啟用', notes: '', image: '' }
 
-export default function Tools({ d, edit, reload, reg }) {
+export default function Tools({ d, edit, reload, reg, init }) {
   const [q, setQ] = useState('')
-  const [fk, setFk] = useState('all')   // 狀態：all／low／off
+  const [fk, setFk] = useState(init?.fk || 'all')   // 狀態：all／low／off
   const [ck, setCk] = useState('')        // 分類（可與狀態同時生效）
   const [form, setForm] = useState(null)
   const [orig, setOrig] = useState('')

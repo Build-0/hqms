@@ -23,7 +23,7 @@ const EMPTY = { products: [], batches: [], cats: [], vacuums: [], vacMaint: [], 
 
 export default function Boh({ session, init }) {
   const edit = permsOf(session).boh === 'edit'
-  const [tab, setTab] = useState(init ? 'chem' : null)   // null ＝ 圓形入口選單；從首頁摘要跳入（補貨／臨期）直接開清潔劑
+  const [tab, setTab] = useState(init ? (init.tab || 'chem') : null)   // null ＝ 圓形入口選單；從首頁摘要跳入（補貨／臨期）直接開清潔劑
   const [d, setD] = useState(null)
   const [err, setErr] = useState('')
   const [report, setReport] = useState(null)   // 目前篩選結果的報告資料
@@ -64,7 +64,7 @@ export default function Boh({ session, init }) {
       {!edit && <p className="note" style={{ textAlign: 'left', margin: '0 4px 6px' }}>目前帳號只可查看</p>}
       {tab === 'chem' && <Chemicals d={d} edit={edit} reload={load} init={init} reg={reg} />}
       {tab === 'vac' && <Machines kind="vacuum" d={d} edit={edit} reload={load} reg={reg} />}
-      {tab === 'tool' && <Tools d={d} edit={edit} reload={load} reg={reg} />}
+      {tab === 'tool' && <Tools d={d} edit={edit} reload={load} reg={reg} init={init} />}
       {tab === 'eq' && <Machines kind="equipment" d={d} edit={edit} reload={load} reg={reg} />}
       {report && (
         <ReportModal title={`後勤管理 · ${report.title}`} sub={`${report.filterText} · ${todayStr()}`} onClose={() => setReport(null)}>
