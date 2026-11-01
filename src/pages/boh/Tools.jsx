@@ -7,7 +7,7 @@ import { Thumb, ImageField, useImages, setCachedImage, ListManager, num } from '
 
 const EMPTY = { name: '', category: '', stock: 0, in_use: 0, min_stock: 0, status: '啟用', notes: '', image: '' }
 
-export default function Tools({ d, edit, reload, reg, init }) {
+export default function Tools({ d, edit, reload, reg, init, embedded }) {
   const [q, setQ] = useState('')
   const [fk, setFk] = useState(init?.fk || 'all')   // 狀態：all／low／off
   const [ck, setCk] = useState('')        // 分類（可與狀態同時生效）
@@ -53,7 +53,7 @@ export default function Tools({ d, edit, reload, reg, init }) {
     try { await api.dbDelete('tools', t.id); toast('已刪除'); setDel(null); setForm(null); reload() } catch (ex) { toast('刪除失敗：' + ex.message) }
   }
 
-  if (reg) reg.current = () => ({
+  if (reg && !embedded) reg.current = () => ({
     title: '清潔工具',
     filterText: [fk === 'low' ? '需補貨' : fk === 'off' ? '停用' : fk === 'on' ? '啟用' : '', ck, q.trim() && `搜尋「${q.trim()}」`].filter(Boolean).join(' · ') || '全部工具',
     cols: ['名稱', '庫存', '在用', '最低', '狀態'],
@@ -65,7 +65,7 @@ export default function Tools({ d, edit, reload, reg, init }) {
   const chip = (k, t) => <SqChip key={k} on={fk === k} onClick={() => setFk(k)} label={t} />
   return (
     <>
-      <div className="fstk">
+      {!embedded && <div className="fstk">
       <div className="srch-row">
         <input className="search-inp" placeholder="🔍 搜尋工具名稱、分類" value={q} onChange={e => setQ(e.target.value)} />
         {edit && <button className="tb-btn sq" title="管理分類" onClick={() => setMgr(true)}>⚙</button>}
@@ -81,7 +81,7 @@ export default function Tools({ d, edit, reload, reg, init }) {
           {d.toolCats.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
         </select>
       </div>
-      </div>
+      </div>}
       {groups.length === 0 && <div className="note">沒有符合的工具</div>}
       {groups.map(g => (
         <div key={g.c}>
@@ -97,7 +97,7 @@ export default function Tools({ d, edit, reload, reg, init }) {
           </div>
         </div>
       ))}
-      {edit && <button className="fab" onClick={() => open(null)}>＋</button>}
+      {edit && !embedded && <button className="fab" onClick={() => open(null)}>＋</button>}
 
       {form && (
         <div className="modal" onClick={e => { if (e.target === e.currentTarget) setForm(null) }}>
