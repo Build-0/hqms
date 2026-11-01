@@ -1369,5 +1369,16 @@ html.rpt-open #root{visibility:hidden}
 .dc-flc b{font-size:34px;font-weight:800;line-height:1;color:var(--accent)}
 .dc-flc b small{font-size:15px;margin-left:3px;color:var(--ink)}
 .dc-flc span:not(.dc-bar){font-size:13px;color:var(--sub)}
-.dc-flc .dc-bar{left:16px;right:16px;bottom:9px}
-.dc-flc .dc-bar i{background:var(--accent)}
+
+
+
+/* 深度清潔記錄 v4：今年未做 */
+.dc-yrs{display:flex;gap:6px;margin:0 0 10px;padding:4px;border-radius:999px;background:var(--line)}
+.dc-yrs button{flex:1;border:none;background:transparent;padding:9px 6px;border-radius:999px;font-family:inherit;font-size:14px;font-weight:700;color:var(--sub);cursor:pointer}
+.dc-yrs button.on{background:var(--card);color:var(--accent);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.dc-left{font-size:13px;color:var(--sub)}
+.dc-left em{font-style:normal;font-weight:800;font-size:18px;color:#c0564f}
+.dc-left.ok{color:var(--accent);font-weight:700}
+.dc-flc.fin b{color:var(--accent)}
+.dc-flc:not(.fin) b{color:var(--ink)}
+.dc-todo{font-size:13px;font-weight:800;color:#c0564f;background:#c0564f1a;padding:4px 10px;border-radius:999px;white-space:nowrap}

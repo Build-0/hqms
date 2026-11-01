@@ -49,13 +49,13 @@ export default function DeepClean({ session }) {
   const [err, setErr] = useState('')
   const [fl, setFl] = useState(0)            // 0 ＝ 樓層卡；否則該樓層嘅項目
   const [item, setItem] = useState(null)     // 揀咗項目 ＝ 該層該項目嘅房間格
-  const [yr, setYr] = useState('')           // '' ＝ 全部年份
-  const [todo, setTodo] = useState(false)    // 只睇未有記錄
+  const [yr, setYr] = useState(YEARS.includes(String(new Date().getFullYear())) ? String(new Date().getFullYear()) : YEARS[YEARS.length - 1])   // 預設今年
+  const [todo, setTodo] = useState(true)     // 只睇今年未做（預設）
   const [sheet, setSheet] = useState(null)   // { room }
   const [form, setForm] = useState(null)     // 新增記錄
   const [report, setReport] = useState(false)
   const [delRow, setDelRow] = useState(null)
-  useBack(!!fl, () => { if (item) { setItem(null); setTodo(false) } else setFl(0) })
+  useBack(!!fl, () => { if (item) setItem(null); else setFl(0) })
   const load = () => api.dbSelectAll(T, 'id,item,room,floor,done_on,note,by_name').then(r => { cache = r; setRows(r); setErr('') }).catch(ex => { setErr(ex.message); setRows(prev => prev || []) })
   useEffect(() => { load() }, [])
 
@@ -82,66 +82,61 @@ export default function DeepClean({ session }) {
   }
   const itemsOf = f => ITEMS.filter(it => (it.mode === 'grid' ? nOf(it, f) > 0 : roomsOf(it, f).length > 0))
 
-  // ── 樓層卡 ──
+  // 該年未做：客房類項目，該層房數 − 該年有記錄房數
+  const todoOf = f => itemsOf(f).filter(it => it.mode === 'grid').map(it => ({ it, ...stat(it, f) })).filter(x => x.n < x.t)
+
+  // ── 樓層卡：今年邊層仲有幾多項未做 ──
   if (!fl) {
+    const all = FLOORS.map(f => todoOf(f))
+    const left = all.reduce((a, l) => a + l.reduce((p, x) => p + x.t - x.n, 0), 0)
     return (
       <>
         {err && <div className="card" style={{ borderColor: 'var(--red)' }}><p style={{ fontSize: 13, lineHeight: 1.7 }}>讀取失敗：{err}</p></div>}
+        <div className="dc-yrs">{YEARS.map(y => <button key={y} className={yr === y ? 'on' : ''} onClick={() => setYr(y)}>{y} 年</button>)}</div>
+        <div className="dc-sum"><b>{left}</b><span>間次未做（{yr} 年，全部樓層）</span></div>
         <div className="dc-flgrid">
-          {FLOORS.map(f => {
-            const its = itemsOf(f), gs = its.filter(it => it.mode === 'grid')
-            const done = gs.reduce((a, it) => a + stat(it, f).n, 0), tot = gs.reduce((a, it) => a + stat(it, f).t, 0)
+          {FLOORS.map((f, k) => {
+            const l = all[k], n = l.reduce((p, x) => p + x.t - x.n, 0)
             return (
-              <button className="dc-flc" key={f} onClick={() => { setFl(f); setItem(null) }}>
+              <button className={'dc-flc' + (l.length ? '' : ' fin')} key={f} onClick={() => { setFl(f); setItem(null) }}>
                 <b>{f}<small>樓</small></b>
-                <span>{its.length} 個大清項目</span>
-                <span className="dc-bar"><i style={{ width: Math.round(done / Math.max(1, tot) * 100) + '%' }} /></span>
+                {l.length ? <span className="dc-left"><em>{l.length}</em> 項未完成</span> : <span className="dc-left ok">✓ 全部完成</span>}
+                {l.length > 0 && <span>共 {n} 間次</span>}
               </button>
             )
           })}
         </div>
-        <p className="src-note" style={{ margin: '4px 4px 0' }}>揀樓層，再揀大清項目；每間房記錄完成日期，可按 2025／2026 年分開睇。</p>
       </>
     )
   }
 
   const Years = () => (
-    <div className="fstk"><div className="dc-chips">
-      <button className={'chip' + (!yr ? ' on' : '')} onClick={() => setYr('')}>全部年份</button>
-      {YEARS.map(y => <button key={y} className={'chip' + (yr === y ? ' on' : '')} onClick={() => setYr(y)}>{y} 年</button>)}
-      {item && item.mode === 'grid' && <button className={'chip' + (todo ? ' on' : '')} onClick={() => setTodo(!todo)}>未有記錄（{stat(item, fl).t - stat(item, fl).n}）</button>}
-    </div></div>
+    <div className="dc-yrs">{YEARS.map(y => <button key={y} className={yr === y ? 'on' : ''} onClick={() => setYr(y)}>{y} 年</button>)}</div>
   )
 
-  // ── 該層項目清單 ──
+  // ── 該層項目清單：未做嘅排最前，已完成嘅收埋 ──
   if (!item) {
+    const open = todoOf(fl).sort((p, q) => (q.t - q.n) - (p.t - p.n))
+    const fin = itemsOf(fl).filter(it => it.mode === 'grid' && !open.some(x => x.it.id === it.id))
+    const oth = itemsOf(fl).filter(it => it.mode === 'list')
+    const row = (it, st, k) => (
+      <button className="dc-item" key={it.id} onClick={() => { setItem(it); setTodo(it.mode === 'grid') }}>
+        <span className="dc-ico" style={{ background: it.color + '26' }}><Icon name={it.icon} size={22} color={it.color} width={2.2} /></span>
+        <span className="dc-txt"><b>{it.label}</b><small>{k === 'open' ? `已做 ${st.n} / ${st.t}` : k === 'fin' ? '✓ 已全部完成' : `${st.t} 項記錄`}</small></span>
+        {k === 'open' && <span className="dc-todo">未做 {st.t - st.n}</span>}
+        <span className="dc-go">›</span>
+        {k === 'open' && <span className="dc-bar"><i style={{ width: Math.round(st.n / Math.max(1, st.t) * 100) + '%', background: it.color }} /></span>}
+      </button>
+    )
     return (
       <>
-        <ToolBar sticky label={`${fl} 樓 · 深度清潔`} />
+        <ToolBar sticky label={`${fl} 樓`} />
         <Years />
         {err && <div className="card" style={{ borderColor: 'var(--red)' }}><p style={{ fontSize: 13, lineHeight: 1.7 }}>讀取失敗：{err}</p></div>}
-        {Object.entries(G).map(([g, gl]) => {
-          const its = itemsOf(fl).filter(it => it.g === g)
-          if (!its.length) return null
-          return (
-            <div key={g}>
-              <div className="bh-grp">{gl}</div>
-              <div className="dc-menu">
-                {its.map(it => {
-                  const st = stat(it, fl)
-                  return (
-                    <button className="dc-item" key={it.id} onClick={() => { setItem(it); setTodo(false) }}>
-                      <span className="dc-ico" style={{ background: it.color + '26' }}><Icon name={it.icon} size={22} color={it.color} width={2.2} /></span>
-                      <span className="dc-txt"><b>{it.label}</b><small>{it.mode === 'grid' ? `${st.n} / ${st.t} 房` : `${st.t} 項`}{st.last ? ` · 最近 ${yr ? shortD(st.last) : longD(st.last)}` : ''}</small></span>
-                      <span className="dc-go">›</span>
-                      {it.mode === 'grid' && <span className="dc-bar"><i style={{ width: Math.round(st.n / Math.max(1, st.t) * 100) + '%', background: it.color }} /></span>}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-          )
-        })}
+        <div className="bh-grp">{yr} 年未完成<span>{open.length}</span></div>
+        {open.length ? <div className="dc-menu">{open.map(x => row(x.it, x, 'open'))}</div> : <p className="src-note" style={{ margin: '8px 4px 14px' }}>{yr} 年全部項目都完成 👍</p>}
+        {fin.length > 0 && <><div className="bh-grp">已完成<span>{fin.length}</span></div><div className="dc-menu">{fin.map(it => row(it, stat(it, fl), 'fin'))}</div></>}
+        {oth.length > 0 && <><div className="bh-grp">其他記錄</div><div className="dc-menu">{oth.map(it => row(it, stat(it, fl), 'oth'))}</div></>}
       </>
     )
   }
@@ -151,7 +146,7 @@ export default function DeepClean({ session }) {
   const st = stat(item, fl)
   const list = roomsOf(item, fl).filter(r => !todo || !recsOf(item, fl, r).length)
   const reportData = () => ({
-    filterText: [`${fl} 樓`, item.label, yr ? yr + ' 年' : '全部年份', todo ? '未有記錄' : ''].filter(Boolean).join('、'),
+    filterText: [`${fl} 樓`, item.label, yr ? yr + ' 年' : '全部年份', todo ? '未做' : ''].filter(Boolean).join('、'),
     cols: ['房號／區域', '最近日期', '次數', '全部日期'],
     groups: [{ name: `${fl} 樓 · ${item.label}`, rows: list.map(r => { const e = recsOf(item, fl, r); return { cells: [r, e.length ? (longD(e[0].done_on) || e[0].note || '有記錄') : '未有', e.length, e.length ? e.map(z => longD(z.done_on) || z.note).join('、') : '—'] } }) }],
   })
@@ -168,10 +163,13 @@ export default function DeepClean({ session }) {
 
   return (
     <>
-      <ToolBar sticky label={`${fl} 樓 · ${item.label}${grid ? ` · ${st.n} / ${st.t}` : ''}`}><ExportBtn onClick={() => setReport(true)} /></ToolBar>
-      <Years />
+      <ToolBar sticky label={`${fl} 樓 · ${item.label}${grid ? ` · ${yr} 年已做 ${st.n} / ${st.t}` : ''}`}><ExportBtn onClick={() => setReport(true)} /></ToolBar>
+      <div className="fstk"><div className="dc-yrs" style={{ margin: 0 }}>
+        {YEARS.map(y => <button key={y} className={yr === y ? 'on' : ''} onClick={() => setYr(y)}>{y} 年</button>)}
+        {grid && <><button className={todo ? 'on' : ''} onClick={() => setTodo(true)}>未做 {st.t - st.n}</button><button className={!todo ? 'on' : ''} onClick={() => setTodo(false)}>全部房</button></>}
+      </div></div>
       {err && <div className="card" style={{ borderColor: 'var(--red)' }}><p style={{ fontSize: 13, lineHeight: 1.7 }}>讀取失敗：{err}</p></div>}
-      {!list.length && <p className="src-note" style={{ margin: '14px 4px' }}>{todo ? '全部都有記錄 👍' : '暫時未有記錄。'}</p>}
+      {!list.length && <p className="src-note" style={{ margin: '14px 4px' }}>{todo ? `${yr} 年全部房都做完 👍` : '暫時未有記錄。'}</p>}
       <div className={'dc-grid' + (grid ? '' : ' wide')}>
         {list.map(r => {
           const l = recsOf(item, fl, r)[0]
