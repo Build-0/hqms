@@ -32,7 +32,6 @@ const ITEMS = [
   { id: 'balcony', g: 'x', label: '露台清洗', icon: 'sun', color: '#2f8f9d', mode: 'list' },
   { id: 'stain', g: 'x', label: '南翼地毯起漬', icon: 'drop', color: '#c0564f', mode: 'list' },
   { id: 'ninegrid', g: 'x', label: '九宮格清潔', icon: 'calendar', color: '#8a6d3b', mode: 'list' },
-  { id: 'fog', g: 'x', label: '天花滅蟲焗霧', icon: 'search', color: '#54808c', mode: 'list' },
   { id: 'pubarea', g: 'x', label: '公共走廊', icon: 'people', color: '#8a6d3b', mode: 'list' },
 ]
 const FLOORS = Array.from({ length: 10 }, (_, i) => i + 3)
