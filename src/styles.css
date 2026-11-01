@@ -1499,3 +1499,5 @@ html.rpt-open #root{visibility:hidden}
 
 .dc-tile.skip{background:var(--bg);border:1px dashed var(--line);box-shadow:none;opacity:.8}
 .dc-tile.skip span{color:var(--sub) !important;font-weight:600}
+
+.dcx-asof{margin:6px 4px 12px;font-size:12px;color:var(--sub);text-align:center}

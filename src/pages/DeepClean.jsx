@@ -54,7 +54,8 @@ function Ring({ pct, color = 'var(--accent)', size = 46 }) {
     </span>
   )
 }
-const LS = 'dc_rows_v1'
+const BASE = '2026-11-01'   // Excel 基準匯入日期
+const LS = 'dc_rows_v2'
 let cache = null   // 只讀一次，換頁返嚟唔使重新載入
 try { const raw = localStorage.getItem(LS); if (raw) cache = JSON.parse(raw) } catch { /* 冇本機快取就照常載入 */ }
 
@@ -76,7 +77,7 @@ export default function DeepClean({ session }) {
   const [report, setReport] = useState(false)
   const [delRow, setDelRow] = useState(null)
   useBack(!!yr, () => { if (item) setItem(null); else if (fl) setFl(0); else setYr(null) })
-  const load = () => api.dbSelectAll(T, 'id,item,room,floor,done_on,note,by_name').then(r => { cache = r; try { localStorage.setItem(LS, JSON.stringify(r)) } catch { /* 容量唔夠就唔存 */ } setRows(r); setErr('') }).catch(ex => { setErr(ex.message); setRows(prev => prev || []) })
+  const load = () => api.dbSelectAll(T, 'id,item,room,floor,done_on,note,by_name,source,created_at').then(r => { cache = r; try { localStorage.setItem(LS, JSON.stringify(r)) } catch { /* 容量唔夠就唔存 */ } setRows(r); setErr('') }).catch(ex => { setErr(ex.message); setRows(prev => prev || []) })
   useEffect(() => { load() }, [])
   useEffect(() => { api.dbSelect('deep_clean_prefs', { order: 'id' }).then(r => { const o = r.find(x => x.id === 'order'); if (o && Array.isArray(o.value)) setOrd(o.value) }).catch(() => {}) }, [])
 
@@ -92,6 +93,8 @@ export default function DeepClean({ session }) {
     return m
   }, [rows])
   if (!rows) return <div className="note">載入中…</div>
+  const lastSys = rows.reduce((a, r) => ((r.source || '').startsWith('系統登記') && (r.created_at || '') > a ? r.created_at : a), '')
+  const asof = <p className="dcx-asof">資料更新日期：{BASE}（Excel 匯入）{lastSys ? ` · 系統最近登記：${lastSys.slice(0, 10)}` : ''}</p>
   if (!yr) {
     const ys = [YR, String(+YR - 1)]
     return (
@@ -106,6 +109,7 @@ export default function DeepClean({ session }) {
             </button>
           ))}
         </div>
+        {asof}
       </>
     )
   }
@@ -152,6 +156,7 @@ export default function DeepClean({ session }) {
             )
           })}
         </div>
+        {asof}
         <div className="bh-grp">{yr} 年進度總覽<span>項目 × 樓層</span></div>
         <div className="dc-tw">
           <table className="dc-t">
@@ -214,6 +219,7 @@ export default function DeepClean({ session }) {
     )}
     return (
       <>
+        {asof}
         <ToolBar sticky label={`${fl} 樓`}>{canEdit && <ToolBtn onClick={() => setSorting(!sorting)}>{sorting ? '完成排序' : '↕ 排序'}</ToolBtn>}</ToolBar>
         {err && <div className="card" style={{ borderColor: 'var(--red)' }}><p style={{ fontSize: 13, lineHeight: 1.7 }}>讀取失敗：{err}</p></div>}
         <div className="bh-grp">{yr} 年未完成<span>{open.length}</span></div>
