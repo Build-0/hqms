@@ -139,6 +139,7 @@ export default function DeepClean({ session }) {
     return (
       <>
         {err && <div className="card" style={{ borderColor: 'var(--red)' }}><p style={{ fontSize: 13, lineHeight: 1.7 }}>讀取失敗：{err}</p></div>}
+        <div className="dc-yrs dcx-yrsw">{[YR, String(+YR - 1)].map(y => <button key={y} className={yr === y ? 'on' : ''} onClick={() => setYr(y)}>{y} 年{y === YR ? '（今年）' : '（參考）'}</button>)}</div>
         <div className="dcx-hero">
           <Ring pct={allPct} size={68} />
           <span className="dcx-hero-t"><b>{left}</b><span>間次 {yr} 年未做</span><small>全部樓層 · {yr === YR ? '過往年份記錄只作參考' : '過往年份記錄（參考）'}</small></span>

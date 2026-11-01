@@ -1510,3 +1510,5 @@ html.rpt-open #root{visibility:hidden}
 .dcx-hd b{font-size:14px;color:var(--ink);display:flex;align-items:center;gap:8px;border-left:3px solid var(--accent);padding-left:8px}
 .dcx-hd b span{font-size:12px;color:var(--sub);font-weight:600}
 .dcx-hint{grid-column:1/-1;margin:0;font-size:12px;color:var(--sub)}
+
+.dcx-yrsw{max-width:320px;margin:0 auto 12px}
