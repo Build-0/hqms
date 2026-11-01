@@ -24,7 +24,7 @@ const ITEMS = [
   { id: 'ceiling', g: 'top', label: '天花槽吸塵', icon: 'clean', color: '#54808c', mode: 'grid' },
   { id: 'curtain', g: 'top', label: '厚簾／窗簾清洗', icon: 'hotel', color: '#8f7ac9', mode: 'grid' },
   { id: 'mattress', g: 'bed', label: '床褥前後反轉', icon: 'bed', color: '#3a8fb5', mode: 'grid' },
-  { id: 'bedframe', g: 'bed', label: '床架防霉清潔', icon: 'bed', color: '#c0564f', mode: 'grid' },
+  { id: 'bedframe', g: 'bed', label: '抹床架', icon: 'bed', color: '#c0564f', mode: 'grid' },
   { id: 'quilt', g: 'bed', label: '被芯更換', icon: 'bed', color: '#d07a2c', mode: 'grid' },
   { id: 'pillowhard', g: 'bed', label: '硬枕芯更換', icon: 'bed', color: '#7a6a4f', mode: 'grid' },
   { id: 'pillowsoft', g: 'bed', label: '軟枕芯更換', icon: 'bed', color: '#5a8f6a', mode: 'grid' },
