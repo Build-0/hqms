@@ -42,6 +42,19 @@ const T = 'deep_clean_records'
 const shortD = d => (d ? `${+d.slice(5, 7)}/${+d.slice(8, 10)}` : '')
 const longD = d => (d ? `${d.slice(0, 4)}-${d.slice(5, 7)}-${d.slice(8, 10)}` : '')
 const YR = String(new Date().getFullYear())   // 今年先係工作年度；之前年份只作參考（自動跟年份更新）
+// 圓環進度（中間顯示百分比）
+function Ring({ pct, color = 'var(--accent)', size = 46 }) {
+  const r = 18, c = 2 * Math.PI * r, p = Math.max(0, Math.min(100, pct))
+  return (
+    <span className="dcx-ring" style={{ width: size, height: size }}>
+      <svg viewBox="0 0 44 44" width={size} height={size}>
+        <circle cx="22" cy="22" r={r} fill="none" stroke="var(--line)" strokeWidth="4.5" />
+        <circle cx="22" cy="22" r={r} fill="none" stroke={p >= 100 ? '#2e9b6a' : color} strokeWidth="4.5" strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c * (1 - p / 100)} transform="rotate(-90 22 22)" />
+      </svg>
+      <b style={{ fontSize: size > 52 ? 16 : 11.5 }}>{p >= 100 ? '✓' : Math.round(p) + '%'}</b>
+    </span>
+  )
+}
 let cache = null   // 只讀一次，換頁返嚟唔使重新載入
 
 export default function DeepClean({ session }) {
@@ -80,11 +93,12 @@ export default function DeepClean({ session }) {
     return (
       <>
         {err && <div className="card" style={{ borderColor: 'var(--red)' }}><p style={{ fontSize: 13, lineHeight: 1.7 }}>讀取失敗：{err}</p></div>}
-        <div className="dc-sqgrid">
+        <div className="pa-grid dcx-g">
           {ys.map(y => (
-            <button className={'dc-sq dc-yr' + (y === YR ? ' now' : '')} key={y} onClick={() => { setYr(y); setFl(0); setItem(null) }}>
-              <b className="dc-yr-n">{y}</b>
-              <span className="dc-left">{y === YR ? '今年 · 跟進、登記' : '過往記錄 · 參考'}</span>
+            <button className={'pa-sq dcx-card dcx-year' + (y === YR ? ' now' : '')} key={y} onClick={() => { setYr(y); setFl(0); setItem(null) }}>
+              <span className="dcx-top"><span className="dcx-ico" style={{ background: y === YR ? 'var(--accent-soft)' : 'var(--bg)' }}><Icon name="calendar" size={24} color={y === YR ? 'var(--accent)' : 'var(--sub)'} width={2.2} /></span><em className={'dcx-pill' + (y === YR ? '' : ' mute')}>{y === YR ? '今年' : '參考'}</em></span>
+              <b className="dcx-big">{y}</b>
+              <span className="dcx-sub">{y === YR ? '跟進未做、登記完成' : '過往記錄'}</span>
             </button>
           ))}
         </div>
@@ -111,18 +125,23 @@ export default function DeepClean({ session }) {
   if (!fl) {
     const all = FLOORS.map(f => todoOf(f))
     const left = all.reduce((a, l) => a + l.reduce((p, x) => p + x.t - x.n, 0), 0)
+    const allG = FLOORS.flatMap(fx => itemsOf(fx).filter(it => it.mode === 'grid').map(it => stat(it, fx))), allPct = allG.reduce((a, x) => a + x.n, 0) / Math.max(1, allG.reduce((a, x) => a + x.t, 0)) * 100
     return (
       <>
         {err && <div className="card" style={{ borderColor: 'var(--red)' }}><p style={{ fontSize: 13, lineHeight: 1.7 }}>讀取失敗：{err}</p></div>}
-        <div className="dc-sum"><b>{left}</b><span>間次 {yr} 年未做（全部樓層）</span><em className="dc-ref">{yr === YR ? '過往年份嘅記錄只作參考' : '過往年份記錄（只作參考）'}</em></div>
-        <div className="dc-flgrid">
-          {FLOORS.map((f, k) => {
+        <div className="dcx-hero">
+          <Ring pct={allPct} size={68} />
+          <span className="dcx-hero-t"><b>{left}</b><span>間次 {yr} 年未做</span><small>全部樓層 · {yr === YR ? '過往年份記錄只作參考' : '過往年份記錄（參考）'}</small></span>
+        </div>
+        <div className="pa-grid dcx-g">
+          {FLOORS.map((fx, k) => {
             const l = all[k], n = l.reduce((p, x) => p + x.t - x.n, 0)
+            const g = itemsOf(fx).filter(it => it.mode === 'grid').map(it => stat(it, fx)), dn = g.reduce((a, x) => a + x.n, 0), dt = g.reduce((a, x) => a + x.t, 0)
             return (
-              <button className={'dc-flc' + (l.length ? '' : ' fin')} key={f} onClick={() => { setFl(f); setItem(null) }}>
-                <b>{f}<small>樓</small></b>
-                {l.length ? <span className="dc-left"><em>{l.length}</em> 項未完成</span> : <span className="dc-left ok">✓ 全部完成</span>}
-                {l.length > 0 && <span>共 {n} 間次</span>}
+              <button className="pa-sq dcx-card" key={fx} onClick={() => { setFl(fx); setItem(null) }}>
+                <span className="dcx-top"><b className="dcx-fl">{fx}<small>樓</small></b><Ring pct={dn / Math.max(1, dt) * 100} /></span>
+                <span className="dcx-sub">{l.length ? `共 ${n} 間次未做` : '全部已完成'}</span>
+                {l.length ? <em className="dcx-pill red">{l.length} 項未完成</em> : <em className="dcx-pill ok">✓ 全部完成</em>}
               </button>
             )
           })}
@@ -164,12 +183,14 @@ export default function DeepClean({ session }) {
     const fin = itemsOf(fl).filter(it => it.mode === 'grid' && !open.some(x => x.it.id === it.id))
     const oth = itemsOf(fl).filter(it => it.mode === 'list')
     const row = (it, st, k) => (
-      <button className={'dc-sq' + (k === 'fin' ? ' fin' : '')} key={it.id} onClick={() => { setItem(it); setTodo(it.mode === 'grid') }}>
-        <span className="dc-ico" style={{ background: it.color + '26' }}><Icon name={it.icon} size={24} color={it.color} width={2.2} /></span>
-        <b className="dc-sq-name">{it.label}</b>
-        {k === 'open' ? <span className="dc-todo">未做 {st.t - st.n}</span> : k === 'fin' ? <span className="dc-left ok">✓ 已完成</span> : <span className="dc-left">{st.t} 項記錄</span>}
-        <small>{k === 'open' ? `${yr} 年 ${st.n}/${st.t}` : k === 'fin' ? `${yr} 年 ${st.n}/${st.t}` : ''}{k !== 'oth' && prevStat(it, fl) ? ` · 之前 ${prevStat(it, fl)}` : ''}</small>
-        {k !== 'oth' && <span className="dc-bar"><i style={{ width: Math.round(st.n / Math.max(1, st.t) * 100) + '%', background: it.color }} /></span>}
+      <button className="pa-sq dcx-card" key={it.id} onClick={() => { setItem(it); setTodo(it.mode === 'grid') }}>
+        <span className="dcx-top">
+          <span className="dcx-ico" style={{ background: it.color + '26' }}><Icon name={it.icon} size={24} color={it.color} width={2.2} /></span>
+          {k !== 'oth' && <Ring pct={st.n / Math.max(1, st.t) * 100} color={it.color} />}
+        </span>
+        <b className="dcx-name">{it.label}</b>
+        <span className="dcx-sub">{k === 'oth' ? `${st.t} 項記錄` : `${yr} 年 ${st.n}/${st.t}${prevStat(it, fl) ? ` · 之前 ${prevStat(it, fl)}` : ''}`}</span>
+        {k === 'open' ? <em className="dcx-pill red">未做 {st.t - st.n}</em> : k === 'fin' ? <em className="dcx-pill ok">✓ 已完成</em> : <em className="dcx-pill mute">查看</em>}
       </button>
     )
     return (
@@ -177,9 +198,9 @@ export default function DeepClean({ session }) {
         <ToolBar sticky label={`${fl} 樓`} />
         {err && <div className="card" style={{ borderColor: 'var(--red)' }}><p style={{ fontSize: 13, lineHeight: 1.7 }}>讀取失敗：{err}</p></div>}
         <div className="bh-grp">{yr} 年未完成<span>{open.length}</span></div>
-        {open.length ? <div className="dc-sqgrid">{open.map(x => row(x.it, x, 'open'))}</div> : <p className="src-note" style={{ margin: '8px 4px 14px' }}>{yr} 年全部項目都完成 👍</p>}
-        {fin.length > 0 && <><div className="bh-grp">已完成<span>{fin.length}</span></div><div className="dc-sqgrid">{fin.map(it => row(it, stat(it, fl), 'fin'))}</div></>}
-        {oth.length > 0 && <><div className="bh-grp">其他記錄</div><div className="dc-sqgrid">{oth.map(it => row(it, stat(it, fl), 'oth'))}</div></>}
+        {open.length ? <div className="pa-grid dcx-g">{open.map(x => row(x.it, x, 'open'))}</div> : <p className="src-note" style={{ margin: '8px 4px 14px' }}>{yr} 年全部項目都完成 👍</p>}
+        {fin.length > 0 && <><div className="bh-grp">已完成<span>{fin.length}</span></div><div className="pa-grid dcx-g">{fin.map(it => row(it, stat(it, fl), 'fin'))}</div></>}
+        {oth.length > 0 && <><div className="bh-grp">其他記錄</div><div className="pa-grid dcx-g">{oth.map(it => row(it, stat(it, fl), 'oth'))}</div></>}
       </>
     )
   }

@@ -1431,3 +1431,44 @@ html.rpt-open #root{visibility:hidden}
 .dc-tot b{display:block;font-size:13px}
 .dc-tot small{font-size:10.5px;color:var(--sub)}
 .dc-sumrow th,.dc-sumrow td{border-bottom:none;background:var(--bg,#f5f5f2)}
+
+/* ── 深度清潔記錄 v6：沿用公共地區方形卡片風格＋圓環進度 ── */
+.dcx-g{grid-template-columns:repeat(auto-fill,minmax(150px,1fr)) !important;gap:12px}
+@media (max-width:420px){.dcx-g{grid-template-columns:repeat(2,minmax(0,1fr)) !important}}
+.dcx-card{justify-content:space-between;gap:6px;padding:14px 14px 14px !important}
+.dcx-card:active{transform:scale(.98)}
+.dcx-top{display:flex;align-items:center;justify-content:space-between;width:100%;gap:8px}
+.dcx-ico{width:42px;height:42px;border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.dcx-ring{position:relative;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+.dcx-ring svg{position:absolute;inset:0}
+.dcx-ring b{position:relative;font-weight:800;color:var(--ink)}
+.dcx-fl{font-size:34px;font-weight:800;line-height:1;color:var(--ink)}
+.dcx-fl small{font-size:14px;margin-left:2px;font-weight:700}
+.dcx-big{font-size:40px;font-weight:800;line-height:1;color:var(--ink);letter-spacing:1px}
+.dcx-year.now .dcx-big{color:var(--accent)}
+.dcx-name{font-size:16px;line-height:1.25;font-weight:800;color:var(--ink);overflow-wrap:anywhere}
+.dcx-sub{font-size:12px;color:var(--sub);line-height:1.35}
+.dcx-pill{font-style:normal;font-size:12px;font-weight:800;padding:4px 11px;border-radius:999px;background:var(--accent-soft);color:var(--accent);align-self:flex-start;white-space:nowrap}
+.dcx-pill.red{background:#c0564f1a;color:#b04038}
+.dcx-pill.ok{background:#2e9b6a22;color:#1f7a55}
+.dcx-pill.mute{background:var(--bg);color:var(--sub)}
+.dcx-hero{display:flex;align-items:center;gap:16px;padding:16px 18px;margin-bottom:12px;border-radius:20px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow-card)}
+.dcx-hero-t{display:flex;flex-direction:column;gap:2px;min-width:0}
+.dcx-hero-t b{font-size:32px;font-weight:800;line-height:1.05;color:var(--ink)}
+.dcx-hero-t span{font-size:14px;font-weight:700;color:var(--ink)}
+.dcx-hero-t small{font-size:12px;color:var(--sub)}
+/* 房間格：強啲、清晰啲 */
+.dc-grid{grid-template-columns:repeat(auto-fill,minmax(66px,1fr)) !important;gap:8px}
+.dc-grid.wide{grid-template-columns:repeat(auto-fill,minmax(104px,1fr)) !important}
+@media (min-width:900px){.dc-grid{grid-template-columns:repeat(auto-fill,minmax(70px,78px)) !important}.dc-grid.wide{grid-template-columns:repeat(auto-fill,minmax(110px,120px)) !important}}
+.dc-tile{border-radius:14px;box-shadow:var(--shadow-card);padding:8px 2px;gap:2px}
+.dc-tile b{font-size:16px}
+.dc-tile span{font-size:12.5px;font-weight:700}
+.dc-tile.ok{background:#2e9b6a1c;border:1px solid #2e9b6a40}
+.dc-tile.ok span{color:#1f7a55}
+.dc-tile:not(.ok):not(.nt) span{color:#b04038}
+/* 進度總覽表 */
+.dc-tw{border-radius:18px;box-shadow:var(--shadow-card)}
+.dc-t{font-size:13px}
+.dc-t tbody th{font-size:13px}
+.dc-c{border-radius:0;font-size:12.5px}
