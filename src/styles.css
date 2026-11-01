@@ -1501,3 +1501,12 @@ html.rpt-open #root{visibility:hidden}
 .dc-tile.skip span{color:var(--sub) !important;font-weight:600}
 
 .dcx-asof{margin:6px 4px 12px;font-size:12px;color:var(--sub);text-align:center}
+
+.dcx-sort{border:1px solid var(--line);background:var(--card);color:var(--accent);border-radius:999px;padding:6px 14px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer}
+.dcx-sort.on{background:var(--accent);border-color:var(--accent);color:#fff}
+
+/* 區塊標題放入卡片格內，同卡片左邊對齊 */
+.dcx-hd{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:10px;margin:8px 0 0}
+.dcx-hd b{font-size:14px;color:var(--ink);display:flex;align-items:center;gap:8px;border-left:3px solid var(--accent);padding-left:8px}
+.dcx-hd b span{font-size:12px;color:var(--sub);font-weight:600}
+.dcx-hint{grid-column:1/-1;margin:0;font-size:12px;color:var(--sub)}

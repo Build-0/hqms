@@ -220,13 +220,11 @@ export default function DeepClean({ session }) {
     return (
       <>
         {asof}
-        <ToolBar sticky label={`${fl} 樓`}>{canEdit && <ToolBtn onClick={() => setSorting(!sorting)}>{sorting ? '完成排序' : '↕ 排序'}</ToolBtn>}</ToolBar>
+        <ToolBar sticky label={`${fl} 樓`} />
         {err && <div className="card" style={{ borderColor: 'var(--red)' }}><p style={{ fontSize: 13, lineHeight: 1.7 }}>讀取失敗：{err}</p></div>}
-        <div className="bh-grp">{yr} 年未完成<span>{open.length}</span></div>
-        {open.length ? <div className="pa-grid dcx-g">{open.map(x => row(x.it, x, 'open'))}</div> : <p className="src-note" style={{ margin: '8px 4px 14px' }}>{yr} 年全部項目都完成 👍</p>}
-        {sorting && <p className="src-note" style={{ margin: '0 4px 8px' }}>撳「前／後」調整未完成項目嘅次序，大家都會見到呢個次序。</p>}
-        {oth.length > 0 && <><div className="bh-grp">其他記錄</div><div className="pa-grid dcx-g">{oth.map(it => row(it, stat(it, fl), 'oth'))}</div></>}
-        {fin.length > 0 && <><div className="bh-grp">已完成<span>{fin.length}</span></div><div className="pa-grid dcx-g">{fin.map(it => row(it, stat(it, fl), 'fin'))}</div></>}
+        {open.length ? <div className="pa-grid dcx-g"><div className="dcx-hd"><b>{yr} 年未完成<span>{open.length}</span></b>{canEdit && open.length > 1 && <button className={'dcx-sort' + (sorting ? ' on' : '')} onClick={() => setSorting(!sorting)}>{sorting ? '✓ 完成排序' : '↕ 調整次序'}</button>}</div>{sorting && <p className="dcx-hint">撳卡片下面嘅「前／後」調整次序，大家都會見到呢個次序。</p>}{open.map(x => row(x.it, x, 'open'))}</div> : <p className="src-note" style={{ margin: '8px 4px 14px' }}>{yr} 年全部項目都完成 👍</p>}
+        {oth.length > 0 && <div className="pa-grid dcx-g"><div className="dcx-hd"><b>其他記錄</b></div>{oth.map(it => row(it, stat(it, fl), 'oth'))}</div>}
+        {fin.length > 0 && <div className="pa-grid dcx-g"><div className="dcx-hd"><b>已完成<span>{fin.length}</span></b></div>{fin.map(it => row(it, stat(it, fl), 'fin'))}</div>}
       </>
     )
   }
