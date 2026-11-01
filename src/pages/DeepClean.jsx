@@ -97,7 +97,7 @@ export default function DeepClean({ session }) {
     return (
       <>
         {err && <div className="card" style={{ borderColor: 'var(--red)' }}><p style={{ fontSize: 13, lineHeight: 1.7 }}>讀取失敗：{err}</p></div>}
-        <div className="pa-grid dcx-g">
+        <div className="pa-grid dcx-g dcx-few">
           {ys.map(y => (
             <button className={'pa-sq dcx-card dcx-year' + (y === YR ? ' now' : '')} key={y} onClick={() => { setYr(y); setFl(0); setItem(null) }}>
               <span className="dcx-top"><span className="dcx-ico" style={{ background: y === YR ? 'var(--accent-soft)' : 'var(--bg)' }}><Icon name="calendar" size={24} color={y === YR ? 'var(--accent)' : 'var(--sub)'} width={2.2} /></span><em className={'dcx-pill' + (y === YR ? '' : ' mute')}>{y === YR ? '今年' : '參考'}</em></span>

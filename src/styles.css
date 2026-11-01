@@ -1492,3 +1492,7 @@ html.rpt-open #root{visibility:hidden}
 .dcx-mv{display:flex;gap:6px;width:100%}
 .dcx-mv button{flex:1;border:1px solid var(--line);background:var(--bg);color:var(--accent);border-radius:10px;padding:6px 0;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer}
 .dcx-card.mv{cursor:default;outline:2px dashed var(--accent);outline-offset:-2px}
+/* 深度清潔記錄：各區塊共用同一組欄位（auto-fill）再整體置中，唔同區塊嘅卡片左邊對齊；年份卡（只有兩張）另外置中 */
+.dcx-g{grid-template-columns:repeat(auto-fill,180px) !important;justify-content:center}
+.dcx-g.dcx-few{grid-template-columns:repeat(auto-fit,180px) !important}
+@media (max-width:420px){.dcx-g,.dcx-g.dcx-few{grid-template-columns:repeat(2,minmax(0,1fr)) !important}}
