@@ -1512,3 +1512,15 @@ html.rpt-open #root{visibility:hidden}
 .dcx-hint{grid-column:1/-1;margin:0;font-size:12px;color:var(--sub)}
 
 .dcx-yrsw{max-width:320px;margin:0 auto 12px}
+
+/* 機器掌握：按機器逐人打勾 */
+.mt-cnt{font-size:24px;font-weight:800;color:var(--accent);line-height:1}
+.mt-cnt small{font-size:12px;color:var(--sub);font-weight:600}
+.mt-chkgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px;margin-bottom:12px}
+.mt-chk{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:16px;border:1px solid var(--line);background:var(--card);box-shadow:var(--shadow-card);font-family:inherit;color:var(--ink);cursor:pointer;text-align:left;min-width:0}
+.mt-chk.on{background:#2e9b6a1c;border-color:#2e9b6a55}
+.mt-box{width:30px;height:30px;border-radius:9px;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px;font-weight:800;color:#fff;background:var(--card)}
+.mt-chk.on .mt-box{background:#2e9b6a;border-color:#2e9b6a}
+.mt-chk-nm{display:flex;flex-direction:column;min-width:0}
+.mt-chk-nm b{font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mt-chk-nm small{font-size:11.5px;color:var(--sub)}

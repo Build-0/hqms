@@ -4,6 +4,7 @@ import { toast } from '../lib/toast'
 import { todayStr } from '../lib/dates'
 import { useBack } from '../lib/nav'
 import { ToolBar, ExportBtn } from '../components/ui'
+import Icon from '../components/Icon'
 import { ReportModal } from '../components/Reports'
 
 // 機器培訓：
@@ -29,7 +30,10 @@ export default function MachineTraining({ canEdit, who }) {
   const [msheet, setMsheet] = useState(null)       // 新增／改機器
   const [report, setReport] = useState(null)       // 'sign' 一頁簽到表／'skill' 掌握矩陣
   const [err, setErr] = useState('')
+  const [skView, setSkView] = useState('m')       // m 按機器打勾／t 總表
+  const [mid, setMid] = useState(null)             // 開咗邊部機器打勾
   useBack(!!sid, () => setSid(null), 2)
+  useBack(!!mid, () => setMid(null))
   const load = () => {
     api.dbSelect('mt_people', { order: 'sort_order' }).then(r => { setPeople(r); setErr('') }).catch(ex => { setErr(ex.message); setPeople(prev => prev || []) })
     api.dbSelect('mt_machines', { order: 'sort_order' }).then(setMachines).catch(() => setMachines([]))
@@ -49,10 +53,12 @@ export default function MachineTraining({ canEdit, who }) {
 
   async function toggleSkill(m, p) {
     const old = skillOf(m.id, p.emp_no)
+    const reload = () => api.dbSelect('mt_skill', { order: 'id' }).then(setSkills).catch(() => {})
+    setSkills(prev => (old ? prev.filter(x => x.id !== old.id) : [...prev, { id: 'tmp-' + m.id + p.emp_no, machine_id: m.id, emp_no: p.emp_no, mastered_on: todayStr() }]))
     try {
       if (old) await api.dbDelete('mt_skill', old.id); else await api.dbInsert('mt_skill', { machine_id: m.id, emp_no: p.emp_no, mastered_on: todayStr() })
-      load()
-    } catch (ex) { toast(ex.message) }
+      reload()
+    } catch (ex) { toast(ex.message); reload() }
   }
   async function saveMachine() {
     const e = msheet
@@ -124,6 +130,42 @@ export default function MachineTraining({ canEdit, who }) {
     )
   }
 
+  // ── 機器詳情：逐個人打勾（邊個識呢部機器）──
+  const mach = machines.find(m => m.id === mid)
+  if (mach) {
+    const have = skills.filter(x => x.machine_id === mach.id).length
+    return (
+      <>
+        <ToolBar sticky label={mach.name + ' · 已掌握 ' + have + '／' + people.length}><ExportBtn onClick={() => setReport('skill')} /></ToolBar>
+        <p className="src-note" style={{ margin: '0 4px 8px' }}>{canEdit ? '撳每個人嘅方格打勾＝識操作呢部機器，再撳一次取消。' : '✔ ＝已掌握。'}{[mach.brand, mach.model].filter(Boolean).length ? '　' + [mach.brand, mach.model].filter(Boolean).join(' ') : ''}</p>
+        {groups.map(g => (
+          <div key={g.d}>
+            <div className="bh-grp">{deptLabel(g.d)}<span>{g.members.filter(p => skillOf(mach.id, p.emp_no)).length}／{g.members.length}</span></div>
+            <div className="mt-chkgrid">
+              {g.members.map(p => {
+                const on = !!skillOf(mach.id, p.emp_no)
+                return (
+                  <button key={p.id} className={'mt-chk' + (on ? ' on' : '')} onClick={() => canEdit && toggleSkill(mach, p)} style={canEdit ? undefined : { cursor: 'default' }}>
+                    <span className="mt-box">{on ? '✓' : ''}</span>
+                    <span className="mt-chk-nm"><b>{pn(p)}</b><small>{p.emp_no}{p.name_zh ? ' ' + p.name_en : ''}</small></span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        ))}
+        {report === 'skill' && (
+          <ReportModal landscape title="機器培訓 · 機器掌握表 Machine Training Matrix" sub={todayStr()} onClose={() => setReport(null)}>
+            <table className="rpt-t rpt-fixed">
+              <thead><tr><th style={{ width: '22%' }}>人員 Staff</th><th>{mach.name}{mach.name_en && <><br />{mach.name_en}</>}</th></tr></thead>
+              <tbody>{groups.map(g => [<tr key={'g' + g.d}><td colSpan={2} style={{ fontWeight: 800, background: '#eef3f1' }}>{deptLabel(g.d)}</td></tr>, ...g.members.map(p => <tr key={p.id}><td>{pn(p)} <small>{p.emp_no}</small></td><td style={{ textAlign: 'center' }}>{skillOf(mach.id, p.emp_no) ? '✔' : ''}</td></tr>)])}</tbody>
+            </table>
+          </ReportModal>
+        )}
+      </>
+    )
+  }
+
   // ── 場次詳情：簽到表 ──
   if (ses) {
     const done = cntOf(ses.id)
@@ -171,6 +213,31 @@ export default function MachineTraining({ canEdit, who }) {
       </div>
       {err && <div className="card" style={{ borderColor: 'var(--red)' }}><p style={{ fontSize: 13, lineHeight: 1.7 }}>讀取失敗：{err}</p></div>}
       {tab === 'skill' && (
+        <div className="seg" style={{ margin: '0 0 10px' }}>
+          <button className={skView === 'm' ? 'on' : ''} onClick={() => setSkView('m')}>按機器打勾</button>
+          <button className={skView === 't' ? 'on' : ''} onClick={() => setSkView('t')}>總表</button>
+        </div>
+      )}
+      {tab === 'skill' && skView === 'm' && (
+        <>
+          {canEdit && <button className="btn alt" style={{ marginBottom: 8 }} onClick={() => setMsheet({ id: null, name: '', name_en: '', brand: '', model: '', serial: '', water_nofoam: null, water_foam: null })}>＋ 新增機器</button>}
+          {machines.length === 0 && <p className="src-note" style={{ margin: '14px 4px' }}>暫時未有機器。{canEdit ? '撳「＋ 新增機器」逐部加入。' : ''}</p>}
+          <div className="pa-grid dcx-g">
+            {machines.map(m => {
+              const n = skills.filter(x => x.machine_id === m.id).length
+              return (
+                <button className="pa-sq dcx-card" key={m.id} onClick={() => setMid(m.id)}>
+                  <span className="dcx-top"><span className="dcx-ico" style={{ background: '#8f7ac926' }}><Icon name="wrench" size={24} color="#8f7ac9" width={2.2} /></span><b className="mt-cnt">{n}<small>／{people.length}</small></b></span>
+                  <b className="dcx-name">{m.name}</b>
+                  <span className="dcx-sub">{[m.brand, m.model].filter(Boolean).join(' ') || m.name_en || ' '}</span>
+                  <em className={'dcx-pill' + (n ? '' : ' mute')}>{n ? '已掌握 ' + n + ' 人' : '未有人登記'}</em>
+                </button>
+              )
+            })}
+          </div>
+        </>
+      )}
+      {tab === 'skill' && skView === 't' && (
         <>
           <ToolBar label={`${people.length} 人 × ${machines.length} 部機器`}><ExportBtn onClick={() => setReport('skill')} /></ToolBar>
           {canEdit && <button className="btn alt" style={{ marginBottom: 8 }} onClick={() => setMsheet({ id: null, name: '', name_en: '', brand: '', model: '', serial: '', water_nofoam: null, water_foam: null })}>＋ 新增機器</button>}
