@@ -18,7 +18,7 @@ const G = { floor: '地板與地毯', top: '天花與窗簾', bed: '床上用品
 const ITEMS = [
   { id: 'carpet', g: 'floor', label: '地毯清洗', icon: 'drop', color: '#4a6fa5', mode: 'grid', only: f => (f === 3 ? 37 : 82) },
   { id: 'tilewash', g: 'floor', label: '磁磚清洗', icon: 'drop', color: '#2f8f9d', mode: 'grid' },
-  { id: 'tilewax', g: 'floor', label: '磁磚打蠟', icon: 'star', color: '#8a6d3b', mode: 'grid', cycle: 2, only: f => (f === 3 ? 0 : 82) },
+  { id: 'tilewax', g: 'floor', label: '磁磚打蠟', icon: 'star', color: '#8a6d3b', mode: 'grid', cycle: 2, only: f => (f === 3 || f >= 11 ? 0 : 82) },
   { id: 'sofavac', g: 'floor', label: '沙發底地毯吸塵', icon: 'clean', color: '#b5603a', mode: 'grid', set: SOFA },   // 只有大床房同套房有梳化（每層 28 間）
   { id: 'deep', g: 'floor', label: '深層清潔（非機器）', icon: 'focus', color: '#1f7a6d', mode: 'grid' },
   { id: 'ceiling', g: 'top', label: '天花槽吸塵', icon: 'clean', color: '#54808c', mode: 'grid' },
