@@ -1477,3 +1477,10 @@ html.rpt-open #root{visibility:hidden}
 @media (min-width:900px){
   main:not(.embed-main) > *{max-width:1080px;margin-left:auto;margin-right:auto}
 }
+/* 深度清潔記錄：卡內文字唔重疊（卡片夠大、內容分行、冇進度條蓋住文字） */
+.dcx-g{grid-template-columns:repeat(auto-fill,minmax(172px,1fr)) !important}
+@media (max-width:420px){.dcx-g{grid-template-columns:repeat(2,minmax(0,1fr)) !important}}
+.dcx-card{gap:4px;padding:12px !important}
+.dcx-name{font-size:15px;flex:1;display:flex;align-items:center}
+.dcx-sub{font-size:11.5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.dcx-pill{font-size:12px;padding:3px 10px}
