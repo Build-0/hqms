@@ -1344,3 +1344,21 @@ html.rpt-open #root{visibility:hidden}
 .dc-rec{display:flex;align-items:center;gap:10px;padding:10px 2px;border-bottom:1px solid var(--line)}
 .dc-rec b{font-size:15px}
 .dc-rec span{flex:1;font-size:13px;color:var(--sub)}
+
+/* 深度清潔記錄 v2：分組清單＋樓層摘要 */
+.dc-menu{display:flex;flex-direction:column;gap:8px;margin:0 0 14px}
+.dc-item,.dc-fl{position:relative;display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:12px 14px 15px;border-radius:var(--r-inner,14px);border:1px solid var(--line);background:var(--card);font-family:inherit;color:var(--ink);cursor:pointer}
+.dc-ico{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.dc-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.dc-txt b{font-size:15px}
+.dc-txt small,.dc-fl-n{font-size:12.5px;color:var(--sub)}
+.dc-fl{margin-bottom:8px}
+.dc-fl>b{width:46px;font-size:16px}
+.dc-fl-n{flex:1}
+.dc-go{color:var(--sub);font-size:20px}
+.dc-bar{position:absolute;left:14px;right:14px;bottom:6px;height:3px;border-radius:3px;background:var(--line);overflow:hidden}
+.dc-bar i{display:block;height:100%;border-radius:3px}
+.dc-bar.big{position:static;height:8px;margin-top:10px}
+.dc-sum{padding:16px;border-radius:var(--r-inner,14px);background:var(--card);border:1px solid var(--line);margin-bottom:12px}
+.dc-sum b{font-size:28px;font-weight:800;margin-right:8px}
+.dc-sum span{font-size:13px;color:var(--sub)}
