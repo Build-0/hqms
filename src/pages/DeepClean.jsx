@@ -127,6 +127,33 @@ export default function DeepClean({ session }) {
             )
           })}
         </div>
+        <div className="bh-grp">{yr} 年進度總覽<span>項目 × 樓層</span></div>
+        <div className="dc-tw">
+          <table className="dc-t">
+            <thead><tr><th>項目</th>{FLOORS.map(f => <th key={f}>{f}F</th>)}<th>合計</th></tr></thead>
+            <tbody>
+              {ITEMS.filter(it => it.mode === 'grid').map(it => {
+                const sts = FLOORS.map(f => (nOf(it, f) ? stat(it, f) : null))
+                const n = sts.reduce((a, x) => a + (x ? x.n : 0), 0), t = sts.reduce((a, x) => a + (x ? x.t : 0), 0)
+                return (
+                  <tr key={it.id}>
+                    <th>{it.label}</th>
+                    {sts.map((x, k) => x
+                      ? <td key={k} className={'dc-c ' + (x.n >= x.t ? 'full' : x.n ? 'part' : 'none')} onClick={() => { setFl(FLOORS[k]); setItem(it); setTodo(true) }}>{x.n >= x.t ? '✓' : Math.round(x.n / x.t * 100) + '%'}</td>
+                      : <td key={k} className="dc-c na">—</td>)}
+                    <td className="dc-tot"><b>{Math.round(n / Math.max(1, t) * 100)}%</b><small>{n}/{t}</small></td>
+                  </tr>
+                )
+              })}
+              <tr className="dc-sumrow">
+                <th>整層</th>
+                {FLOORS.map(f => { const g = itemsOf(f).filter(it => it.mode === 'grid').map(it => stat(it, f)); const n = g.reduce((a, x) => a + x.n, 0), t = g.reduce((a, x) => a + x.t, 0); return <td key={f} className="dc-c"><b>{Math.round(n / Math.max(1, t) * 100)}%</b></td> })}
+                <td className="dc-tot" />
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p className="src-note" style={{ margin: '6px 4px 0' }}>綠色＝全層完成，黃色＝做咗部分，紅色＝{yr} 年未開始；撳格仔直接睇該層該項目。</p>
       </>
     )
   }
