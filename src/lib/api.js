@@ -433,17 +433,18 @@ export async function dbSelect(table, { cols = '*', order = 'id', asc = true, eq
   throwIf(error)
   return data
 }
-// 超過 1000 行都讀齊：分頁讀取（每頁 1000）
+// 超過 1000 行都讀齊：先攞總數，再同時讀晒所有分頁（每頁 1000），比逐頁讀快好多
 export async function dbSelectAll(table, cols = '*') {
   needDb()
-  const out = []
-  for (let from = 0; ; from += 1000) {
-    const { data, error } = await sb.from(table).select(cols).order('id').range(from, from + 999)
+  const head = await sb.from(table).select('id', { count: 'exact', head: true })
+  throwIf(head.error)
+  const pages = Math.ceil((head.count || 0) / 1000)
+  const parts = await Promise.all(Array.from({ length: pages }, async (_, i) => {
+    const { data, error } = await sb.from(table).select(cols).order('id').range(i * 1000, i * 1000 + 999)
     throwIf(error)
-    out.push(...data)
-    if (data.length < 1000) break
-  }
-  return out
+    return data
+  }))
+  return parts.flat()
 }
 export async function dbSelectIn(table, cols, ids) {
   needDb()

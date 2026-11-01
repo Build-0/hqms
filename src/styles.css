@@ -1484,3 +1484,7 @@ html.rpt-open #root{visibility:hidden}
 .dcx-name{font-size:15px;flex:1;display:flex;align-items:center}
 .dcx-sub{font-size:11.5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .dcx-pill{font-size:12px;padding:3px 10px}
+
+/* 深度清潔記錄：卡片置中（張數少時唔會貼左） */
+.dcx-g{grid-template-columns:repeat(auto-fit,minmax(172px,200px)) !important;justify-content:center}
+@media (max-width:420px){.dcx-g{grid-template-columns:repeat(2,minmax(0,1fr)) !important}}

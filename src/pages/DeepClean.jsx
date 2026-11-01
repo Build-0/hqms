@@ -55,7 +55,9 @@ function Ring({ pct, color = 'var(--accent)', size = 46 }) {
     </span>
   )
 }
+const LS = 'dc_rows_v1'
 let cache = null   // 只讀一次，換頁返嚟唔使重新載入
+try { const raw = localStorage.getItem(LS); if (raw) cache = JSON.parse(raw) } catch { /* 冇本機快取就照常載入 */ }
 
 export default function DeepClean({ session }) {
   const lvl = itemLevel(session, 'deepclean')
@@ -73,7 +75,7 @@ export default function DeepClean({ session }) {
   const [report, setReport] = useState(false)
   const [delRow, setDelRow] = useState(null)
   useBack(!!yr, () => { if (item) setItem(null); else if (fl) setFl(0); else setYr(null) })
-  const load = () => api.dbSelectAll(T, 'id,item,room,floor,done_on,note,by_name').then(r => { cache = r; setRows(r); setErr('') }).catch(ex => { setErr(ex.message); setRows(prev => prev || []) })
+  const load = () => api.dbSelectAll(T, 'id,item,room,floor,done_on,note,by_name').then(r => { cache = r; try { localStorage.setItem(LS, JSON.stringify(r)) } catch { /* 容量唔夠就唔存 */ } setRows(r); setErr('') }).catch(ex => { setErr(ex.message); setRows(prev => prev || []) })
   useEffect(() => { load() }, [])
 
   // item → floor → room → 記錄（新到舊）
