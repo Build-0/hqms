@@ -1472,3 +1472,8 @@ html.rpt-open #root{visibility:hidden}
 .dc-t{font-size:13px}
 .dc-t tbody th{font-size:13px}
 .dc-c{border-radius:0;font-size:12.5px}
+
+/* 桌面版：全部模組內容統一置中（最闊 1080px），唔再貼住左邊 */
+@media (min-width:900px){
+  main:not(.embed-main) > *{max-width:1080px;margin-left:auto;margin-right:auto}
+}
