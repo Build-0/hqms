@@ -18,11 +18,11 @@ const G = { floor: '地板與地毯', top: '天花與窗簾', bed: '床上用品
 const ITEMS = [
   { id: 'carpet', g: 'floor', label: '地毯清洗', icon: 'drop', color: '#4a6fa5', mode: 'grid', only: f => (f === 3 ? 37 : 82) },
   { id: 'tilewash', g: 'floor', label: '磁磚清洗', icon: 'drop', color: '#2f8f9d', mode: 'grid' },
-  { id: 'tilewax', g: 'floor', label: '磁磚打蠟', icon: 'star', color: '#8a6d3b', mode: 'grid', only: f => (f === 3 ? 0 : 82) },
+  { id: 'tilewax', g: 'floor', label: '磁磚打蠟', icon: 'star', color: '#8a6d3b', mode: 'grid', cycle: 2, only: f => (f === 3 ? 0 : 82) },
   { id: 'sofavac', g: 'floor', label: '沙發底地毯吸塵', icon: 'clean', color: '#b5603a', mode: 'grid', set: SOFA },   // 只有大床房同套房有梳化（每層 28 間）
   { id: 'deep', g: 'floor', label: '深層清潔（非機器）', icon: 'focus', color: '#1f7a6d', mode: 'grid' },
   { id: 'ceiling', g: 'top', label: '天花槽吸塵', icon: 'clean', color: '#54808c', mode: 'grid' },
-  { id: 'curtain', g: 'top', label: '厚簾／窗簾清洗', icon: 'hotel', color: '#8f7ac9', mode: 'grid' },
+  { id: 'curtain', g: 'top', label: '厚簾／窗簾清洗', icon: 'hotel', color: '#8f7ac9', mode: 'grid', cycle: 3 },
   { id: 'mattress', g: 'bed', label: '床褥前後反轉', icon: 'bed', color: '#3a8fb5', mode: 'grid' },
   { id: 'bedframe', g: 'bed', label: '抹床架', icon: 'bed', color: '#c0564f', mode: 'grid' },
   { id: 'quilt', g: 'bed', label: '被芯更換', icon: 'bed', color: '#d07a2c', mode: 'grid' },
@@ -114,8 +114,10 @@ export default function DeepClean({ session }) {
   const recsOf = (it, f, room) => allOf(it, f, room).filter(r => (r.done_on || '').startsWith(yr))
   const prevOf = (it, f, room) => allOf(it, f, room).find(r => r.done_on && r.done_on < yr + '-01-01')   // 今年之前最近一次（參考）
   const roomsOf = (it, f) => (it.mode === 'grid' ? ROOMS(f, nOf(it, f), it.set) : [...((idx[it.id] && idx[it.id][f]) || new Map()).keys()].sort((a, b) => a.localeCompare(b, undefined, { numeric: true })))
+  // 有週期嘅項目：週期內（例如 2 年一次＝去年）做過、而今年未做 → 今年跳過，唔計入未做
+  const skipped = (it, f, room) => !!it.cycle && !recsOf(it, f, room).length && allOf(it, f, room).some(r => { const y = +(r.done_on || '').slice(0, 4); return y > +yr - it.cycle && y < +yr })
   const stat = (it, f) => {
-    const rs = roomsOf(it, f); let n = 0, last = ''
+    const rs = roomsOf(it, f).filter(r => !skipped(it, f, r)); let n = 0, last = ''
     for (const r of rs) { const e = recsOf(it, f, r); if (e.length) { n++; if (e[0].done_on && e[0].done_on > last) last = e[0].done_on } }
     return { n, t: rs.length, last }
   }
@@ -195,6 +197,7 @@ export default function DeepClean({ session }) {
     }
     const fin = itemsOf(fl).filter(it => it.mode === 'grid' && !open.some(x => x.it.id === it.id))
     const oth = itemsOf(fl).filter(it => it.mode === 'list')
+    const skipN = it => roomsOf(it, fl).filter(r => skipped(it, fl, r)).length
     const row = (it, st, k) => {
       const mv = sorting && k === 'open', Tag = mv ? 'div' : 'button'
       return (
@@ -204,7 +207,7 @@ export default function DeepClean({ session }) {
           {k !== 'oth' && <Ring pct={st.n / Math.max(1, st.t) * 100} color={it.color} />}
         </span>
         <b className="dcx-name">{it.label}</b>
-        <span className="dcx-sub">{k === 'oth' ? `${st.t} 項記錄` : `${yr} 年 ${st.n}/${st.t}${prevStat(it, fl) ? ` · 之前 ${prevStat(it, fl)}` : ''}`}</span>
+        <span className="dcx-sub">{k === 'oth' ? `${st.t} 項記錄` : `${yr} 年 ${st.n}/${st.t}${it.cycle ? ` · 每 ${it.cycle} 年一次${skipN(it) ? `（跳過 ${skipN(it)}）` : ''}` : prevStat(it, fl) ? ` · 之前 ${prevStat(it, fl)}` : ''}`}</span>
         {mv ? <span className="dcx-mv"><button onClick={() => move(it.id, -1)} aria-label="前移">‹ 前</button><button onClick={() => move(it.id, 1)} aria-label="後移">後 ›</button></span>
           : k === 'open' ? <em className="dcx-pill red">未做 {st.t - st.n}</em> : k === 'fin' ? <em className="dcx-pill ok">✓ 已完成</em> : <em className="dcx-pill mute">查看</em>}
       </Tag>
@@ -225,7 +228,7 @@ export default function DeepClean({ session }) {
   // ── 該層該項目：房間格 ──
   const grid = item.mode === 'grid'
   const st = stat(item, fl)
-  const list = roomsOf(item, fl).filter(r => !todo || !recsOf(item, fl, r).length)
+  const list = roomsOf(item, fl).filter(r => !todo || (!recsOf(item, fl, r).length && !skipped(item, fl, r)))
   const reportData = () => ({
     filterText: [`${fl} 樓`, item.label, yr + ' 年', todo ? '未做' : ''].filter(Boolean).join('、'),
     cols: ['房號／區域', yr + ' 年完成日期', '上次（參考）'],
@@ -258,15 +261,16 @@ export default function DeepClean({ session }) {
         <button className={todo ? 'on' : ''} onClick={() => setTodo(true)}>{yr} 年未做 {st.t - st.n}</button><button className={!todo ? 'on' : ''} onClick={() => setTodo(false)}>全部房</button>
       </div></div>}
       {err && <div className="card" style={{ borderColor: 'var(--red)' }}><p style={{ fontSize: 13, lineHeight: 1.7 }}>讀取失敗：{err}</p></div>}
+      {item.cycle && <p className="src-note" style={{ margin: '0 4px 8px' }}>{item.label}每 {item.cycle} 年做一次：{+yr - item.cycle + 1} 至 {+yr - 1} 年做過嘅房，{yr} 年會自動跳過。</p>}
       {!list.length && <p className="src-note" style={{ margin: '14px 4px' }}>{todo ? `${yr} 年全部房都做完 👍` : '暫時未有記錄。'}</p>}
       {pick && <p className="src-note" style={{ margin: '4px 4px 8px' }}>撳未做嘅房間揀選，再喺下面揀日期登記完成。</p>}
       <div className={'dc-grid' + (grid ? '' : ' wide')} style={pick ? { paddingBottom: 70 } : undefined}>
         {list.map(r => {
-          const l = recsOf(item, fl, r)[0], p = !l && prevOf(item, fl, r), on = pick && pick.has(r)
+          const l = recsOf(item, fl, r)[0], p = !l && prevOf(item, fl, r), on = pick && pick.has(r), sk = !l && skipped(item, fl, r)
           return (
-            <button key={r} className={'dc-tile' + (l ? (l.done_on ? ' ok' : ' nt') : '') + (on ? ' sel' : '')} onClick={() => { if (pick && !l) { const n = new Set(pick); n.has(r) ? n.delete(r) : n.add(r); setPick(n) } else if (!pick) setSheet({ room: r }) }}>
+            <button key={r} className={'dc-tile' + (l ? (l.done_on ? ' ok' : ' nt') : sk ? ' skip' : '') + (on ? ' sel' : '')} onClick={() => { if (pick && sk) return; if (pick && !l) { const n = new Set(pick); n.has(r) ? n.delete(r) : n.add(r); setPick(n) } else if (!pick) setSheet({ room: r }) }}>
               <b>{r}</b>
-              <span>{l ? (shortD(l.done_on) || '備註') : on ? '✓' : '未做'}</span>
+              <span>{l ? (shortD(l.done_on) || '備註') : sk ? '跳過' : on ? '✓' : '未做'}</span>
               {l && l.done_on && <small>{l.done_on.slice(0, 4)}</small>}
               {p && <small className="dc-prev">上次 {p.done_on.slice(2, 4)}/{+p.done_on.slice(5, 7)}</small>}
             </button>
