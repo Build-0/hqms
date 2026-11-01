@@ -62,6 +62,11 @@ export default function Boh({ session, init }) {
       )}
       {tab && <ToolBar sticky label={TABS.find(x => x[0] === tab)[1]}><ExportBtn onClick={() => setReport((reg.current && reg.current()) || { title: '', filterText: '', cols: [], groups: [] })} /></ToolBar>}
       {!edit && <p className="note" style={{ textAlign: 'left', margin: '0 4px 6px' }}>目前帳號只可查看</p>}
+      {tab === 'chem' && init?.fk === 'low' && (() => {
+        const lw = x => x.status !== '停用' && num(x.min_stock) > 0 && num(x.stock) < num(x.min_stock)
+        const nc = d.products.filter(lw).length, nt = d.tools.filter(lw).length
+        return nt > 0 ? <div style={{ margin: '0 0 8px', padding: '9px 14px', borderRadius: 12, background: '#fdecea', color: '#b3342a', fontWeight: 700, fontSize: 14 }}>🛒 需補貨共 {nc + nt} 項　<span style={{ fontWeight: 500 }}>清潔劑 {nc} ・ 清潔工具 {nt}</span></div> : null
+      })()}
       {tab === 'chem' && <Chemicals d={d} edit={edit} reload={load} init={init} reg={reg} />}
       {tab === 'chem' && init?.fk === 'low' && d.tools.some(t => t.status !== '停用' && num(t.min_stock) > 0 && num(t.stock) < num(t.min_stock)) && (
         <>
