@@ -12,6 +12,8 @@ import Confirm from '../components/Confirm'
 // 深度清潔記錄：先揀樓層（每層一張卡），再揀大清項目，最後睇每間房嘅完成日期（可按年份分開）
 // 資料由各份 Excel 記錄表匯入。mode：grid ＝ 客房（每層 82 間）；list ＝ 只有部分房／區域有記錄
 // only(f)：該樓層有幾多間房屬於這個項目（3 樓 38–82 號房冇地毯；3 樓唔打蠟）
+// 有梳化床嘅房（每層 28 間：21 間標準大床房＋套房 02/33/77/79/81＋轉角房 37/69）
+const SOFA = [1, 2, 3, 5, 6, 8, 11, 13, 18, 20, 30, 33, 35, 36, 37, 46, 48, 52, 63, 65, 66, 67, 68, 69, 75, 77, 79, 81]
 const G = { floor: '地板與地毯', top: '天花與窗簾', bed: '床上用品', x: '其他' }
 const ITEMS = [
   { id: 'carpet', g: 'floor', label: '地毯清洗', icon: 'drop', color: '#4a6fa5', mode: 'grid', only: f => (f === 3 ? 37 : 82) },
@@ -33,8 +35,6 @@ const ITEMS = [
   { id: 'fog', g: 'x', label: '天花滅蟲焗霧', icon: 'search', color: '#54808c', mode: 'list' },
   { id: 'pubarea', g: 'x', label: '公共走廊', icon: 'people', color: '#8a6d3b', mode: 'list' },
 ]
-// 有梳化床嘅房（每層 28 間：21 間標準大床房＋套房 02/33/77/79/81＋轉角房 37/69）
-const SOFA = [1, 2, 3, 5, 6, 8, 11, 13, 18, 20, 30, 33, 35, 36, 37, 46, 48, 52, 63, 65, 66, 67, 68, 69, 75, 77, 79, 81]
 const FLOORS = Array.from({ length: 10 }, (_, i) => i + 3)
 const nOf = (it, f) => (it.set ? it.set.length : it.only ? it.only(f) : 82)
 const ROOMS = (n, k, set) => (set ? set.map(x => String(n * 100 + x)) : Array.from({ length: k }, (_, i) => String(n * 100 + i + 1)))
