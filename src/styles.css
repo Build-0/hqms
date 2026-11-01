@@ -1400,4 +1400,13 @@ html.rpt-open #root{visibility:hidden}
 .dc-sq .dc-bar,.dc-flc .dc-bar{left:14px;right:14px;bottom:9px}
 .dc-flc{justify-content:space-between}
 .dc-tile{aspect-ratio:1/1;justify-content:center}
-@media (min-width:600px){.dc-sqgrid,.dc-flgrid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+
+/* 深度清潔記錄：卡片大細固定喺約 130–160px，闊螢幕就一行排多啲張，唔會愈拉愈大 */
+.dc-sqgrid,.dc-flgrid{grid-template-columns:repeat(auto-fill,minmax(130px,150px));justify-content:start}
+@media (max-width:420px){.dc-sqgrid,.dc-flgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.dc-flc b{font-size:28px}
+.dc-sq-name{font-size:14px}
+.dc-grid{grid-template-columns:repeat(auto-fill,minmax(58px,64px))}
+@media (max-width:420px){.dc-grid{grid-template-columns:repeat(auto-fill,minmax(58px,1fr))}}
+.dc-grid.wide{grid-template-columns:repeat(auto-fill,minmax(92px,100px))}
