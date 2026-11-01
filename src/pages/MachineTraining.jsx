@@ -15,6 +15,9 @@ import { ReportModal } from '../components/Reports'
 const DEPTS = ['經理', 'Sup', '倉', 'Linen', 'PA', 'PM', 'ON', 'RA']
 // 組別中英對照（簽到表同表格都用）
 const DEPT_NAME = { 經理: ['經理', 'Manager'], Sup: ['主管', 'Supervisor'], 倉: ['倉庫', 'Warehouse'], Linen: ['布草', 'Linen'], PA: ['公共區域', 'Public Area'], PM: ['中更', 'Mid Shift'], ON: ['通宵', 'Overnight'], RA: ['房務員', 'Room Attendant'], 其他: ['其他', 'Others'] }
+// 機器適用清潔劑欄位：[欄位, 中文, 英文, 產品名]
+const CLEANERS = [['water_floor', '洗地水', 'Floor cleaner', 'Wetrok Remat'], ['water_nofoam', '無泡洗地毯水', 'Non-foaming carpet shampoo', 'Wetrok Retax'], ['water_foam', '有泡洗地毯水', 'Foaming carpet shampoo', 'Wetrok Shampoo']]
+const mark = v => (v == null ? '' : v ? '✔' : '✖')
 const deptLabel = d => (DEPT_NAME[d] ? DEPT_NAME[d][0] + ' ' + DEPT_NAME[d][1] : d)
 
 export default function MachineTraining({ canEdit, who }) {
@@ -63,7 +66,7 @@ export default function MachineTraining({ canEdit, who }) {
   async function saveMachine() {
     const e = msheet
     if (!e.name.trim()) { toast('請填機器名稱'); return }
-    try { const row = { name: e.name.trim(), name_en: (e.name_en || '').trim(), brand: (e.brand || '').trim(), model: (e.model || '').trim(), serial: (e.serial || '').trim(), water_nofoam: e.water_nofoam == null ? null : !!e.water_nofoam, water_foam: e.water_foam == null ? null : !!e.water_foam }; if (e.id) await api.dbUpdate('mt_machines', e.id, row); else await api.dbInsert('mt_machines', { ...row, sort_order: machines.length + 1 }); toast('已儲存'); setMsheet(null); load() } catch (ex) { toast('儲存失敗：' + ex.message) }
+    try { const row = { name: e.name.trim(), name_en: (e.name_en || '').trim(), brand: (e.brand || '').trim(), model: (e.model || '').trim(), serial: (e.serial || '').trim(), ...Object.fromEntries(CLEANERS.map(([k]) => [k, e[k] == null ? null : !!e[k]])) }; if (e.id) await api.dbUpdate('mt_machines', e.id, row); else await api.dbInsert('mt_machines', { ...row, sort_order: machines.length + 1 }); toast('已儲存'); setMsheet(null); load() } catch (ex) { toast('儲存失敗：' + ex.message) }
   }
   async function delMachine() { try { await api.dbDelete('mt_machines', msheet.id); toast('已刪除'); setMsheet(null); load() } catch (ex) { toast(ex.message) } }
   async function saveSession() {
@@ -220,7 +223,7 @@ export default function MachineTraining({ canEdit, who }) {
       )}
       {tab === 'skill' && skView === 'm' && (
         <>
-          {canEdit && <button className="btn alt" style={{ marginBottom: 8 }} onClick={() => setMsheet({ id: null, name: '', name_en: '', brand: '', model: '', serial: '', water_nofoam: null, water_foam: null })}>＋ 新增機器</button>}
+          {canEdit && <button className="btn alt" style={{ marginBottom: 8 }} onClick={() => setMsheet({ id: null, name: '', name_en: '', brand: '', model: '', serial: '', water_floor: null, water_floor: null, water_nofoam: null, water_foam: null })}>＋ 新增機器</button>}
           {machines.length === 0 && <p className="src-note" style={{ margin: '14px 4px' }}>暫時未有機器。{canEdit ? '撳「＋ 新增機器」逐部加入。' : ''}</p>}
           <div className="pa-grid dcx-g">
             {machines.map(m => {
@@ -296,14 +299,13 @@ export default function MachineTraining({ canEdit, who }) {
           <ToolBar label={`機器適用清潔劑 · ${machines.length} 部`}><ExportBtn onClick={() => setReport('mach')} /></ToolBar>
           <div className="wo-wrap">
             <table className="wo-t">
-              <thead><tr><th className="wo-nm">機器名稱 Machine name</th><th>品牌 Brand</th><th>型號 Model</th><th>序號 Serial No.</th><th>無泡地毯水</th><th>有泡地毯水</th></tr></thead>
+              <thead><tr><th className="wo-nm">機器名稱 Machine name</th><th>品牌 Brand</th><th>型號 Model</th><th>序號 Serial No.</th>{CLEANERS.map(([k, zh, en, p]) => <th key={k}>{zh}<small style={{ display: 'block', fontWeight: 500 }}>{en}<br />{p}</small></th>)}</tr></thead>
               <tbody>
                 {machines.map(m => (
                   <tr key={m.id} onClick={() => canEdit && setMsheet({ ...m })} className={canEdit ? 'click' : ''}>
                     <td className="wo-nm"><b>{m.name}</b>{m.name_en && <small>{m.name_en}</small>}</td>
                     <td style={{ textAlign: 'center' }}>{m.brand}</td><td style={{ textAlign: 'center', whiteSpace: 'normal' }}>{m.model}</td><td style={{ textAlign: 'center', whiteSpace: 'normal' }}>{m.serial}</td>
-                    <td style={{ textAlign: 'center', fontWeight: 800, color: m.water_nofoam ? '#17624f' : '#b3342a' }}>{m.water_nofoam == null ? '' : m.water_nofoam ? '✔' : '✖'}</td>
-                    <td style={{ textAlign: 'center', fontWeight: 800, color: m.water_foam ? '#17624f' : '#b3342a' }}>{m.water_foam == null ? '' : m.water_foam ? '✔' : '✖'}</td>
+                                        {CLEANERS.map(([k]) => <td key={k} style={{ textAlign: 'center', fontWeight: 800, color: m[k] ? '#17624f' : '#b3342a' }}>{mark(m[k])}</td>)}
                   </tr>
                 ))}
               </tbody>
@@ -354,8 +356,8 @@ export default function MachineTraining({ canEdit, who }) {
             </div>
             <div className="f-row"><label>序號 Serial No.</label><input value={msheet.serial || ''} onChange={e => setMsheet({ ...msheet, serial: e.target.value })} /></div>
             <div style={{ display: 'flex', gap: 10 }}>
-              {[['water_nofoam', '無泡地毯水'], ['water_foam', '有泡地毯水']].map(([k, t]) => (
-                <div className="f-row" style={{ flex: 1 }} key={k}><label>{t}</label>
+              {CLEANERS.map(([k, zh, en, p]) => (
+                <div className="f-row" style={{ flex: 1 }} key={k}><label>{zh}<br /><small>{en} · {p}</small></label>
                   <div className="seg" style={{ margin: 0 }}>{[[true, '✔ 適用'], [false, '✖ 不適用']].map(([v, tt]) => <button key={String(v)} className={msheet[k] === v ? 'on' : ''} onClick={() => setMsheet({ ...msheet, [k]: v })}>{tt}</button>)}</div></div>
               ))}
             </div>
@@ -378,9 +380,9 @@ export default function MachineTraining({ canEdit, who }) {
       {report === 'mach' && (
         <ReportModal landscape title="機器適用清潔劑 Machine & Applicable Cleaners" sub={todayStr()} onClose={() => setReport(null)}>
           <table className="rpt-t rpt-fixed">
-            <colgroup><col style={{ width: '25%' }} /><col style={{ width: '10%' }} /><col style={{ width: '20%' }} /><col style={{ width: '25%' }} /><col style={{ width: '10%' }} /><col style={{ width: '10%' }} /></colgroup>
-            <thead><tr><th>機器名稱 Machine name</th><th>品牌 Brand</th><th>型號 Model</th><th>序號 Serial No.</th><th>無泡地毯水</th><th>有泡地毯水</th></tr></thead>
-            <tbody>{machines.map(m => <tr key={m.id}><td>{m.name}<br /><small>{m.name_en}</small></td><td>{m.brand}</td><td>{m.model}</td><td>{m.serial}</td><td style={{ textAlign: 'center' }}>{m.water_nofoam == null ? '' : m.water_nofoam ? '✔' : '✖'}</td><td style={{ textAlign: 'center' }}>{m.water_foam == null ? '' : m.water_foam ? '✔' : '✖'}</td></tr>)}</tbody>
+            <colgroup><col style={{ width: '20%' }} /><col style={{ width: '8%' }} /><col style={{ width: '16%' }} /><col style={{ width: '20%' }} /><col style={{ width: '12%' }} /><col style={{ width: '12%' }} /><col style={{ width: '12%' }} /></colgroup>
+            <thead><tr><th>機器名稱 Machine name</th><th>品牌 Brand</th><th>型號 Model</th><th>序號 Serial No.</th>{CLEANERS.map(([k, zh, en, p]) => <th key={k}>{zh}<br /><small>{en}<br />{p}</small></th>)}</tr></thead>
+            <tbody>{machines.map(m => <tr key={m.id}><td>{m.name}<br /><small>{m.name_en}</small></td><td>{m.brand}</td><td>{m.model}</td><td>{m.serial}</td>{CLEANERS.map(([k]) => <td key={k} style={{ textAlign: 'center' }}>{mark(m[k])}</td>)}</tr>)}</tbody>
           </table>
         </ReportModal>
       )}
