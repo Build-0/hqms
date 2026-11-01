@@ -1488,3 +1488,7 @@ html.rpt-open #root{visibility:hidden}
 /* 深度清潔記錄：卡片置中（張數少時唔會貼左） */
 .dcx-g{grid-template-columns:repeat(auto-fit,minmax(172px,200px)) !important;justify-content:center}
 @media (max-width:420px){.dcx-g{grid-template-columns:repeat(2,minmax(0,1fr)) !important}}
+
+.dcx-mv{display:flex;gap:6px;width:100%}
+.dcx-mv button{flex:1;border:1px solid var(--line);background:var(--bg);color:var(--accent);border-radius:10px;padding:6px 0;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer}
+.dcx-card.mv{cursor:default;outline:2px dashed var(--accent);outline-offset:-2px}

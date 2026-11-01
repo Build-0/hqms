@@ -69,6 +69,8 @@ export default function DeepClean({ session }) {
   const [yr, setYr] = useState(null)      // 入嚟先揀年份：今年（跟進）／過往年份（參考）
   const [pick, setPick] = useState(null)   // 批量登記：null ＝ 未開；否則 Set<房號>
   const [pickDate, setPickDate] = useState(todayStr())
+  const [ord, setOrd] = useState([])           // 未完成項目嘅顯示次序（大家共用，存喺資料庫）
+  const [sorting, setSorting] = useState(false)
   const [todo, setTodo] = useState(true)     // 只睇今年未做（預設）
   const [sheet, setSheet] = useState(null)   // { room }
   const [form, setForm] = useState(null)     // 新增記錄
@@ -77,6 +79,7 @@ export default function DeepClean({ session }) {
   useBack(!!yr, () => { if (item) setItem(null); else if (fl) setFl(0); else setYr(null) })
   const load = () => api.dbSelectAll(T, 'id,item,room,floor,done_on,note,by_name').then(r => { cache = r; try { localStorage.setItem(LS, JSON.stringify(r)) } catch { /* 容量唔夠就唔存 */ } setRows(r); setErr('') }).catch(ex => { setErr(ex.message); setRows(prev => prev || []) })
   useEffect(() => { load() }, [])
+  useEffect(() => { api.dbSelect('deep_clean_prefs', { order: 'id' }).then(r => { const o = r.find(x => x.id === 'order'); if (o && Array.isArray(o.value)) setOrd(o.value) }).catch(() => {}) }, [])
 
   // item → floor → room → 記錄（新到舊）
   const idx = useMemo(() => {
@@ -181,28 +184,41 @@ export default function DeepClean({ session }) {
 
   // ── 該層項目清單：未做嘅排最前，已完成嘅收埋 ──
   if (!item) {
-    const open = todoOf(fl).sort((p, q) => (q.t - q.n) - (p.t - p.n))
+    const rank = id => { const i = ord.indexOf(id); return i >= 0 ? i : 1000 + ITEMS.findIndex(x => x.id === id) }
+    const open = todoOf(fl).sort((p, q) => rank(p.it.id) - rank(q.it.id))
+    async function move(id, d) {   // 同相鄰嘅未完成項目交換位置，即時儲存
+      const ids = open.map(x => x.it.id), i = ids.indexOf(id), j = i + d
+      if (j < 0 || j >= ids.length) return
+      const full = [...new Set([...ord.filter(x => ITEMS.some(y => y.id === x)), ...ITEMS.map(x => x.id)])]
+      const a = full.indexOf(ids[i]), b = full.indexOf(ids[j]);[full[a], full[b]] = [full[b], full[a]]
+      setOrd(full)
+      try { await api.dbUpdate('deep_clean_prefs', 'order', { value: full, updated_at: new Date().toISOString() }) } catch (ex) { toast('儲存次序失敗：' + ex.message) }
+    }
     const fin = itemsOf(fl).filter(it => it.mode === 'grid' && !open.some(x => x.it.id === it.id))
     const oth = itemsOf(fl).filter(it => it.mode === 'list')
-    const row = (it, st, k) => (
-      <button className="pa-sq dcx-card" key={it.id} onClick={() => { setItem(it); setTodo(it.mode === 'grid') }}>
+    const row = (it, st, k) => {
+      const mv = sorting && k === 'open', Tag = mv ? 'div' : 'button'
+      return (
+      <Tag className={'pa-sq dcx-card' + (mv ? ' mv' : '')} key={it.id} onClick={mv ? undefined : () => { setItem(it); setTodo(it.mode === 'grid') }}>
         <span className="dcx-top">
           <span className="dcx-ico" style={{ background: it.color + '26' }}><Icon name={it.icon} size={24} color={it.color} width={2.2} /></span>
           {k !== 'oth' && <Ring pct={st.n / Math.max(1, st.t) * 100} color={it.color} />}
         </span>
         <b className="dcx-name">{it.label}</b>
         <span className="dcx-sub">{k === 'oth' ? `${st.t} 項記錄` : `${yr} 年 ${st.n}/${st.t}${prevStat(it, fl) ? ` · 之前 ${prevStat(it, fl)}` : ''}`}</span>
-        {k === 'open' ? <em className="dcx-pill red">未做 {st.t - st.n}</em> : k === 'fin' ? <em className="dcx-pill ok">✓ 已完成</em> : <em className="dcx-pill mute">查看</em>}
-      </button>
-    )
+        {mv ? <span className="dcx-mv"><button onClick={() => move(it.id, -1)} aria-label="前移">‹ 前</button><button onClick={() => move(it.id, 1)} aria-label="後移">後 ›</button></span>
+          : k === 'open' ? <em className="dcx-pill red">未做 {st.t - st.n}</em> : k === 'fin' ? <em className="dcx-pill ok">✓ 已完成</em> : <em className="dcx-pill mute">查看</em>}
+      </Tag>
+    )}
     return (
       <>
-        <ToolBar sticky label={`${fl} 樓`} />
+        <ToolBar sticky label={`${fl} 樓`}>{canEdit && <ToolBtn onClick={() => setSorting(!sorting)}>{sorting ? '完成排序' : '↕ 排序'}</ToolBtn>}</ToolBar>
         {err && <div className="card" style={{ borderColor: 'var(--red)' }}><p style={{ fontSize: 13, lineHeight: 1.7 }}>讀取失敗：{err}</p></div>}
         <div className="bh-grp">{yr} 年未完成<span>{open.length}</span></div>
         {open.length ? <div className="pa-grid dcx-g">{open.map(x => row(x.it, x, 'open'))}</div> : <p className="src-note" style={{ margin: '8px 4px 14px' }}>{yr} 年全部項目都完成 👍</p>}
-        {fin.length > 0 && <><div className="bh-grp">已完成<span>{fin.length}</span></div><div className="pa-grid dcx-g">{fin.map(it => row(it, stat(it, fl), 'fin'))}</div></>}
+        {sorting && <p className="src-note" style={{ margin: '0 4px 8px' }}>撳「前／後」調整未完成項目嘅次序，大家都會見到呢個次序。</p>}
         {oth.length > 0 && <><div className="bh-grp">其他記錄</div><div className="pa-grid dcx-g">{oth.map(it => row(it, stat(it, fl), 'oth'))}</div></>}
+        {fin.length > 0 && <><div className="bh-grp">已完成<span>{fin.length}</span></div><div className="pa-grid dcx-g">{fin.map(it => row(it, stat(it, fl), 'fin'))}</div></>}
       </>
     )
   }
