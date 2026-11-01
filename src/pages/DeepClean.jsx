@@ -17,7 +17,7 @@ const ITEMS = [
   { id: 'carpet', g: 'floor', label: '地毯清洗', icon: 'drop', color: '#4a6fa5', mode: 'grid', only: f => (f === 3 ? 37 : 82) },
   { id: 'tilewash', g: 'floor', label: '磁磚清洗', icon: 'drop', color: '#2f8f9d', mode: 'grid' },
   { id: 'tilewax', g: 'floor', label: '磁磚打蠟', icon: 'star', color: '#8a6d3b', mode: 'grid', only: f => (f === 3 ? 0 : 82) },
-  { id: 'sofavac', g: 'floor', label: '沙發底地毯吸塵', icon: 'clean', color: '#b5603a', mode: 'grid' },
+  { id: 'sofavac', g: 'floor', label: '沙發底地毯吸塵', icon: 'clean', color: '#b5603a', mode: 'grid', set: SOFA },   // 只有大床房同套房有梳化（每層 28 間）
   { id: 'deep', g: 'floor', label: '深層清潔（非機器）', icon: 'focus', color: '#1f7a6d', mode: 'grid' },
   { id: 'ceiling', g: 'top', label: '天花槽吸塵', icon: 'clean', color: '#54808c', mode: 'grid' },
   { id: 'curtain', g: 'top', label: '厚簾／窗簾清洗', icon: 'hotel', color: '#8f7ac9', mode: 'grid' },
@@ -33,9 +33,11 @@ const ITEMS = [
   { id: 'fog', g: 'x', label: '天花滅蟲焗霧', icon: 'search', color: '#54808c', mode: 'list' },
   { id: 'pubarea', g: 'x', label: '公共走廊', icon: 'people', color: '#8a6d3b', mode: 'list' },
 ]
+// 有梳化床嘅房（每層 28 間：21 間標準大床房＋套房 02/33/77/79/81＋轉角房 37/69）
+const SOFA = [1, 2, 3, 5, 6, 8, 11, 13, 18, 20, 30, 33, 35, 36, 37, 46, 48, 52, 63, 65, 66, 67, 68, 69, 75, 77, 79, 81]
 const FLOORS = Array.from({ length: 10 }, (_, i) => i + 3)
-const nOf = (it, f) => (it.only ? it.only(f) : 82)
-const ROOMS = (n, k) => Array.from({ length: k }, (_, i) => String(n * 100 + i + 1))
+const nOf = (it, f) => (it.set ? it.set.length : it.only ? it.only(f) : 82)
+const ROOMS = (n, k, set) => (set ? set.map(x => String(n * 100 + x)) : Array.from({ length: k }, (_, i) => String(n * 100 + i + 1)))
 const T = 'deep_clean_records'
 const shortD = d => (d ? `${+d.slice(5, 7)}/${+d.slice(8, 10)}` : '')
 const longD = d => (d ? `${d.slice(0, 4)}-${d.slice(5, 7)}-${d.slice(8, 10)}` : '')
@@ -77,7 +79,7 @@ export default function DeepClean({ session }) {
   const allOf = (it, f, room) => (idx[it.id] && idx[it.id][f] && idx[it.id][f].get(room)) || []
   const recsOf = (it, f, room) => allOf(it, f, room).filter(r => (r.done_on || '').startsWith(yr))
   const prevOf = (it, f, room) => allOf(it, f, room).find(r => r.done_on && r.done_on < yr + '-01-01')   // 今年之前最近一次（參考）
-  const roomsOf = (it, f) => (it.mode === 'grid' ? ROOMS(f, nOf(it, f)) : [...((idx[it.id] && idx[it.id][f]) || new Map()).keys()].sort((a, b) => a.localeCompare(b, undefined, { numeric: true })))
+  const roomsOf = (it, f) => (it.mode === 'grid' ? ROOMS(f, nOf(it, f), it.set) : [...((idx[it.id] && idx[it.id][f]) || new Map()).keys()].sort((a, b) => a.localeCompare(b, undefined, { numeric: true })))
   const stat = (it, f) => {
     const rs = roomsOf(it, f); let n = 0, last = ''
     for (const r of rs) { const e = recsOf(it, f, r); if (e.length) { n++; if (e[0].done_on && e[0].done_on > last) last = e[0].done_on } }
