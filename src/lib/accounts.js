@@ -33,6 +33,7 @@ export const ITEMS = [
   { id: 'findings', group: '房間品質', label: '查房記錄', add: true },
   { id: 'topics', group: '房間品質', label: '培訓主題庫' },
   { id: 'cyclic', group: '房間品質', label: '清潔要點' },
+  { id: 'deepclean', group: '房間品質', label: '深度清潔記錄', add: true },
   { id: 'complaint', group: '房間品質', label: '客訴管理' },
   { id: 'boh', group: '後勤管理', label: '後勤管理（整個模組）' },
   { id: 'uniform', group: '後勤管理', label: '制服布草管理' },

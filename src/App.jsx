@@ -9,6 +9,7 @@ import Defects from './pages/Defects'
 import Boh from './pages/Boh'
 import Home from './pages/Home'
 import Findings from './pages/Findings'
+import DeepClean from './pages/DeepClean'
 import Icon from './components/Icon'
 import Embed from './components/Embed'
 import Gate from './components/Gate'
@@ -28,6 +29,7 @@ const MODULES = [
   { id: 'findings', sub: '問題、表揚與人員表現', icon: 'camera', label: '查房記錄', color: '#d07a2c', Page: Findings },
   { id: 'topics', sub: '分類教材與正確做法', icon: 'book', label: '培訓主題庫', color: '#4a6fa5', Page: Topics },
   { id: 'cyclic', sub: '每日、循環、深度清潔', icon: 'clean', label: '清潔要點', color: '#54808c', Page: CyclicClean },
+  { id: 'deepclean', sub: '地毯、磁磚、床褥、枕芯等', icon: 'drop', label: '深度清潔記錄', color: '#8f7ac9', Page: DeepClean },
   { id: 'public', sub: '崗位、看板、任務、員工', icon: 'people', label: '公共地區', color: '#8a6d3b', top: true, Page: PublicAreas },
   // 嵌入的舊系統（與品質系統同網站、各自保留原有資料庫）
   { id: 'boh', icon: 'box', label: '後勤管理', color: '#7a6a4f', top: true, Page: Boh },

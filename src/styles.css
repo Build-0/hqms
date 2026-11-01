@@ -1329,3 +1329,18 @@ html.rpt-open #root{visibility:hidden}
 .pp-hd b{font-size:22px;color:#0d5c50}.pp-hd span{font-size:18px;font-weight:700}
 .pp-page .rpt-t td{padding:6px 8px;font-size:13px}
 @media print{.pp-page{break-after:auto !important;page-break-after:auto !important}.pp-page+.pp-page{break-before:page;page-break-before:always}}
+
+/* 深度清潔記錄：房間格仔 */
+.dc-chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
+.dc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(58px,1fr));gap:6px;margin:0 0 12px}
+.dc-grid.wide{grid-template-columns:repeat(auto-fill,minmax(92px,1fr))}
+.dc-tile{display:flex;flex-direction:column;align-items:center;gap:1px;padding:7px 2px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--sub);font-family:inherit;cursor:pointer}
+.dc-tile b{font-size:14px;color:var(--ink);font-weight:800}
+.dc-tile span{font-size:12px}
+.dc-tile small{font-size:10px;color:var(--sub);opacity:.8;line-height:1}
+.dc-tile.ok{background:var(--accent-soft);border-color:transparent}
+.dc-tile.ok span{color:var(--accent);font-weight:700}
+.dc-tile.nt{background:#fbf1de;border-color:transparent}
+.dc-rec{display:flex;align-items:center;gap:10px;padding:10px 2px;border-bottom:1px solid var(--line)}
+.dc-rec b{font-size:15px}
+.dc-rec span{flex:1;font-size:13px;color:var(--sub)}
