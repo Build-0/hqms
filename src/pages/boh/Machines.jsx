@@ -102,7 +102,7 @@ export default function Machines({ kind, d, edit, reload, reg }) {
         </select>
         <select className="df-sel" value={grp} onChange={e => setGrp(e.target.value)}>
           <option value="">{isVac ? '所有位置' : '所有類型'}</option>
-          {allGroups.map(g => <option key={g} value={g}>{g}</option>)}
+          {[...groupNames, ...present.filter(g => !groupNames.includes(g))].map(g => <option key={g} value={g}>{g}{present.includes(g) ? '' : '（暫無）'}</option>)}
         </select>
       </div>
       </div>
