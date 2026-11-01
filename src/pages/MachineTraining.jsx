@@ -207,7 +207,7 @@ export default function MachineTraining({ canEdit, who }) {
     <>
       <div className="seg" style={{ margin: '0 0 10px' }}>
         <button className={tab === 'skill' ? 'on' : ''} onClick={() => setTab('skill')}>機器掌握</button>
-        <button className={tab === 'mach' ? 'on' : ''} onClick={() => setTab('mach')}>機器資料（{machines.length}）</button>
+        <button className={tab === 'mach' ? 'on' : ''} onClick={() => setTab('mach')}>機器適用清潔劑（{machines.length}）</button>
         <button className={tab === 'sess' ? 'on' : ''} onClick={() => setTab('sess')}>培訓場次（{sessions.length}）</button>
         <button className={tab === 'ppl' ? 'on' : ''} onClick={() => setTab('ppl')}>人員（{people.length}）</button>
       </div>
@@ -293,7 +293,7 @@ export default function MachineTraining({ canEdit, who }) {
       )}
       {tab === 'mach' && (
         <>
-          <ToolBar label={`機器地毯水適用表 · ${machines.length} 部`}><ExportBtn onClick={() => setReport('mach')} /></ToolBar>
+          <ToolBar label={`機器適用清潔劑 · ${machines.length} 部`}><ExportBtn onClick={() => setReport('mach')} /></ToolBar>
           <div className="wo-wrap">
             <table className="wo-t">
               <thead><tr><th className="wo-nm">機器名稱 Machine name</th><th>品牌 Brand</th><th>型號 Model</th><th>序號 Serial No.</th><th>無泡地毯水</th><th>有泡地毯水</th></tr></thead>
@@ -376,7 +376,7 @@ export default function MachineTraining({ canEdit, who }) {
         </div>
       )}
       {report === 'mach' && (
-        <ReportModal landscape title="機器地毯水適用表 Machine & Carpet Water Table" sub={todayStr()} onClose={() => setReport(null)}>
+        <ReportModal landscape title="機器適用清潔劑 Machine & Applicable Cleaners" sub={todayStr()} onClose={() => setReport(null)}>
           <table className="rpt-t rpt-fixed">
             <colgroup><col style={{ width: '25%' }} /><col style={{ width: '10%' }} /><col style={{ width: '20%' }} /><col style={{ width: '25%' }} /><col style={{ width: '10%' }} /><col style={{ width: '10%' }} /></colgroup>
             <thead><tr><th>機器名稱 Machine name</th><th>品牌 Brand</th><th>型號 Model</th><th>序號 Serial No.</th><th>無泡地毯水</th><th>有泡地毯水</th></tr></thead>
