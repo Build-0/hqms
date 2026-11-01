@@ -121,12 +121,12 @@ export default function DeepClean({ session }) {
     const fin = itemsOf(fl).filter(it => it.mode === 'grid' && !open.some(x => x.it.id === it.id))
     const oth = itemsOf(fl).filter(it => it.mode === 'list')
     const row = (it, st, k) => (
-      <button className="dc-item" key={it.id} onClick={() => { setItem(it); setTodo(it.mode === 'grid') }}>
-        <span className="dc-ico" style={{ background: it.color + '26' }}><Icon name={it.icon} size={22} color={it.color} width={2.2} /></span>
-        <span className="dc-txt"><b>{it.label}</b><small>{k === 'open' ? `${yr} 年已做 ${st.n} / ${st.t}` : k === 'fin' ? `✓ ${yr} 年已全部完成` : `${st.t} 項記錄`}{k !== 'oth' && prevStat(it, fl) ? ` · 去年 ${prevStat(it, fl)}` : ''}</small></span>
-        {k === 'open' && <span className="dc-todo">未做 {st.t - st.n}</span>}
-        <span className="dc-go">›</span>
-        {k === 'open' && <span className="dc-bar"><i style={{ width: Math.round(st.n / Math.max(1, st.t) * 100) + '%', background: it.color }} /></span>}
+      <button className={'dc-sq' + (k === 'fin' ? ' fin' : '')} key={it.id} onClick={() => { setItem(it); setTodo(it.mode === 'grid') }}>
+        <span className="dc-ico" style={{ background: it.color + '26' }}><Icon name={it.icon} size={24} color={it.color} width={2.2} /></span>
+        <b className="dc-sq-name">{it.label}</b>
+        {k === 'open' ? <span className="dc-todo">未做 {st.t - st.n}</span> : k === 'fin' ? <span className="dc-left ok">✓ 已完成</span> : <span className="dc-left">{st.t} 項記錄</span>}
+        <small>{k === 'open' ? `${yr} 年 ${st.n}/${st.t}` : k === 'fin' ? `${yr} 年 ${st.n}/${st.t}` : ''}{k !== 'oth' && prevStat(it, fl) ? ` · 去年 ${prevStat(it, fl)}` : ''}</small>
+        {k !== 'oth' && <span className="dc-bar"><i style={{ width: Math.round(st.n / Math.max(1, st.t) * 100) + '%', background: it.color }} /></span>}
       </button>
     )
     return (
@@ -134,9 +134,9 @@ export default function DeepClean({ session }) {
         <ToolBar sticky label={`${fl} 樓`} />
         {err && <div className="card" style={{ borderColor: 'var(--red)' }}><p style={{ fontSize: 13, lineHeight: 1.7 }}>讀取失敗：{err}</p></div>}
         <div className="bh-grp">{yr} 年未完成<span>{open.length}</span></div>
-        {open.length ? <div className="dc-menu">{open.map(x => row(x.it, x, 'open'))}</div> : <p className="src-note" style={{ margin: '8px 4px 14px' }}>{yr} 年全部項目都完成 👍</p>}
-        {fin.length > 0 && <><div className="bh-grp">已完成<span>{fin.length}</span></div><div className="dc-menu">{fin.map(it => row(it, stat(it, fl), 'fin'))}</div></>}
-        {oth.length > 0 && <><div className="bh-grp">其他記錄</div><div className="dc-menu">{oth.map(it => row(it, stat(it, fl), 'oth'))}</div></>}
+        {open.length ? <div className="dc-sqgrid">{open.map(x => row(x.it, x, 'open'))}</div> : <p className="src-note" style={{ margin: '8px 4px 14px' }}>{yr} 年全部項目都完成 👍</p>}
+        {fin.length > 0 && <><div className="bh-grp">已完成<span>{fin.length}</span></div><div className="dc-sqgrid">{fin.map(it => row(it, stat(it, fl), 'fin'))}</div></>}
+        {oth.length > 0 && <><div className="bh-grp">其他記錄</div><div className="dc-sqgrid">{oth.map(it => row(it, stat(it, fl), 'oth'))}</div></>}
       </>
     )
   }
