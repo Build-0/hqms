@@ -17,7 +17,7 @@ const SOFA = [1, 2, 3, 5, 6, 8, 11, 13, 18, 20, 30, 33, 35, 36, 37, 46, 48, 52, 
 const G = { floor: '地板與地毯', top: '天花與窗簾', bed: '床上用品', x: '其他' }
 const ITEMS = [
   { id: 'carpet', g: 'floor', label: '地毯清洗', icon: 'drop', color: '#4a6fa5', mode: 'grid', only: f => (f === 3 ? 37 : 82) },
-  { id: 'tilewash', g: 'floor', label: '磁磚清洗', icon: 'drop', color: '#2f8f9d', mode: 'grid' },
+  { id: 'tilewash', g: 'floor', label: '磁磚清洗', icon: 'drop', color: '#2f8f9d', mode: 'grid', only: f => ([3, 11, 12].includes(f) ? 82 : 0) },
   { id: 'tilewax', g: 'floor', label: '磁磚打蠟', icon: 'star', color: '#8a6d3b', mode: 'grid', cycle: 2, only: f => (f === 3 || f >= 11 ? 0 : 82) },
   { id: 'sofavac', g: 'floor', label: '沙發底地毯吸塵', icon: 'clean', color: '#b5603a', mode: 'grid', set: SOFA },   // 只有大床房同套房有梳化（每層 28 間）
   { id: 'deep', g: 'floor', label: '深層清潔（非機器）', icon: 'focus', color: '#1f7a6d', mode: 'grid' },
