@@ -76,7 +76,8 @@ export default function DeepClean({ session }) {
   const [form, setForm] = useState(null)     // 新增記錄
   const [report, setReport] = useState(false)
   const [delRow, setDelRow] = useState(null)
-  useBack(!!yr, () => { if (item) setItem(null); else if (fl) setFl(0); else setYr(null) })
+  const [master, setMaster] = useState(null)   // 總表：某項目全部樓層一張表
+  useBack(!!yr, () => { if (master) setMaster(null); else if (item) setItem(null); else if (fl) setFl(0); else setYr(null) })
   const load = () => api.dbSelectAll(T, 'id,item,room,floor,done_on,note,by_name,source,created_at').then(r => { cache = r; try { localStorage.setItem(LS, JSON.stringify(r)) } catch { /* 容量唔夠就唔存 */ } setRows(r); setErr('') }).catch(ex => { setErr(ex.message); setRows(prev => prev || []) })
   useEffect(() => { load() }, [])
   useEffect(() => { api.dbSelect('deep_clean_prefs', { order: 'id' }).then(r => { const o = r.find(x => x.id === 'order'); if (o && Array.isArray(o.value)) setOrd(o.value) }).catch(() => {}) }, [])
@@ -131,6 +132,57 @@ export default function DeepClean({ session }) {
   // 該年未做：客房類項目，該層房數 − 該年有記錄房數
   const todoOf = f => itemsOf(f).filter(it => it.mode === 'grid').map(it => ({ it, ...stat(it, f) })).filter(x => x.n < x.t)
 
+  // ── 總表：房號 × 樓層，每格最近完成日期（同 Excel 記錄表一樣），底下每層完成數同完成率 ──
+  if (master) {
+    const it = master, MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    const fmt = d => `${+d.slice(8, 10)}-${MON[+d.slice(5, 7) - 1]}`
+    const fls = FLOORS.filter(f => nOf(it, f) > 0)
+    const SEC = [['南 South', 1, 36], ['北 North', 37, 67], ['東 East', 68, 82]]
+    const sts = fls.map(f => ({ f, ...stat(it, f) }))
+    const n = sts.reduce((a, x) => a + x.n, 0), t = sts.reduce((a, x) => a + x.t, 0), pct = n / Math.max(1, t) * 100
+    return (
+      <>
+        <ToolBar sticky label={`${it.label} 總表 · ${yr} 年`} />
+        <div className="dm-sum">
+          <span className="dm-ring"><Ring pct={pct} color={it.color} size={68} /></span>
+          <span className="dm-nums"><b>{n}</b><small>已清潔</small></span>
+          <span className="dm-nums"><b>{t - n}</b><small>剩餘未完成</small></span>
+          <span className="dm-nums"><b>{t}</b><small>總房數</small></span>
+        </div>
+        <div className="dm-fl">{sts.map(x => <button key={x.f} onClick={() => { setMaster(null); setFl(x.f); setItem(it); setTodo(true) }}><b>{x.f}F</b><span style={{ width: Math.round(x.n / Math.max(1, x.t) * 100) + '%', background: it.color }} /><i>{x.n}/{x.t}</i></button>)}</div>
+        {SEC.map(([name, a, z]) => (
+          <div key={name}>
+            <div className="bh-grp">{name}</div>
+            <div className="dm-w">
+              <table className="dm-t">
+                <thead><tr><th>F</th>{Array.from({ length: z - a + 1 }, (_, i) => <th key={i}>{a + i}</th>)}</tr></thead>
+                <tbody>
+                  {fls.map(f => {
+                    const ok = new Set(ROOMS(f, nOf(it, f), it.set))
+                    return (
+                      <tr key={f}>
+                        <th>{f}</th>
+                        {Array.from({ length: z - a + 1 }, (_, i) => {
+                          const r = String(f * 100 + a + i)
+                          if (!ok.has(r)) return <td key={i} className="na" />
+                          const e = recsOf(it, f, r)[0], p = !e && prevOf(it, f, r)
+                          if (e) return <td key={i} className="ok" style={{ background: it.color + '26' }}>{e.done_on ? fmt(e.done_on) : '✓'}</td>
+                          if (skipped(it, f, r)) return <td key={i} className="sk">跳過</td>
+                          return <td key={i} className="no">{p ? <small>{fmt(p.done_on)}<br />{p.done_on.slice(2, 4)}</small> : ''}</td>
+                        })}
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ))}
+        <p className="src-note" style={{ margin: '8px 4px 0' }}>有顏色＝{yr} 年已完成（顯示最近一次日期）；空白＝未做，灰字＝上次（參考）日期；灰底＝冇呢間房。撳上面樓層可入去登記。</p>
+      </>
+    )
+  }
+
   // ── 樓層卡：今年邊層仲有幾多項未做 ──
   if (!fl) {
     const all = FLOORS.map(f => todoOf(f))
@@ -168,7 +220,7 @@ export default function DeepClean({ session }) {
                 const n = sts.reduce((a, x) => a + (x ? x.n : 0), 0), t = sts.reduce((a, x) => a + (x ? x.t : 0), 0)
                 return (
                   <tr key={it.id}>
-                    <th>{it.label}</th>
+                    <th onClick={() => setMaster(it)} style={{ cursor: 'pointer' }}>{it.label} <small style={{ color: 'var(--accent)' }}>總表›</small></th>
                     {sts.map((x, k) => x
                       ? <td key={k} className={'dc-c ' + (x.n >= x.t ? 'full' : x.n ? 'part' : 'none')} onClick={() => { setFl(FLOORS[k]); setItem(it); setTodo(true) }}>{x.n >= x.t ? '✓' : Math.round(x.n / x.t * 100) + '%'}</td>
                       : <td key={k} className="dc-c na">—</td>)}
@@ -261,7 +313,7 @@ export default function DeepClean({ session }) {
 
   return (
     <>
-      <ToolBar sticky label={`${fl} 樓 · ${item.label}${grid ? ` · ${yr} 年 ${st.n}/${st.t}` : ''}`}><ExportBtn onClick={() => setReport(true)} />{canAdd && grid && yr === YR && <ToolBtn onClick={() => { setPick(pick ? null : new Set()); setTodo(true) }}>{pick ? '取消批量' : '批量登記'}</ToolBtn>}</ToolBar>
+      <ToolBar sticky label={`${fl} 樓 · ${item.label}${grid ? ` · ${yr} 年 ${st.n}/${st.t}` : ''}`}><ExportBtn onClick={() => setReport(true)} />{grid && <ToolBtn onClick={() => setMaster(item)}>總表</ToolBtn>}{canAdd && grid && yr === YR && <ToolBtn onClick={() => { setPick(pick ? null : new Set()); setTodo(true) }}>{pick ? '取消批量' : '批量登記'}</ToolBtn>}</ToolBar>
       {grid && <div className="fstk"><div className="dc-yrs" style={{ margin: 0 }}>
         <button className={todo ? 'on' : ''} onClick={() => setTodo(true)}>{yr} 年未做 {st.t - st.n}</button><button className={!todo ? 'on' : ''} onClick={() => setTodo(false)}>全部房</button>
       </div></div>}
