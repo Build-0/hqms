@@ -54,7 +54,7 @@ function Ring({ pct, color = 'var(--accent)', size = 46 }) {
     </span>
   )
 }
-const BASE = '2026-11-01'   // Excel 基準匯入日期
+const BASE = '2026-11-03'   // Excel 最近更新日期（基準匯入 2026-11-01）
 const LS = 'dc_rows_v2'
 let cache = null   // 只讀一次，換頁返嚟唔使重新載入
 try { const raw = localStorage.getItem(LS); if (raw) cache = JSON.parse(raw) } catch { /* 冇本機快取就照常載入 */ }
