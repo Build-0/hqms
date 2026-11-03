@@ -19,6 +19,7 @@ export default function Bins({ d, edit, reload, reg, onClose }) {
   const [mgr, setMgr] = useState(false)
   const [extra, setExtra] = useState(() => new Set())   // 明細頁：數量為 0 但剛加入（或剛減到 0）嘅項目，離開頁面前保留喺列表
   const openSel = v => { setExtra(new Set()); setSel(v) }
+  const [mk, setMk] = useState('all')                // 管理位置：篩選 all／use／store／off
   const [nf, setNf] = useState({ floor: '', name: '', kind: 'use' })
   const rowsRef = useRef(rows); rowsRef.current = rows
   const chain = useRef(Promise.resolve())
@@ -59,6 +60,13 @@ export default function Bins({ d, edit, reload, reg, onClose }) {
     const floor = nf.floor.trim(), name = nf.name.trim()
     if (!name) { toast('請填位置名稱'); return }
     try { await api.dbInsert('bin_areas', { floor, name, kind: nf.kind, sort_order: (areas.length ? Math.max(...areas.map(a => a.sort_order || 0)) : 0) + 1 }); setNf({ ...nf, name: '' }); reload() } catch (ex) { toast('新增失敗：' + ex.message) }
+  }
+  async function setKind(a, kind) {
+    try { await api.dbUpdate('bin_areas', a.id, { kind }); const t = new Set(rows.filter(r => r.area_id === a.id).map(r => r.tool_id)); reload()
+      // 同步各款「在用」（只計使用中位置）
+      for (const id of t) { const n = rows.filter(r => r.tool_id === id && (r.area_id === a.id ? kind : kindOf(r.area_id)) === 'use').reduce((x, r) => x + r.qty, 0); await api.dbUpdate('tools', id, { in_use: n }) }
+      toast('已更改類型')
+    } catch (ex) { toast('更改失敗：' + ex.message) }
   }
   async function delArea(a) {
     if (!window.confirm(`刪除位置「${aName(a)}」同佢嘅垃圾桶數量記錄？`)) return
@@ -190,10 +198,18 @@ export default function Bins({ d, edit, reload, reg, onClose }) {
               <select className="df-sel" style={{ width: 96 }} value={nf.kind} onChange={e => setNf({ ...nf, kind: e.target.value })}>{Object.entries(KIND).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
               <button className="btn" style={{ width: 'auto', padding: '0 16px', margin: 0 }} onClick={addArea}>新增</button>
             </div>
-            <div style={{ maxHeight: '48vh', overflow: 'auto', marginTop: 10 }}>
-              {areas.map(a => (
-                <div key={a.id} className="bn-mrow"><span>{aName(a)}{a.kind !== 'use' && <em className="bn-tag">{KIND[a.kind]}</em>}</span><span style={{ color: 'var(--sub)' }}>{areaTot(a.id)}</span><button className="mini danger" onClick={() => delArea(a)}>✕</button></div>
+            <div className="bn-tabs" style={{ marginTop: 10 }}>
+              {[['all', '全部'], ['use', '使用中'], ['store', '倉'], ['off', '停用']].map(([k, t]) => (
+                <button key={k} className={mk === k ? 'on' : ''} onClick={() => setMk(k)}>{t}（{k === 'all' ? areas.length : areas.filter(a => a.kind === k).length}）</button>
               ))}
+            </div>
+            <div style={{ maxHeight: '44vh', overflow: 'auto' }}>
+              {areas.filter(a => mk === 'all' || a.kind === mk).map(a => (
+                <div key={a.id} className="bn-mrow"><span>{aName(a)}</span><span style={{ color: 'var(--sub)' }}>{areaTot(a.id)}</span>
+                  <select className="df-sel" style={{ width: 84, padding: '4px 6px' }} value={a.kind} onChange={e => setKind(a, e.target.value)}>{Object.entries(KIND).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
+                  <button className="mini danger" onClick={() => delArea(a)}>✕</button></div>
+              ))}
+              {areas.filter(a => mk === 'all' || a.kind === mk).length === 0 && <div className="note">冇符合嘅位置</div>}
             </div>
             <button className="btn ghost" onClick={() => setMgr(false)}>完成</button>
           </div>
