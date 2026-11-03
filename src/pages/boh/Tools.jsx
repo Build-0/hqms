@@ -58,13 +58,16 @@ export default function Tools({ d, edit, reload, reg, init, embedded }) {
     try { await api.dbDelete('tools', t.id); toast('已刪除'); setDel(null); setForm(null); reload() } catch (ex) { toast('刪除失敗：' + ex.message) }
   }
 
+  const binOnly = groups.length > 0 && groups.every(g => g.c === '垃圾桶')   // 只匯出垃圾桶：用「使用中／倉／停用／合共」
   if (reg) reg.current = () => ({
     title: '清潔工具',
     filterText: [fk === 'low' ? '需補貨' : fk === 'off' ? '停用' : fk === 'on' ? '啟用' : '', ck, q.trim() && `搜尋「${q.trim()}」`].filter(Boolean).join(' · ') || '全部工具',
-    cols: ['名稱', '庫存', '在用', '最低', '狀態'],
+    cols: binOnly ? ['名稱', '使用中', '倉', '停用', '合共'] : ['名稱', '庫存', '在用', '最低', '狀態'],
     groups: groups.map(g => ({
       name: g.c,
-      rows: g.items.map(t => ({ photo: img(t.id), cells: [t.name, t.stock, num(t.in_use) || 0, num(t.min_stock) || '—', t.status], cls: ['', low(t) ? 'rpt-red' : '', '', '', ''] })),
+      rows: g.items.map(t => binOnly
+        ? { photo: img(t.id), cells: [t.name, binSum(t, 'use'), binSum(t, 'store'), binSum(t, 'off'), binSum(t, 'use') + binSum(t, 'store') + binSum(t, 'off')], cls: ['', '', '', '', ''] }
+        : { photo: img(t.id), cells: [t.name, t.stock, num(t.in_use) || 0, num(t.min_stock) || '—', t.status], cls: ['', low(t) ? 'rpt-red' : '', '', '', ''] }),
     })),
   })
   if (binView) return <Bins d={d} edit={edit} reload={reload} reg={reg} onClose={() => { setBinView(false); reload() }} />
