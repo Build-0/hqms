@@ -126,9 +126,17 @@ export default function Bins({ d, edit, reload, reg, onClose }) {
   }
 
   const byFloor = FLOORS.concat([...new Set(useAreas.map(a => a.floor).filter(f => !FLOORS.includes(f)))]).map(f => ({ f, items: useAreas.filter(a => a.floor === f) })).filter(g => g.items.length)
+  // 位置卡縮圖：該位置所放垃圾桶嘅相（數量多嘅排前；最多 4 張拼貼）
+  const areaPics = a => rows.filter(r => r.area_id === a.id && r.qty > 0).sort((x, y) => y.qty - x.qty).map(r => img(r.tool_id)).filter(Boolean).slice(0, 4)
+  const areaThumb = a => {
+    const p = areaPics(a)
+    if (p.length === 0) return <span className="bn-ico">{a.kind === 'use' ? '🗑' : a.kind === 'store' ? '📦' : '🚫'}</span>
+    if (p.length === 1) return <Thumb src={p[0]} fallback="🗑" size={64} />
+    return <span className={'bn-mosaic m' + p.length}>{p.map((x, i) => <img key={i} src={x} alt="" loading="lazy" />)}</span>
+  }
   const areaCard = a => (
     <button className={'sq-card' + (a.kind !== 'use' ? ' off' : '')} key={a.id} onClick={() => openSel({ k: 'area', id: a.id })}>
-      <span className="bn-ico">{a.kind === 'use' ? '🗑' : a.kind === 'store' ? '📦' : '🚫'}</span>
+      {areaThumb(a)}
       <span className="sq-name">{a.name}</span>
       <span className="sq-n">{areaTot(a.id)}<small>{a.kind === 'use' ? '個' : `個・${KIND[a.kind]}`}</small></span>
     </button>
