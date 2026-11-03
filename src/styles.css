@@ -1570,3 +1570,19 @@ html.rpt-open #root{visibility:hidden}
 .sq-eq .sq-card .sq-name{min-height:2.7em !important;display:-webkit-box;align-items:center}
 .sq-eq .sq-n{margin-top:auto}
 .sq-eq .sq-n small{white-space:nowrap}
+
+/* 管理位置：新增表單 + 逐行展開編輯 */
+.bn-box{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px}
+.bn-cap{font-size:12.5px;font-weight:700;color:var(--sub);margin-bottom:6px}
+.bn-add2{display:flex;gap:8px}
+.bn-add2 .df-sel:nth-child(2){flex:1;min-width:0}
+.bn-seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.bn-seg button{height:42px;border-radius:12px;border:1.5px solid var(--line);background:var(--card);font:inherit;font-size:14px;font-weight:700;color:var(--sub);cursor:pointer}
+.bn-seg button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.bn-mrow2{border-bottom:1px solid var(--line)}
+.bn-mhead{display:flex;align-items:center;gap:8px;width:100%;padding:12px 2px;background:none;border:none;font:inherit;text-align:left;cursor:pointer;color:inherit}
+.bn-mn{flex:1;min-width:0;font-size:14px;font-weight:600;overflow-wrap:anywhere}
+.bn-mc{font-size:12.5px;color:var(--sub);flex-shrink:0}
+.bn-tag.k-use{background:#e1f1ec;color:#17624f}.bn-tag.k-store{background:#fdf0d8;color:#8a5a00}.bn-tag.k-off{background:#eceff1;color:#69767f}
+.bn-mhead .bn-tag{margin-left:0}
+.bn-mopen{padding:2px 2px 12px}

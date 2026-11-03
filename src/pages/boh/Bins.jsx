@@ -20,6 +20,7 @@ export default function Bins({ d, edit, reload, reg, onClose }) {
   const [mgr, setMgr] = useState(false)
   const [extra, setExtra] = useState(() => new Set())   // 明細頁：數量為 0 但剛加入（或剛減到 0）嘅項目，離開頁面前保留喺列表
   const openSel = v => { setExtra(new Set()); setSel(v) }
+  const [openRow, setOpenRow] = useState(null)       // 管理位置：展開咗邊個位置
   const [mk, setMk] = useState('all')                // 管理位置：篩選 all／use／store／off
   const [nf, setNf] = useState({ floor: '', name: '', kind: 'use' })
   const rowsRef = useRef(rows); rowsRef.current = rows
@@ -204,22 +205,35 @@ export default function Bins({ d, edit, reload, reg, onClose }) {
         <div className="modal" style={{ zIndex: 60 }} onClick={e => { if (e.target === e.currentTarget) setMgr(false) }}>
           <div className="sheet">
             <h2>管理位置</h2>
-            <div className="bn-add">
-              <input className="df-sel" style={{ width: 80 }} placeholder="樓層" value={nf.floor} onChange={e => setNf({ ...nf, floor: e.target.value })} />
-              <input className="df-sel" placeholder="位置名稱" value={nf.name} onChange={e => setNf({ ...nf, name: e.target.value })} onKeyDown={e => { if (e.key === 'Enter') addArea() }} />
-              <select className="df-sel" style={{ width: 96 }} value={nf.kind} onChange={e => setNf({ ...nf, kind: e.target.value })}>{Object.entries(KIND).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
-              <button className="btn" style={{ width: 'auto', padding: '0 16px', margin: 0 }} onClick={addArea}>新增</button>
+            <div className="bn-box">
+              <div className="bn-cap">新增位置</div>
+              <div className="bn-add2">
+                <input className="df-sel" style={{ width: 92 }} placeholder="樓層" value={nf.floor} onChange={e => setNf({ ...nf, floor: e.target.value })} />
+                <input className="df-sel" placeholder="位置名稱" value={nf.name} onChange={e => setNf({ ...nf, name: e.target.value })} onKeyDown={e => { if (e.key === 'Enter') addArea() }} />
+              </div>
+              <div className="bn-cap" style={{ marginTop: 10 }}>呢個位置嘅類型</div>
+              <div className="bn-seg">{Object.entries(KIND).map(([k, v]) => <button key={k} type="button" className={nf.kind === k ? 'on' : ''} onClick={() => setNf({ ...nf, kind: k })}>{v}</button>)}</div>
+              <button className="btn" style={{ marginTop: 12 }} onClick={addArea}>＋ 新增位置</button>
             </div>
-            <div className="bn-tabs" style={{ marginTop: 10 }}>
+            <div className="bn-cap" style={{ margin: '14px 2px 6px' }}>現有位置（撳一下可更改類型或刪除）</div>
+            <div className="bn-tabs">
               {[['all', '全部'], ['use', '使用中'], ['store', '倉'], ['off', '停用']].map(([k, t]) => (
                 <button key={k} className={mk === k ? 'on' : ''} onClick={() => setMk(k)}>{t}（{k === 'all' ? areas.length : areas.filter(a => a.kind === k).length}）</button>
               ))}
             </div>
-            <div style={{ maxHeight: '44vh', overflow: 'auto' }}>
+            <div style={{ maxHeight: '38vh', overflow: 'auto' }}>
               {areas.filter(a => mk === 'all' || a.kind === mk).map(a => (
-                <div key={a.id} className="bn-mrow"><span>{aName(a)}</span><span style={{ color: 'var(--sub)' }}>{areaTot(a.id)}</span>
-                  <select className="df-sel" style={{ width: 84, padding: '4px 6px' }} value={a.kind} onChange={e => setKind(a, e.target.value)}>{Object.entries(KIND).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
-                  <button className="mini danger" onClick={() => delArea(a)}>✕</button></div>
+                <div key={a.id} className="bn-mrow2">
+                  <button type="button" className="bn-mhead" onClick={() => setOpenRow(openRow === a.id ? null : a.id)}>
+                    <span className="bn-mn">{aName(a)}</span><span className="bn-mc">{areaTot(a.id)} 個</span><em className={'bn-tag k-' + a.kind}>{KIND[a.kind]}</em>
+                  </button>
+                  {openRow === a.id && (
+                    <div className="bn-mopen">
+                      <div className="bn-seg">{Object.entries(KIND).map(([k, v]) => <button key={k} type="button" className={a.kind === k ? 'on' : ''} onClick={() => a.kind !== k && setKind(a, k)}>{v}</button>)}</div>
+                      <button type="button" className="btn danger" style={{ marginTop: 8 }} onClick={() => delArea(a)}>刪除呢個位置</button>
+                    </div>
+                  )}
+                </div>
               ))}
               {areas.filter(a => mk === 'all' || a.kind === mk).length === 0 && <div className="note">冇符合嘅位置</div>}
             </div>
