@@ -8,7 +8,8 @@ const KIND = { use: '使用中', store: '倉', off: '停用' }
 const FLOORS = ['GF', '1F', '2F', '3F', '4F', '5F', '6F', '7F', '8F', '9F', '10F', '11F', '12F']
 const fno = f => { const i = FLOORS.indexOf(f); return i < 0 ? 99 : i }
 
-// 垃圾桶分佈：每款垃圾桶 × 每個位置 = 數量。位置分「使用中」同「非使用中（倉／停用）」；庫存倉存仍記喺清潔工具
+// 垃圾桶分佈：每款垃圾桶 × 每個位置 = 數量（唯一數據來源）。位置分三類：使用中、倉（倉庫庫存、機械倉等）、停用。
+// tools.in_use／tools.stock 由本頁自動同步（在用＝使用中位置加總；庫存＝倉位置加總）。
 export default function Bins({ d, edit, reload, reg, onClose }) {
   const all = d.tools.filter(t => t.category === '垃圾桶')
   const areas = [...d.binAreas].sort((a, b) => fno(a.floor) - fno(b.floor) || (a.sort_order || 0) - (b.sort_order || 0))
@@ -30,13 +31,17 @@ export default function Bins({ d, edit, reload, reg, onClose }) {
   const qty = (t, a) => (rows.find(r => r.tool_id === t && r.area_id === a) || {}).qty || 0
   const areaTot = a => rows.filter(r => r.area_id === a).reduce((n, r) => n + r.qty, 0)
   const modelUse = t => rows.filter(r => r.tool_id === t && kindOf(r.area_id) === 'use').reduce((n, r) => n + r.qty, 0)
-  const modelOff = t => rows.filter(r => r.tool_id === t && kindOf(r.area_id) !== 'use').reduce((n, r) => n + r.qty, 0)
-  const bins = all.filter(t => t.status !== '停用' || modelUse(t.id) + modelOff(t.id) > 0)
+  const modelOf = (t, k) => rows.filter(r => r.tool_id === t && kindOf(r.area_id) === k).reduce((n, r) => n + r.qty, 0)
+  const modelStore = t => modelOf(t, 'store')
+  const modelOff = t => modelOf(t, 'off')
+  const modelAll = t => modelUse(t) + modelStore(t) + modelOff(t)
+  const bins = all.filter(t => t.status !== '停用' || modelAll(t.id) > 0)
   const inUse = all.reduce((n, t) => n + modelUse(t.id), 0)
+  const storeN = all.reduce((n, t) => n + modelStore(t.id), 0)
   const offN = all.reduce((n, t) => n + modelOff(t.id), 0)
-  const inStock = all.filter(t => t.status !== '停用').reduce((n, t) => n + num(t.stock), 0)
-  const useAreas = areas.filter(a => a.kind === 'use'), offAreas = areas.filter(a => a.kind !== 'use')
-  const aName = a => `${a.floor} ${a.name}`
+  const useAreas = areas.filter(a => a.kind === 'use'), storeAreas = areas.filter(a => a.kind === 'store'), offAreas = areas.filter(a => a.kind === 'off')
+  const aName = a => (a.floor ? a.floor + ' ' : '') + a.name
+  const sums = (t, list, over) => ({ in_use: list.filter(r => r.tool_id === t && (over && r.area_id === over.id ? over.kind : kindOf(r.area_id)) === 'use').reduce((n, r) => n + r.qty, 0), stock: list.filter(r => r.tool_id === t && (over && r.area_id === over.id ? over.kind : kindOf(r.area_id)) === 'store').reduce((n, r) => n + r.qty, 0) })
 
   // 即時更新畫面，背景逐項依次寫入（避免連按時重複新增）
   function setQty(t, a, v) {
@@ -52,7 +57,7 @@ export default function Bins({ d, edit, reload, reg, onClose }) {
         const cur = rowsRef.current.find(r => r.tool_id === t && r.area_id === a)
         if (cur && cur.id) await api.dbUpdate('bin_counts', cur.id, { qty: cur.qty, updated_at: new Date().toISOString() })
         else if (cur) { const r = await api.dbInsert('bin_counts', { tool_id: t, area_id: a, qty: cur.qty }); setRows(p => { const n = p.map(x => (x.tool_id === t && x.area_id === a ? { ...x, id: r.id } : x)); rowsRef.current = n; return n }) }
-        await api.dbUpdate('tools', t, { in_use: rowsRef.current.filter(r => r.tool_id === t && kindOf(r.area_id) === 'use').reduce((n, r) => n + r.qty, 0) })
+        await api.dbUpdate('tools', t, sums(t, rowsRef.current))
       } catch (ex) { toast('儲存失敗：' + ex.message) }
     })
   }
@@ -63,8 +68,8 @@ export default function Bins({ d, edit, reload, reg, onClose }) {
   }
   async function setKind(a, kind) {
     try { await api.dbUpdate('bin_areas', a.id, { kind }); const t = new Set(rows.filter(r => r.area_id === a.id).map(r => r.tool_id)); reload()
-      // 同步各款「在用」（只計使用中位置）
-      for (const id of t) { const n = rows.filter(r => r.tool_id === id && (r.area_id === a.id ? kind : kindOf(r.area_id)) === 'use').reduce((x, r) => x + r.qty, 0); await api.dbUpdate('tools', id, { in_use: n }) }
+      // 同步各款「在用」同「庫存」
+      for (const id of t) await api.dbUpdate('tools', id, sums(id, rows, { id: a.id, kind }))
       toast('已更改類型')
     } catch (ex) { toast('更改失敗：' + ex.message) }
   }
@@ -75,12 +80,12 @@ export default function Bins({ d, edit, reload, reg, onClose }) {
 
   if (reg) reg.current = () => ({
     title: '垃圾桶分佈',
-    filterText: `使用中 ${inUse} ・ 非使用中 ${offN}（倉／停用）・ 倉庫庫存 ${inStock}`,
+    filterText: `使用中 ${inUse} ・ 倉 ${storeN} ・ 停用 ${offN}　合共 ${inUse + storeN + offN}`,
     cols: ['款式', '數量'],
     groups: [
       ...useAreas.map(a => ({ name: `${aName(a)}（共 ${areaTot(a.id)}）`, rows: bins.filter(t => qty(t.id, a.id) > 0).map(t => ({ photo: img(t.id), cells: [t.name, qty(t.id, a.id)], cls: ['', ''] })) })),
-      ...offAreas.map(a => ({ name: `【${KIND[a.kind]}】${aName(a)}（共 ${areaTot(a.id)}）`, rows: bins.filter(t => qty(t.id, a.id) > 0).map(t => ({ photo: img(t.id), cells: [t.name, qty(t.id, a.id)], cls: ['', ''] })) })),
-      { name: `各款合計`, rows: bins.map(t => ({ photo: img(t.id), cells: [t.name, `使用中 ${modelUse(t.id)}　非使用中 ${modelOff(t.id)}　倉庫 ${num(t.stock)}`], cls: ['', ''] })) },
+      ...[...storeAreas, ...offAreas].map(a => ({ name: `【${KIND[a.kind]}】${aName(a)}（共 ${areaTot(a.id)}）`, rows: bins.filter(t => qty(t.id, a.id) > 0).map(t => ({ photo: img(t.id), cells: [t.name, qty(t.id, a.id)], cls: ['', ''] })) })),
+      { name: `各款合計`, rows: bins.map(t => ({ photo: img(t.id), cells: [t.name, `使用中 ${modelUse(t.id)}　倉 ${modelStore(t.id)}　停用 ${modelOff(t.id)}　合共 ${modelAll(t.id)}`], cls: ['', ''] })) },
     ].filter(g => g.rows.length),
   })
 
@@ -110,7 +115,7 @@ export default function Bins({ d, edit, reload, reg, onClose }) {
         <div className="bn-hd">
           {m && <Thumb src={img(m.id)} fallback="🗑" size={44} />}
           <div><b>{isArea ? aName(a) : m.name}</b>
-            <small>{isArea ? `${KIND[a.kind]}${a.kind === 'use' ? '' : '（唔計入使用中）'} ・ 共 ${areaTot(a.id)} 個` : `使用中 ${modelUse(m.id)} ・ 非使用中 ${modelOff(m.id)} ・ 倉庫 ${num(m.stock)}`}</small></div>
+            <small>{isArea ? `${KIND[a.kind]}${a.kind === 'use' ? '' : '（唔計入使用中）'} ・ 共 ${areaTot(a.id)} 個` : `使用中 ${modelUse(m.id)} ・ 倉 ${modelStore(m.id)} ・ 停用 ${modelOff(m.id)} ・ 合共 ${modelAll(m.id)}`}</small></div>
         </div>
         <div className="bn-list">
           {list.map(x => (
@@ -154,9 +159,10 @@ export default function Bins({ d, edit, reload, reg, onClose }) {
     <>
       <div className="bn-kpis">
         <div><b>{inUse}</b><small>使用中</small></div>
-        <div><b>{offN}</b><small>非使用中（倉／停用）</small></div>
-        <div><b>{inStock}</b><small>倉庫庫存</small></div>
+        <div><b>{storeN}</b><small>倉</small></div>
+        <div><b>{offN}</b><small>停用</small></div>
       </div>
+      <div className="bn-total">合共 {inUse + storeN + offN} 個</div>
       <div className="bn-tabs">
         <button className={view === 'area' ? 'on' : ''} onClick={() => setView('area')}>按位置（{areas.length}）</button>
         <button className={view === 'model' ? 'on' : ''} onClick={() => setView('model')}>按款式（{bins.length}）</button>
@@ -170,9 +176,15 @@ export default function Bins({ d, edit, reload, reg, onClose }) {
               <div className="sq-grid">{g.items.map(areaCard)}</div>
             </div>
           ))}
+          {storeAreas.length > 0 && (
+            <div>
+              <div className="bh-grp" style={{ borderColor: 'var(--sub)' }}>倉<span>{storeN} 個</span></div>
+              <div className="sq-grid">{storeAreas.map(areaCard)}</div>
+            </div>
+          )}
           {offAreas.length > 0 && (
             <div>
-              <div className="bh-grp" style={{ borderColor: 'var(--sub)' }}>非使用中（倉／停用）<span>{offN} 個</span></div>
+              <div className="bh-grp" style={{ borderColor: 'var(--sub)' }}>停用<span>{offN} 個</span></div>
               <div className="sq-grid">{offAreas.map(areaCard)}</div>
             </div>
           )}
@@ -183,7 +195,7 @@ export default function Bins({ d, edit, reload, reg, onClose }) {
             <button className={'sq-card' + (t.status === '停用' ? ' off' : '')} key={t.id} onClick={() => openSel({ k: 'model', id: t.id })}>
               <Thumb src={img(t.id)} fallback="🗑" size={64} />
               <span className="sq-name">{t.name}</span>
-              <span className="sq-n">{modelUse(t.id)}<small>使用中{modelOff(t.id) ? ` ・ 非使用 ${modelOff(t.id)}` : ''}</small></span>
+              <span className="sq-n">{modelUse(t.id)}<small>使用中 ・ 倉 {modelStore(t.id)}{modelOff(t.id) ? ` ・ 停 ${modelOff(t.id)}` : ''}</small></span>
             </button>
           ))}
         </div>

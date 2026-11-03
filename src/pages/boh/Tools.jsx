@@ -20,6 +20,9 @@ export default function Tools({ d, edit, reload, reg, init, embedded }) {
   const tools = d.tools
   const img = useImages('tools', tools.map(t => t.id))
   const low = t => t.status !== '停用' && num(t.min_stock) > 0 && num(t.stock) < num(t.min_stock)
+  // 垃圾桶款式：數量以「垃圾桶分佈」為準（在用＝使用中位置、庫存＝倉位置）
+  const isBin = t => t.category === '垃圾桶'
+  const binSum = (t, k) => (d.binCounts || []).filter(r => r.tool_id === t.id && ((d.binAreas || []).find(a => a.id === r.area_id) || {}).kind === k).reduce((n, r) => n + r.qty, 0)
   const lowN = tools.filter(low).length, offN = tools.filter(t => t.status === '停用').length
 
   const shown = useMemo(() => tools.filter(t => {
@@ -94,7 +97,9 @@ export default function Tools({ d, edit, reload, reg, init, embedded }) {
               <button className={`sq-card ${t.status === '停用' ? 'off' : ''}`} key={t.id} onClick={() => edit && open(t)}>
                 <Thumb src={img(t.id)} fallback="🧹" size={64} />
                 <span className="sq-name">{t.name}</span>
-                <span className={`sq-n ${low(t) ? 'low' : ''}`}>{t.stock}<small>{t.status === '停用' ? '停用' : low(t) ? '需補貨' : '庫存'}</small></span>
+                {isBin(t) && !embedded
+                  ? <span className="sq-n">{binSum(t, 'use')}<small>使用中 ・ 倉 {binSum(t, 'store')}{binSum(t, 'off') ? ` ・ 停 ${binSum(t, 'off')}` : ''}</small></span>
+                  : <span className={`sq-n ${low(t) ? 'low' : ''}`}>{t.stock}<small>{t.status === '停用' ? '停用' : low(t) ? '需補貨' : '庫存'}</small></span>}
               </button>
             ))}
           </div>
@@ -113,10 +118,11 @@ export default function Tools({ d, edit, reload, reg, init, embedded }) {
               </select>
             </div>
             <div className="bh-row3">
-              <div className="f-row"><label>庫存</label><input type="number" inputMode="numeric" value={form.stock} onChange={e => setForm({ ...form, stock: e.target.value })} /></div>
-              <div className="f-row"><label>在用</label><input type="number" inputMode="numeric" value={form.in_use} onChange={e => setForm({ ...form, in_use: e.target.value })} /></div>
+              <div className="f-row"><label>庫存</label><input type="number" inputMode="numeric" value={form.stock} disabled={form.category === '垃圾桶'} onChange={e => setForm({ ...form, stock: e.target.value })} /></div>
+              <div className="f-row"><label>在用</label><input type="number" inputMode="numeric" value={form.in_use} disabled={form.category === '垃圾桶'} onChange={e => setForm({ ...form, in_use: e.target.value })} /></div>
               <div className="f-row"><label>最低庫存</label><input type="number" inputMode="numeric" value={form.min_stock} onChange={e => setForm({ ...form, min_stock: e.target.value })} /></div>
             </div>
+            {form.category === '垃圾桶' && <p className="note" style={{ textAlign: 'left', margin: '0 0 8px' }}>垃圾桶嘅庫存、在用由「垃圾桶分佈」統計，請喺嗰度加減數量。</p>}
             <div className="f-row"><label>狀態</label>
               <select className="df-sel" value={form.status} onChange={e => setForm({ ...form, status: e.target.value })}><option>啟用</option><option>停用</option></select>
             </div>
