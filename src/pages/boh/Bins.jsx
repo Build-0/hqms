@@ -173,29 +173,29 @@ export default function Bins({ d, edit, reload, reg, onClose }) {
           {byFloor.map(g => (
             <div key={g.f}>
               <div className="bh-grp">{g.f}<span>{g.items.reduce((n, a) => n + areaTot(a.id), 0)} 個</span></div>
-              <div className="sq-grid">{g.items.map(areaCard)}</div>
+              <div className="sq-grid sq-eq">{g.items.map(areaCard)}</div>
             </div>
           ))}
           {storeAreas.length > 0 && (
             <div>
               <div className="bh-grp" style={{ borderColor: 'var(--sub)' }}>倉<span>{storeN} 個</span></div>
-              <div className="sq-grid">{storeAreas.map(areaCard)}</div>
+              <div className="sq-grid sq-eq">{storeAreas.map(areaCard)}</div>
             </div>
           )}
           {offAreas.length > 0 && (
             <div>
               <div className="bh-grp" style={{ borderColor: 'var(--sub)' }}>停用<span>{offN} 個</span></div>
-              <div className="sq-grid">{offAreas.map(areaCard)}</div>
+              <div className="sq-grid sq-eq">{offAreas.map(areaCard)}</div>
             </div>
           )}
         </>
       ) : (
-        <div className="sq-grid">
+        <div className="sq-grid sq-eq">
           {bins.map(t => (
             <button className={'sq-card' + (t.status === '停用' ? ' off' : '')} key={t.id} onClick={() => openSel({ k: 'model', id: t.id })}>
               <Thumb src={img(t.id)} fallback="🗑" size={64} />
               <span className="sq-name">{t.name}</span>
-              <span className="sq-n">{modelUse(t.id)}<small>使用中 ・ 倉 {modelStore(t.id)}{modelOff(t.id) ? ` ・ 停 ${modelOff(t.id)}` : ''}</small></span>
+              <span className="sq-n">{modelUse(t.id)}<small>使用中</small><small>倉 {modelStore(t.id)} ・ 停 {modelOff(t.id)}</small></span>
             </button>
           ))}
         </div>

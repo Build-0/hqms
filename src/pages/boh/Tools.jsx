@@ -95,13 +95,13 @@ export default function Tools({ d, edit, reload, reg, init, embedded }) {
       {groups.map(g => (
         <div key={g.c}>
           <div className="bh-grp">{g.c}<span>{g.items.length}</span>{g.c === '垃圾桶' && !embedded && <button className="mini pri" style={{ marginLeft: 'auto' }} onClick={() => setBinView(true)}>🗑 使用中分佈</button>}</div>
-          <div className="sq-grid">
+          <div className="sq-grid sq-eq">
             {g.items.map(t => (
               <button className={`sq-card ${t.status === '停用' ? 'off' : ''}`} key={t.id} onClick={() => edit && open(t)}>
                 <Thumb src={img(t.id)} fallback="🧹" size={64} />
                 <span className="sq-name">{t.name}</span>
                 {isBin(t) && !embedded
-                  ? <span className="sq-n">{binSum(t, 'use')}<small>使用中 ・ 倉 {binSum(t, 'store')}{binSum(t, 'off') ? ` ・ 停 ${binSum(t, 'off')}` : ''}</small></span>
+                  ? <span className="sq-n">{binSum(t, 'use')}<small>使用中</small><small>倉 {binSum(t, 'store')} ・ 停 {binSum(t, 'off')}</small></span>
                   : <span className={`sq-n ${low(t) ? 'low' : ''}`}>{t.stock}<small>{t.status === '停用' ? '停用' : low(t) ? '需補貨' : '庫存'}</small></span>}
               </button>
             ))}
