@@ -49,6 +49,17 @@ export default function Tools({ d, edit, reload, reg, init, embedded }) {
     const row = { name: form.name.trim(), category: form.category, stock: num(form.stock), in_use: num(form.in_use), min_stock: num(form.min_stock), status: form.status, notes: form.notes || '' }
     try {
       if (form.image !== orig) row.image = form.image || null
+      if (form.id && form.category === '垃圾桶') {   // 庫存＝倉位置合計：改動記入「倉庫（庫存）」
+        const wh = (d.binAreas || []).find(a => !a.floor && a.name === '倉庫（庫存）')
+        if (wh) {
+          const mine = (d.binCounts || []).filter(r => r.tool_id === form.id)
+          const other = mine.filter(r => r.area_id !== wh.id && ((d.binAreas || []).find(a => a.id === r.area_id) || {}).kind === 'store').reduce((n, r) => n + r.qty, 0)
+          const qty = Math.max(0, row.stock - other), cur = mine.find(r => r.area_id === wh.id)
+          if (cur) await api.dbUpdate('bin_counts', cur.id, { qty }); else if (qty) await api.dbInsert('bin_counts', { tool_id: form.id, area_id: wh.id, qty })
+          row.stock = qty + other
+        }
+        row.in_use = binSum(form, 'use')
+      }
       if (form.id) { await api.dbUpdate('tools', form.id, row); if (form.image !== orig) setCachedImage('tools', form.id, form.image) }
       else { const r = await api.dbInsert('tools', { ...row, sort_order: tools.length + 1, image: form.image || null }); setCachedImage('tools', r.id, form.image) }
       toast('已儲存'); setForm(null); reload()
@@ -121,11 +132,11 @@ export default function Tools({ d, edit, reload, reg, init, embedded }) {
               </select>
             </div>
             <div className="bh-row3">
-              <div className="f-row"><label>庫存</label><input type="number" inputMode="numeric" value={form.stock} disabled={form.category === '垃圾桶'} onChange={e => setForm({ ...form, stock: e.target.value })} /></div>
+              <div className="f-row"><label>庫存</label><input type="number" inputMode="numeric" value={form.stock} disabled={form.category === '垃圾桶' && !form.id} onChange={e => setForm({ ...form, stock: e.target.value })} /></div>
               <div className="f-row"><label>在用</label><input type="number" inputMode="numeric" value={form.in_use} disabled={form.category === '垃圾桶'} onChange={e => setForm({ ...form, in_use: e.target.value })} /></div>
               <div className="f-row"><label>最低庫存</label><input type="number" inputMode="numeric" value={form.min_stock} onChange={e => setForm({ ...form, min_stock: e.target.value })} /></div>
             </div>
-            {form.category === '垃圾桶' && <p className="note" style={{ textAlign: 'left', margin: '0 0 8px' }}>垃圾桶嘅庫存、在用由「垃圾桶分佈」統計，請喺嗰度加減數量。</p>}
+            {form.category === '垃圾桶' && <p className="note" style={{ textAlign: 'left', margin: '0 0 8px' }}>庫存可以直接改（記入「倉庫（庫存）」）；在用由「垃圾桶分佈」嘅使用中位置統計。</p>}
             <div className="f-row"><label>狀態</label>
               <select className="df-sel" value={form.status} onChange={e => setForm({ ...form, status: e.target.value })}><option>啟用</option><option>停用</option></select>
             </div>
