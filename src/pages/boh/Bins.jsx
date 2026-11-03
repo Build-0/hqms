@@ -2,27 +2,38 @@ import { useRef, useState } from 'react'
 import * as api from '../../lib/api'
 import { toast } from '../../lib/toast'
 import { useBack } from '../../lib/nav'
-import { Thumb, useImages, ListManager, num } from './shared'
+import { Thumb, useImages, num } from './shared'
 
-// 垃圾桶分佈：每款垃圾桶 × 每個區域 = 使用中數量；倉存仍然記喺清潔工具（庫存）
+const KIND = { use: '使用中', store: '倉', off: '停用' }
+const FLOORS = ['GF', '1F', '2F', '3F', '4F', '5F', '6F', '7F', '8F', '9F', '10F', '11F', '12F']
+const fno = f => { const i = FLOORS.indexOf(f); return i < 0 ? 99 : i }
+
+// 垃圾桶分佈：每款垃圾桶 × 每個位置 = 數量。位置分「使用中」同「非使用中（倉／停用）」；庫存倉存仍記喺清潔工具
 export default function Bins({ d, edit, reload, reg, onClose }) {
-  const bins = d.tools.filter(t => t.category === '垃圾桶' && t.status !== '停用')
-  const areas = d.binAreas
-  const img = useImages('tools', bins.map(t => t.id))
+  const all = d.tools.filter(t => t.category === '垃圾桶')
+  const areas = [...d.binAreas].sort((a, b) => fno(a.floor) - fno(b.floor) || (a.sort_order || 0) - (b.sort_order || 0))
+  const img = useImages('tools', all.map(t => t.id))
   const [rows, setRows] = useState(d.binCounts)
-  const [view, setView] = useState('area')          // area 按區域／model 按款式
+  const [view, setView] = useState('area')          // area 按位置／model 按款式
   const [sel, setSel] = useState(null)              // { k: 'area'|'model', id }
   const [mgr, setMgr] = useState(false)
+  const [nf, setNf] = useState({ floor: '', name: '', kind: 'use' })
   const rowsRef = useRef(rows); rowsRef.current = rows
   const chain = useRef(Promise.resolve())
   useBack(!!sel, () => setSel(null), 3)
   useBack(true, () => { onClose() }, 2)
 
+  const kindOf = id => (d.binAreas.find(a => a.id === id) || {}).kind || 'use'
   const qty = (t, a) => (rows.find(r => r.tool_id === t && r.area_id === a) || {}).qty || 0
-  const areaTot = a => rows.filter(r => r.area_id === a && bins.some(t => t.id === r.tool_id)).reduce((n, r) => n + r.qty, 0)
-  const modelTot = t => rows.filter(r => r.tool_id === t).reduce((n, r) => n + r.qty, 0)
-  const inUse = bins.reduce((n, t) => n + modelTot(t.id), 0)
-  const inStock = bins.reduce((n, t) => n + num(t.stock), 0)
+  const areaTot = a => rows.filter(r => r.area_id === a).reduce((n, r) => n + r.qty, 0)
+  const modelUse = t => rows.filter(r => r.tool_id === t && kindOf(r.area_id) === 'use').reduce((n, r) => n + r.qty, 0)
+  const modelOff = t => rows.filter(r => r.tool_id === t && kindOf(r.area_id) !== 'use').reduce((n, r) => n + r.qty, 0)
+  const bins = all.filter(t => t.status !== '停用' || modelUse(t.id) + modelOff(t.id) > 0)
+  const inUse = all.reduce((n, t) => n + modelUse(t.id), 0)
+  const offN = all.reduce((n, t) => n + modelOff(t.id), 0)
+  const inStock = all.filter(t => t.status !== '停用').reduce((n, t) => n + num(t.stock), 0)
+  const useAreas = areas.filter(a => a.kind === 'use'), offAreas = areas.filter(a => a.kind !== 'use')
+  const aName = a => `${a.floor} ${a.name}`
 
   // 即時更新畫面，背景逐項依次寫入（避免連按時重複新增）
   function setQty(t, a, v) {
@@ -38,19 +49,29 @@ export default function Bins({ d, edit, reload, reg, onClose }) {
         const cur = rowsRef.current.find(r => r.tool_id === t && r.area_id === a)
         if (cur && cur.id) await api.dbUpdate('bin_counts', cur.id, { qty: cur.qty, updated_at: new Date().toISOString() })
         else if (cur) { const r = await api.dbInsert('bin_counts', { tool_id: t, area_id: a, qty: cur.qty }); setRows(p => { const n = p.map(x => (x.tool_id === t && x.area_id === a ? { ...x, id: r.id } : x)); rowsRef.current = n; return n }) }
-        await api.dbUpdate('tools', t, { in_use: rowsRef.current.filter(r => r.tool_id === t).reduce((n, r) => n + r.qty, 0) })
+        await api.dbUpdate('tools', t, { in_use: rowsRef.current.filter(r => r.tool_id === t && kindOf(r.area_id) === 'use').reduce((n, r) => n + r.qty, 0) })
       } catch (ex) { toast('儲存失敗：' + ex.message) }
     })
+  }
+  async function addArea() {
+    const floor = nf.floor.trim(), name = nf.name.trim()
+    if (!name) { toast('請填位置名稱'); return }
+    try { await api.dbInsert('bin_areas', { floor, name, kind: nf.kind, sort_order: (areas.length ? Math.max(...areas.map(a => a.sort_order || 0)) : 0) + 1 }); setNf({ ...nf, name: '' }); reload() } catch (ex) { toast('新增失敗：' + ex.message) }
+  }
+  async function delArea(a) {
+    if (!window.confirm(`刪除位置「${aName(a)}」同佢嘅垃圾桶數量記錄？`)) return
+    try { await api.dbDelete('bin_areas', a.id); setRows(p => p.filter(r => r.area_id !== a.id)); reload() } catch (ex) { toast('刪除失敗：' + ex.message) }
   }
 
   if (reg) reg.current = () => ({
     title: '垃圾桶分佈',
-    filterText: `使用中 ${inUse} ・ 倉存 ${inStock}`,
+    filterText: `使用中 ${inUse} ・ 非使用中 ${offN}（倉／停用）・ 倉庫庫存 ${inStock}`,
     cols: ['款式', '數量'],
     groups: [
-      ...areas.map(a => ({ name: `${a.name}（共 ${areaTot(a.id)}）`, rows: bins.filter(t => qty(t.id, a.id) > 0).map(t => ({ photo: img(t.id), cells: [t.name, qty(t.id, a.id)], cls: ['', ''] })) })).filter(g => g.rows.length),
-      { name: `各款合計（使用中 ${inUse}・倉存 ${inStock}）`, rows: bins.map(t => ({ photo: img(t.id), cells: [t.name, `使用 ${modelTot(t.id)}　倉 ${num(t.stock)}`], cls: ['', ''] })) },
-    ],
+      ...useAreas.map(a => ({ name: `${aName(a)}（共 ${areaTot(a.id)}）`, rows: bins.filter(t => qty(t.id, a.id) > 0).map(t => ({ photo: img(t.id), cells: [t.name, qty(t.id, a.id)], cls: ['', ''] })) })),
+      ...offAreas.map(a => ({ name: `【${KIND[a.kind]}】${aName(a)}（共 ${areaTot(a.id)}）`, rows: bins.filter(t => qty(t.id, a.id) > 0).map(t => ({ photo: img(t.id), cells: [t.name, qty(t.id, a.id)], cls: ['', ''] })) })),
+      { name: `各款合計`, rows: bins.map(t => ({ photo: img(t.id), cells: [t.name, `使用中 ${modelUse(t.id)}　非使用中 ${modelOff(t.id)}　倉庫 ${num(t.stock)}`], cls: ['', ''] })) },
+    ].filter(g => g.rows.length),
   })
 
   const stepper = (t, a) => {
@@ -64,24 +85,27 @@ export default function Bins({ d, edit, reload, reg, onClose }) {
     )
   }
 
-  // ── 明細頁：某區域（逐款）或某款式（逐區域）──
+  // ── 明細頁：某位置（逐款）或某款式（逐位置）──
   if (sel) {
     const isArea = sel.k === 'area'
     const a = isArea ? areas.find(x => x.id === sel.id) : null
-    const m = isArea ? null : bins.find(x => x.id === sel.id)
+    const m = isArea ? null : all.find(x => x.id === sel.id)
     if (!a && !m) return null
-    const list = isArea ? [...bins].sort((x, y) => (qty(y.id, a.id) > 0) - (qty(x.id, a.id) > 0)) : areas
+    const list = isArea
+      ? [...bins.filter(t => t.status !== '停用')].sort((x, y) => (qty(y.id, a.id) > 0) - (qty(x.id, a.id) > 0))
+      : [...areas].sort((x, y) => (qty(m.id, y.id) > 0) - (qty(m.id, x.id) > 0))
     return (
       <>
         <div className="bn-hd">
           {m && <Thumb src={img(m.id)} fallback="🗑" size={44} />}
-          <div><b>{isArea ? a.name : m.name}</b><small>{isArea ? `使用中 ${areaTot(a.id)} 個` : `使用中 ${modelTot(m.id)} ・ 倉存 ${num(m.stock)}`}</small></div>
+          <div><b>{isArea ? aName(a) : m.name}</b>
+            <small>{isArea ? `${KIND[a.kind]}${a.kind === 'use' ? '' : '（唔計入使用中）'} ・ 共 ${areaTot(a.id)} 個` : `使用中 ${modelUse(m.id)} ・ 非使用中 ${modelOff(m.id)} ・ 倉庫 ${num(m.stock)}`}</small></div>
         </div>
         <div className="bn-list">
           {list.map(x => (
             <div className="bn-row" key={x.id}>
               {isArea && <Thumb src={img(x.id)} fallback="🗑" size={40} />}
-              <span className="bn-nm">{x.name}</span>
+              <span className="bn-nm">{isArea ? x.name : aName(x)}{!isArea && x.kind !== 'use' && <em className="bn-tag">{KIND[x.kind]}</em>}</span>
               {stepper(isArea ? x.id : m.id, isArea ? a.id : x.id)}
             </div>
           ))}
@@ -91,40 +115,72 @@ export default function Bins({ d, edit, reload, reg, onClose }) {
     )
   }
 
+  const byFloor = FLOORS.concat([...new Set(useAreas.map(a => a.floor).filter(f => !FLOORS.includes(f)))]).map(f => ({ f, items: useAreas.filter(a => a.floor === f) })).filter(g => g.items.length)
+  const areaCard = a => (
+    <button className={'sq-card' + (a.kind !== 'use' ? ' off' : '')} key={a.id} onClick={() => setSel({ k: 'area', id: a.id })}>
+      <span className="bn-ico">{a.kind === 'use' ? '🗑' : a.kind === 'store' ? '📦' : '🚫'}</span>
+      <span className="sq-name">{a.name}</span>
+      <span className="sq-n">{areaTot(a.id)}<small>{a.kind === 'use' ? '個' : `個・${KIND[a.kind]}`}</small></span>
+    </button>
+  )
+
   return (
     <>
       <div className="bn-kpis">
         <div><b>{inUse}</b><small>使用中</small></div>
-        <div><b>{inStock}</b><small>倉存</small></div>
-        <div><b>{inUse + inStock}</b><small>合共</small></div>
+        <div><b>{offN}</b><small>非使用中（倉／停用）</small></div>
+        <div><b>{inStock}</b><small>倉庫庫存</small></div>
       </div>
       <div className="bn-tabs">
-        <button className={view === 'area' ? 'on' : ''} onClick={() => setView('area')}>按區域（{areas.length}）</button>
+        <button className={view === 'area' ? 'on' : ''} onClick={() => setView('area')}>按位置（{areas.length}）</button>
         <button className={view === 'model' ? 'on' : ''} onClick={() => setView('model')}>按款式（{bins.length}）</button>
-        {edit && view === 'area' && <button className="bn-gear" title="管理區域" onClick={() => setMgr(true)}>⚙</button>}
+        {edit && view === 'area' && <button className="bn-gear" title="管理位置" onClick={() => setMgr(true)}>⚙</button>}
       </div>
       {view === 'area' ? (
-        <div className="sq-grid">
-          {areas.map(a => (
-            <button className="sq-card" key={a.id} onClick={() => setSel({ k: 'area', id: a.id })}>
-              <span className="bn-ico">🗑</span>
-              <span className="sq-name">{a.name}</span>
-              <span className="sq-n">{areaTot(a.id)}<small>個</small></span>
-            </button>
+        <>
+          {byFloor.map(g => (
+            <div key={g.f}>
+              <div className="bh-grp">{g.f}<span>{g.items.reduce((n, a) => n + areaTot(a.id), 0)} 個</span></div>
+              <div className="sq-grid">{g.items.map(areaCard)}</div>
+            </div>
           ))}
-        </div>
+          {offAreas.length > 0 && (
+            <div>
+              <div className="bh-grp" style={{ borderColor: 'var(--sub)' }}>非使用中（倉／停用）<span>{offN} 個</span></div>
+              <div className="sq-grid">{offAreas.map(areaCard)}</div>
+            </div>
+          )}
+        </>
       ) : (
         <div className="sq-grid">
           {bins.map(t => (
-            <button className="sq-card" key={t.id} onClick={() => setSel({ k: 'model', id: t.id })}>
+            <button className={'sq-card' + (t.status === '停用' ? ' off' : '')} key={t.id} onClick={() => setSel({ k: 'model', id: t.id })}>
               <Thumb src={img(t.id)} fallback="🗑" size={64} />
               <span className="sq-name">{t.name}</span>
-              <span className="sq-n">{modelTot(t.id)}<small>使用 ・ 倉 {num(t.stock)}</small></span>
+              <span className="sq-n">{modelUse(t.id)}<small>使用中{modelOff(t.id) ? ` ・ 非使用 ${modelOff(t.id)}` : ''}</small></span>
             </button>
           ))}
         </div>
       )}
-      {mgr && <ListManager title="垃圾桶區域" table="bin_areas" rows={areas} onClose={() => setMgr(false)} onChanged={reload} />}
+      {mgr && (
+        <div className="modal" style={{ zIndex: 60 }} onClick={e => { if (e.target === e.currentTarget) setMgr(false) }}>
+          <div className="sheet">
+            <h2>管理位置</h2>
+            <div className="bn-add">
+              <input className="df-sel" style={{ width: 80 }} placeholder="樓層" value={nf.floor} onChange={e => setNf({ ...nf, floor: e.target.value })} />
+              <input className="df-sel" placeholder="位置名稱" value={nf.name} onChange={e => setNf({ ...nf, name: e.target.value })} onKeyDown={e => { if (e.key === 'Enter') addArea() }} />
+              <select className="df-sel" style={{ width: 96 }} value={nf.kind} onChange={e => setNf({ ...nf, kind: e.target.value })}>{Object.entries(KIND).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
+              <button className="btn" style={{ width: 'auto', padding: '0 16px', margin: 0 }} onClick={addArea}>新增</button>
+            </div>
+            <div style={{ maxHeight: '48vh', overflow: 'auto', marginTop: 10 }}>
+              {areas.map(a => (
+                <div key={a.id} className="bn-mrow"><span>{aName(a)}{a.kind !== 'use' && <em className="bn-tag">{KIND[a.kind]}</em>}</span><span style={{ color: 'var(--sub)' }}>{areaTot(a.id)}</span><button className="mini danger" onClick={() => delArea(a)}>✕</button></div>
+              ))}
+            </div>
+            <button className="btn ghost" onClick={() => setMgr(false)}>完成</button>
+          </div>
+        </div>
+      )}
     </>
   )
 }

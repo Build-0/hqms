@@ -1549,3 +1549,9 @@ html.rpt-open #root{visibility:hidden}
 .bn-step button:disabled{opacity:.35;cursor:default}
 .bn-step input{width:54px;height:36px;text-align:center;border:1px solid var(--line);border-radius:10px;font:inherit;font-size:16px;font-weight:700;background:var(--card);color:inherit}
 @media (min-width:900px){.bn-list{display:grid;grid-template-columns:1fr 1fr;gap:8px}}
+.bn-tag{font-style:normal;font-size:11px;font-weight:700;margin-left:6px;padding:1px 7px;border-radius:999px;background:#e8ecef;color:var(--sub);white-space:nowrap}
+.bn-add{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.bn-add .df-sel:nth-child(2){flex:1;min-width:120px}
+.bn-mrow{display:flex;align-items:center;gap:10px;padding:6px 2px;border-bottom:1px solid var(--line);font-size:13.5px}
+.bn-mrow>span:first-child{flex:1;min-width:0;overflow-wrap:anywhere}
+.bn-kpis small{display:block;line-height:1.25}
