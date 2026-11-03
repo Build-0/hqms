@@ -17,6 +17,8 @@ export default function Bins({ d, edit, reload, reg, onClose }) {
   const [view, setView] = useState('area')          // area 按位置／model 按款式
   const [sel, setSel] = useState(null)              // { k: 'area'|'model', id }
   const [mgr, setMgr] = useState(false)
+  const [extra, setExtra] = useState(() => new Set())   // 明細頁：數量為 0 但剛加入（或剛減到 0）嘅項目，離開頁面前保留喺列表
+  const openSel = v => { setExtra(new Set()); setSel(v) }
   const [nf, setNf] = useState({ floor: '', name: '', kind: 'use' })
   const rowsRef = useRef(rows); rowsRef.current = rows
   const chain = useRef(Promise.resolve())
@@ -91,9 +93,10 @@ export default function Bins({ d, edit, reload, reg, onClose }) {
     const a = isArea ? areas.find(x => x.id === sel.id) : null
     const m = isArea ? null : all.find(x => x.id === sel.id)
     if (!a && !m) return null
-    const list = isArea
-      ? [...bins.filter(t => t.status !== '停用')].sort((x, y) => (qty(y.id, a.id) > 0) - (qty(x.id, a.id) > 0))
-      : [...areas].sort((x, y) => (qty(m.id, y.id) > 0) - (qty(m.id, x.id) > 0))
+    const cand = isArea ? bins.filter(t => t.status !== '停用') : areas
+    const has = x => (isArea ? qty(x.id, a.id) : qty(m.id, x.id)) > 0 || extra.has(x.id)
+    const list = cand.filter(has)
+    const rest = cand.filter(x => !has(x))
     return (
       <>
         <div className="bn-hd">
@@ -110,6 +113,13 @@ export default function Bins({ d, edit, reload, reg, onClose }) {
             </div>
           ))}
         </div>
+        {list.length === 0 && <div className="note">{isArea ? '呢個位置暫時冇垃圾桶' : '呢款暫時冇放喺任何位置'}</div>}
+        {edit && rest.length > 0 && (
+          <select className="df-sel" style={{ marginTop: 10, width: '100%' }} value="" onChange={e => { const id = Number(e.target.value); if (!id) return; setExtra(p => new Set([...p, id])); const x = cand.find(c => c.id === id); if (x) setQty(isArea ? x.id : m.id, isArea ? a.id : x.id, qty(isArea ? x.id : m.id, isArea ? a.id : x.id) || 1) }}>
+            <option value="">{isArea ? '＋ 加入款式…' : '＋ 加入位置…'}</option>
+            {rest.map(x => <option key={x.id} value={x.id}>{isArea ? x.name : aName(x) + (x.kind !== 'use' ? '（' + KIND[x.kind] + '）' : '')}</option>)}
+          </select>
+        )}
         {!edit && <p className="note">目前帳號只可查看</p>}
       </>
     )
@@ -117,7 +127,7 @@ export default function Bins({ d, edit, reload, reg, onClose }) {
 
   const byFloor = FLOORS.concat([...new Set(useAreas.map(a => a.floor).filter(f => !FLOORS.includes(f)))]).map(f => ({ f, items: useAreas.filter(a => a.floor === f) })).filter(g => g.items.length)
   const areaCard = a => (
-    <button className={'sq-card' + (a.kind !== 'use' ? ' off' : '')} key={a.id} onClick={() => setSel({ k: 'area', id: a.id })}>
+    <button className={'sq-card' + (a.kind !== 'use' ? ' off' : '')} key={a.id} onClick={() => openSel({ k: 'area', id: a.id })}>
       <span className="bn-ico">{a.kind === 'use' ? '🗑' : a.kind === 'store' ? '📦' : '🚫'}</span>
       <span className="sq-name">{a.name}</span>
       <span className="sq-n">{areaTot(a.id)}<small>{a.kind === 'use' ? '個' : `個・${KIND[a.kind]}`}</small></span>
@@ -154,7 +164,7 @@ export default function Bins({ d, edit, reload, reg, onClose }) {
       ) : (
         <div className="sq-grid">
           {bins.map(t => (
-            <button className={'sq-card' + (t.status === '停用' ? ' off' : '')} key={t.id} onClick={() => setSel({ k: 'model', id: t.id })}>
+            <button className={'sq-card' + (t.status === '停用' ? ' off' : '')} key={t.id} onClick={() => openSel({ k: 'model', id: t.id })}>
               <Thumb src={img(t.id)} fallback="🗑" size={64} />
               <span className="sq-name">{t.name}</span>
               <span className="sq-n">{modelUse(t.id)}<small>使用中{modelOff(t.id) ? ` ・ 非使用 ${modelOff(t.id)}` : ''}</small></span>
