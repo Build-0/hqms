@@ -19,7 +19,7 @@ const COLS = {
   equipment: 'id,type,model,brand,floor_code,status,notes,sort_order,label,serial,accessories',
 }
 const TABS = [['chem', '清潔劑', 'drop', '#2f8f9d'], ['vac', '吸塵機', 'clean', '#54808c'], ['tool', '清潔工具', 'wrench', '#b5603a'], ['eq', '設備', 'gear', '#7a6a4f']]
-const EMPTY = { products: [], batches: [], cats: [], vacuums: [], vacMaint: [], floors: [], tools: [], toolCats: [], equipment: [], equipMaint: [], types: [] }
+const EMPTY = { binAreas: [], binCounts: [], products: [], batches: [], cats: [], vacuums: [], vacMaint: [], floors: [], tools: [], toolCats: [], equipment: [], equipMaint: [], types: [] }
 
 export default function Boh({ session, init }) {
   const edit = permsOf(session).boh === 'edit'
@@ -35,13 +35,14 @@ export default function Boh({ session, init }) {
   async function load() {
     try {
       const S = api.dbSelect
-      const [products, batches, cats, vacuums, vacMaint, floors, tools, toolCats, equipment, equipMaint, types] = await Promise.all([
+      const [products, batches, cats, vacuums, vacMaint, floors, tools, toolCats, equipment, equipMaint, types, binAreas, binCounts] = await Promise.all([
         S('products', { cols: COLS.products, order: 'sort_order' }), S('product_batches'), S('boh_categories', { order: 'sort_order' }),
         S('vacuums', { cols: COLS.vacuums, order: 'sort_order' }), S('vacuum_maintenance'), S('vacuum_floors', { order: 'sort_order' }),
         S('tools', { cols: COLS.tools, order: 'sort_order' }), S('tool_categories', { order: 'sort_order' }),
         S('equipment', { cols: COLS.equipment, order: 'sort_order' }), S('equipment_maintenance'), S('equipment_types', { order: 'sort_order' }),
+        S('bin_areas', { order: 'sort_order' }).catch(() => []), S('bin_counts').catch(() => []),
       ])
-      setD({ products, batches, cats, vacuums, vacMaint, floors, tools, toolCats, equipment, equipMaint, types }); setErr('')
+      setD({ binAreas, binCounts, products, batches, cats, vacuums, vacMaint, floors, tools, toolCats, equipment, equipMaint, types }); setErr('')
     } catch (ex) { setErr(ex.message); setD(prev => prev || EMPTY) }
   }
   if (!d) return <div className="note">載入中…</div>

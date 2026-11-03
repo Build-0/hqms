@@ -4,6 +4,7 @@ import * as api from '../../lib/api'
 import { toast } from '../../lib/toast'
 import Confirm from '../../components/Confirm'
 import { Thumb, ImageField, useImages, setCachedImage, ListManager, num } from './shared'
+import Bins from './Bins'
 
 const EMPTY = { name: '', category: '', stock: 0, in_use: 0, min_stock: 0, status: '啟用', notes: '', image: '' }
 
@@ -15,6 +16,7 @@ export default function Tools({ d, edit, reload, reg, init, embedded }) {
   const [orig, setOrig] = useState('')
   const [del, setDel] = useState(null)
   const [mgr, setMgr] = useState(false)
+  const [binView, setBinView] = useState(false)   // 垃圾桶分佈
   const tools = d.tools
   const img = useImages('tools', tools.map(t => t.id))
   const low = t => t.status !== '停用' && num(t.min_stock) > 0 && num(t.stock) < num(t.min_stock)
@@ -62,6 +64,7 @@ export default function Tools({ d, edit, reload, reg, init, embedded }) {
       rows: g.items.map(t => ({ photo: img(t.id), cells: [t.name, t.stock, num(t.in_use) || 0, num(t.min_stock) || '—', t.status], cls: ['', low(t) ? 'rpt-red' : '', '', '', ''] })),
     })),
   })
+  if (binView) return <Bins d={d} edit={edit} reload={reload} reg={reg} onClose={() => { setBinView(false); reload() }} />
   const chip = (k, t) => <SqChip key={k} on={fk === k} onClick={() => setFk(k)} label={t} />
   return (
     <>
@@ -85,7 +88,7 @@ export default function Tools({ d, edit, reload, reg, init, embedded }) {
       {groups.length === 0 && <div className="note">沒有符合的工具</div>}
       {groups.map(g => (
         <div key={g.c}>
-          <div className="bh-grp">{g.c}<span>{g.items.length}</span></div>
+          <div className="bh-grp">{g.c}<span>{g.items.length}</span>{g.c === '垃圾桶' && !embedded && <button className="mini pri" style={{ marginLeft: 'auto' }} onClick={() => setBinView(true)}>🗑 使用中分佈</button>}</div>
           <div className="sq-grid">
             {g.items.map(t => (
               <button className={`sq-card ${t.status === '停用' ? 'off' : ''}`} key={t.id} onClick={() => edit && open(t)}>

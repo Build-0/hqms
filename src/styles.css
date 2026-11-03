@@ -1528,3 +1528,24 @@ html.rpt-open #root{visibility:hidden}
 /* 網頁版：標題列加「返回主頁」掣（手機版隱藏，手機用 ‹ 逐層返回） */
 .home-btn{display:none;padding-bottom:0;align-items:center;justify-content:center}
 @media (min-width:900px){.home-btn{display:inline-flex}}
+
+/* 垃圾桶分佈 */
+.bn-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 10px}
+.bn-kpis>div{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:10px 6px;text-align:center;box-shadow:var(--shadow-card)}
+.bn-kpis b{display:block;font-size:22px;font-weight:800;color:var(--accent);line-height:1.1}
+.bn-kpis small{font-size:11.5px;color:var(--sub)}
+.bn-tabs{display:flex;gap:8px;margin:0 0 10px;align-items:center}
+.bn-tabs button{flex:1;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:8px 10px;font:inherit;font-size:13px;font-weight:700;color:var(--sub);cursor:pointer}
+.bn-tabs button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.bn-tabs .bn-gear{flex:0 0 38px;padding:8px 0}
+.bn-ico{font-size:30px;line-height:1}
+.bn-hd{display:flex;align-items:center;gap:10px;margin:0 0 10px;padding:10px 12px;background:var(--card);border:1px solid var(--line);border-radius:16px}
+.bn-hd b{display:block;font-size:16px}.bn-hd small{color:var(--sub);font-size:12.5px}
+.bn-list{display:flex;flex-direction:column;gap:6px}
+.bn-row{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:8px 10px}
+.bn-nm{flex:1;min-width:0;font-size:14px;font-weight:600;overflow-wrap:anywhere}
+.bn-step{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.bn-step button{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--bg,#f4f6f6);font-size:20px;font-weight:700;cursor:pointer;color:var(--accent);line-height:1}
+.bn-step button:disabled{opacity:.35;cursor:default}
+.bn-step input{width:54px;height:36px;text-align:center;border:1px solid var(--line);border-radius:10px;font:inherit;font-size:16px;font-weight:700;background:var(--card);color:inherit}
+@media (min-width:900px){.bn-list{display:grid;grid-template-columns:1fr 1fr;gap:8px}}
