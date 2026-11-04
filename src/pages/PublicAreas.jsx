@@ -163,7 +163,8 @@ function Roster({ d, load, log, staffOf, canEdit }) {
       let sid = e.id
       if (sid) { await api.dbUpdate('pa_staff', sid, srow); await log('修改員工 ' + srow.name) }
       else { const s = await api.dbInsert('pa_staff', { ...srow, sort_order: d.staff.length + 1 }); sid = s.id; await log('新增員工 ' + srow.name) }
-      if (e.post_id) await api.dbUpdate('pa_posts', e.post_id, { ...prow, staff_id: sid })
+      if (e.staffOnly) { /* 已離職員工：只改人員資料 */ }
+      else if (e.post_id) await api.dbUpdate('pa_posts', e.post_id, { ...prow, staff_id: sid })
       else {
         const p = await api.dbInsert('pa_posts', { ...prow, staff_id: sid, code: e.code.trim(), sort_order: d.posts.length + 1 })
         await api.dbInsertMany('pa_slots', Array.from({ length: 48 }, (_, i) => ({ post_id: p.id, slot: i, task: '' })))
@@ -172,6 +173,7 @@ function Roster({ d, load, log, staffOf, canEdit }) {
       toast(tr('已儲存', 'Saved')); setEdit(null); load()
     } catch (ex) { toast(tr('儲存失敗：', 'Save failed: ') + ex.message) }
   }
+  const openGone = s => setEdit({ ...blank, ...s, langs: s.langs || [], rest_weekdays: s.rest_weekdays || [], rest_dates: s.rest_dates || [], notes: s.notes || '', phone: s.phone || '', staffOnly: true })
   async function stopPost() {
     try { await api.dbUpdate('pa_posts', edit.post_id, { active: false }); await log('停用崗位 ' + edit.code); toast(tr('已停用崗位', 'Post disabled')); setEdit(null); load() } catch (ex) { toast(ex.message) }
   }
@@ -207,7 +209,18 @@ function Roster({ d, load, log, staffOf, canEdit }) {
           </div>
         </div>
       ))}
-      {gone.length > 0 && <p className="src-note" style={{ margin: '10px 4px' }}>{tr('已離職／停用：', 'Inactive: ')}{gone.map(s => s.name).join('、')}</p>}
+      {gone.length > 0 && <>
+        <div className="bh-grp">{tr('已離職／停用', 'Inactive')}<span>{gone.length}</span></div>
+        <div className="pa-grid pa-gone">
+          {gone.map(s => (
+            <button className="pa-gone-c" key={s.id} onClick={() => canEdit && openGone(s)} style={canEdit ? undefined : { cursor: 'default' }}>
+              {s.photo ? <img className="pa-av" src={s.photo} alt="" loading="lazy" /> : <i className="pa-av none">{(s.name || '?').slice(0, 1)}</i>}
+              <b>{s.name}</b>
+              <small>{[s.kind, [s.gender, s.nationality].filter(Boolean).join(' · ')].filter(Boolean).join(' ・ ')}</small>
+            </button>
+          ))}
+        </div>
+      </>}
       {canEdit && <button className="fab" onClick={() => setEdit({ ...blank })}>＋</button>}
       {canEdit && edit && (
         <div className="modal" onClick={e => { if (e.target === e.currentTarget) setEdit(null) }}>
@@ -230,6 +243,7 @@ function Roster({ d, load, log, staffOf, canEdit }) {
               <input type="date" value="" onChange={e => e.target.value && setEdit({ ...edit, rest_dates: [...edit.rest_dates, e.target.value].sort() })} />
               <div className="chips wrap" style={{ marginTop: 6 }}>{edit.rest_dates.map(x => <button key={x} className="chip on" onClick={() => setEdit({ ...edit, rest_dates: edit.rest_dates.filter(y => y !== x) })}>{x} ✕</button>)}</div></div>}
             <div className="f-row"><label>{tr('人員備註', 'Staff notes')}</label><input value={edit.notes} onChange={e => setEdit({ ...edit, notes: e.target.value })} /></div>
+            {!edit.staffOnly && <>
             <div className="pa-sep">{tr('崗位資料', 'Post')}</div>
             {!edit.post_id && <div className="f-row"><label>{tr('崗位編號', 'Post code')}</label><input value={edit.code} onChange={e => setEdit({ ...edit, code: e.target.value })} /></div>}
             <div className="f-row"><label>{tr('分類', 'Group')}</label>
@@ -244,6 +258,7 @@ function Roster({ d, load, log, staffOf, canEdit }) {
             <div className="f-row"><label>{tr('崗位備註', 'Post notes')}</label><input value={edit.pnotes || ''} onChange={e => setEdit({ ...edit, pnotes: e.target.value })} /></div>
             {edit.flag && <button className="btn alt" onClick={() => setEdit({ ...edit, flag: '' })}>✓ {tr('已確認，取消「', 'Confirmed — clear “')}{edit.flag}{tr('」標記', '” flag')}</button>}
             {edit.post_id && <button className="btn danger sm-quiet" onClick={stopPost}>{tr('停用這個崗位', 'Disable this post')}</button>}
+            </>}
             {edit.id && <button className="btn ghost sm-quiet" onClick={() => setEdit({ ...edit, active: !edit.active })}>{edit.active ? tr('標記為已離職／停用', 'Mark as left / inactive') : tr('重新啟用', 'Re-enable')}</button>}
           </div>
         </div>

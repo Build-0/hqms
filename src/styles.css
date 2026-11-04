@@ -1612,3 +1612,15 @@ html.rpt-open #root{visibility:hidden}
 .bn-entry-ico{font-size:30px;width:52px;height:52px;border-radius:14px;background:var(--accent-soft);display:flex;align-items:center;justify-content:center;flex:none}
 .bn-entry-t{display:flex;flex-direction:column;gap:3px;flex:1;min-width:0}.bn-entry-t b{font-size:17px}.bn-entry-t small{color:var(--sub);font-size:12.5px}
 .bn-entry-go{color:var(--accent);font-weight:700;font-size:13px;white-space:nowrap}
+
+.pa-gone{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media (min-width:900px){.pa-gone{grid-template-columns:repeat(6,minmax(0,1fr))}}
+.pa-gone-c{display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 8px;text-align:center;border-radius:18px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow-card);cursor:pointer;font-family:inherit;color:var(--ink);opacity:.75;min-width:0}
+.pa-gone-c .pa-av{filter:grayscale(1)}
+.pa-gone-c b{font-size:14px;max-width:100
+.pa-gone{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media (min-width:900px){.pa-gone{grid-template-columns:repeat(6,minmax(0,1fr))}}
+.pa-gone-c{display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 8px;text-align:center;border-radius:18px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow-card);cursor:pointer;font-family:inherit;color:var(--ink);opacity:.75;min-width:0}
+.pa-gone-c .pa-av{filter:grayscale(1)}
+.pa-gone-c b{font-size:14px;max-width:100%;overflow-wrap:anywhere}
+.pa-gone-c small{font-size:11px;color:var(--sub)}
