@@ -142,8 +142,10 @@ export default function DeepClean({ session }) {
     const n = sts.reduce((a, x) => a + x.n, 0), t = sts.reduce((a, x) => a + x.t, 0), pct = n / Math.max(1, t) * 100
     return (
       <>
-        <ToolBar sticky label={`${it.label} 總表 · ${yr} 年`}><ExportBtn onClick={() => setReport(true)} /></ToolBar>
-        <h2 className="dm-title" style={{ color: it.color }}>{it.label}<small>全部樓層總表 · {yr} 年</small></h2>
+        <div className="dm-head">
+          <h2 className="dm-title" style={{ color: it.color }}>{it.label}<small>全部樓層總表 · {yr} 年</small></h2>
+          <ExportBtn onClick={() => setReport(true)} />
+        </div>
         <div className="dm-sum">
           <span className="dm-ring"><Ring pct={pct} color={it.color} size={68} /></span>
           <span className="dm-nums"><b>{n}</b><small>已清潔</small></span>

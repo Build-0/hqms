@@ -1607,3 +1607,4 @@ html.rpt-open #root{visibility:hidden}
 .dm-t tbody tr:nth-child(even) td:not(.na):not(.ok){background:color-mix(in srgb,var(--line) 22%,transparent)}
 .dm-t tbody tr{border-bottom:2px solid var(--line)}
 .dm-t td,.dm-t tbody th{height:34px}
+.dm-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:6px 0 0}.dm-head .dm-title{margin:0}
