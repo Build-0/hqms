@@ -142,7 +142,8 @@ export default function DeepClean({ session }) {
     const n = sts.reduce((a, x) => a + x.n, 0), t = sts.reduce((a, x) => a + x.t, 0), pct = n / Math.max(1, t) * 100
     return (
       <>
-        <ToolBar sticky label={`${it.label} 總表 · ${yr} 年`} />
+        <ToolBar sticky label={`${it.label} 總表 · ${yr} 年`}><ExportBtn onClick={() => setReport(true)} /></ToolBar>
+        <h2 className="dm-title" style={{ color: it.color }}>{it.label}<small>全部樓層總表 · {yr} 年</small></h2>
         <div className="dm-sum">
           <span className="dm-ring"><Ring pct={pct} color={it.color} size={68} /></span>
           <span className="dm-nums"><b>{n}</b><small>已清潔</small></span>
@@ -179,6 +180,14 @@ export default function DeepClean({ session }) {
           </div>
         ))}
         <p className="src-note" style={{ margin: '8px 4px 0' }}>有顏色＝{yr} 年已完成（顯示最近一次日期）；空白＝未做，灰字＝上次（參考）日期；灰底＝冇呢間房。撳上面樓層可入去登記。</p>
+        {report && <ReportModal title={`深度清潔總表 · ${it.label}`} sub={todayStr()} onClose={() => setReport(false)}><ListReport data={{
+          filterText: `${it.label}、${yr} 年、全部樓層（${n}/${t}，完成率 ${Math.round(pct)}%）`,
+          cols: ['樓層／房號', yr + ' 年完成日期', '上次（參考）'],
+          groups: [
+            { name: '每層完成數', rows: sts.map(x => ({ cells: [x.f + ' 樓', `${x.n}/${x.t}`, Math.round(x.n / Math.max(1, x.t) * 100) + '%'] })) },
+            ...fls.map(f => ({ name: `${f} 樓`, rows: ROOMS(f, nOf(it, f), it.set).map(r => { const e = recsOf(it, f, r), p = prevOf(it, f, r); return { cells: [r, e.length ? (longD(e[0].done_on) || e[0].note || '有記錄') : skipped(it, f, r) ? '跳過' : '未做', p ? longD(p.done_on) : '—'] } }) })),
+          ],
+        }} /></ReportModal>}
       </>
     )
   }
