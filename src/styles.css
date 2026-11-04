@@ -1530,7 +1530,7 @@ html.rpt-open #root{visibility:hidden}
 @media (min-width:900px){.home-btn{display:inline-flex}}
 
 /* 垃圾桶分佈 */
-.bn-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 10px}
+.bn-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0 10px}
 .bn-kpis>div{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:10px 6px;text-align:center;box-shadow:var(--shadow-card)}
 .bn-kpis b{display:block;font-size:22px;font-weight:800;color:var(--accent);line-height:1.1}
 .bn-kpis small{font-size:11.5px;color:var(--sub)}
