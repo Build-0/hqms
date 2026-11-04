@@ -107,7 +107,7 @@ export default function Tools({ d, edit, reload, reg, init, embedded }) {
       {groups.length === 0 && <div className="note">沒有符合的工具</div>}
       {groups.map(g => (
         <div key={g.c}>
-          <div className="bh-grp">{g.c}<span>{g.items.length}</span>{g.c === '垃圾桶' && !embedded && <button className="mini pri" style={{ marginLeft: 'auto' }} onClick={() => setBinView(true)}>🗑 使用中分佈</button>}</div>
+          <div className="bh-grp">{g.c}<span>{g.items.length}</span></div>
           {g.c === '垃圾桶' && !embedded && fk === 'all' && !q.trim() ? (() => {
             const u = g.items.reduce((n, t) => n + binSum(t, 'use'), 0), s = g.items.reduce((n, t) => n + binSum(t, 'store'), 0), o = g.items.reduce((n, t) => n + binSum(t, 'off'), 0)
             return (
