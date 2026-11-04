@@ -156,13 +156,13 @@ export default function DeepClean({ session }) {
             <div className="bh-grp">{name}</div>
             <div className="dm-w">
               <table className="dm-t">
-                <thead><tr><th>F</th>{Array.from({ length: z - a + 1 }, (_, i) => <th key={i}>{a + i}</th>)}</tr></thead>
+                <thead><tr><th className="dm-f">樓層</th>{Array.from({ length: z - a + 1 }, (_, i) => <th key={i}>{a + i}</th>)}</tr></thead>
                 <tbody>
                   {fls.map(f => {
                     const ok = new Set(ROOMS(f, nOf(it, f), it.set))
                     return (
                       <tr key={f}>
-                        <th>{f}</th>
+                        <th className="dm-f">{f}<small>樓</small></th>
                         {Array.from({ length: z - a + 1 }, (_, i) => {
                           const r = String(f * 100 + a + i)
                           if (!ok.has(r)) return <td key={i} className="na" />
