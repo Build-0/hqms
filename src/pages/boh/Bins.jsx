@@ -10,7 +10,7 @@ const fno = f => { const i = FLOORS.indexOf(f); return i < 0 ? 99 : i }
 
 // 垃圾桶分佈：每款垃圾桶 × 每個位置 = 數量（唯一數據來源）。位置分三類：使用中、倉（倉庫庫存、機械倉等）、停用。
 // tools.in_use／tools.stock 由本頁自動同步（在用＝使用中位置加總；庫存＝倉位置加總）。
-export default function Bins({ d, edit, reload, reg, onClose }) {
+export default function Bins({ d, edit, reload, reg, onClose, onEditTool }) {
   const all = d.tools.filter(t => t.category === '垃圾桶')
   const areas = [...d.binAreas].sort((a, b) => fno(a.floor) - fno(b.floor) || (a.sort_order || 0) - (b.sort_order || 0))
   const img = useImages('tools', all.map(t => t.id))
@@ -134,6 +134,7 @@ export default function Bins({ d, edit, reload, reg, onClose }) {
             {rest.map(x => <option key={x.id} value={x.id}>{isArea ? x.name : aName(x) + (x.kind !== 'use' ? '（' + KIND[x.kind] + '）' : '')}</option>)}
           </select>
         )}
+        {edit && m && onEditTool && <button className="mini-btn" style={{ marginTop: 14, width: '100%' }} onClick={() => onEditTool(m)}>✎ 編輯款式（改名、換相、最低庫存）</button>}
         {!edit && <p className="note">目前帳號只可查看</p>}
       </>
     )

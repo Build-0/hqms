@@ -1608,3 +1608,7 @@ html.rpt-open #root{visibility:hidden}
 .dm-t tbody tr{border-bottom:2px solid var(--line)}
 .dm-t td,.dm-t tbody th{height:34px}
 .dm-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:6px 0 0}.dm-head .dm-title{margin:0}
+.bn-entry{display:flex;align-items:center;gap:14px;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:var(--shadow, 0 1px 3px rgba(0,0,0,.06));color:var(--text)}
+.bn-entry-ico{font-size:30px;width:52px;height:52px;border-radius:14px;background:var(--accent-soft);display:flex;align-items:center;justify-content:center;flex:none}
+.bn-entry-t{display:flex;flex-direction:column;gap:3px;flex:1;min-width:0}.bn-entry-t b{font-size:17px}.bn-entry-t small{color:var(--sub);font-size:12.5px}
+.bn-entry-go{color:var(--accent);font-weight:700;font-size:13px;white-space:nowrap}

@@ -17,6 +17,7 @@ export default function Tools({ d, edit, reload, reg, init, embedded }) {
   const [del, setDel] = useState(null)
   const [mgr, setMgr] = useState(false)
   const [binView, setBinView] = useState(false)   // 垃圾桶分佈
+  const [fromBin, setFromBin] = useState(false)
   const tools = d.tools
   const img = useImages('tools', tools.map(t => t.id))
   const low = t => t.status !== '停用' && num(t.min_stock) > 0 && num(t.stock) < num(t.min_stock)
@@ -62,7 +63,7 @@ export default function Tools({ d, edit, reload, reg, init, embedded }) {
       }
       if (form.id) { await api.dbUpdate('tools', form.id, row); if (form.image !== orig) setCachedImage('tools', form.id, form.image) }
       else { const r = await api.dbInsert('tools', { ...row, sort_order: tools.length + 1, image: form.image || null }); setCachedImage('tools', r.id, form.image) }
-      toast('已儲存'); setForm(null); reload()
+      toast('已儲存'); closeForm(); reload()
     } catch (ex) { toast('儲存失敗：' + ex.message) }
   }
   async function remove(t) {
@@ -81,7 +82,8 @@ export default function Tools({ d, edit, reload, reg, init, embedded }) {
         : { photo: img(t.id), cells: [t.name, t.stock, num(t.in_use) || 0, num(t.min_stock) || '—', t.status], cls: ['', low(t) ? 'rpt-red' : '', '', '', ''] }),
     })),
   })
-  if (binView) return <Bins d={d} edit={edit} reload={reload} reg={reg} onClose={() => { setBinView(false); reload() }} />
+  const closeForm = () => { setForm(null); if (fromBin) { setFromBin(false); setBinView(true) } }   // 由分佈頁開嘅編輯，關閉後返回分佈頁
+  if (binView) return <Bins d={d} edit={edit} reload={reload} reg={reg} onClose={() => { setBinView(false); reload() }} onEditTool={t => { setFromBin(true); setBinView(false); open(t) }} />
   const chip = (k, t) => <SqChip key={k} on={fk === k} onClick={() => setFk(k)} label={t} />
   return (
     <>
@@ -106,7 +108,16 @@ export default function Tools({ d, edit, reload, reg, init, embedded }) {
       {groups.map(g => (
         <div key={g.c}>
           <div className="bh-grp">{g.c}<span>{g.items.length}</span>{g.c === '垃圾桶' && !embedded && <button className="mini pri" style={{ marginLeft: 'auto' }} onClick={() => setBinView(true)}>🗑 使用中分佈</button>}</div>
-          <div className="sq-grid sq-eq">
+          {g.c === '垃圾桶' && !embedded && fk === 'all' && !q.trim() ? (() => {
+            const u = g.items.reduce((n, t) => n + binSum(t, 'use'), 0), s = g.items.reduce((n, t) => n + binSum(t, 'store'), 0), o = g.items.reduce((n, t) => n + binSum(t, 'off'), 0)
+            return (
+              <button className="bn-entry" onClick={() => setBinView(true)}>
+                <span className="bn-entry-ico">🗑</span>
+                <span className="bn-entry-t"><b>垃圾桶 合共 {u + s + o}</b><small>使用中 {u} ・ 倉 {s} ・ 停 {o}　｜　{g.items.length} 款</small></span>
+                <span className="bn-entry-go">睇分佈 ›</span>
+              </button>
+            )
+          })() : <div className="sq-grid sq-eq">
             {g.items.map(t => (
               <button className={`sq-card ${t.status === '停用' ? 'off' : ''}`} key={t.id} onClick={() => edit && open(t)}>
                 <Thumb src={img(t.id)} fallback="🧹" size={64} />
@@ -116,13 +127,13 @@ export default function Tools({ d, edit, reload, reg, init, embedded }) {
                   : <span className={`sq-n ${low(t) ? 'low' : ''}`}>{t.stock}<small>{t.status === '停用' ? '停用' : low(t) ? '需補貨' : '庫存'}</small></span>}
               </button>
             ))}
-          </div>
+          </div>}
         </div>
       ))}
       {edit && !embedded && <button className="fab" onClick={() => open(null)}>＋</button>}
 
       {form && (
-        <div className="modal" onClick={e => { if (e.target === e.currentTarget) setForm(null) }}>
+        <div className="modal" onClick={e => { if (e.target === e.currentTarget) closeForm() }}>
           <div className="sheet">
             <h2>{form.id ? '編輯工具' : '新增工具'}</h2>
             <div className="f-row"><label>名稱 *</label><input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></div>
@@ -144,7 +155,7 @@ export default function Tools({ d, edit, reload, reg, init, embedded }) {
             <ImageField value={form.image} onChange={v => setForm({ ...form, image: v })} fallback="🧹" />
             <button className="btn" onClick={save}>儲存</button>
             {form.id && <button className="btn danger" onClick={() => setDel(form)}>刪除</button>}
-            <button className="btn ghost" onClick={() => setForm(null)}>取消</button>
+            <button className="btn ghost" onClick={closeForm}>取消</button>
           </div>
         </div>
       )}
