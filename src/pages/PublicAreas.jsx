@@ -274,7 +274,7 @@ const ANNUAL_CATS = [
   ['office', '後勤寫字樓清潔', 'Back-office cleaning'],
   ['offroutine', '非日常清潔衛生跟進表', 'Non-routine cleaning follow-up'],
 ]
-const ANNUAL_AREAS = [['商場內', 'Inside mall'], ['商場外', 'Outside mall'], ['舊街', 'Old Street'], ['停車場', 'Car park'], ['皇宮前地', 'Palace forecourt'], ['外圍', 'Perimeter']]
+const ANNUAL_AREAS = [['商場內', 'Inside mall'], ['商場外', 'Outside mall'], ['舊街', 'Old Street'], ['停車場', 'Car park'], ['皇宮前地', 'Palace forecourt'], ['外圍', 'Perimeter'], ['酒店內外', 'Hotel (inside & outside)'], ['後勤地區', 'Back-of-house areas']]
 const ANNUAL_FREQ = [['定期', 'Regular'], ['不定期', 'Irregular']]
 // 中文 → 英文：用瀏覽器內建翻譯（Chrome 138+ 電腦版），本機處理，內容唔會傳出去
 async function zhToEn(texts) {
