@@ -1,4 +1,5 @@
 import { Ordered } from '../../lib/cardOrder'
+import { LinenHome, LinenYear, emptyRec } from './LinenYears'
 import { useEffect, useState } from 'react'
 import * as api from '../../lib/api'
 import { toast } from '../../lib/toast'
@@ -22,9 +23,14 @@ export default function Uniform({ edit }) {
   const [view, setView] = useState(null)       // 唯讀查看（冇編輯權限）
   const [upBusy, setUpBusy] = useState(false)
   const [err, setErr] = useState('')
-  useBack(!!cat, () => setCat(null))
+  const [sub, setSub] = useState(null)       // 布草入面：null＝入口卡；'stock'＝現有庫存；數字＝該年紀錄
+  const [yrs, setYrs] = useState([])
+  const [ys, setYs] = useState(null)
+  useBack(!!cat, () => { setCat(null); setSub(null) })
+  useBack(cat === '布草' && sub != null, () => setSub(null))
   const load = () => api.dbSelect('uni_items', { order: 'sort_order' }).then(r => { setItems(r); setErr('') }).catch(ex => { setErr(ex.message); setItems(prev => prev || []) })
-  useEffect(() => { load() }, [])
+  const loadYrs = () => api.dbSelect('uni_linen_yr', { order: 'year' }).then(setYrs).catch(() => setYrs([]))
+  useEffect(() => { load(); loadYrs() }, [])
   if (!items) return <div className="note">載入中…</div>
   const nm = i => [i.name, i.size].filter(Boolean).join(' ') || '（未命名）'
   const low = i => i.min_qty > 0 && i.qty <= i.min_qty
@@ -48,6 +54,9 @@ export default function Uniform({ edit }) {
       </>
     )
   }
+
+  if (cat === '布草' && sub == null) return <LinenHome items={ofCat('布草')} yrs={yrs} edit={edit} onPick={setSub} onAdd={y => { setSub(y); setYs(emptyRec(y)) }} />
+  if (cat === '布草' && typeof sub === 'number') return <LinenYear year={sub} items={ofCat('布草')} yrs={yrs} edit={edit} ys={ys} setYs={setYs} reload={loadYrs} />
 
   const all = ofCat(cat)
   const list = all.filter(i => (!f.low || low(i)) && (!f.q.trim() || (nm(i) + (i.location || '') + (i.grp || '')).toLowerCase().includes(f.q.trim().toLowerCase())))
