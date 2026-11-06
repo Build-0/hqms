@@ -60,7 +60,7 @@ export function LinenRec({ yrs, edit, onPick, onAdd }) {
     const sup = [...new Set(rs.filter(r => r.purchase_qty).map(r => r.supplier).filter(Boolean))].join('、')
     return { q, sup }
   }
-  const cards = years.map(y => { const t = stat(y); return [y, y + ' 年', 'calendar', '#8a5fa8', t.q ? <>入貨 {t.q.toLocaleString()} 件{t.sup ? <><br /><span className="lin-sup">{t.sup}</span></> : null}</> : '盤點／報廢紀錄'] })
+  const cards = years.map(y => { const t = stat(y); return [y, y + ' 年', 'calendar', '#8a5fa8', t.q ? <>入貨 {t.q.toLocaleString()} 件{t.sup ? <><br /><span className="lin-sup">{t.sup}</span></> : null}</> : <><span className="lin-sup none">無入貨</span><br />只有盤點／報廢</>] })
   return (
     <>
       <ToolBar label="布草入貨紀錄" />
@@ -113,12 +113,13 @@ export function LinenYear({ year, items, yrs, edit, ys, setYs, reload }) {
     <>
       <ToolBar label={`${year} 年 · 布草紀錄`} />
       <p className="pa-stat">入貨 {tq.toLocaleString()} 件　·　當時金額 {hk(Math.round(tc))}　·　報廢 {td.toLocaleString()} 件　·　報廢金額約 {hk(Math.round(tdv))}</p>
+      {tq === 0 && rs.length > 0 && <p className="src-note" style={{ margin: '10px 4px', fontWeight: 600 }}>{year} 年冇買過布草，所以冇供應商同單價，只有盤點遺失／報廢紀錄。</p>}
       {rs.length === 0 && <p className="src-note" style={{ margin: '14px 4px' }}>呢一年未有紀錄。{edit ? '撳右下角「＋」新增。' : ''}</p>}
       <Ordered okey="linen_items" items={sorted} idOf={r => r.item_id} labelOf={r => byId[r.item_id]?.name || '（已刪除品項）'}>{ord => (
       <div className="pa-grid pa-grid-an">
         {ord.map(r => (
           <div className="pa-sq pa-an" key={r.id} role="button" tabIndex={0} onClick={() => edit && setYs({ ...r })} style={edit ? undefined : { cursor: 'default' }}>
-            <span className="pa-sq-top"><span className={'lin-sup' + (r.supplier ? '' : ' empty')}>{r.supplier || (edit ? '＋ 填供應商' : '未填供應商')}</span></span>
+            <span className="pa-sq-top">{r.purchase_qty ? <span className={'lin-sup' + (r.supplier ? '' : ' empty')}>{r.supplier || (edit ? '＋ 填供應商' : '未填供應商')}</span> : <span className="lin-sup none">呢年無入貨</span>}</span>
             <b className="pa-sq-name"><NameSz i={byId[r.item_id]} /></b>
             <span className="pa-sq-post">
               {r.purchase_qty ? <span className="st-qty">{r.purchase_qty.toLocaleString()}<small> 件入貨</small></span> : null}
