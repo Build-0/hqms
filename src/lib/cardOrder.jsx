@@ -24,12 +24,22 @@ export const canReorder = s => !s || !!s.dev || s.role === 'admin'
 const regs = []
 const regSubs = new Set()
 const emitRegs = () => regSubs.forEach(f => f(n => n + 1))
-export function OrderHeaderBtn() {
+export function OrderSettingsRow({ onPick }) {
   const [, bump] = useState(0)
   useEffect(() => { regSubs.add(bump); return () => { regSubs.delete(bump) } }, [])
   const r = regs[regs.length - 1]
   if (!r || !canReorder(getSession())) return null
-  return <button className="hdr-gear hdr-sort" onClick={r.open} aria-label="排序卡片" title="自訂卡片排序"><Icon name="sort" size={24} color="#fff" width={2} /></button>
+  return (
+    <>
+      <div className="st2-sec">排序</div>
+      <div className="st2-card">
+        <button className="st2-row st2-act" onClick={() => { onPick(); r.open() }}>
+          <Icon name="sort" size={20} width={2.2} />
+          <span className="st2-lab">自訂卡片排序<small>調整目前呢一頁嘅卡片次序</small></span><span className="st2-go">›</span>
+        </button>
+      </div>
+    </>
+  )
 }
 
 function sortBy(ids, items, idOf) {
