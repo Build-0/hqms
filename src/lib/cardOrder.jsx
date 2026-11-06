@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import * as api from './api'
 import { toast } from './toast'
 import { getSession } from './accounts'
+import Icon from '../components/Icon'
 
 // 卡片自訂排序：全部帳號共用（存喺資料庫 card_order），只有開發者／管理員見到「排序」掣
 let cache = null            // { 排序位置key: [卡片id…] }
@@ -19,6 +20,18 @@ function load() {
 
 export const canReorder = s => !s || !!s.dev || s.role === 'admin'
 
+// 標題列右上角嘅排序圖示：目前畫面有可排序嘅卡片組先出現，撳一下開排序視窗
+const regs = []
+const regSubs = new Set()
+const emitRegs = () => regSubs.forEach(f => f(n => n + 1))
+export function OrderHeaderBtn() {
+  const [, bump] = useState(0)
+  useEffect(() => { regSubs.add(bump); return () => { regSubs.delete(bump) } }, [])
+  const r = regs[regs.length - 1]
+  if (!r || !canReorder(getSession())) return null
+  return <button className="hdr-gear hdr-sort" onClick={r.open} aria-label="排序卡片" title="自訂卡片排序"><Icon name="sort" size={24} color="#fff" width={2} /></button>
+}
+
 function sortBy(ids, items, idOf) {
   if (!ids || !ids.length) return items
   const rank = x => { const i = ids.indexOf(idOf(x)); return i < 0 ? 1e6 : i }
@@ -31,9 +44,15 @@ export function Ordered({ okey, items, idOf = x => x.id, labelOf = x => x.label,
   const [open, setOpen] = useState(false)
   useEffect(() => { subs.add(bump); if (!cache) load(); return () => { subs.delete(bump) } }, [])
   const list = sortBy(cache && cache[okey], items, idOf)
+  const orderable = bar && list.length > 1
+  useEffect(() => {
+    if (!orderable) return
+    const r = { open: () => setOpen(true) }
+    regs.push(r); emitRegs()
+    return () => { regs.splice(regs.indexOf(r), 1); emitRegs() }
+  }, [orderable])
   return (
     <>
-      {bar && canReorder(getSession()) && list.length > 1 && <div className="ord-bar"><button className="ord-btn" onClick={() => setOpen(true)}>⇅ 排序</button></div>}
       {children(list)}
       {open && <OrderSheet okey={okey} list={list} idOf={idOf} labelOf={labelOf} onClose={() => setOpen(false)} />}
     </>
@@ -57,17 +76,19 @@ function OrderSheet({ okey, list, idOf, labelOf, onClose }) {
   }
   return (
     <div className="modal" style={{ zIndex: 70 }} onClick={e => { if (e.target === e.currentTarget) onClose() }}>
-      <div className="sheet">
+      <div className="sheet ord-sheet">
         <div className="sheet-hd"><h2>卡片排序</h2><span className="sheet-hd-acts"><button className="mini" onClick={onClose}>取消</button><button className="mini pri" disabled={busy} onClick={() => save(ids)}>儲存</button></span></div>
-        <p className="src-note">用 ▲ ▼ 調整次序，儲存後所有帳號都會跟呢個次序。</p>
-        {ids.map((id, i) => (
-          <div className="ord-row" key={id}>
-            <span className="ord-n">{i + 1}</span>
-            <b>{lab(id)}</b>
-            <button className="mini" disabled={i === 0} onClick={() => move(i, -1)}>▲</button>
-            <button className="mini" disabled={i === ids.length - 1} onClick={() => move(i, 1)}>▼</button>
-          </div>
-        ))}
+        <p className="src-note">撳右邊箭咀移動，儲存後所有帳號都跟呢個次序。</p>
+        <div className="ord-list">
+          {ids.map((id, i) => (
+            <div className="ord-row" key={id}>
+              <span className="ord-n">{i + 1}</span>
+              <b>{lab(id)}</b>
+              <button className="ord-mv" aria-label="上移" disabled={i === 0} onClick={() => move(i, -1)}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M6 15l6-6 6 6" /></svg></button>
+              <button className="ord-mv" aria-label="下移" disabled={i === ids.length - 1} onClick={() => move(i, 1)}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6" /></svg></button>
+            </div>
+          ))}
+        </div>
         <button className="btn ghost sm-quiet" disabled={busy} onClick={() => save([])}>還原預設次序</button>
       </div>
     </div>

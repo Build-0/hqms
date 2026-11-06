@@ -20,7 +20,7 @@ import { getSession, clearSession, applyOverride, permsOf, itemLevel, ITEMS, ROL
 import PermAdmin from './components/PermAdmin'
 import UniformPage from './pages/UniformPage'
 import { toast } from './lib/toast'
-import { Ordered } from './lib/cardOrder'
+import { Ordered, OrderHeaderBtn } from './lib/cardOrder'
 
 // 首頁圓形入口：之後加新模組（清潔劑、機器…）直接在這裡加一行
 const MODULES = [
@@ -166,6 +166,7 @@ export default function App() {
           {(cur || inQuality) && <button className="back-btn home-btn" aria-label="返回主頁" title="返回主頁" onClick={() => setTab('home')}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 11.5 12 4l9 7.5" /><path d="M5.5 10v9.5h13V10" /><path d="M10 19.5v-5h4v5" /></svg></button>}
           {cur && <span className="hdr-ico" style={{ background: 'rgba(255,255,255,.2)' }}><Icon name={cur.icon} size={18} color="#fff" /></span>}
           <h1 style={{ flex: 1 }}>{title}</h1>
+          <OrderHeaderBtn />
           <button className="hdr-gear" onClick={() => setSettings(true)} aria-label="設定"><Icon name="gear" size={26} color="#fff" width={2} /></button>
         </div>
         {tab === 'home' && (
