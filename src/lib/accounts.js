@@ -84,6 +84,8 @@ export const ACCOUNTS = [
   { key: '101117', id: '101117', name: 'Kit Law', role: 'admin' },
   { key: '101082', id: '101082', name: 'Duncan Wang', role: 'store' },
   { key: '101055', id: '101055', name: 'Ray Liao', role: 'store' },
+  { key: '100814', id: '100814', name: 'Andy Li', role: 'store' },    // 李旭升
+  { key: '101326', id: '101326', name: 'Victor Lei', role: 'store' },   // 雷智翔
   { key: '100684', id: '100684', name: 'Abby Liu', role: 'clerk' },
   { key: '101323', id: '101323', name: 'Nico Yan', role: 'clerk' },
   { key: '100266', id: '100266', name: 'Irene Lin', role: 'supervisor' },
