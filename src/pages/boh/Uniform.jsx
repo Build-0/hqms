@@ -68,6 +68,11 @@ export default function Uniform({ edit }) {
   const groups = []
   list.forEach(i => { const g = i.grp || '未分類'; const x = groups.find(y => y.g === g); if (x) x.items.push(i); else groups.push({ g, items: [i] }) })
   const hasGroups = groups.some(g => g.g !== '未分類')
+  const regroup = arr => { const out = []; arr.forEach(i => { const g = i.grp || '未分類'; const x = out.find(y => y.g === g); if (x) x.items.push(i); else out.push({ g, items: [i] }) }); return out }
+  // 布草：所有品項次序可自訂（⚙設定 → 自訂卡片排序），全帳號共用
+  const renderWith = fn => (cat === '布草'
+    ? <Ordered okey="linen_items" items={list} idOf={i => i.id} labelOf={i => i.name || '（未命名）'}>{ord => fn(regroup(ord))}</Ordered>
+    : fn(groups))
 
   async function save() {
     const e = sheet
@@ -108,7 +113,7 @@ export default function Uniform({ edit }) {
       </div>
       {err && <div className="card" style={{ borderColor: 'var(--red)' }}><p style={{ fontSize: 13, lineHeight: 1.7 }}>讀取失敗：{err}</p></div>}
       {list.length === 0 && !err && <p className="src-note" style={{ margin: '14px 4px' }}>{all.length ? '冇符合嘅品項。' : '暫時未有品項。'}{edit && !all.length ? '撳右下角「＋」新增。' : ''}</p>}
-      {groups.map(g => (
+      {renderWith(gs => gs.map(g => (
         <div key={g.g}>
           {hasGroups && <div className="bh-grp">{g.g}<span>{g.items.length}</span></div>}
           <div className="pa-grid pa-grid-an">
@@ -133,7 +138,7 @@ export default function Uniform({ edit }) {
             ))}
           </div>
         </div>
-      ))}
+      )))}
       {edit && <button className="fab" onClick={() => setSheet({ id: null, grp: '', name: '', size: '', qty: '', init_qty: '', base_floor: '', min_qty: '', location: '', notes: '', attachments: [] })}>＋</button>}
       {sheet && (
         <div className="modal" onClick={e => { if (e.target === e.currentTarget) setSheet(null) }}>

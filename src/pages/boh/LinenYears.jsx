@@ -20,7 +20,7 @@ export function LinenHome({ items, yrs, edit, onPick, onAdd }) {
     return { q, sup }
   }
   const cards = [
-    ['stock', '現有庫存', 'bed', '#3a8fb5', `${items.length} 款`],
+    ['stock', '各款現有數量', 'bed', '#3a8fb5', `${items.length} 款`],
     ...years.map(y => { const t = stat(y); return [y, y + ' 年', 'calendar', '#8a5fa8', t.q ? `入貨 ${t.q.toLocaleString()} 件${t.sup ? ' · ' + t.sup : ''}` : '盤點／報廢紀錄'] }),
   ]
   return (
@@ -74,8 +74,9 @@ export function LinenYear({ year, items, yrs, edit, ys, setYs, reload }) {
       <ToolBar label={`${year} 年 · 布草紀錄`} />
       <p className="pa-stat">入貨 {tq.toLocaleString()} 件　·　當時金額 {hk(Math.round(tc))}　·　報廢 {td.toLocaleString()} 件</p>
       {rs.length === 0 && <p className="src-note" style={{ margin: '14px 4px' }}>呢一年未有紀錄。{edit ? '撳右下角「＋」新增。' : ''}</p>}
+      <Ordered okey="linen_items" items={sorted} idOf={r => r.item_id} labelOf={r => byId[r.item_id]?.name || '（已刪除品項）'}>{ord => (
       <div className="pa-grid pa-grid-an">
-        {sorted.map(r => (
+        {ord.map(r => (
           <div className="pa-sq pa-an" key={r.id} role="button" tabIndex={0} onClick={() => edit && setYs({ ...r })} style={edit ? undefined : { cursor: 'default' }}>
             <span className="pa-sq-top"><em>{r.supplier || (edit ? '＋ 填供應商' : '未填供應商')}</em></span>
             <b className="pa-sq-name"><NameSz i={byId[r.item_id]} /></b>
@@ -89,6 +90,7 @@ export function LinenYear({ year, items, yrs, edit, ys, setYs, reload }) {
           </div>
         ))}
       </div>
+      )}</Ordered>
       {edit && <button className="fab" onClick={() => setYs(emptyRec(year))}>＋</button>}
       {ys && (
         <div className="modal" onClick={e => { if (e.target === e.currentTarget) setYs(null) }}>
