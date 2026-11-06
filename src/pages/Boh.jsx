@@ -9,6 +9,9 @@ import Icon from '../components/Icon'
 import Chemicals from './boh/Chemicals'
 import Machines from './boh/Machines'
 import Tools from './boh/Tools'
+import Supplies from './boh/Supplies'
+import WriteOff from './boh/WriteOff'
+import { itemLevel } from '../lib/accounts'
 import { daysUntil, num } from './boh/shared'
 
 // 後勤管理（原「酒店後勤系統」改寫為原生模組，只用中文）
@@ -17,12 +20,14 @@ const COLS = {
   vacuums: 'id,model,brand,floor_code,status,notes,sort_order,label,serial',
   tools: 'id,name,stock,status,notes,sort_order,category,in_use,min_stock',
   equipment: 'id,type,model,brand,floor_code,status,notes,sort_order,label,serial,accessories',
+  supplies: 'id,name,category,unit,stock,min_stock,status,supplier,notes,sort_order',
 }
-const TABS = [['chem', '清潔劑', 'drop', '#2f8f9d'], ['vac', '吸塵機', 'clean', '#54808c'], ['tool', '清潔工具', 'wrench', '#b5603a'], ['eq', '設備', 'gear', '#7a6a4f']]
-const EMPTY = { binAreas: [], binCounts: [], products: [], batches: [], cats: [], vacuums: [], vacMaint: [], floors: [], tools: [], toolCats: [], equipment: [], equipMaint: [], types: [] }
+const TABS = [['chem', '清潔劑', 'drop', '#2f8f9d'], ['vac', '吸塵機', 'clean', '#54808c'], ['tool', '清潔工具', 'wrench', '#b5603a'], ['eq', '設備', 'gear', '#7a6a4f'], ['sup', '客房物資消耗品', 'box', '#8a5fa8'], ['wo', '報銷與遺失管理', 'search', '#c0564f']]
+const EMPTY = { supplies: [], supplyCats: [], binAreas: [], binCounts: [],products: [], batches: [], cats: [], vacuums: [], vacMaint: [], floors: [], tools: [], toolCats: [], equipment: [], equipMaint: [], types: [] }
 
 export default function Boh({ session, init }) {
   const edit = permsOf(session).boh === 'edit'
+  const woLevel = itemLevel(session, 'writeoff')   // 報銷與遺失管理：沿用原本獨立權限（開發中，預設只限開發者）
   const [tab, setTab] = useState(init ? (init.tab || 'chem') : null)   // null ＝ 圓形入口選單；從首頁摘要跳入（補貨／臨期）直接開清潔劑
   const [d, setD] = useState(null)
   const [err, setErr] = useState('')
@@ -35,14 +40,15 @@ export default function Boh({ session, init }) {
   async function load() {
     try {
       const S = api.dbSelect
-      const [products, batches, cats, vacuums, vacMaint, floors, tools, toolCats, equipment, equipMaint, types, binAreas, binCounts] = await Promise.all([
+      const [products, batches, cats, vacuums, vacMaint, floors, tools, toolCats, equipment, equipMaint, types, binAreas, binCounts, supplies, supplyCats] = await Promise.all([
         S('products', { cols: COLS.products, order: 'sort_order' }), S('product_batches'), S('boh_categories', { order: 'sort_order' }),
         S('vacuums', { cols: COLS.vacuums, order: 'sort_order' }), S('vacuum_maintenance'), S('vacuum_floors', { order: 'sort_order' }),
         S('tools', { cols: COLS.tools, order: 'sort_order' }), S('tool_categories', { order: 'sort_order' }),
         S('equipment', { cols: COLS.equipment, order: 'sort_order' }), S('equipment_maintenance'), S('equipment_types', { order: 'sort_order' }),
         S('bin_areas', { order: 'sort_order' }).catch(() => []), S('bin_counts').catch(() => []),
+        S('supplies', { cols: COLS.supplies, order: 'sort_order' }).catch(() => []), S('supply_categories', { order: 'sort_order' }).catch(() => []),
       ])
-      setD({ binAreas, binCounts, products, batches, cats, vacuums, vacMaint, floors, tools, toolCats, equipment, equipMaint, types }); setErr('')
+      setD({ supplies, supplyCats, binAreas, binCounts, products, batches, cats, vacuums, vacMaint, floors, tools, toolCats, equipment, equipMaint, types }); setErr('')
     } catch (ex) { setErr(ex.message); setD(prev => prev || EMPTY) }
   }
   if (!d) return <div className="note">載入中…</div>
@@ -63,16 +69,16 @@ export default function Boh({ session, init }) {
       {err && <div className="card" style={{ borderColor: 'var(--red)' }}><p style={{ fontSize: 13, lineHeight: 1.7 }}>讀取失敗：{err}</p></div>}
       {!tab && (
         <div className="home-grid">
-          {TABS.map(([k, t, ic, co]) => (
+          {TABS.filter(x => x[0] !== 'wo' || woLevel !== 'none').map(([k, t, ic, co]) => (
             <button className="home-item" key={k} onClick={() => setTab(k)}>
               <span className="hi-circle" style={{ background: co + '26', borderColor: 'transparent' }}><Icon name={ic} size={33} color={co} width={2.2} /></span>
               <span className="hi-label">{t}</span>
-              <span className="hi-sub">{{ chem: d.products.length, vac: d.vacuums.length, tool: d.tools.length, eq: d.equipment.length }[k]} 項</span>
+              <span className="hi-sub">{k === 'wo' ? '報銷、遺失、跟進' : `${{ chem: d.products.length, vac: d.vacuums.length, tool: d.tools.length, eq: d.equipment.length, sup: d.supplies.length }[k]} 項`}</span>
             </button>
           ))}
         </div>
       )}
-      {tab && <ToolBar sticky label={TABS.find(x => x[0] === tab)[1]}><ExportBtn onClick={() => setReport(makeReport())} /></ToolBar>}
+      {tab && tab !== 'wo' && <ToolBar sticky label={TABS.find(x => x[0] === tab)[1]}><ExportBtn onClick={() => setReport(makeReport())} /></ToolBar>}
       {!edit && <p className="note" style={{ textAlign: 'left', margin: '0 4px 6px' }}>目前帳號只可查看</p>}
       {tab === 'chem' && init?.fk === 'low' && (() => {
         const lw = x => x.status !== '停用' && num(x.min_stock) > 0 && num(x.stock) < num(x.min_stock)
@@ -89,6 +95,8 @@ export default function Boh({ session, init }) {
       {tab === 'vac' && <Machines kind="vacuum" d={d} edit={edit} reload={load} reg={reg} />}
       {tab === 'tool' && <Tools d={d} edit={edit} reload={load} reg={reg} init={init} />}
       {tab === 'eq' && <Machines kind="equipment" d={d} edit={edit} reload={load} reg={reg} />}
+      {tab === 'sup' && <Supplies d={d} edit={edit} reload={load} reg={reg} who={session ? session.name : ''} />}
+      {tab === 'wo' && woLevel !== 'none' && <WriteOff edit={woLevel === 'edit'} who={session ? session.name : ''} />}
       {report && (
         <ReportModal title={`後勤管理 · ${report.title}`} sub={`${report.filterText} · ${todayStr()}`} onClose={() => setReport(null)}>
           <ListReport data={report} />
