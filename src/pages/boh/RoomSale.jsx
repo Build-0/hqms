@@ -2,12 +2,17 @@ import { useEffect, useState } from 'react'
 import * as api from '../../lib/api'
 import { toast } from '../../lib/toast'
 import { todayStr } from '../../lib/dates'
+import { Ordered } from '../../lib/cardOrder'
+import { useBack } from '../../lib/nav'
+import Icon from '../../components/Icon'
 import { ToolBar, ExportBtn } from '../../components/ui'
 import { ReportModal, ListReport } from '../../components/Reports'
 import { PhotoField, PhotoGrid } from '../../components/Photos'
 
 // 房間可售物品：價錢／庫存表（名稱、分類、單價 MOP、現有數量、最低存量、存放位置、備註）
 const GRP_HINT = ['迷你吧飲品', '零食', '日用品', '洗漱用品', '其他']
+// 分類入口卡：先揀分類再睇品項（冇列出嘅自訂分類用預設圖示，排喺後面）
+const CAT_STYLE = { 'Line Friends': ['star', '#3aa65a'], 歐舒丹: ['drop', '#d9822b'], 葡京人: ['hotel', '#b5483a'], 布草: ['bed', '#3a8fb5'], 房間固定物品: ['tag', '#2f8f9d'], 客人要求物品: ['chat', '#8f7ac9'], 兒童用品: ['people', '#d9628b'] }
 const money = n => (n == null || n === '' ? '—' : 'MOP ' + Number(n).toLocaleString())
 // 成本價可用澳門幣或港幣；統計同毛利一律折算成澳門幣（官方匯率 1 港幣 = 1.03 澳門幣）
 const HKD_TO_MOP = 1.03
@@ -20,15 +25,23 @@ export default function RoomSale({ edit }) {
   const [sheet, setSheet] = useState(null)
   const [report, setReport] = useState(false)
   const [err, setErr] = useState('')
+  const [cat, setCat] = useState(null)
+  useBack(!!cat, () => setCat(null))
   const load = () => api.dbSelect('room_sale_items', { order: 'sort_order' }).then(r => { setItems(r); setErr('') }).catch(ex => { setErr(ex.message); setItems(prev => prev || []) })
   useEffect(() => { load() }, [])
   if (!items) return <div className="note">載入中…</div>
   const low = i => i.min_qty > 0 && i.qty <= i.min_qty
-  const list = items.filter(i => (!f.low || low(i)) && (!f.q.trim() || ((i.name || '') + (i.grp || '') + (i.location || '')).toLowerCase().includes(f.q.trim().toLowerCase())))
+  const searching = !!f.q.trim() || f.low
+  const list = items.filter(i => (!cat || searching || (i.grp || '未分類') === cat) && (!f.low || low(i)) && (!f.q.trim() || ((i.name || '') + (i.grp || '') + (i.location || '')).toLowerCase().includes(f.q.trim().toLowerCase())))
   const lowN = items.filter(low).length
   const value = items.reduce((a, i) => a + (Number(i.price) || 0) * (Number(i.qty) || 0), 0)
   const costValue = items.reduce((a, i) => a + (costMop(i) || 0) * (Number(i.qty) || 0), 0)
   const margin = i => (i.price != null && costMop(i) != null && Number(i.price) > 0 ? Math.round(((i.price - costMop(i)) / i.price) * 100) : null)
+  const cats = []
+  items.forEach(i => { const g = i.grp || '未分類'; const x = cats.find(y => y[0] === g); if (x) x[1].push(i); else cats.push([g, [i]]) })
+  const catRank = c => { const k = Object.keys(CAT_STYLE).indexOf(c); return k < 0 ? 99 : k }
+  cats.sort((a, b) => catRank(a[0]) - catRank(b[0]))
+  const showCards = !cat && !searching
   const groups = []
   list.forEach(i => { const g = i.grp || '未分類'; const x = groups.find(y => y.g === g); if (x) x.items.push(i); else groups.push({ g, items: [i] }) })
   const hasGroups = groups.some(g => g.g !== '未分類')
@@ -51,7 +64,7 @@ export default function RoomSale({ edit }) {
 
   return (
     <>
-      <ToolBar label={`房間可售物品 · ${items.length} 項`}><ExportBtn onClick={() => setReport(true)} /></ToolBar>
+      <ToolBar label={cat ? `${cat} · ${items.filter(i => (i.grp || '未分類') === cat).length} 項` : `房間可售物品 · ${items.length} 項`}><ExportBtn onClick={() => setReport(true)} /></ToolBar>
       <p className="pa-stat">庫存總值：售價 {money(value)}　·　成本（折算澳門幣）{money(Math.round(costValue))}　·　存量低 {lowN} 項</p>
       <div className="fstk">
         <div className="df-grid3" style={{ gridTemplateColumns: 'minmax(0,2fr) minmax(0,1fr)' }}>
@@ -60,10 +73,23 @@ export default function RoomSale({ edit }) {
         </div>
       </div>
       {err && <div className="card" style={{ borderColor: 'var(--red)' }}><p style={{ fontSize: 13, lineHeight: 1.7 }}>讀取失敗：{err}</p></div>}
-      {list.length === 0 && !err && <p className="src-note" style={{ margin: '14px 4px' }}>{items.length ? '冇符合嘅品項。' : '暫時未有品項。'}{edit && !items.length ? '撳右下角「＋」新增。' : ''}</p>}
-      {groups.map(g => (
+      {showCards && (
+        <Ordered okey="roomsale" items={cats} idOf={x => x[0]} labelOf={x => x[0]}>{ord => (
+          <div className="home-grid">
+            {ord.map(([c, its]) => { const [ic, co] = CAT_STYLE[c] || ['box', '#8a5fa8']; const lw = its.filter(low).length; return (
+              <button className="home-item" key={c} onClick={() => setCat(c)}>
+                <span className="hi-circle" style={{ background: co + '26', borderColor: 'transparent' }}><Icon name={ic} size={33} color={co} width={2.2} /></span>
+                <span className="hi-label">{c}</span>
+                <span className="hi-sub">{its.length} 項{lw ? ` · ${lw} 項存量低` : ''}</span>
+              </button>
+            ) })}
+          </div>
+        )}</Ordered>
+      )}
+      {!showCards && list.length === 0 && !err && <p className="src-note" style={{ margin: '14px 4px' }}>{items.length ? '冇符合嘅品項。' : '暫時未有品項。'}{edit && !items.length ? '撳右下角「＋」新增。' : ''}</p>}
+      {!showCards && groups.map(g => (
         <div key={g.g}>
-          {hasGroups && <div className="bh-grp">{g.g}<span>{g.items.length}</span></div>}
+          {hasGroups && (searching || !cat) && <div className="bh-grp">{g.g}<span>{g.items.length}</span></div>}
           <div className="pa-grid pa-grid-an">
             {g.items.map(i => (
               <div className="pa-sq pa-an" key={i.id} role="button" tabIndex={0} onClick={() => edit && setSheet({ ...i, price: i.price ?? '', cost: i.cost ?? '', cost_cur: i.cost_cur || 'MOP', photos: i.photos || [] })} style={edit ? undefined : { cursor: 'default' }}>
@@ -87,7 +113,7 @@ export default function RoomSale({ edit }) {
           </div>
         </div>
       ))}
-      {edit && <button className="fab" onClick={() => setSheet({ id: null, grp: '', name: '', price: '', cost: '', cost_cur: 'MOP', photos: [], qty: '', min_qty: '', location: '', notes: '' })}>＋</button>}
+      {edit && <button className="fab" onClick={() => setSheet({ id: null, grp: cat || '', name: '', price: '', cost: '', cost_cur: 'MOP', photos: [], qty: '', min_qty: '', location: '', notes: '' })}>＋</button>}
       {sheet && (
         <div className="modal" onClick={e => { if (e.target === e.currentTarget) setSheet(null) }}>
           <div className="sheet">
