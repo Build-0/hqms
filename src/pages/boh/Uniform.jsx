@@ -59,7 +59,7 @@ export default function Uniform({ edit }) {
   }
 
   if (cat === '布草' && sub == null) return <LinenHome items={ofCat('布草')} yrs={yrs} onPick={setSub} />
-  if (cat === '布草' && sub === 'base') return <LinenBase items={ofCat('布草')} />
+  if (cat === '布草' && sub === 'base') return <LinenBase items={ofCat('布草')} edit={edit} onSaved={load} />
   if (cat === '布草' && sub === 'price') return <LinenPrice items={ofCat('布草')} yrs={yrs} />
   if (cat === '布草' && sub === 'rec') return <LinenRec yrs={yrs} edit={edit} onPick={setSub} onAdd={y => { setSub(y); setYs(emptyRec(y)) }} />
   if (cat === '布草' && typeof sub === 'number') return <LinenYear year={sub} items={ofCat('布草')} yrs={yrs} edit={edit} ys={ys} setYs={setYs} reload={loadYrs} />

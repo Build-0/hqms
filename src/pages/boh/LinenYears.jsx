@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Ordered } from '../../lib/cardOrder'
 import * as api from '../../lib/api'
 import { toast } from '../../lib/toast'
@@ -207,7 +208,8 @@ export function LinenPrice({ items, yrs }) {
 
 // 客房基數：酒店房間數同每款布草嘅一層／全酒店基數
 const FL = 10
-export function LinenBase({ items }) {
+export function LinenBase({ items, edit, onSaved }) {
+  const [sh, setSh] = useState(null)   // { id, name, base_floor, isNew }
   const tiles = [['總房數', '820 間', ''], ['樓層', FL + ' 層', '每層 82 間'], ['大床房', '28 間', '每層（每間 1 張大床）'], ['小床房', '54 間', '每層（每間 2 張，共 108 張）']]
   const list = items.filter(i => i.base_floor)
   const rest = items.filter(i => !i.base_floor)
@@ -220,7 +222,7 @@ export function LinenBase({ items }) {
       <div className="bh-grp">每款布草基數<span>{list.length}</span></div>
       <div className="pa-grid pa-grid-an">
         {list.map(i => (
-          <div className="pa-sq pa-an" key={i.id} style={{ cursor: 'default' }}>
+          <div className="pa-sq pa-an" key={i.id} role="button" tabIndex={0} onClick={() => edit && setSh({ id: i.id, name: '', base_floor: String(i.base_floor) })} style={edit ? undefined : { cursor: 'default' }}>
             <span className="pa-sq-top"><span className="lin-sup">基數</span></span>
             <b className="pa-sq-name"><NameSz i={i} /></b>
             <span className="pa-sq-post">
@@ -230,7 +232,38 @@ export function LinenBase({ items }) {
           </div>
         ))}
       </div>
-      {rest.length > 0 && <p className="src-note" style={{ margin: '12px 4px' }}>未設基數：{rest.map(i => i.name).join('、')}。到「各款現有數量」撳品項，填「一層基數」就會出現喺呢度。</p>}
+      {rest.length > 0 && <p className="src-note" style={{ margin: '12px 4px' }}>未設基數：{rest.map(i => i.name).join('、')}。{edit ? '撳右下角「＋」加入。' : ''}</p>}
+      {edit && <button className="fab" onClick={() => setSh({ id: '', name: '', base_floor: '' })}>＋</button>}
+      {sh && (
+        <div className="modal" onClick={e => { if (e.target === e.currentTarget) setSh(null) }}>
+          <div className="sheet">
+            <div className="sheet-hd"><h2>{list.some(i => i.id === sh.id) ? '修改基數' : '新增基數款式'}</h2><span className="sheet-hd-acts"><button className="mini" onClick={() => setSh(null)}>取消</button><button className="mini pri" onClick={async () => {
+              const n = Number(sh.base_floor)
+              if (!(n > 0)) return toast('請填一層基數')
+              try {
+                if (sh.id === '__new') {
+                  if (!sh.name.trim()) return toast('請填款式名稱')
+                  await api.dbInsert('uni_items', { cat: '布草', grp: '', name: sh.name.trim(), size: '', qty: 0, min_qty: 0, base_floor: n, sort_order: items.length + 100 })
+                } else {
+                  if (!sh.id) return toast('請揀款式')
+                  await api.dbUpdate('uni_items', sh.id, { base_floor: n })
+                }
+                toast('已儲存'); setSh(null); onSaved()
+              } catch (ex) { toast('儲存失敗：' + ex.message) }
+            }}>儲存</button></span></div>
+            <div className="f-row"><label>款式</label>
+              <select value={sh.id} disabled={list.some(i => i.id === sh.id)} onChange={e => setSh({ ...sh, id: e.target.value })}>
+                <option value="">揀款式…</option>
+                {rest.map(i => <option key={i.id} value={i.id}>{[i.name, i.size].filter(Boolean).join(' ')}</option>)}
+                {list.some(i => i.id === sh.id) && list.filter(i => i.id === sh.id).map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
+                <option value="__new">＋ 全新款式（自己打名）</option>
+              </select></div>
+            {sh.id === '__new' && <div className="f-row"><label>款式名稱</label><input value={sh.name} onChange={e => setSh({ ...sh, name: e.target.value })} placeholder="例：加床床單" /></div>}
+            <div className="f-row"><label>一層基數（件）{Number(sh.base_floor) > 0 ? `　${FL} 層 = ${(Number(sh.base_floor) * FL).toLocaleString()}` : ''}</label><input inputMode="numeric" value={sh.base_floor} onChange={e => setSh({ ...sh, base_floor: e.target.value })} /></div>
+            {list.some(i => i.id === sh.id) && <button className="btn danger sm-quiet" onClick={async () => { try { await api.dbUpdate('uni_items', sh.id, { base_floor: null }); toast('已移除基數'); setSh(null); onSaved() } catch (ex) { toast(ex.message) } }}>移除呢款基數</button>}
+          </div>
+        </div>
+      )}
     </>
   )
 }
