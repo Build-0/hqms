@@ -29,6 +29,7 @@ export function LinenHome({ items, yrs, onPick }) {
   const tiles = [['總入貨', sum('purchase_qty').toLocaleString() + ' 件', 'HKD ' + Math.round(money).toLocaleString()], ['總報廢', sum('condemned_qty').toLocaleString() + ' 件', '約 HKD ' + Math.round(yrs.reduce((a, r) => a + condValue(yrs, r), 0)).toLocaleString()], ['盤點遺失', sum('lost_qty').toLocaleString() + ' 件', '約 HKD ' + Math.round(yrs.reduce((a, r) => a + (r.lost_qty || 0) * priceFor(yrs, r.item_id, r.year).price, 0)).toLocaleString()]]
   const cards = [
     ['stock', '各款現有數量', 'bed', '#3a8fb5', `${items.length} 款`],
+    ['base', '客房基數', 'hotel', '#2f8f9d', '820 間房 · 10 層'],
     ['price', '價錢對比', 'tag', '#d9822b', '各年單價＋供應商'],
     ['rec', '入貨紀錄', 'calendar', '#8a5fa8', years.length ? `${years[years.length - 1]}–${years[0]} 年` : '未有紀錄'],
   ]
@@ -200,6 +201,36 @@ export function LinenPrice({ items, yrs }) {
         </div>
       )}
       <p className="src-note" style={{ margin: '4px 4px 14px' }}>綠色粗體＝呢款最平嘅一年；首尾變化＝最新價對比最早價（▲升價紅色、▼減價綠色）。只列有入貨價嘅年份。</p>
+    </>
+  )
+}
+
+// 客房基數：酒店房間數同每款布草嘅一層／全酒店基數
+const FL = 10
+export function LinenBase({ items }) {
+  const tiles = [['總房數', '820 間', ''], ['樓層', FL + ' 層', '每層 82 間'], ['大床房', '28 間', '每層（每間 1 張大床）'], ['小床房', '54 間', '每層（每間 2 張，共 108 張）']]
+  const list = items.filter(i => i.base_floor)
+  const rest = items.filter(i => !i.base_floor)
+  return (
+    <>
+      <ToolBar label="客房基數" />
+      <div className="lin-sum" style={{ gridTemplateColumns: 'repeat(2,minmax(0,1fr))' }}>
+        {tiles.map(([t, v, sub]) => <div className="lin-sum-t" key={t}><span>{t}</span><b>{v}</b>{sub ? <small>{sub}</small> : null}</div>)}
+      </div>
+      <div className="bh-grp">每款布草基數<span>{list.length}</span></div>
+      <div className="pa-grid pa-grid-an">
+        {list.map(i => (
+          <div className="pa-sq pa-an" key={i.id} style={{ cursor: 'default' }}>
+            <span className="pa-sq-top"><span className="lin-sup">基數</span></span>
+            <b className="pa-sq-name"><NameSz i={i} /></b>
+            <span className="pa-sq-post">
+              <span className="st-qty">{i.base_floor.toLocaleString()}<small> 件／層</small></span>
+              <span className="pa-sub">{FL} 層共 {(i.base_floor * FL).toLocaleString()} 件</span>
+            </span>
+          </div>
+        ))}
+      </div>
+      {rest.length > 0 && <p className="src-note" style={{ margin: '12px 4px' }}>未設基數：{rest.map(i => i.name).join('、')}。到「各款現有數量」撳品項，填「一層基數」就會出現喺呢度。</p>}
     </>
   )
 }

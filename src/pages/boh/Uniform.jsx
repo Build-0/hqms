@@ -1,5 +1,5 @@
 import { Ordered } from '../../lib/cardOrder'
-import { LinenHome, LinenRec, LinenPrice, LinenYear, emptyRec } from './LinenYears'
+import { LinenHome, LinenRec, LinenPrice, LinenBase, LinenYear, emptyRec } from './LinenYears'
 import { useEffect, useState } from 'react'
 import * as api from '../../lib/api'
 import { toast } from '../../lib/toast'
@@ -59,6 +59,7 @@ export default function Uniform({ edit }) {
   }
 
   if (cat === '布草' && sub == null) return <LinenHome items={ofCat('布草')} yrs={yrs} onPick={setSub} />
+  if (cat === '布草' && sub === 'base') return <LinenBase items={ofCat('布草')} />
   if (cat === '布草' && sub === 'price') return <LinenPrice items={ofCat('布草')} yrs={yrs} />
   if (cat === '布草' && sub === 'rec') return <LinenRec yrs={yrs} edit={edit} onPick={setSub} onAdd={y => { setSub(y); setYs(emptyRec(y)) }} />
   if (cat === '布草' && typeof sub === 'number') return <LinenYear year={sub} items={ofCat('布草')} yrs={yrs} edit={edit} ys={ys} setYs={setYs} reload={loadYrs} />
@@ -106,7 +107,6 @@ export default function Uniform({ edit }) {
   return (
     <>
       <ToolBar label={`${cat} · ${all.length} 款 · 共 ${total} 件`}><ExportBtn onClick={() => setReport(true)} /></ToolBar>
-      {cat === '布草' && <p className="pa-stat">酒店 820 間房　·　{FLOORS} 層，每層 82 間（大床 28 ／ 小床 54，小床房每間 2 張）</p>}
       <div className="fstk">
         <div className="df-grid3" style={{ gridTemplateColumns: 'minmax(0,2fr) minmax(0,1fr)' }}>
           <input className="search-inp" placeholder="搜尋品項／分類／位置" value={f.q} onChange={e => setF({ ...f, q: e.target.value })} />
