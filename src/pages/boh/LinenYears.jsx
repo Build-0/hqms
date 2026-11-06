@@ -23,8 +23,14 @@ export function LinenHome({ items, yrs, edit, onPick, onAdd }) {
     ['stock', '各款現有數量', 'bed', '#3a8fb5', `${items.length} 款`],
     ...years.map(y => { const t = stat(y); return [y, y + ' 年', 'calendar', '#8a5fa8', t.q ? `入貨 ${t.q.toLocaleString()} 件${t.sup ? ' · ' + t.sup : ''}` : '盤點／報廢紀錄'] }),
   ]
+  const sum = k => yrs.reduce((a, r) => a + (r[k] || 0), 0)
+  const money = yrs.reduce((a, r) => a + (r.purchase_qty || 0) * (Number(r.unit_price) || 0), 0)
+  const tiles = [['總入貨', sum('purchase_qty').toLocaleString() + ' 件', 'HKD ' + Math.round(money).toLocaleString()], ['總報廢', sum('condemned_qty').toLocaleString() + ' 件', ''], ['盤點遺失', sum('lost_qty').toLocaleString() + ' 件', years.length ? years[years.length - 1] + '–' + years[0] + ' 年' : '']]
   return (
     <>
+      <div className="lin-sum">
+        {tiles.map(([t, v, sub]) => <div className="lin-sum-t" key={t}><span>{t}</span><b>{v}</b>{sub ? <small>{sub}</small> : null}</div>)}
+      </div>
       <Ordered okey="linen" items={cards} idOf={x => String(x[0])} labelOf={x => x[1]}>{list => (
         <div className="home-grid lin-grid">
           {list.map(([k, t, ic, co, sub]) => (

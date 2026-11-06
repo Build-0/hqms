@@ -1656,3 +1656,11 @@ html.rpt-open #root{visibility:hidden}
   .home-grid.lin-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));justify-content:stretch;max-width:980px;margin:0 auto;gap:20px;padding:28px 10px}
   .home-grid.lin-grid .home-item{width:auto;min-width:0}
 }
+
+/* 布草入口 Summary */
+.lin-sum{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:14px 0 4px}
+.lin-sum-t{display:flex;flex-direction:column;gap:2px;padding:12px 14px;border-radius:18px;background:rgba(31,122,109,.09);min-width:0}
+.lin-sum-t span{font-size:12.5px;color:var(--sub)}
+.lin-sum-t b{font-size:22px;font-weight:800;color:var(--ink);line-height:1.2}
+.lin-sum-t small{font-size:11.5px;color:var(--sub)}
+@media (min-width:700px){.lin-sum{max-width:980px;margin:18px auto 0}.lin-sum-t b{font-size:28px}}
