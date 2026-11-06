@@ -1691,3 +1691,9 @@ html.rpt-open #root{visibility:hidden}
   .pa-grid{display:flex;flex-wrap:wrap;justify-content:center;gap:10px}
   .pa-grid > *{flex:none;width:calc((100% - 30px) / 4);min-width:0}
 }
+
+/* 最後一行靠左對齊第一張（組本身仍然置中） */
+@media (min-width:700px){
+  .home-grid.home-grid,.home-grid.sub-grid,.pa-wrap .home-grid,.pa-wrap .home-grid.sub-grid{justify-content:flex-start !important}
+  .sq-grid,.sq-grid.sq-eq,.pa-grid{justify-content:flex-start !important}
+}
