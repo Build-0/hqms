@@ -1675,3 +1675,9 @@ html.rpt-open #root{visibility:hidden}
   .home-grid.home-grid,.home-grid.sub-grid,.pa-wrap .home-grid,.pa-wrap .home-grid.sub-grid{display:grid !important;grid-template-columns:repeat(4,minmax(0,1fr)) !important;justify-content:start !important;justify-items:stretch;max-width:980px;margin:0 !important;gap:20px !important;padding:28px 10px !important}
   .home-grid .home-item,.pa-wrap .home-grid .home-item{width:auto !important;min-width:0}
 }
+
+/* 品項卡（清潔劑／工具／設備／物資等）電腦版同樣一行四張 */
+@media (min-width:700px){
+  .sq-grid,.sq-grid.sq-eq{grid-template-columns:repeat(4,minmax(0,1fr)) !important;gap:14px}
+  .pa-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
