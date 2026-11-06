@@ -210,7 +210,7 @@ export function LinenPrice({ items, yrs }) {
 const FL = 10
 export function LinenBase({ items, edit, onSaved }) {
   const [sh, setSh] = useState(null)   // { id, name, base_floor, isNew }
-  const tiles = [['總房數', '820 間', ''], ['樓層', FL + ' 層', '每層 82 間'], ['大床房', '28 間', '每層（每間 1 張大床）'], ['小床房', '54 間', '每層（每間 2 張，共 108 張）']]
+  const tiles = [['總房數', '820 間', ''], ['樓層', FL + ' 層', '每層 82 間'], ['大床房', '26 間', '每層（每間 1 張大床）'], ['小床房', '56 間', '每層（每間 2 張，共 112 張）']]
   const list = items.filter(i => i.base_floor)
   const rest = items.filter(i => !i.base_floor)
   return (

@@ -12,7 +12,7 @@ import { ReportModal, ListReport } from '../../components/Reports'
 // 制服與布草管理：只做庫存（領用／歸還由各部門自己嘅系統處理）
 // 入口分「制服」「布草」「物資」三類（物資＝制服房嘅大桶、布草車、熨斗等器具），各有自己嘅品項；布草預設有酒店常用嘅床上用品、浴室布草、布草袋
 const CATS = [['制服', 'shirt', '#8f7ac9'], ['布草', 'bed', '#3a8fb5'], ['物資', 'box', '#c98a3a']]
-// 酒店房間基數：820 間房、10 層、每層 82 間（大床 28 + 小床 54，小床房每間兩張）
+// 酒店房間基數：820 間房、10 層、每層 82 間（大床 26 + 小床 56，小床房每間兩張）
 const FLOORS = 10
 const baseTxt = i => (i.base_floor ? `基數 一層 ${i.base_floor.toLocaleString()} ／ ${FLOORS} 層 ${(i.base_floor * FLOORS).toLocaleString()}` : '')
 const GRP_HINT = { 制服: ['上衣', '褲／裙', '外套', '其他'], 布草: ['床上用品', '浴室布草', '布草袋', '其他'], 物資: ['布草車／大桶', '熨斗／熨燙', '架／推車', '其他'] }
