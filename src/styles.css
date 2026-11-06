@@ -1650,3 +1650,9 @@ html.rpt-open #root{visibility:hidden}
 .ord-mv{width:40px;height:40px;flex:none;border-radius:50%;border:1px solid var(--line);background:var(--bg);color:var(--ink);display:flex;align-items:center;justify-content:center;cursor:pointer;font-family:inherit}
 .ord-mv:active{background:var(--accent-soft)}
 .ord-mv:disabled{opacity:.28;cursor:default}
+
+/* 布草入口：電腦版一行四張卡（手機維持兩張） */
+@media (min-width:700px){
+  .home-grid.lin-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));justify-content:stretch;max-width:980px;margin:0 auto;gap:20px;padding:28px 10px}
+  .home-grid.lin-grid .home-item{width:auto;min-width:0}
+}

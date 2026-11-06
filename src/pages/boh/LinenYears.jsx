@@ -26,7 +26,7 @@ export function LinenHome({ items, yrs, edit, onPick, onAdd }) {
   return (
     <>
       <Ordered okey="linen" items={cards} idOf={x => String(x[0])} labelOf={x => x[1]}>{list => (
-        <div className="home-grid">
+        <div className="home-grid lin-grid">
           {list.map(([k, t, ic, co, sub]) => (
             <button className="home-item" key={k} onClick={() => onPick(k)}>
               <span className="hi-circle" style={{ background: co + '26', borderColor: 'transparent' }}><Icon name={ic} size={33} color={co} width={2.2} /></span>
