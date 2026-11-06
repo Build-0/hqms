@@ -183,7 +183,7 @@ export default function Machines({ kind, d, edit, reload, reg }) {
           <div className="sheet">
             <h2>{form.id ? `編輯${C.name}` : `新增${C.name}`}</h2>
             {!isVac && <div className="f-row"><label>設備類型 *</label>
-              <select className="df-sel" value={form.type || ''} onChange={e => setForm({ ...form, type: e.target.value })}>{d.types.map(t => <option key={t.id} value={t.name}>{t.name}</option>)}</select>
+              <select className="df-sel" value={form.type || ''} onChange={e => setForm({ ...form, type: e.target.value, accessories: mergeAcc(e.target.value, (form.accessories || []).filter(a => !tmplOf(form.type).includes(a.name)), !form.id) })}>{d.types.map(t => <option key={t.id} value={t.name}>{t.name}</option>)}</select>
             </div>}
             <div className="bh-row2">
               <div className="f-row"><label>機號（標籤）</label><input value={form.label} onChange={e => setForm({ ...form, label: e.target.value })} /></div>
