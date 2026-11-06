@@ -10,8 +10,38 @@ const nmOf = i => [i.name, i.size].filter(Boolean).join(' ') || '（未命名）
 const NameSz = ({ i }) => (i ? <>{i.name || '（未命名）'}{i.size ? <small style={{ display: 'block', fontSize: '.62em', fontWeight: 500, opacity: .65, marginTop: 2 }}>{i.size}</small> : null}</> : '（已刪除品項）')
 const emptyRec = (year) => ({ id: null, item_id: '', year, purchase_qty: '', unit_price: '', supplier: '', condemned_qty: '', lost_qty: '', note: '' })
 
-// 布草入口：現有庫存 + 每個年份一張卡
-export function LinenHome({ items, yrs, edit, onPick, onAdd }) {
+// 布草入口：頂部 Summary + 兩張卡（各款現有數量／入貨紀錄）
+export function LinenHome({ items, yrs, onPick }) {
+  const years = [...new Set(yrs.map(r => r.year))].sort((a, b) => b - a)
+  const sum = k => yrs.reduce((a, r) => a + (r[k] || 0), 0)
+  const money = yrs.reduce((a, r) => a + (r.purchase_qty || 0) * (Number(r.unit_price) || 0), 0)
+  const tiles = [['總入貨', sum('purchase_qty').toLocaleString() + ' 件', 'HKD ' + Math.round(money).toLocaleString()], ['總報廢', sum('condemned_qty').toLocaleString() + ' 件', ''], ['盤點遺失', sum('lost_qty').toLocaleString() + ' 件', years.length ? years[years.length - 1] + '–' + years[0] + ' 年' : '']]
+  const cards = [
+    ['stock', '各款現有數量', 'bed', '#3a8fb5', `${items.length} 款`],
+    ['rec', '入貨紀錄', 'calendar', '#8a5fa8', years.length ? `${years[years.length - 1]}–${years[0]} 年` : '未有紀錄'],
+  ]
+  return (
+    <>
+      <div className="lin-sum">
+        {tiles.map(([t, v, sub]) => <div className="lin-sum-t" key={t}><span>{t}</span><b>{v}</b>{sub ? <small>{sub}</small> : null}</div>)}
+      </div>
+      <Ordered okey="linen" items={cards} idOf={x => String(x[0])} labelOf={x => x[1]}>{list => (
+        <div className="home-grid lin-grid">
+          {list.map(([k, t, ic, co, sub]) => (
+            <button className="home-item" key={k} onClick={() => onPick(k)}>
+              <span className="hi-circle" style={{ background: co + '26', borderColor: 'transparent' }}><Icon name={ic} size={33} color={co} width={2.2} /></span>
+              <span className="hi-label">{t}</span>
+              <span className="hi-sub">{sub}</span>
+            </button>
+          ))}
+        </div>
+      )}</Ordered>
+    </>
+  )
+}
+
+// 入貨紀錄：每個年份一張卡
+export function LinenRec({ yrs, edit, onPick, onAdd }) {
   const years = [...new Set(yrs.map(r => r.year))].sort((a, b) => b - a)
   const stat = y => {
     const rs = yrs.filter(r => r.year === y)
@@ -19,19 +49,11 @@ export function LinenHome({ items, yrs, edit, onPick, onAdd }) {
     const sup = [...new Set(rs.filter(r => r.purchase_qty).map(r => r.supplier).filter(Boolean))].join('、')
     return { q, sup }
   }
-  const cards = [
-    ['stock', '各款現有數量', 'bed', '#3a8fb5', `${items.length} 款`],
-    ...years.map(y => { const t = stat(y); return [y, y + ' 年', 'calendar', '#8a5fa8', t.q ? `入貨 ${t.q.toLocaleString()} 件${t.sup ? ' · ' + t.sup : ''}` : '盤點／報廢紀錄'] }),
-  ]
-  const sum = k => yrs.reduce((a, r) => a + (r[k] || 0), 0)
-  const money = yrs.reduce((a, r) => a + (r.purchase_qty || 0) * (Number(r.unit_price) || 0), 0)
-  const tiles = [['總入貨', sum('purchase_qty').toLocaleString() + ' 件', 'HKD ' + Math.round(money).toLocaleString()], ['總報廢', sum('condemned_qty').toLocaleString() + ' 件', ''], ['盤點遺失', sum('lost_qty').toLocaleString() + ' 件', years.length ? years[years.length - 1] + '–' + years[0] + ' 年' : '']]
+  const cards = years.map(y => { const t = stat(y); return [y, y + ' 年', 'calendar', '#8a5fa8', t.q ? `入貨 ${t.q.toLocaleString()} 件${t.sup ? ' · ' + t.sup : ''}` : '盤點／報廢紀錄'] })
   return (
     <>
-      <div className="lin-sum">
-        {tiles.map(([t, v, sub]) => <div className="lin-sum-t" key={t}><span>{t}</span><b>{v}</b>{sub ? <small>{sub}</small> : null}</div>)}
-      </div>
-      <Ordered okey="linen" items={cards} idOf={x => String(x[0])} labelOf={x => x[1]}>{list => (
+      <ToolBar label="布草入貨紀錄" />
+      <Ordered okey="linen_yrs" items={cards} idOf={x => String(x[0])} labelOf={x => x[1]}>{list => (
         <div className="home-grid lin-grid">
           {list.map(([k, t, ic, co, sub]) => (
             <button className="home-item" key={k} onClick={() => onPick(k)}>
