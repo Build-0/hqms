@@ -44,7 +44,6 @@ export const ITEMS = [
   { id: 'pa_tasks', group: '公共地區', label: '任務代碼' },
   { id: 'pa_board', group: '公共地區', label: '24 小時看板' },
   { id: 'pa_annual', group: '公共地區', label: '年度清潔' },
-  { id: 'pa_stock', group: '公共地區', label: '物資清點' },
   { id: 'pa_training', group: '公共地區', label: '機器培訓' },
 ]
 export const LEVEL_LABEL = { none: '無', view: '查看', add: '新增', edit: '編輯' }
