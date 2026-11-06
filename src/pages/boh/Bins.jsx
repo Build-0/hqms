@@ -114,14 +114,14 @@ export default function Bins({ d, edit, reload, reg, onClose, onEditTool }) {
     return (
       <>
         <div className="bn-hd">
-          {m && <Thumb src={img(m.id)} fallback="🗑" size={44} />}
+          {m && <Thumb src={img(m.id)} fallback="🗑" size={72} zoom />}
           <div><b>{isArea ? aName(a) : m.name}</b>
             <small>{isArea ? `${KIND[a.kind]}${a.kind === 'use' ? '' : '（唔計入使用中）'} ・ 共 ${areaTot(a.id)} 個` : `使用中 ${modelUse(m.id)} ・ 倉 ${modelStore(m.id)} ・ 停用 ${modelOff(m.id)} ・ 合共 ${modelAll(m.id)}`}</small></div>
         </div>
         <div className="bn-list">
           {list.map(x => (
             <div className="bn-row" key={x.id}>
-              {isArea && <Thumb src={img(x.id)} fallback="🗑" size={40} />}
+              {isArea && <Thumb src={img(x.id)} fallback="🗑" size={56} zoom />}
               <span className="bn-nm">{isArea ? x.name : aName(x)}{!isArea && x.kind !== 'use' && <em className="bn-tag">{KIND[x.kind]}</em>}</span>
               {stepper(isArea ? x.id : m.id, isArea ? a.id : x.id)}
             </div>

@@ -145,7 +145,7 @@ export default function Chemicals({ d, edit, reload, init, reg }) {
             {(() => { const p = pvP; const bs = batchesOf(p.id); return (
                       <div className="c-item bh-card" key={p.id} style={!active(p) ? { opacity: .6 } : undefined}>
                         <div className="bh-item" style={{ cursor: 'default' }}>
-                          <Thumb src={img(p.id)} fallback="🧴" size={72} />
+                          <Thumb src={img(p.id)} fallback="🧴" size={72} zoom />
                           <div className="bh-main">
                             <div className="bh-name">{p.name_zh}{!active(p) && <span className="badge b-gray">停用</span>}</div>
                             {p.name_en && <div className="bh-sub">{p.name_en}</div>}

@@ -184,7 +184,7 @@ export default function Supplies({ d, edit, reload, reg, who }) {
             <div className="sheet" style={{ padding: 12 }}>
               <div className="c-item bh-card" style={!active(s) ? { opacity: .6 } : undefined}>
                 <div className="bh-item" style={{ cursor: 'default' }}>
-                  <Thumb src={img(s.id)} fallback="🧴" size={72} />
+                  <Thumb src={img(s.id)} fallback="🧴" size={72} zoom />
                   <div className="bh-main">
                     <div className="bh-name">{s.name}{!active(s) && <span className="badge b-gray">停用</span>}</div>
                     <div className="bh-sub">{s.category} · 單位：{s.unit}</div>

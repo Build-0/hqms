@@ -1625,3 +1625,19 @@ html.rpt-open #root{visibility:hidden}
 .pa-gone-c b{font-size:14px;max-width:100%;overflow-wrap:anywhere}
 .pa-gone-c small{font-size:11px;color:var(--sub)}
 .pa-kind.k-寶潔力{background:#dbe7f6;color:#27507f}.pa-kind.k-外借{background:#fbe3d3;color:#9a4a16}
+
+/* 後勤方形卡：手機一行兩張、相放大（相片唔再得 64px）；詳情頁相可撳開大圖 */
+@media (max-width:599px){.sq-grid{grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:10px}}
+@media (min-width:600px){.sq-grid{grid-template-columns:repeat(auto-fill,minmax(170px,1fr)) !important}}
+.sq-card .bh-thumb{width:100% !important;height:auto !important;aspect-ratio:1/1;max-width:140px}
+.sq-card .bh-thumb.has-img{background:#eef2f4 !important;border-radius:14px;overflow:hidden}
+.sq-card .bh-thumb.has-img img{border-radius:0}
+.sq-card .bh-thumb.no-img{font-size:52px}
+.sq-card .bn-ico{font-size:52px}
+.sq-card .bn-mosaic{width:100%;height:auto;aspect-ratio:1/1;max-width:140px}
+.sq-eq .sq-card{min-height:216px}
+.bh-thumb.zoomable{cursor:zoom-in}
+.bn-hd .bh-thumb,.bh-item .bh-thumb{width:84px !important;height:84px !important}
+.img-zoom{position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.88);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px;cursor:zoom-out}
+.img-zoom img{max-width:100%;max-height:82vh;object-fit:contain;border-radius:10px;background:#fff}
+.img-zoom span{color:#fff;font-size:13px;opacity:.8}

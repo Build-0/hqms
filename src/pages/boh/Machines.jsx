@@ -127,7 +127,7 @@ export default function Machines({ kind, d, edit, reload, reg }) {
         <div className="modal" onClick={e => { if (e.target === e.currentTarget) setView(null) }}>
           <div className="sheet">
             <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 8 }}>
-              <Thumb src={img(cur.id)} fallback={C.icon} size={84} />
+              <Thumb src={img(cur.id)} fallback={C.icon} size={84} zoom />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <h2 style={{ margin: 0 }}>{title(cur)}</h2>
                 <div className="bh-sub">{sub(cur)}</div>

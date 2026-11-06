@@ -27,11 +27,17 @@ export function useImages(table, ids) {
 }
 export const setCachedImage = (table, id, v) => cache.set(table + id, v || '')
 
-export function Thumb({ src, fallback = '📦', size = 64 }) {
+// zoom：詳情頁用，撳相放大成全螢幕大圖（卡片內唔設，免得同開詳情撞）
+export function Thumb({ src, fallback = '📦', size = 64, zoom }) {
+  const [big, setBig] = useState(false)
+  const canZoom = zoom && src
   return (
-    <div className={`bh-thumb ${src ? 'has-img' : 'no-img'}`} style={{ width: size, height: size }}>
-      {src ? <img src={src} alt="" loading="lazy" /> : <span>{fallback}</span>}
-    </div>
+    <>
+      <div className={`bh-thumb ${src ? 'has-img' : 'no-img'}${canZoom ? ' zoomable' : ''}`} style={{ width: size, height: size }} onClick={canZoom ? e => { e.stopPropagation(); setBig(true) } : undefined}>
+        {src ? <img src={src} alt="" loading="lazy" /> : <span>{fallback}</span>}
+      </div>
+      {big && <div className="img-zoom" onClick={e => { e.stopPropagation(); setBig(false) }}><img src={src} alt="" /><span>撳任何位置關閉</span></div>}
+    </>
   )
 }
 
