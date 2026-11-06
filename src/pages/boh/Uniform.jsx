@@ -124,7 +124,7 @@ export default function Uniform({ edit }) {
           </div>
         </div>
       )}
-      {report && <ReportModal title={`制服布草管理 · ${cat}`} sub={todayStr()} onClose={() => setReport(false)}><ListReport data={reportData()} /></ReportModal>}
+      {report && <ReportModal title={`制服房管理 · ${cat}`} sub={todayStr()} onClose={() => setReport(false)}><ListReport data={reportData()} /></ReportModal>}
     </>
   )
 }

@@ -29,14 +29,14 @@ export const publicPerm = s => (!s ? 'edit' : s.role === 'admin' ? 'edit' : s.pu
 
 // 逐項權限：每個「卡片」都可獨立設定 無／查看／新增／編輯（開發者喺「權限管理」設定，資料庫 perm_items 為準）
 export const ITEMS = [
-  { id: 'daily', group: '房間品質', label: '今日重點' },
-  { id: 'findings', group: '房間品質', label: '查房記錄', add: true },
-  { id: 'topics', group: '房間品質', label: '培訓主題庫' },
-  { id: 'cyclic', group: '房間品質', label: '清潔要點' },
-  { id: 'deepclean', group: '房間品質', label: '深度清潔記錄', add: true },
-  { id: 'complaint', group: '房間品質', label: '客訴管理' },
+  { id: 'daily', group: '房間管理', label: '今日重點' },
+  { id: 'findings', group: '房間管理', label: '查房記錄', add: true },
+  { id: 'topics', group: '房間管理', label: '培訓主題庫' },
+  { id: 'cyclic', group: '房間管理', label: '清潔要點' },
+  { id: 'deepclean', group: '房間管理', label: '深度清潔記錄', add: true },
+  { id: 'complaint', group: '房間管理', label: '客訴管理' },
   { id: 'boh', group: '後勤管理', label: '後勤管理（整個模組）' },
-  { id: 'uniform', group: '後勤管理', label: '制服布草管理' },
+  { id: 'uniform', group: '後勤管理', label: '制服房管理' },
   { id: 'writeoff', group: '後勤管理', label: '報銷與遺失管理' },
   { id: 'roomsale', group: '後勤管理', label: '房間可售物品價錢／庫存表' },
   { id: 'defect', group: '缺陷管理', label: '缺陷管理（整個模組）', add: true },
