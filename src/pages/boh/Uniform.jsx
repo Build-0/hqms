@@ -115,7 +115,7 @@ export default function Uniform({ edit }) {
             {g.items.map(i => (
               <div className="pa-sq pa-an" key={i.id} role="button" tabIndex={0} onClick={() => edit ? setSheet({ ...i, attachments: i.attachments || [] }) : setView(i)}>
                 <span className="pa-sq-top"><em>{i.location || '未設位置'}</em>{low(i) && <small className="pa-flag">存量低</small>}</span>
-                <b className="pa-sq-name">{nm(i)}</b>
+                <b className="pa-sq-name">{i.name || '（未命名）'}{i.size ? <small style={{ display: 'block', fontSize: '.62em', fontWeight: 500, opacity: .65, marginTop: 2 }}>{i.size}</small> : null}</b>
                 <span className="pa-sq-post">
                   <span className={'st-qty' + (low(i) ? ' low' : '')}>{i.qty}<small> 件{i.min_qty ? ` ／ 最低 ${i.min_qty}` : ''}</small></span>
                   {i.base_floor ? <span className="pa-sq-area">{baseTxt(i)}</span> : null}

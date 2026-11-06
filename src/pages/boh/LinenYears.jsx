@@ -6,6 +6,8 @@ import { ToolBar } from '../../components/ui'
 
 const hk = n => (n == null || n === '' ? '—' : 'HKD ' + Number(n).toLocaleString())
 const nmOf = i => [i.name, i.size].filter(Boolean).join(' ') || '（未命名）'
+// 品名 + 細字尺碼
+const NameSz = ({ i }) => (i ? <>{i.name || '（未命名）'}{i.size ? <small style={{ display: 'block', fontSize: '.62em', fontWeight: 500, opacity: .65, marginTop: 2 }}>{i.size}</small> : null}</> : '（已刪除品項）')
 const emptyRec = (year) => ({ id: null, item_id: '', year, purchase_qty: '', unit_price: '', supplier: '', condemned_qty: '', lost_qty: '', note: '' })
 
 // 布草入口：現有庫存 + 每個年份一張卡
@@ -75,8 +77,8 @@ export function LinenYear({ year, items, yrs, edit, ys, setYs, reload }) {
       <div className="pa-grid pa-grid-an">
         {sorted.map(r => (
           <div className="pa-sq pa-an" key={r.id} role="button" tabIndex={0} onClick={() => edit && setYs({ ...r })} style={edit ? undefined : { cursor: 'default' }}>
-            <span className="pa-sq-top"><em>{r.supplier || '未填供應商'}</em></span>
-            <b className="pa-sq-name">{byId[r.item_id] ? nmOf(byId[r.item_id]) : '（已刪除品項）'}</b>
+            <span className="pa-sq-top"><em>{r.supplier || (edit ? '＋ 填供應商' : '未填供應商')}</em></span>
+            <b className="pa-sq-name"><NameSz i={byId[r.item_id]} /></b>
             <span className="pa-sq-post">
               {r.purchase_qty ? <span className="st-qty">{r.purchase_qty.toLocaleString()}<small> 件入貨</small></span> : null}
               {r.unit_price != null && <span className="pa-sub">單價 {hk(r.unit_price)}{r.purchase_qty ? ' · 共 ' + hk(Math.round(r.purchase_qty * r.unit_price)) : ''}</span>}
@@ -100,7 +102,7 @@ export function LinenYear({ year, items, yrs, edit, ys, setYs, reload }) {
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
               {F('purchase_qty', '入貨數量')}{F('unit_price', '當時單價（HKD）')}
               <div className="f-row" style={{ flex: '1 1 100%' }}><label>供應商</label>
-                <input list="lin-sup" value={ys.supplier || ''} onChange={e => setYs({ ...ys, supplier: e.target.value })} />
+                <input list="lin-sup" placeholder="自己打供應商名" value={ys.supplier || ''} onChange={e => setYs({ ...ys, supplier: e.target.value })} />
                 <datalist id="lin-sup">{[...new Set(yrs.map(r => r.supplier).filter(Boolean))].map(x => <option key={x} value={x} />)}</datalist></div>
               {F('condemned_qty', '報廢數量')}{F('lost_qty', '盤點遺失數量')}
             </div>
