@@ -33,16 +33,16 @@ const MODULES = [
   // 嵌入的舊系統（與品質系統同網站、各自保留原有資料庫）
   { id: 'boh', icon: 'box', label: '後勤管理', color: '#7a6a4f', top: true, Page: Boh },
   { id: 'defect', icon: 'wrench', label: '缺陷管理', color: '#b5603a', top: true, Page: Defects },
-  { id: 'uniform', sub: '制服庫存', icon: 'shirt', label: '制服房管理', color: '#8f7ac9', top: true, dev: true, Page: UniformPage },
+  { id: 'uniform', sub: '制服庫存', icon: 'shirt', label: '制服與布草管理', color: '#8f7ac9', top: true, dev: true, Page: UniformPage },
   { id: 'complaint', sub: '記錄、統計與月報', icon: 'chat', label: '客訴管理', color: '#c0564f', Page: Complaints },
 ]
-// 首頁系統卡（次序：房間管理、缺陷管理、公共地區、後勤管理、制服房管理）
+// 首頁系統卡（次序：房間管理、缺陷管理、公共地區、後勤管理、制服與布草管理）
 const SYSTEMS = [
   { id: 'quality', icon: 'clipcheck', label: '房間管理', sub: '檢查、評分、報告', color: '#1f7a6d' },
   { id: 'defect', icon: 'wrench', label: '缺陷管理', sub: '登記、跟進、統計', color: '#c0564f' },
   { id: 'public', icon: 'people', label: '公共地區', sub: '崗位、看板、員工', color: '#8a6d3b' },
   { id: 'boh', icon: 'box', label: '後勤管理', sub: '物資、庫存、設備', color: '#4a6fa5' },
-  { id: 'uniform', icon: 'shirt', label: '制服房管理', sub: '制服庫存', color: '#8f7ac9', dev: true },
+  { id: 'uniform', icon: 'shirt', label: '制服與布草管理', sub: '制服庫存', color: '#8f7ac9', dev: true },
 ]
 const WD = ['日', '一', '二', '三', '四', '五', '六']
 
@@ -268,7 +268,7 @@ export default function App() {
             if (api.isOpen) { await api.signOut(); clearSession(); setTab('home'); setSessionState(null) } else { await api.signOut(); setUser(null) }
           }} />
       )}
-      {<Ordered okey="home" bar={false} idOf={x => x[0]} items={[['quality', '房間', 'clipcheck'], ['defect', '缺陷', 'wrench'], ['public', '公共', 'people'], ['boh', '後勤', 'box'], ['uniform', '制服房管理', 'shirt']].filter(([id]) => id !== 'uniform' || showSys({ id, dev: true }))}>{ord => (() => {
+      {<Ordered okey="home" bar={false} idOf={x => x[0]} items={[['quality', '房間', 'clipcheck'], ['defect', '缺陷', 'wrench'], ['public', '公共', 'people'], ['boh', '後勤', 'box'], ['uniform', '制服與布草管理', 'shirt']].filter(([id]) => id !== 'uniform' || showSys({ id, dev: true }))}>{ord => (() => {
         // 底部導覽最多 5 格：項目多過 5 個時，首頁 + 排頭三個留低，其餘（例如後勤、開發中模組）收入「更多」；次序跟首頁「排序」
         const all = [['home', '首頁', 'hotel'], ...ord]
         const many = all.length > 5

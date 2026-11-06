@@ -8,10 +8,10 @@ import Icon from '../../components/Icon'
 import { ToolBar, ExportBtn } from '../../components/ui'
 import { ReportModal, ListReport } from '../../components/Reports'
 
-// 制服布草管理：只做庫存（領用／歸還由各部門自己嘅系統處理）
-// 入口分「制服」「布草」兩類，各有自己嘅品項；布草預設有酒店常用嘅床上用品、浴室布草、布草袋
-const CATS = [['制服', 'shirt', '#8f7ac9'], ['布草', 'bed', '#3a8fb5']]
-const GRP_HINT = { 制服: ['上衣', '褲／裙', '外套', '其他'], 布草: ['床上用品', '浴室布草', '布草袋', '其他'] }
+// 制服與布草管理：只做庫存（領用／歸還由各部門自己嘅系統處理）
+// 入口分「制服」「布草」「物資」三類（物資＝制服房嘅大桶、布草車、熨斗等器具），各有自己嘅品項；布草預設有酒店常用嘅床上用品、浴室布草、布草袋
+const CATS = [['制服', 'shirt', '#8f7ac9'], ['布草', 'bed', '#3a8fb5'], ['物資', 'box', '#c98a3a']]
+const GRP_HINT = { 制服: ['上衣', '褲／裙', '外套', '其他'], 布草: ['床上用品', '浴室布草', '布草袋', '其他'], 物資: ['布草車／大桶', '熨斗／熨燙', '架／推車', '其他'] }
 
 export default function Uniform({ edit }) {
   const [items, setItems] = useState(null)
@@ -57,7 +57,7 @@ export default function Uniform({ edit }) {
 
   async function save() {
     const e = sheet
-    const row = { cat, grp: e.grp.trim(), name: e.name.trim(), size: e.size.trim(), qty: Number(e.qty) || 0, min_qty: Number(e.min_qty) || 0, location: e.location.trim(), notes: e.notes.trim() }
+    const row = { cat, grp: e.grp.trim(), name: e.name.trim(), size: e.size.trim(), qty: Number(e.qty) || 0, init_qty: e.init_qty === '' || e.init_qty == null ? null : Number(e.init_qty), min_qty: Number(e.min_qty) || 0, location: e.location.trim(), notes: e.notes.trim() }
     try {
       if (e.id) await api.dbUpdate('uni_items', e.id, row); else await api.dbInsert('uni_items', { ...row, sort_order: items.length + 1 })
       toast('已儲存'); setSheet(null); load()
@@ -69,8 +69,8 @@ export default function Uniform({ edit }) {
   }
   const reportData = () => ({
     filterText: [cat, f.low ? '存量低' : ''].filter(Boolean).join('、'),
-    cols: ['分類', '品項', '現有', '最低存量', '位置', '備註'],
-    groups: groups.map(g => ({ name: g.g, rows: g.items.map(i => ({ cells: [i.grp || '—', nm(i), i.qty, i.min_qty || '—', i.location || '—', i.notes || '—'], cls: low(i) ? { 2: 'rpt-red' } : undefined })) })),
+    cols: ['分類', '品項', '現有', '初次入貨', '最低存量', '位置', '備註'],
+    groups: groups.map(g => ({ name: g.g, rows: g.items.map(i => ({ cells: [i.grp || '—', nm(i), i.qty, i.init_qty ?? '—', i.min_qty || '—', i.location || '—', i.notes || '—'], cls: low(i) ? { 2: 'rpt-red' } : undefined })) })),
   })
 
   return (
@@ -94,6 +94,7 @@ export default function Uniform({ edit }) {
                 <b className="pa-sq-name">{nm(i)}</b>
                 <span className="pa-sq-post">
                   <span className={'st-qty' + (low(i) ? ' low' : '')}>{i.qty}<small> 件{i.min_qty ? ` ／ 最低 ${i.min_qty}` : ''}</small></span>
+                  {i.init_qty != null && <span className="pa-sq-area">初次入貨 {i.init_qty}</span>}
                   {i.notes && <span className="pa-sq-area">{i.notes}</span>}
                 </span>
                 {edit && (
@@ -107,19 +108,20 @@ export default function Uniform({ edit }) {
           </div>
         </div>
       ))}
-      {edit && <button className="fab" onClick={() => setSheet({ id: null, grp: '', name: '', size: '', qty: '', min_qty: '', location: '', notes: '' })}>＋</button>}
+      {edit && <button className="fab" onClick={() => setSheet({ id: null, grp: '', name: '', size: '', qty: '', init_qty: '', min_qty: '', location: '', notes: '' })}>＋</button>}
       {sheet && (
         <div className="modal" onClick={e => { if (e.target === e.currentTarget) setSheet(null) }}>
           <div className="sheet">
             <div className="sheet-hd"><h2>{sheet.id ? nm(sheet) : `新增${cat}品項`}</h2><span className="sheet-hd-acts"><button className="mini" onClick={() => setSheet(null)}>取消</button><button className="mini pri" onClick={save}>儲存</button></span></div>
-            <div className="f-row"><label>品項名稱</label><input value={sheet.name} onChange={e => setSheet({ ...sheet, name: e.target.value })} placeholder={cat === '布草' ? '例：床單、洗被袋、大被袋' : '例：房務員上衣'} /></div>
+            <div className="f-row"><label>品項名稱</label><input value={sheet.name} onChange={e => setSheet({ ...sheet, name: e.target.value })} placeholder={cat === '布草' ? '例：床單、洗被袋、大被袋' : cat === '物資' ? '例：布草大桶、熨斗、布草車' : '例：房務員上衣'} /></div>
             <div className="f-row"><label>分類</label>
               <input list="uni-grp" value={sheet.grp} onChange={e => setSheet({ ...sheet, grp: e.target.value })} placeholder="例：床上用品" />
               <datalist id="uni-grp">{[...new Set([...GRP_HINT[cat], ...all.map(i => i.grp).filter(Boolean)])].map(x => <option key={x} value={x} />)}</datalist></div>
-            <div style={{ display: 'flex', gap: 10 }}>
-              <div className="f-row" style={{ flex: 1 }}><label>尺碼／規格</label><input value={sheet.size} onChange={e => setSheet({ ...sheet, size: e.target.value })} placeholder="S／M／L／大床" /></div>
-              <div className="f-row" style={{ flex: 1 }}><label>現有數量</label><input inputMode="numeric" value={sheet.qty} onChange={e => setSheet({ ...sheet, qty: e.target.value })} /></div>
-              <div className="f-row" style={{ flex: 1 }}><label>最低存量</label><input inputMode="numeric" value={sheet.min_qty} onChange={e => setSheet({ ...sheet, min_qty: e.target.value })} /></div>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              <div className="f-row" style={{ flex: '1 1 40%' }}><label>尺碼／規格</label><input value={sheet.size} onChange={e => setSheet({ ...sheet, size: e.target.value })} placeholder="S／M／L／大床" /></div>
+              <div className="f-row" style={{ flex: '1 1 40%' }}><label>現有數量</label><input inputMode="numeric" value={sheet.qty} onChange={e => setSheet({ ...sheet, qty: e.target.value })} /></div>
+              <div className="f-row" style={{ flex: '1 1 40%' }}><label>初次入貨數量</label><input inputMode="numeric" value={sheet.init_qty ?? ''} onChange={e => setSheet({ ...sheet, init_qty: e.target.value })} /></div>
+              <div className="f-row" style={{ flex: '1 1 40%' }}><label>最低存量</label><input inputMode="numeric" value={sheet.min_qty} onChange={e => setSheet({ ...sheet, min_qty: e.target.value })} /></div>
             </div>
             <div className="f-row"><label>存放位置</label><input value={sheet.location} onChange={e => setSheet({ ...sheet, location: e.target.value })} /></div>
             <div className="f-row"><label>備註</label><input value={sheet.notes} onChange={e => setSheet({ ...sheet, notes: e.target.value })} /></div>
@@ -127,7 +129,7 @@ export default function Uniform({ edit }) {
           </div>
         </div>
       )}
-      {report && <ReportModal title={`制服房管理 · ${cat}`} sub={todayStr()} onClose={() => setReport(false)}><ListReport data={reportData()} /></ReportModal>}
+      {report && <ReportModal title={`制服與布草管理 · ${cat}`} sub={todayStr()} onClose={() => setReport(false)}><ListReport data={reportData()} /></ReportModal>}
     </>
   )
 }

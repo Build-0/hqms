@@ -36,7 +36,7 @@ export const ITEMS = [
   { id: 'deepclean', group: '房間管理', label: '深度清潔記錄', add: true },
   { id: 'complaint', group: '房間管理', label: '客訴管理' },
   { id: 'boh', group: '後勤管理', label: '後勤管理（整個模組）' },
-  { id: 'uniform', group: '後勤管理', label: '制服房管理' },
+  { id: 'uniform', group: '後勤管理', label: '制服與布草管理' },
   { id: 'writeoff', group: '後勤管理', label: '報銷與遺失管理' },
   { id: 'roomsale', group: '後勤管理', label: '房間可售物品價錢／庫存表' },
   { id: 'defect', group: '缺陷管理', label: '缺陷管理（整個模組）', add: true },
