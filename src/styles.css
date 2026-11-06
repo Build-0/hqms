@@ -1681,3 +1681,13 @@ html.rpt-open #root{visibility:hidden}
   .sq-grid,.sq-grid.sq-eq{grid-template-columns:repeat(4,minmax(0,1fr)) !important;gap:14px;max-width:980px;margin-left:auto !important;margin-right:auto !important}
   .pa-grid{grid-template-columns:repeat(4,minmax(0,1fr));max-width:980px;margin-left:auto;margin-right:auto}
 }
+
+/* 最後一行少過四張時置中（每張固定四分之一闊度） */
+@media (min-width:700px){
+  .home-grid.home-grid,.home-grid.sub-grid,.pa-wrap .home-grid,.pa-wrap .home-grid.sub-grid{display:flex !important;flex-wrap:wrap;justify-content:center !important;gap:20px !important}
+  .home-grid .home-item,.pa-wrap .home-grid .home-item{flex:none;width:calc((100% - 60px) / 4) !important}
+  .sq-grid,.sq-grid.sq-eq{display:flex !important;flex-wrap:wrap;justify-content:center;gap:14px}
+  .sq-grid > *{flex:none;width:calc((100% - 42px) / 4);min-width:0}
+  .pa-grid{display:flex;flex-wrap:wrap;justify-content:center;gap:10px}
+  .pa-grid > *{flex:none;width:calc((100% - 30px) / 4);min-width:0}
+}
