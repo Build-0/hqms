@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import * as api from '../../lib/api'
 import { compressImage } from '../../lib/image'
 import { toast } from '../../lib/toast'
@@ -36,7 +37,7 @@ export function Thumb({ src, fallback = '📦', size = 64, zoom }) {
       <div className={`bh-thumb ${src ? 'has-img' : 'no-img'}${canZoom ? ' zoomable' : ''}`} style={{ width: size, height: size }} onClick={canZoom ? e => { e.stopPropagation(); setBig(true) } : undefined}>
         {src ? <img src={src} alt="" loading="lazy" /> : <span>{fallback}</span>}
       </div>
-      {big && <div className="img-zoom" onClick={e => { e.stopPropagation(); setBig(false) }}><img src={src} alt="" /><span>撳任何位置關閉</span></div>}
+      {big && createPortal(<div className="img-zoom" onClick={e => { e.stopPropagation(); setBig(false) }}><img src={src} alt="" /><span>撳任何位置關閉</span></div>, document.body)}
     </>
   )
 }
