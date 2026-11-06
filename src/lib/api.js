@@ -168,6 +168,21 @@ export async function uploadPhoto(file) {
   return sb.storage.from('photos').getPublicUrl(path).data.publicUrl
 }
 
+// 附件（相片會壓縮；PDF、Excel、Word 等原檔上傳），回傳 { name, url, type }
+export async function uploadAttachment(file) {
+  if (file.type.startsWith('image/')) return { name: file.name, url: await uploadPhoto(file), type: 'image' }
+  if (file.size > 20 * 1024 * 1024) throw new Error('檔案太大（上限 20MB）')
+  if (isLocal) {
+    const url = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(file) })
+    return { name: file.name, url, type: 'file' }
+  }
+  const ext = (file.name.split('.').pop() || 'bin').replace(/[^a-z0-9]/gi, '').slice(0, 8) || 'bin'
+  const path = `att-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
+  const { error } = await sb.storage.from('photos').upload(path, file, { contentType: file.type || 'application/octet-stream' })
+  throwIf(error)
+  return { name: file.name, url: sb.storage.from('photos').getPublicUrl(path).data.publicUrl, type: 'file' }
+}
+
 // ── complaints ──
 export async function listComplaints() {
   if (isLocal) return local.listComplaints()

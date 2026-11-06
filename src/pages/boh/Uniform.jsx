@@ -19,6 +19,8 @@ export default function Uniform({ edit }) {
   const [f, setF] = useState({ low: false, q: '' })
   const [sheet, setSheet] = useState(null)
   const [report, setReport] = useState(false)
+  const [view, setView] = useState(null)       // 唯讀查看（冇編輯權限）
+  const [upBusy, setUpBusy] = useState(false)
   const [err, setErr] = useState('')
   useBack(!!cat, () => setCat(null))
   const load = () => api.dbSelect('uni_items', { order: 'sort_order' }).then(r => { setItems(r); setErr('') }).catch(ex => { setErr(ex.message); setItems(prev => prev || []) })
@@ -57,11 +59,20 @@ export default function Uniform({ edit }) {
 
   async function save() {
     const e = sheet
-    const row = { cat, grp: e.grp.trim(), name: e.name.trim(), size: e.size.trim(), qty: Number(e.qty) || 0, init_qty: e.init_qty === '' || e.init_qty == null ? null : Number(e.init_qty), min_qty: Number(e.min_qty) || 0, location: e.location.trim(), notes: e.notes.trim() }
+    const row = { cat, grp: e.grp.trim(), name: e.name.trim(), size: e.size.trim(), qty: Number(e.qty) || 0, init_qty: e.init_qty === '' || e.init_qty == null ? null : Number(e.init_qty), min_qty: Number(e.min_qty) || 0, location: e.location.trim(), notes: e.notes.trim(), attachments: e.attachments || [] }
     try {
       if (e.id) await api.dbUpdate('uni_items', e.id, row); else await api.dbInsert('uni_items', { ...row, sort_order: items.length + 1 })
       toast('已儲存'); setSheet(null); load()
     } catch (ex) { toast('儲存失敗：' + ex.message) }
+  }
+  async function addFiles(files) {
+    setUpBusy(true)
+    try {
+      const got = []
+      for (const file of files) got.push(await api.uploadAttachment(file))
+      setSheet(p => ({ ...p, attachments: [...(p.attachments || []), ...got] }))
+    } catch (ex) { toast('上傳失敗：' + ex.message) }
+    setUpBusy(false)
   }
   async function del() { try { await api.dbDelete('uni_items', sheet.id); toast('已刪除'); setSheet(null); load() } catch (ex) { toast(ex.message) } }
   async function adjust(i, d) {
@@ -89,11 +100,12 @@ export default function Uniform({ edit }) {
           {hasGroups && <div className="bh-grp">{g.g}<span>{g.items.length}</span></div>}
           <div className="pa-grid pa-grid-an">
             {g.items.map(i => (
-              <div className="pa-sq pa-an" key={i.id} role="button" tabIndex={0} onClick={() => edit && setSheet({ ...i })} style={edit ? undefined : { cursor: 'default' }}>
+              <div className="pa-sq pa-an" key={i.id} role="button" tabIndex={0} onClick={() => edit ? setSheet({ ...i, attachments: i.attachments || [] }) : setView(i)}>
                 <span className="pa-sq-top"><em>{i.location || '未設位置'}</em>{low(i) && <small className="pa-flag">存量低</small>}</span>
                 <b className="pa-sq-name">{nm(i)}</b>
                 <span className="pa-sq-post">
                   <span className={'st-qty' + (low(i) ? ' low' : '')}>{i.qty}<small> 件{i.min_qty ? ` ／ 最低 ${i.min_qty}` : ''}</small></span>
+                  {(i.attachments || []).length > 0 && <span className="pa-sq-area">📎 {i.attachments.length} 個附件</span>}
                   {i.init_qty != null && <span className="pa-sq-area">初次入貨 {i.init_qty}</span>}
                   {i.notes && <span className="pa-sq-area">{i.notes}</span>}
                 </span>
@@ -108,7 +120,7 @@ export default function Uniform({ edit }) {
           </div>
         </div>
       ))}
-      {edit && <button className="fab" onClick={() => setSheet({ id: null, grp: '', name: '', size: '', qty: '', init_qty: '', min_qty: '', location: '', notes: '' })}>＋</button>}
+      {edit && <button className="fab" onClick={() => setSheet({ id: null, grp: '', name: '', size: '', qty: '', init_qty: '', min_qty: '', location: '', notes: '', attachments: [] })}>＋</button>}
       {sheet && (
         <div className="modal" onClick={e => { if (e.target === e.currentTarget) setSheet(null) }}>
           <div className="sheet">
@@ -125,11 +137,42 @@ export default function Uniform({ edit }) {
             </div>
             <div className="f-row"><label>存放位置</label><input value={sheet.location} onChange={e => setSheet({ ...sheet, location: e.target.value })} /></div>
             <div className="f-row"><label>備註</label><input value={sheet.notes} onChange={e => setSheet({ ...sheet, notes: e.target.value })} /></div>
+            <div className="f-row"><label>附件（舊資料、單據、相片、PDF／Excel 都得）</label>
+              <AttList list={sheet.attachments || []} onDel={k => setSheet(p => ({ ...p, attachments: p.attachments.filter((_, n) => n !== k) }))} />
+              <label className="btn ghost sm-quiet" style={{ display: 'inline-block', cursor: 'pointer', textAlign: 'center' }}>{upBusy ? '上傳緊…' : '＋ 加附件'}<input type="file" multiple hidden disabled={upBusy} accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt" onChange={e => { const fl = [...e.target.files]; e.target.value = ''; if (fl.length) addFiles(fl) }} /></label>
+            </div>
             {sheet.id && <button className="btn danger sm-quiet" onClick={del}>刪除這項</button>}
+          </div>
+        </div>
+      )}
+      {view && (
+        <div className="modal" onClick={e => { if (e.target === e.currentTarget) setView(null) }}>
+          <div className="sheet">
+            <div className="sheet-hd"><h2>{nm(view)}</h2><span className="sheet-hd-acts"><button className="mini" onClick={() => setView(null)}>關閉</button></span></div>
+            <p className="src-note">現有 {view.qty} 件{view.init_qty != null ? ` · 初次入貨 ${view.init_qty}` : ''}{view.min_qty ? ` · 最低 ${view.min_qty}` : ''}{view.location ? ` · ${view.location}` : ''}{view.notes ? ` · ${view.notes}` : ''}</p>
+            {(view.attachments || []).length ? <AttList list={view.attachments} /> : <p className="src-note">未有附件。</p>}
           </div>
         </div>
       )}
       {report && <ReportModal title={`制服與布草管理 · ${cat}`} sub={todayStr()} onClose={() => setReport(false)}><ListReport data={reportData()} /></ReportModal>}
     </>
+  )
+}
+
+// 附件清單：相片顯示縮圖（撳開大圖），其他檔案顯示檔名連結
+function AttList({ list, onDel }) {
+  if (!list.length) return null
+  return (
+    <div style={{ display: 'grid', gap: 8, margin: '6px 0' }}>
+      {list.map((a, k) => (
+        <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <a href={a.url} target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0, textDecoration: 'none', color: 'inherit' }}>
+            {a.type === 'image' ? <img src={a.url} alt="" style={{ width: 56, height: 56, objectFit: 'cover', borderRadius: 8, flex: 'none' }} /> : <span style={{ fontSize: 28, flex: 'none' }}>📄</span>}
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.name || '附件'}</span>
+          </a>
+          {onDel && <button type="button" className="mini" onClick={() => onDel(k)}>移除</button>}
+        </div>
+      ))}
+    </div>
   )
 }
