@@ -1669,3 +1669,9 @@ html.rpt-open #root{visibility:hidden}
 .lin-sup{display:inline-block;margin-top:4px;padding:3px 12px;border-radius:999px;background:#1f7a6d;color:#fff !important;font-size:12.5px;font-weight:700;font-style:normal;line-height:1.5;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .lin-sup.empty{background:rgba(31,122,109,.12);color:#1f7a6d !important;font-weight:600}
 .lin-sup.none{background:rgba(120,120,120,.16);color:#6b6b6b !important;font-weight:700}
+
+/* 全站入口卡統一：電腦版一行四張、靠左排；手機維持兩張 */
+@media (min-width:700px){
+  .home-grid.home-grid,.home-grid.sub-grid,.pa-wrap .home-grid,.pa-wrap .home-grid.sub-grid{display:grid !important;grid-template-columns:repeat(4,minmax(0,1fr)) !important;justify-content:start !important;justify-items:stretch;max-width:980px;margin:0 !important;gap:20px !important;padding:28px 10px !important}
+  .home-grid .home-item,.pa-wrap .home-grid .home-item{width:auto !important;min-width:0}
+}
