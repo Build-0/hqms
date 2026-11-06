@@ -56,7 +56,7 @@ export function ImageField({ value, onChange, fallback }) {
     <div className="f-row">
       <label>相片</label>
       <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-        <Thumb src={value} fallback={fallback} size={72} />
+        <Thumb src={value} fallback={fallback} size={150} zoom />
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           <button type="button" className="btn ghost" style={{ margin: 0 }} onClick={() => inp.current.click()} disabled={busy}>{busy ? '處理中…' : value ? '更換相片' : '選擇相片'}</button>
           {value && <button type="button" className="linky" style={{ textAlign: 'left' }} onClick={() => onChange('')}>移除相片</button>}
