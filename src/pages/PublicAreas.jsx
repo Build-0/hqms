@@ -13,9 +13,9 @@ import { todayStr } from '../lib/dates'
 // 公共地區管理（管理員可改；公眾主管可查看）。右上角可切換 中文／English。
 const GRPS = ['商場', '前區', '後區', '深度清潔', '管理支援']   // 「替補」另外加喺 Roster，唔放喺新增崗位預設
 const GRP_EN = { 商場: 'Mall', 前區: 'Front of house', 後區: 'Back of house', 深度清潔: 'Deep cleaning', 管理支援: 'Supervisors & Captains', 替補: 'Relief', 其他: 'Other' }
-const KINDS = ['HSKP', '外判']
+const KINDS = ['HSKP', '寶潔力', '外借']
 const POS_EN = { 組長: 'Captain', 主管: 'Supervisor', 替補: 'Relief' }
-const KIND_EN = { HSKP: 'HSKP', 外判: 'Pro-Cleaning', 主管: 'Supervisor', 替補: 'Relief' }
+const KIND_EN = { HSKP: 'HSKP', 寶潔力: 'Pro-Cleaning', 外借: 'Borrowed', 外判: 'Pro-Cleaning', 主管: 'Supervisor', 替補: 'Relief' }
 const NATS = ['中國', '菲律賓', '越南', '緬甸', '印尼', '尼泊爾', '其他']
 const NAT_EN = { 中國: 'China', 菲律賓: 'Philippines', 越南: 'Vietnam', 緬甸: 'Myanmar', 印尼: 'Indonesia', 尼泊爾: 'Nepal', 其他: 'Other' }
 const LANGS = ['粵語', '普通話', '英語']
@@ -147,7 +147,7 @@ function Roster({ d, load, log, staffOf, canEdit }) {
     }) })),
   })
 
-  const blank = { id: null, post_id: null, name: '', photo: '', kind: '外判', position: '', gender: '', nationality: '', langs: [], phone: '', notes: '', old_name: '', rest_kind: 'monthly1', rest_weekdays: [], rest_dates: [], active: true, code: `崗${d.posts.length + 1}`, grp: GRPS[0], start_time: '09:00', end_time: '18:00', break_text: '', work_area: '', work_area_en: '', pnotes: '', flag: '' }
+  const blank = { id: null, post_id: null, name: '', photo: '', kind: '寶潔力', position: '', gender: '', nationality: '', langs: [], phone: '', notes: '', old_name: '', rest_kind: 'monthly1', rest_weekdays: [], rest_dates: [], active: true, code: `崗${d.posts.length + 1}`, grp: GRPS[0], start_time: '09:00', end_time: '18:00', break_text: '', work_area: '', work_area_en: '', pnotes: '', flag: '' }
   const open = p => {
     const s = staffOf(p.staff_id)
     setEdit(s
@@ -239,7 +239,7 @@ function Roster({ d, load, log, staffOf, canEdit }) {
             <div className="f-row"><label>{tr('國籍', 'Nationality')}</label><select value={edit.nationality} onChange={e => setEdit({ ...edit, nationality: e.target.value })}><option value="">{tr('（未填）', '(not set)')}</option>{NATS.map(n => <option key={n} value={n}>{en ? NAT_EN[n] : n}</option>)}</select></div>
             <div className="f-row"><label>{tr('識講（可多選）', 'Languages spoken')}</label>
               <div className="chips wrap">{LANGS.map(l => <button key={l} className={`chip ${edit.langs.includes(l) ? 'on' : ''}`} onClick={() => setEdit({ ...edit, langs: tg(edit.langs, l) })}>{en ? LANG_EN[l] : l}</button>)}</div></div>
-            {edit.kind !== 'HSKP' && <div className="f-row"><label>{tr('休息日期（外判每月休 1 天）', 'Days off (outsourced: 1 per month)')}</label>
+            {edit.kind !== 'HSKP' && <div className="f-row"><label>{edit.kind === '外借' ? tr('休息日期（外借人員，按實際）', 'Days off (borrowed staff, as scheduled)') : tr('休息日期（寶潔力每月休 1 天）', 'Days off (Pro-Cleaning: 1 per month)')}</label>
               <input type="date" value="" onChange={e => e.target.value && setEdit({ ...edit, rest_dates: [...edit.rest_dates, e.target.value].sort() })} />
               <div className="chips wrap" style={{ marginTop: 6 }}>{edit.rest_dates.map(x => <button key={x} className="chip on" onClick={() => setEdit({ ...edit, rest_dates: edit.rest_dates.filter(y => y !== x) })}>{x} ✕</button>)}</div></div>}
             <div className="f-row"><label>{tr('人員備註', 'Staff notes')}</label><input value={edit.notes} onChange={e => setEdit({ ...edit, notes: e.target.value })} /></div>
@@ -639,7 +639,7 @@ function Board({ d, load, log, staffOf, canEdit }) {
   const totG = hrs.reduce((a, h) => a + h.gross, 0), totN = hrs.reduce((a, h) => a + h.net, 0)
   const onCount = i => posts.filter(p => p.start_time && p.end_time && onDuty(p, i) && (((slotsOf[p.id] || [])[i] || {}).task || '') !== '休息').length
   const statLine = tr(`全日合計（${timed.length} 個崗位）：總工時 ${num(totG)} 小時　·　淨工時 ${num(totN)} 小時（已扣休息）`, `Daily total (${timed.length} posts): ${num(totG)} h worked in total · ${num(totN)} h net of breaks`)
-  // 按類別（外判／HSKP）分開計算
+  // 按類別（HSKP／寶潔力／外借）分開計算
   const byKind = KINDS.map(k => {
     const ids = timed.filter(p => (staffOf(p.staff_id) || {}).kind === k).map(p => p.id)
     const hs = hrs.filter(h => ids.includes(h.id))
