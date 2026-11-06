@@ -26,7 +26,7 @@ export function LinenHome({ items, yrs, onPick }) {
   const years = [...new Set(yrs.map(r => r.year))].sort((a, b) => b - a)
   const sum = k => yrs.reduce((a, r) => a + (r[k] || 0), 0)
   const money = yrs.reduce((a, r) => a + (r.purchase_qty || 0) * (Number(r.unit_price) || 0), 0)
-  const tiles = [['總入貨', sum('purchase_qty').toLocaleString() + ' 件', 'HKD ' + Math.round(money).toLocaleString()], ['總報廢', sum('condemned_qty').toLocaleString() + ' 件', '約 HKD ' + Math.round(yrs.reduce((a, r) => a + condValue(yrs, r), 0)).toLocaleString()], ['盤點遺失', sum('lost_qty').toLocaleString() + ' 件', years.length ? years[years.length - 1] + '–' + years[0] + ' 年' : '']]
+  const tiles = [['總入貨', sum('purchase_qty').toLocaleString() + ' 件', 'HKD ' + Math.round(money).toLocaleString()], ['總報廢', sum('condemned_qty').toLocaleString() + ' 件', '約 HKD ' + Math.round(yrs.reduce((a, r) => a + condValue(yrs, r), 0)).toLocaleString()], ['盤點遺失', sum('lost_qty').toLocaleString() + ' 件', '約 HKD ' + Math.round(yrs.reduce((a, r) => a + (r.lost_qty || 0) * priceFor(yrs, r.item_id, r.year).price, 0)).toLocaleString()]]
   const cards = [
     ['stock', '各款現有數量', 'bed', '#3a8fb5', `${items.length} 款`],
     ['rec', '入貨紀錄', 'calendar', '#8a5fa8', years.length ? `${years[years.length - 1]}–${years[0]} 年` : '未有紀錄'],
@@ -125,7 +125,7 @@ export function LinenYear({ year, items, yrs, edit, ys, setYs, reload }) {
               {r.purchase_qty ? <span className="st-qty">{r.purchase_qty.toLocaleString()}<small> 件入貨</small></span> : null}
               {r.unit_price != null && <span className="pa-sub">單價 {hk(r.unit_price)}{r.purchase_qty ? ' · 共 ' + hk(Math.round(r.purchase_qty * r.unit_price)) : ''}</span>}
               {r.condemned_qty != null && <span className="pa-hrs">報廢 {r.condemned_qty.toLocaleString()} 件{(() => { const p = priceFor(yrs, r.item_id, r.year); return p.price && r.condemned_qty ? ` · 約 ${hk(Math.round(r.condemned_qty * p.price))}${p.from !== r.year ? `（按 ${p.from} 年單價）` : ''}` : '' })()}</span>}
-              {r.lost_qty != null && <span className="pa-hrs">盤點遺失 {r.lost_qty.toLocaleString()} 件</span>}
+              {r.lost_qty != null && <span className="pa-hrs">盤點遺失 {r.lost_qty.toLocaleString()} 件{(() => { const p = priceFor(yrs, r.item_id, r.year); return p.price && r.lost_qty ? ` · 約 ${hk(Math.round(r.lost_qty * p.price))}` : '' })()}</span>}
               {r.note && <span className="pa-sq-area">{r.note}</span>}
             </span>
           </div>
