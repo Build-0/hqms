@@ -29,6 +29,7 @@ export function LinenHome({ items, yrs, onPick }) {
   const tiles = [['總入貨', sum('purchase_qty').toLocaleString() + ' 件', 'HKD ' + Math.round(money).toLocaleString()], ['總報廢', sum('condemned_qty').toLocaleString() + ' 件', '約 HKD ' + Math.round(yrs.reduce((a, r) => a + condValue(yrs, r), 0)).toLocaleString()], ['盤點遺失', sum('lost_qty').toLocaleString() + ' 件', '約 HKD ' + Math.round(yrs.reduce((a, r) => a + (r.lost_qty || 0) * priceFor(yrs, r.item_id, r.year).price, 0)).toLocaleString()]]
   const cards = [
     ['stock', '各款現有數量', 'bed', '#3a8fb5', `${items.length} 款`],
+    ['price', '價錢對比', 'tag', '#d9822b', '各年單價＋供應商'],
     ['rec', '入貨紀錄', 'calendar', '#8a5fa8', years.length ? `${years[years.length - 1]}–${years[0]} 年` : '未有紀錄'],
   ]
   return (
@@ -159,3 +160,46 @@ export function LinenYear({ year, items, yrs, edit, ys, setYs, reload }) {
 }
 
 export { emptyRec }
+
+// 價錢對比：每款布草喺有入貨嘅年份（2019、2024、2025、2026…）嘅單價同供應商並排
+export function LinenPrice({ items, yrs }) {
+  const years = [...new Set(yrs.filter(r => r.unit_price > 0).map(r => r.year))].sort((a, b) => a - b)
+  const supOf = y => [...new Set(yrs.filter(r => r.year === y && r.unit_price > 0).map(r => r.supplier).filter(Boolean))].join('、')
+  const rows = items.map(i => ({ i, p: Object.fromEntries(years.map(y => [y, yrs.find(r => r.item_id === i.id && r.year === y && r.unit_price > 0)?.unit_price])) })).filter(x => years.some(y => x.p[y] != null))
+  const th = { padding: '8px 10px', textAlign: 'right', whiteSpace: 'nowrap', fontWeight: 700, borderBottom: '1px solid rgba(0,0,0,.1)' }
+  const td = { padding: '9px 10px', textAlign: 'right', whiteSpace: 'nowrap', borderBottom: '1px solid rgba(0,0,0,.06)' }
+  return (
+    <>
+      <ToolBar label="布草價錢對比（HKD／件）" />
+      {rows.length === 0 ? <p className="src-note" style={{ margin: '14px 4px' }}>未有單價紀錄。</p> : (
+        <div style={{ overflowX: 'auto', margin: '10px 0' }}>
+          <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: 14 }}>
+            <thead>
+              <tr>
+                <th style={{ ...th, textAlign: 'left' }}>品項</th>
+                {years.map(y => <th key={y} style={th}>{y}<br /><span className="lin-sup" style={{ fontSize: 11, padding: '1px 8px' }}>{supOf(y) || '—'}</span></th>)}
+                <th style={th}>首尾變化</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map(({ i, p }) => {
+                const vals = years.map(y => p[y]).filter(v => v != null).map(Number)
+                const min = Math.min(...vals)
+                const first = vals[0], last = vals[vals.length - 1]
+                const chg = vals.length > 1 && first ? Math.round(((last - first) / first) * 100) : null
+                return (
+                  <tr key={i.id}>
+                    <td style={{ ...td, textAlign: 'left', whiteSpace: 'normal' }}><b>{i.name}</b>{i.size ? <small style={{ display: 'block', opacity: .6, fontSize: 12 }}>{i.size}</small> : null}</td>
+                    {years.map(y => <td key={y} style={{ ...td, fontWeight: p[y] != null && Number(p[y]) === min && vals.length > 1 ? 800 : 500, color: p[y] != null && Number(p[y]) === min && vals.length > 1 ? '#1f7a6d' : undefined }}>{p[y] != null ? Number(p[y]).toLocaleString() : '—'}</td>)}
+                    <td style={{ ...td, fontWeight: 700, color: chg == null ? undefined : chg > 0 ? 'var(--red)' : '#1f7a6d' }}>{chg == null ? '—' : (chg > 0 ? '▲ ' : chg < 0 ? '▼ ' : '') + Math.abs(chg) + '%'}</td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+      <p className="src-note" style={{ margin: '4px 4px 14px' }}>綠色粗體＝呢款最平嘅一年；首尾變化＝最新價對比最早價（▲升價紅色、▼減價綠色）。只列有入貨價嘅年份。</p>
+    </>
+  )
+}

@@ -1,5 +1,5 @@
 import { Ordered } from '../../lib/cardOrder'
-import { LinenHome, LinenRec, LinenYear, emptyRec } from './LinenYears'
+import { LinenHome, LinenRec, LinenPrice, LinenYear, emptyRec } from './LinenYears'
 import { useEffect, useState } from 'react'
 import * as api from '../../lib/api'
 import { toast } from '../../lib/toast'
@@ -59,6 +59,7 @@ export default function Uniform({ edit }) {
   }
 
   if (cat === '布草' && sub == null) return <LinenHome items={ofCat('布草')} yrs={yrs} onPick={setSub} />
+  if (cat === '布草' && sub === 'price') return <LinenPrice items={ofCat('布草')} yrs={yrs} />
   if (cat === '布草' && sub === 'rec') return <LinenRec yrs={yrs} edit={edit} onPick={setSub} onAdd={y => { setSub(y); setYs(emptyRec(y)) }} />
   if (cat === '布草' && typeof sub === 'number') return <LinenYear year={sub} items={ofCat('布草')} yrs={yrs} edit={edit} ys={ys} setYs={setYs} reload={loadYrs} />
 
