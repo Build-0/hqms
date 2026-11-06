@@ -8,6 +8,17 @@ const hk = n => (n == null || n === '' ? '—' : 'HKD ' + Number(n).toLocaleStri
 const nmOf = i => [i.name, i.size].filter(Boolean).join(' ') || '（未命名）'
 // 品名 + 細字尺碼
 const NameSz = ({ i }) => (i ? <>{i.name || '（未命名）'}{i.size ? <small style={{ display: 'block', fontSize: '.62em', fontWeight: 500, opacity: .65, marginTop: 2 }}>{i.size}</small> : null}</> : '（已刪除品項）')
+// 報廢金額：報廢數量 × 單價。該年冇入貨價就用同一款最近嘅前一年價錢（再冇就用最近嘅後一年）
+function priceFor(yrs, itemId, year) {
+  const p = yrs.filter(r => r.item_id === itemId && r.unit_price != null && Number(r.unit_price) > 0)
+  const same = p.find(r => r.year === year)
+  if (same) return { price: Number(same.unit_price), from: year }
+  const before = p.filter(r => r.year < year).sort((a, b) => b.year - a.year)[0]
+  if (before) return { price: Number(before.unit_price), from: before.year }
+  const after = p.filter(r => r.year > year).sort((a, b) => a.year - b.year)[0]
+  return after ? { price: Number(after.unit_price), from: after.year } : { price: 0, from: null }
+}
+const condValue = (yrs, r) => (r.condemned_qty || 0) * priceFor(yrs, r.item_id, r.year).price
 const emptyRec = (year) => ({ id: null, item_id: '', year, purchase_qty: '', unit_price: '', supplier: '', condemned_qty: '', lost_qty: '', note: '' })
 
 // 布草入口：頂部 Summary + 兩張卡（各款現有數量／入貨紀錄）
@@ -15,7 +26,7 @@ export function LinenHome({ items, yrs, onPick }) {
   const years = [...new Set(yrs.map(r => r.year))].sort((a, b) => b - a)
   const sum = k => yrs.reduce((a, r) => a + (r[k] || 0), 0)
   const money = yrs.reduce((a, r) => a + (r.purchase_qty || 0) * (Number(r.unit_price) || 0), 0)
-  const tiles = [['總入貨', sum('purchase_qty').toLocaleString() + ' 件', 'HKD ' + Math.round(money).toLocaleString()], ['總報廢', sum('condemned_qty').toLocaleString() + ' 件', ''], ['盤點遺失', sum('lost_qty').toLocaleString() + ' 件', years.length ? years[years.length - 1] + '–' + years[0] + ' 年' : '']]
+  const tiles = [['總入貨', sum('purchase_qty').toLocaleString() + ' 件', 'HKD ' + Math.round(money).toLocaleString()], ['總報廢', sum('condemned_qty').toLocaleString() + ' 件', '約 HKD ' + Math.round(yrs.reduce((a, r) => a + condValue(yrs, r), 0)).toLocaleString()], ['盤點遺失', sum('lost_qty').toLocaleString() + ' 件', years.length ? years[years.length - 1] + '–' + years[0] + ' 年' : '']]
   const cards = [
     ['stock', '各款現有數量', 'bed', '#3a8fb5', `${items.length} 款`],
     ['rec', '入貨紀錄', 'calendar', '#8a5fa8', years.length ? `${years[years.length - 1]}–${years[0]} 年` : '未有紀錄'],
@@ -81,6 +92,7 @@ export function LinenYear({ year, items, yrs, edit, ys, setYs, reload }) {
   const tq = rs.reduce((a, r) => a + (r.purchase_qty || 0), 0)
   const tc = rs.reduce((a, r) => a + (r.purchase_qty || 0) * (Number(r.unit_price) || 0), 0)
   const td = rs.reduce((a, r) => a + (r.condemned_qty || 0), 0)
+  const tdv = rs.reduce((a, r) => a + condValue(yrs, r), 0)
   const n = v => (v === '' || v == null ? null : Number(v))
   async function save() {
     const e = ys
@@ -100,7 +112,7 @@ export function LinenYear({ year, items, yrs, edit, ys, setYs, reload }) {
   return (
     <>
       <ToolBar label={`${year} 年 · 布草紀錄`} />
-      <p className="pa-stat">入貨 {tq.toLocaleString()} 件　·　當時金額 {hk(Math.round(tc))}　·　報廢 {td.toLocaleString()} 件</p>
+      <p className="pa-stat">入貨 {tq.toLocaleString()} 件　·　當時金額 {hk(Math.round(tc))}　·　報廢 {td.toLocaleString()} 件　·　報廢金額約 {hk(Math.round(tdv))}</p>
       {rs.length === 0 && <p className="src-note" style={{ margin: '14px 4px' }}>呢一年未有紀錄。{edit ? '撳右下角「＋」新增。' : ''}</p>}
       <Ordered okey="linen_items" items={sorted} idOf={r => r.item_id} labelOf={r => byId[r.item_id]?.name || '（已刪除品項）'}>{ord => (
       <div className="pa-grid pa-grid-an">
@@ -111,7 +123,7 @@ export function LinenYear({ year, items, yrs, edit, ys, setYs, reload }) {
             <span className="pa-sq-post">
               {r.purchase_qty ? <span className="st-qty">{r.purchase_qty.toLocaleString()}<small> 件入貨</small></span> : null}
               {r.unit_price != null && <span className="pa-sub">單價 {hk(r.unit_price)}{r.purchase_qty ? ' · 共 ' + hk(Math.round(r.purchase_qty * r.unit_price)) : ''}</span>}
-              {r.condemned_qty != null && <span className="pa-hrs">報廢 {r.condemned_qty.toLocaleString()} 件</span>}
+              {r.condemned_qty != null && <span className="pa-hrs">報廢 {r.condemned_qty.toLocaleString()} 件{(() => { const p = priceFor(yrs, r.item_id, r.year); return p.price && r.condemned_qty ? ` · 約 ${hk(Math.round(r.condemned_qty * p.price))}${p.from !== r.year ? `（按 ${p.from} 年單價）` : ''}` : '' })()}</span>}
               {r.lost_qty != null && <span className="pa-hrs">盤點遺失 {r.lost_qty.toLocaleString()} 件</span>}
               {r.note && <span className="pa-sq-area">{r.note}</span>}
             </span>
