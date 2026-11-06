@@ -1,3 +1,4 @@
+import { Ordered } from '../lib/cardOrder'
 import { ToolBar, ToolBtn, ExportBtn } from '../components/ui'
 import { useEffect, useMemo, useState } from 'react'
 import * as api from '../lib/api'
@@ -120,15 +121,17 @@ export default function Defects({ session, init }) {
       {err && <div className="card" style={{ borderColor: 'var(--red)' }}><p style={{ fontSize: 13, lineHeight: 1.7 }}>讀取失敗：{err}</p></div>}
 
       {full && !tab && (
-        <div className="home-grid">
-          {[['list', '缺陷列表', 'wrench', '#c0564f', `${list.length} 筆`], ['stats', '統計', 'search', '#4a6fa5', '分類、樓層'], ['types', '類型設定', 'gear', '#7a6a4f', `${types.length} 種`]].map(([k, t, ic, co, sb]) => (
-            <button className="home-item" key={k} onClick={() => setTab(k)}>
-              <span className="hi-circle" style={{ background: co + '26', borderColor: 'transparent' }}><Icon name={ic} size={33} color={co} width={2.2} /></span>
-              <span className="hi-label">{t}</span>
-              <span className="hi-sub">{sb}</span>
-            </button>
-          ))}
-        </div>
+        <Ordered okey="defect" idOf={x => x[0]} labelOf={x => x[1]} items={[['list', '缺陷列表', 'wrench', '#c0564f', `${list.length} 筆`], ['stats', '統計', 'search', '#4a6fa5', '分類、樓層'], ['types', '類型設定', 'gear', '#7a6a4f', `${types.length} 種`]]}>{items => (
+          <div className="home-grid">
+            {items.map(([k, t, ic, co, sb]) => (
+              <button className="home-item" key={k} onClick={() => setTab(k)}>
+                <span className="hi-circle" style={{ background: co + '26', borderColor: 'transparent' }}><Icon name={ic} size={33} color={co} width={2.2} /></span>
+                <span className="hi-label">{t}</span>
+                <span className="hi-sub">{sb}</span>
+              </button>
+            ))}
+          </div>
+        )}</Ordered>
       )}
       {full && tab && <ToolBar sticky label={tab === 'list' ? `共 ${shown.length} 筆` : tab === 'stats' ? '統計' : '類型設定'}><ExportBtn onClick={() => setReport(true)} /></ToolBar>}
 

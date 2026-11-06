@@ -20,6 +20,7 @@ import { getSession, clearSession, applyOverride, permsOf, itemLevel, ITEMS, ROL
 import PermAdmin from './components/PermAdmin'
 import UniformPage from './pages/UniformPage'
 import { toast } from './lib/toast'
+import { Ordered } from './lib/cardOrder'
 
 // 首頁圓形入口：之後加新模組（清潔劑、機器…）直接在這裡加一行
 const MODULES = [
@@ -177,28 +178,32 @@ export default function App() {
       </header>
       <main className={cur?.embed ? 'embed-main' : ''}>
         {cur ? <cur.Page key={tab + ':' + rk} session={session} init={init} /> : inQuality ? (
-          <div className="home-grid">
-            {qMods.filter(m => lvl(m.id) !== 'none').map(m => (
-              <button className="home-item" key={m.id} onClick={() => setTab(m.id)}>
-                <span className="hi-circle" style={{ background: m.color + '26', borderColor: 'transparent' }}><Icon name={m.icon} size={33} color={m.color} width={2.2} /></span>
-                <span className="hi-label">{m.label}</span>
-                <span className="hi-sub">{m.sub}</span>
-              </button>
-            ))}
-          </div>
-        ) : (
-          <div className="sys-home">
-            <div className="sys-grid">
-              {SYSTEMS.filter(sy => showSys(sy)).map(sy => (
-                <button className={`sys-card ${locked(sy.id) ? 'locked' : ''}`} key={sy.id} onClick={() => (locked(sy.id) ? toast(sy.wip ? '開發中，暫時未開放' : '此帳號沒有權限進入「' + sy.label + '」') : go(sy.id))}>
-                  <Icon name={sy.icon} size={46} color={sy.color} width={2} />
-                  <b>{sy.label}</b>
-                  <span>{sy.sub}</span>
-                  {locked(sy.id) && <i>{sy.wip ? '開發中' : '🔒 無權限'}</i>}
-                  {sy.wip && !locked(sy.id) && <i style={{ color: 'var(--accent)' }}>開發中</i>}
+          <Ordered okey="quality" items={qMods.filter(m => lvl(m.id) !== 'none')}>{list => (
+            <div className="home-grid">
+              {list.map(m => (
+                <button className="home-item" key={m.id} onClick={() => setTab(m.id)}>
+                  <span className="hi-circle" style={{ background: m.color + '26', borderColor: 'transparent' }}><Icon name={m.icon} size={33} color={m.color} width={2.2} /></span>
+                  <span className="hi-label">{m.label}</span>
+                  <span className="hi-sub">{m.sub}</span>
                 </button>
               ))}
             </div>
+          )}</Ordered>
+        ) : (
+          <div className="sys-home">
+            <Ordered okey="home" items={SYSTEMS.filter(sy => showSys(sy))}>{list => (
+              <div className="sys-grid">
+                {list.map(sy => (
+                  <button className={`sys-card ${locked(sy.id) ? 'locked' : ''}`} key={sy.id} onClick={() => (locked(sy.id) ? toast(sy.wip ? '開發中，暫時未開放' : '此帳號沒有權限進入「' + sy.label + '」') : go(sy.id))}>
+                    <Icon name={sy.icon} size={46} color={sy.color} width={2} />
+                    <b>{sy.label}</b>
+                    <span>{sy.sub}</span>
+                    {locked(sy.id) && <i>{sy.wip ? '開發中' : '🔒 無權限'}</i>}
+                    {sy.wip && !locked(sy.id) && <i style={{ color: 'var(--accent)' }}>開發中</i>}
+                  </button>
+                ))}
+              </div>
+            )}</Ordered>
             <Home key={rk} session={session} go={go} />
             <div className="ver-line">版本 {__BUILD__}</div>
           </div>
@@ -261,13 +266,12 @@ export default function App() {
             if (api.isOpen) { await api.signOut(); clearSession(); setTab('home'); setSessionState(null) } else { await api.signOut(); setUser(null) }
           }} />
       )}
-      {(() => {
-        // 底部導覽最多 5 格：項目多過 5 個時，首頁／品質／公共／缺陷留低，其餘（後勤、開發中模組）收入「更多」
-        const all = [['home', '首頁', 'hotel'], ['quality', '房間', 'clipcheck'], ['defect', '缺陷', 'wrench'], ['public', '公共', 'people'], ['boh', '後勤', 'box'], ['uniform', '制服房管理', 'shirt']]
-          .filter(([id]) => id !== 'uniform' || showSys({ id, dev: true }))
+      {<Ordered okey="home" bar={false} idOf={x => x[0]} items={[['quality', '房間', 'clipcheck'], ['defect', '缺陷', 'wrench'], ['public', '公共', 'people'], ['boh', '後勤', 'box'], ['uniform', '制服房管理', 'shirt']].filter(([id]) => id !== 'uniform' || showSys({ id, dev: true }))}>{ord => (() => {
+        // 底部導覽最多 5 格：項目多過 5 個時，首頁 + 排頭三個留低，其餘（例如後勤、開發中模組）收入「更多」；次序跟首頁「排序」
+        const all = [['home', '首頁', 'hotel'], ...ord]
         const many = all.length > 5
-        const main = many ? all.filter(([id]) => ['home', 'quality', 'public', 'defect'].includes(id)) : all
-        const more = many ? all.filter(([id]) => !['home', 'quality', 'public', 'defect'].includes(id)) : []
+        const main = many ? all.slice(0, 4) : all
+        const more = many ? all.slice(4) : []
         const devId = () => false
         const tapItem = (id, label) => { const lock = id !== 'home' && locked(id); if (lock) toast(devId(id) ? '開發中，暫時未開放' : '此帳號沒有權限進入「' + label + '」'); else { setMoreOpen(false); go(id) } }
         const area = ['boh', 'defect', 'public', 'uniform'].includes(tab) ? tab : tab === 'home' ? 'home' : 'quality'
@@ -310,7 +314,7 @@ export default function App() {
             )}
           </>
         )
-      })()}
+      })()}</Ordered>}
       {msg && <div className="toast">{msg}</div>}
     </div>
   )

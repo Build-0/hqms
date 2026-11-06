@@ -1,3 +1,4 @@
+import { Ordered } from '../lib/cardOrder'
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import * as api from '../lib/api'
 import Icon from '../components/Icon'
@@ -85,21 +86,23 @@ export default function PublicAreas({ session }) {
       <div className="df-wrap pa-wrap">
         {err && <div className="card" style={{ borderColor: 'var(--red)' }}><p style={{ fontSize: 13, lineHeight: 1.7 }}>{tr('讀取失敗：', 'Failed to load: ')}{err}</p></div>}
         {!view && (
-          <div className="home-grid">
-            {[['roster', tr('人員崗位', 'Staff & posts'), 'people', '#1f7a6d', tr(`${d.staff.filter(x => x.active).length} 位在職 · ${d.posts.filter(p => p.active).length} 個崗位`, `${d.staff.filter(x => x.active).length} staff · ${d.posts.filter(p => p.active).length} posts`)],
+          <Ordered okey="public" idOf={x => x[0]} labelOf={x => x[1]} items={[['roster', tr('人員崗位', 'Staff & posts'), 'people', '#1f7a6d', tr(`${d.staff.filter(x => x.active).length} 位在職 · ${d.posts.filter(p => p.active).length} 個崗位`, `${d.staff.filter(x => x.active).length} staff · ${d.posts.filter(p => p.active).length} posts`)],
               ['tasks', tr('任務代碼', 'Task codes'), 'book', '#b5603a', tr(`${d.tasks.length} 個任務`, `${d.tasks.length} tasks`)],
               ['board', tr('24 小時看板', '24-hour board'), 'calendar', '#4a6fa5', tr('每崗每半小時', 'Every 30 min per post')],
               ['annual', tr('年度清潔', 'Annual cleaning'), 'drop', '#3a8fb5', (() => { const fmt = v => { const [y, m, dd] = v.split('-').map(Number); return tr(`${y}年${m}月${dd}日`, `${dd}/${m}/${y}`) }; if (lastRec) return tr('相關紀錄 ', 'Records: ') + fmt(lastRec); if (nextPlan) return tr('資料起始：', 'Data from: ') + fmt(nextPlan); return tr('相關紀錄：暫無', 'Records: none') })()],
               ['stock', tr('物資清點', 'Stock count'), 'box', '#b5603a', tr(`${stockN} 項物資`, `${stockN} items`)],
               ['training', tr('機器培訓', 'Machine training'), 'cap', '#8f7ac9', tr('培訓場次、簽名', 'Sessions & sign-in')],
-            ].filter(a => lv('pa_' + a[0]) !== 'none').map(([k, t, ic, co, sb]) => (
-              <button className="home-item" key={k} onClick={() => setView(k)}>
-                <span className="hi-circle" style={{ background: co + '26', borderColor: 'transparent' }}><Icon name={ic} size={33} color={co} width={2.2} /></span>
-                <span className="hi-label">{t}</span>
-                <span className="hi-sub">{sb}</span>
-              </button>
-            ))}
-          </div>
+            ].filter(a => lv('pa_' + a[0]) !== 'none')}>{list => (
+            <div className="home-grid">
+              {list.map(([k, t, ic, co, sb]) => (
+                <button className="home-item" key={k} onClick={() => setView(k)}>
+                  <span className="hi-circle" style={{ background: co + '26', borderColor: 'transparent' }}><Icon name={ic} size={33} color={co} width={2.2} /></span>
+                  <span className="hi-label">{t}</span>
+                  <span className="hi-sub">{sb}</span>
+                </button>
+              ))}
+            </div>
+          )}</Ordered>
         )}
         {view && <div className="pa-crumb"><button onClick={() => setView(null)}>{tr('公共地區', 'Public areas')}</button><i>›</i><b>{({ roster: tr('人員崗位', 'Staff & posts'), tasks: tr('任務代碼', 'Task codes'), board: tr('24 小時看板', '24-hour board'), annual: tr('年度清潔', 'Annual cleaning'), stock: tr('物資清點', 'Stock count'), training: tr('機器培訓', 'Machine training') })[view]}</b></div>}
         {view && !ce('pa_' + view) && <p className="note" style={{ textAlign: 'left', margin: '0 4px 8px' }}>{tr('目前帳號只可查看', 'View only')}（{session ? session.name : ''}）</p>}
@@ -317,15 +320,17 @@ function Annual({ log, canEdit, who }) {
     return (
       <>
         {err && <div className="card" style={{ borderColor: 'var(--red)' }}><p style={{ fontSize: 13, lineHeight: 1.7 }}>{tr('讀取失敗：', 'Failed to load: ')}{err}</p></div>}
-        <div className="home-grid">
-          {ANNUAL_CATS.map(([k, zh, e]) => (
-            <button className="home-item" key={k} onClick={() => setCat(k)}>
-              <span className="hi-circle" style={{ background: ICONS[k][1] + '26', borderColor: 'transparent' }}><Icon name={ICONS[k][0]} size={33} color={ICONS[k][1]} width={2.2} /></span>
-              <span className="hi-label">{en ? e : zh}</span>
-              <span className="hi-sub">{tr(`${rows.filter(r => r.cat === k).length} 項`, `${rows.filter(r => r.cat === k).length} items`)}</span>
-            </button>
-          ))}
-        </div>
+        <Ordered okey="annual" items={ANNUAL_CATS} idOf={x => x[0]} labelOf={x => x[1]}>{list => (
+          <div className="home-grid">
+            {list.map(([k, zh, e]) => (
+              <button className="home-item" key={k} onClick={() => setCat(k)}>
+                <span className="hi-circle" style={{ background: ICONS[k][1] + '26', borderColor: 'transparent' }}><Icon name={ICONS[k][0]} size={33} color={ICONS[k][1]} width={2.2} /></span>
+                <span className="hi-label">{en ? e : zh}</span>
+                <span className="hi-sub">{tr(`${rows.filter(r => r.cat === k).length} 項`, `${rows.filter(r => r.cat === k).length} items`)}</span>
+              </button>
+            ))}
+          </div>
+        )}</Ordered>
       </>
     )
   }

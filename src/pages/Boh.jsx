@@ -12,6 +12,7 @@ import Tools from './boh/Tools'
 import Supplies from './boh/Supplies'
 import WriteOff from './boh/WriteOff'
 import RoomSale from './boh/RoomSale'
+import { Ordered } from '../lib/cardOrder'
 import { itemLevel } from '../lib/accounts'
 import { daysUntil, num } from './boh/shared'
 
@@ -70,15 +71,17 @@ export default function Boh({ session, init }) {
     <div className="df-wrap">
       {err && <div className="card" style={{ borderColor: 'var(--red)' }}><p style={{ fontSize: 13, lineHeight: 1.7 }}>讀取失敗：{err}</p></div>}
       {!tab && (
-        <div className="home-grid">
-          {TABS.filter(x => (x[0] !== 'wo' || woLevel !== 'none') && (x[0] !== 'rs' || rsLevel !== 'none')).map(([k, t, ic, co]) => (
-            <button className="home-item" key={k} onClick={() => setTab(k)}>
-              <span className="hi-circle" style={{ background: co + '26', borderColor: 'transparent' }}><Icon name={ic} size={33} color={co} width={2.2} /></span>
-              <span className="hi-label">{t}</span>
-              <span className="hi-sub">{k === 'wo' ? '報銷、遺失、跟進' : k === 'rs' ? '價錢、庫存' :`${{ chem: d.products.length, vac: d.vacuums.length, tool: d.tools.length, eq: d.equipment.length, sup: d.supplies.length }[k]} 項`}</span>
-            </button>
-          ))}
-        </div>
+        <Ordered okey="boh" idOf={x => x[0]} labelOf={x => x[1]} items={TABS.filter(x => (x[0] !== 'wo' || woLevel !== 'none') && (x[0] !== 'rs' || rsLevel !== 'none'))}>{list => (
+          <div className="home-grid">
+            {list.map(([k, t, ic, co]) => (
+              <button className="home-item" key={k} onClick={() => setTab(k)}>
+                <span className="hi-circle" style={{ background: co + '26', borderColor: 'transparent' }}><Icon name={ic} size={33} color={co} width={2.2} /></span>
+                <span className="hi-label">{t}</span>
+                <span className="hi-sub">{k === 'wo' ? '報銷、遺失、跟進' : k === 'rs' ? '價錢、庫存' : `${{ chem: d.products.length, vac: d.vacuums.length, tool: d.tools.length, eq: d.equipment.length, sup: d.supplies.length }[k]} 項`}</span>
+              </button>
+            ))}
+          </div>
+        )}</Ordered>
       )}
       {tab && tab !== 'wo' && tab !== 'rs' && <ToolBar sticky label={TABS.find(x => x[0] === tab)[1]}><ExportBtn onClick={() => setReport(makeReport())} /></ToolBar>}
       {!edit && <p className="note" style={{ textAlign: 'left', margin: '0 4px 6px' }}>目前帳號只可查看</p>}

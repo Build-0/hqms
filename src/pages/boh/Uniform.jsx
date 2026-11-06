@@ -1,3 +1,4 @@
+import { Ordered } from '../../lib/cardOrder'
 import { useEffect, useState } from 'react'
 import * as api from '../../lib/api'
 import { toast } from '../../lib/toast'
@@ -31,15 +32,17 @@ export default function Uniform({ edit }) {
     return (
       <>
         {err && <div className="card" style={{ borderColor: 'var(--red)' }}><p style={{ fontSize: 13, lineHeight: 1.7 }}>讀取失敗：{err}</p></div>}
-        <div className="home-grid">
-          {CATS.map(([c, ic, co]) => (
-            <button className="home-item" key={c} onClick={() => { setCat(c); setF({ low: false, q: '' }) }}>
-              <span className="hi-circle" style={{ background: co + '26', borderColor: 'transparent' }}><Icon name={ic} size={33} color={co} width={2.2} /></span>
-              <span className="hi-label">{c}</span>
-              <span className="hi-sub">{ofCat(c).length} 款{ofCat(c).filter(low).length ? ` · ${ofCat(c).filter(low).length} 項存量低` : ''}</span>
-            </button>
-          ))}
-        </div>
+        <Ordered okey="uniform" items={CATS} idOf={x => x[0]} labelOf={x => x[0]}>{list => (
+          <div className="home-grid">
+            {list.map(([c, ic, co]) => (
+              <button className="home-item" key={c} onClick={() => { setCat(c); setF({ low: false, q: '' }) }}>
+                <span className="hi-circle" style={{ background: co + '26', borderColor: 'transparent' }}><Icon name={ic} size={33} color={co} width={2.2} /></span>
+                <span className="hi-label">{c}</span>
+                <span className="hi-sub">{ofCat(c).length} 款{ofCat(c).filter(low).length ? ` · ${ofCat(c).filter(low).length} 項存量低` : ''}</span>
+              </button>
+            ))}
+          </div>
+        )}</Ordered>
       </>
     )
   }

@@ -464,6 +464,11 @@ export async function dbUpdate(table, id, patch) {
   throwIf(error)
   return data
 }
+export async function dbUpsert(table, row, onConflict) {
+  needDb()
+  const { error } = await sb.from(table).upsert(row, { onConflict })
+  throwIf(error)
+}
 export async function dbInsertMany(table, rows) {
   needDb()
   if (!rows.length) return

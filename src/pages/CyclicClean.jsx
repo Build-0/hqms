@@ -1,3 +1,4 @@
+import { Ordered } from '../lib/cardOrder'
 import { ToolBar, ToolBtn, ExportBtn } from '../components/ui'
 import { useState, useEffect } from 'react'
 import * as api from '../lib/api'
@@ -225,15 +226,17 @@ export default function CyclicClean() {
             </p>
           </div>
         )}
-        <div className="home-grid">
-          {SECTIONS.map(s => (
-            <button className="home-item" key={s.key} onClick={() => setSub(s.key)}>
-              <span className="hi-circle" style={{ background: s.color + '26', borderColor: 'transparent' }}><Icon name={s.icon} size={33} color={s.color} width={2.2} /></span>
-              <span className="hi-label">{s.title}</span>
-              <span className="hi-sub">{s.sub} · {bySection(s.key).length} 項</span>
-            </button>
-          ))}
-        </div>
+        <Ordered okey="cyclic" items={SECTIONS} idOf={s => s.key} labelOf={s => s.title}>{list => (
+          <div className="home-grid">
+            {list.map(s => (
+              <button className="home-item" key={s.key} onClick={() => setSub(s.key)}>
+                <span className="hi-circle" style={{ background: s.color + '26', borderColor: 'transparent' }}><Icon name={s.icon} size={33} color={s.color} width={2.2} /></span>
+                <span className="hi-label">{s.title}</span>
+                <span className="hi-sub">{s.sub} · {bySection(s.key).length} 項</span>
+              </button>
+            ))}
+          </div>
+        )}</Ordered>
         {!err && items.length === 0 && (
           <button className="add-topic" onClick={importSeed}>⬇ 匯入預設項目</button>
         )}
