@@ -60,7 +60,7 @@ export function LinenRec({ yrs, edit, onPick, onAdd }) {
     const sup = [...new Set(rs.filter(r => r.purchase_qty).map(r => r.supplier).filter(Boolean))].join('、')
     return { q, sup }
   }
-  const cards = years.map(y => { const t = stat(y); return [y, y + ' 年', 'calendar', '#8a5fa8', t.q ? `入貨 ${t.q.toLocaleString()} 件${t.sup ? ' · ' + t.sup : ''}` : '盤點／報廢紀錄'] })
+  const cards = years.map(y => { const t = stat(y); return [y, y + ' 年', 'calendar', '#8a5fa8', t.q ? <>入貨 {t.q.toLocaleString()} 件{t.sup ? <><br /><span className="lin-sup">{t.sup}</span></> : null}</> : '盤點／報廢紀錄'] })
   return (
     <>
       <ToolBar label="布草入貨紀錄" />
@@ -118,7 +118,7 @@ export function LinenYear({ year, items, yrs, edit, ys, setYs, reload }) {
       <div className="pa-grid pa-grid-an">
         {ord.map(r => (
           <div className="pa-sq pa-an" key={r.id} role="button" tabIndex={0} onClick={() => edit && setYs({ ...r })} style={edit ? undefined : { cursor: 'default' }}>
-            <span className="pa-sq-top"><em>{r.supplier || (edit ? '＋ 填供應商' : '未填供應商')}</em></span>
+            <span className="pa-sq-top"><span className={'lin-sup' + (r.supplier ? '' : ' empty')}>{r.supplier || (edit ? '＋ 填供應商' : '未填供應商')}</span></span>
             <b className="pa-sq-name"><NameSz i={byId[r.item_id]} /></b>
             <span className="pa-sq-post">
               {r.purchase_qty ? <span className="st-qty">{r.purchase_qty.toLocaleString()}<small> 件入貨</small></span> : null}

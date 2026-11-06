@@ -42,21 +42,34 @@ export default function Machines({ kind, d, edit, reload, reg }) {
   const countBy = s => C.items.filter(x => x.status === s).length
   const mOf = id => C.maint.filter(r => r[C.fk] === id).sort((a, b) => String(b.service_date).localeCompare(String(a.service_date)))
 
+  const tmplOf = t => { const row = d.types.find(y => y.name === t); return Array.isArray(row?.accessories) ? row.accessories : [] }
+  // 將標準配件同呢台已有嘅配件合併：標準配件逐項列出（新機預設全部剔，舊機冇記錄就唔剔），自訂配件跟後面
+  const mergeAcc = (type, cur, isNew) => {
+    const have = new Map((cur || []).map(a => [a.name, !!a.ok]))
+    const t = tmplOf(type)
+    return [...t.map(n => ({ name: n, ok: have.has(n) ? have.get(n) : isNew })), ...(cur || []).filter(a => !t.includes(a.name))]
+  }
   function open(x) {
     const image = x ? img(x.id) || '' : ''
     setOrig(image)
-    setForm(x ? { ...x, image, accessories: x.accessories || [] } : { label: '', serial: '', model: '', brand: '', floor_code: isVac ? (d.floors[0]?.name || '') : '', type: isVac ? undefined : (d.types[0]?.name || ''), status: '正常', notes: '', image: '', accessories: [] })
+    setForm(x ? { ...x, image, accessories: isVac ? [] : mergeAcc(x.type, x.accessories, false) } : { label: '', serial: '', model: '', brand: '', floor_code: isVac ? (d.floors[0]?.name || '') : '', type: isVac ? undefined : (d.types[0]?.name || ''), status: '正常', notes: '', image: '', accessories: isVac ? [] : mergeAcc(d.types[0]?.name || '', [], true) })
     setView(null)
   }
   async function save() {
     if (!isVac && !form.type) { toast('請選擇設備類型'); return }
     if (!form.label.trim() && !form.model?.trim()) { toast('請填機號或型號'); return }
     const row = { label: form.label.trim(), serial: form.serial || '', model: form.model || '', brand: form.brand || '', floor_code: form.floor_code || '', status: form.status, notes: form.notes || '' }
-    if (!isVac) { row.type = form.type; row.accessories = (form.accessories || []).filter(a => a.name.trim()) }
+    if (!isVac) { row.type = form.type; row.accessories = (form.accessories || []).filter(a => a.name.trim()).map(a => ({ name: a.name.trim(), ok: !!a.ok })) }
     try {
       if (form.image !== orig) row.image = form.image || null
       if (form.id) { await api.dbUpdate(C.table, form.id, row); if (form.image !== orig) setCachedImage(C.table, form.id, form.image) }
       else { const r = await api.dbInsert(C.table, { ...row, sort_order: C.items.length + 1, image: form.image || null }); setCachedImage(C.table, r.id, form.image) }
+      if (!isVac) {
+        const trow = d.types.find(y => y.name === form.type)
+        const t = tmplOf(form.type)
+        const added = row.accessories.map(a => a.name.trim()).filter(n => n && !t.includes(n))
+        if (trow && added.length) await api.dbUpdate('equipment_types', trow.id, { accessories: [...t, ...added] })
+      }
       toast('已儲存'); setForm(null); reload()
     } catch (ex) { toast('儲存失敗：' + ex.message) }
   }
@@ -191,14 +204,20 @@ export default function Machines({ kind, d, edit, reload, reg }) {
             </div>
             <div className="f-row"><label>備註</label><input value={form.notes || ''} onChange={e => setForm({ ...form, notes: e.target.value })} /></div>
             {!isVac && (
-              <div className="f-row"><label>配件</label>
-                {(form.accessories || []).map((a, i) => (
-                  <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
-                    <input className="df-sel" value={a.name} onChange={e => setForm({ ...form, accessories: form.accessories.map((x, k) => (k === i ? { ...x, name: e.target.value } : x)) })} />
-                    <button className="mini danger" onClick={() => setForm({ ...form, accessories: form.accessories.filter((_, k) => k !== i) })}>✕</button>
-                  </div>
-                ))}
-                <button className="linky" onClick={() => setForm({ ...form, accessories: [...(form.accessories || []), { name: '', ok: true }] })}>＋ 新增配件</button>
+              <div className="f-row"><label>配件（剔＝有，冇剔＝缺）</label>
+                {(form.accessories || []).map((a, i) => {
+                  const std = tmplOf(form.type).includes(a.name)
+                  return (
+                    <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 6, alignItems: 'center' }}>
+                      <input type="checkbox" style={{ width: 22, height: 22, flex: 'none' }} checked={!!a.ok} onChange={() => setForm({ ...form, accessories: form.accessories.map((x, k) => (k === i ? { ...x, ok: !x.ok } : x)) })} />
+                      {std ? <span style={{ flex: 1, ...(a.ok ? null : { color: 'var(--red)' }) }}>{a.name}{a.ok ? '' : '（缺）'}</span>
+                        : <input className="df-sel" style={{ flex: 1 }} placeholder="配件名稱" value={a.name} onChange={e => setForm({ ...form, accessories: form.accessories.map((x, k) => (k === i ? { ...x, name: e.target.value } : x)) })} />}
+                      {!std && <button className="mini danger" onClick={() => setForm({ ...form, accessories: form.accessories.filter((_, k) => k !== i) })}>✕</button>}
+                    </div>
+                  )
+                })}
+                <button className="linky" onClick={() => setForm({ ...form, accessories: [...(form.accessories || []), { name: '', ok: true }] })}>＋ 新增其他配件</button>
+                <p className="src-note" style={{ margin: '4px 0 0' }}>新增嘅配件儲存後會自動加入「{form.type}」嘅標準清單，之後每台{form.type}都會列出嚟打剔。</p>
               </div>
             )}
             <ImageField value={form.image} onChange={v => setForm({ ...form, image: v })} fallback={C.icon} />
