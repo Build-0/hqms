@@ -1708,3 +1708,8 @@ html.rpt-open #root{visibility:hidden}
 /* 分佈頁：故障 */
 .sq-n small.bn-broken{color:#c0392b;font-weight:800}
 .bn-kpis .bn-kbad b{color:#c0392b}
+
+/* 手機：PDF 已準備好（再撳一下分享） */
+.rpt-ready{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:24px}
+.rpt-ready-box{background:#fff;border-radius:22px;padding:22px 18px 16px;width:100%;max-width:340px;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center}
+.rpt-ready-ico{font-size:44px;line-height:1}.rpt-ready-box b{font-size:18px}.rpt-ready-box small{color:var(--sub);word-break:break-all;margin-bottom:6px}.rpt-ready-box .btn{width:100%;margin:0}

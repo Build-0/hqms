@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { todayStr } from '../lib/dates'
 import { canExport, EXPORT_MSG } from '../lib/accounts'
-import { savePdf } from '../lib/pdf'
+import { savePdf, sharePending, openPdf } from '../lib/pdf'
 
 // 報告外殼：全螢幕預覽 + 「儲存為 PDF」（瀏覽器列印 → 另存 PDF；手機用分享 → 列印/存成 PDF）
 export function ReportModal({ title, sub, onClose, children, landscape: landscapeProp, a3, signPage, en }) {
@@ -60,6 +60,7 @@ export function ReportModal({ title, sub, onClose, children, landscape: landscap
     window.addEventListener('afterprint', done)
     setTimeout(() => window.print(), 50)
   }
+  const [ready, setReady] = useState(null)   // 手機：PDF 已產生，等用戶撳掣分享／開啟
   async function toPdf() {
     if (busy) return
     setBusy(true)
@@ -67,7 +68,8 @@ export function ReportModal({ title, sub, onClose, children, landscape: landscap
       const el = document.querySelector('.rpt-overlay .rpt-print')
       const z = el.style.zoom; el.style.zoom = ''   // 產生 PDF 時用原大小，避免縮放影響截圖
       const how = await savePdf(el, document.title || 'report', { landscape, a3, fitOne: !!a3 || !!signPage }).finally(() => { el.style.zoom = z })
-      if (how === 'download') alert('PDF 已下載。若沒有出現，請到「檔案」App → 下載項目查看。')
+      if (how && how.pending) setReady(how.pending)
+      else if (how === 'download') alert(en ? 'PDF downloaded.' : 'PDF 已下載。')
     } catch (e) {
       const msg = e && e.message ? e.message : String(e)
       // 網頁剛更新過、舊頁面搵唔到新檔案：重新載入最新版本，再試一次
@@ -97,6 +99,17 @@ export function ReportModal({ title, sub, onClose, children, landscape: landscap
           <div className="rpt-ft"><span>{en ? 'Housekeeping & Public Area System' : '客房公區管理系統'}</span><span>{en ? 'Exported ' : '匯出時間 '}{stamp}</span></div>
         </div>
       </div>
+      {ready && (
+        <div className="rpt-ready rpt-noprint" onClick={e => { if (e.target === e.currentTarget) setReady(null) }}>
+          <div className="rpt-ready-box">
+            <div className="rpt-ready-ico">📄</div>
+            <b>{en ? 'PDF is ready' : 'PDF 已準備好'}</b>
+            <small>{ready.name}</small>
+            <button className="btn" onClick={async () => { const r = await sharePending(ready); if (r !== 'cancel') setReady(null) }}>{en ? 'Share / Save to Files' : '分享／儲存到「檔案」'}</button>
+            <button className="btn ghost" onClick={() => { openPdf(ready); setReady(null) }}>{en ? 'Open PDF' : '直接開啟 PDF'}</button>
+          </div>
+        </div>
+      )}
       <div className="rpt-foot rpt-noprint">
         <button className="btn ghost" onClick={onClose}>‹ {en ? 'Back' : '返回'}</button>
         <button className="btn ghost rpt-printbtn" style={{ flex: '0 0 26%' }} onClick={printNow}>{en ? 'Save' : '保存'}</button>
