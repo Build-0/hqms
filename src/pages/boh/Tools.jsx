@@ -6,6 +6,8 @@ import Confirm from '../../components/Confirm'
 import { Thumb, ImageField, useImages, setCachedImage, ListManager, num } from './shared'
 import Bins from './Bins'
 
+const DIST = ['垃圾桶', '洗手液器']   // 按位置記數量嘅分類（數量以分佈頁為準）
+const DIST_ICO = { 垃圾桶: '🗑', 洗手液器: '🧴' }
 const EMPTY = { name: '', category: '', stock: 0, in_use: 0, min_stock: 0, status: '啟用', notes: '', image: '' }
 
 export default function Tools({ d, edit, reload, reg, init, embedded }) {
@@ -16,13 +18,13 @@ export default function Tools({ d, edit, reload, reg, init, embedded }) {
   const [orig, setOrig] = useState('')
   const [del, setDel] = useState(null)
   const [mgr, setMgr] = useState(false)
-  const [binView, setBinView] = useState(false)   // 垃圾桶分佈
+  const [binView, setBinView] = useState(false)   // 分佈頁：false 或分類名（垃圾桶／洗手液器）
   const [fromBin, setFromBin] = useState(false)
   const tools = d.tools
   const img = useImages('tools', tools.map(t => t.id))
   const low = t => t.status !== '停用' && num(t.min_stock) > 0 && num(t.stock) < num(t.min_stock)
   // 垃圾桶款式：數量以「垃圾桶分佈」為準（在用＝使用中位置、庫存＝倉位置）
-  const isBin = t => t.category === '垃圾桶'
+  const isBin = t => DIST.includes(t.category)
   const binSum = (t, k) => (d.binCounts || []).filter(r => r.tool_id === t.id && ((d.binAreas || []).find(a => a.id === r.area_id) || {}).kind === k).reduce((n, r) => n + r.qty, 0)
   const lowN = tools.filter(low).length, offN = tools.filter(t => t.status === '停用').length
 
@@ -50,8 +52,8 @@ export default function Tools({ d, edit, reload, reg, init, embedded }) {
     const row = { name: form.name.trim(), category: form.category, stock: num(form.stock), in_use: num(form.in_use), min_stock: num(form.min_stock), status: form.status, notes: form.notes || '' }
     try {
       if (form.image !== orig) row.image = form.image || null
-      if (form.id && form.category === '垃圾桶') {   // 庫存＝倉位置合計：改動記入「倉庫（庫存）」
-        const wh = (d.binAreas || []).find(a => !a.floor && a.name === '倉庫（庫存）')
+      if (form.id && DIST.includes(form.category)) {   // 庫存＝倉位置合計：改動記入該分類嘅「倉庫（庫存）」
+        const wh = (d.binAreas || []).find(a => !a.floor && a.name === '倉庫（庫存）' && (a.cat || '垃圾桶') === form.category)
         if (wh) {
           const mine = (d.binCounts || []).filter(r => r.tool_id === form.id)
           const other = mine.filter(r => r.area_id !== wh.id && ((d.binAreas || []).find(a => a.id === r.area_id) || {}).kind === 'store').reduce((n, r) => n + r.qty, 0)
@@ -70,7 +72,7 @@ export default function Tools({ d, edit, reload, reg, init, embedded }) {
     try { await api.dbDelete('tools', t.id); toast('已刪除'); setDel(null); setForm(null); reload() } catch (ex) { toast('刪除失敗：' + ex.message) }
   }
 
-  const binOnly = groups.length > 0 && groups.every(g => g.c === '垃圾桶')   // 只匯出垃圾桶：用「使用中／倉／停用／合共」
+  const binOnly = groups.length > 0 && groups.every(g => DIST.includes(g.c))   // 只匯出垃圾桶：用「使用中／倉／停用／合共」
   if (reg) reg.current = () => ({
     title: '清潔工具',
     filterText: [fk === 'low' ? '需補貨' : fk === 'off' ? '停用' : fk === 'on' ? '啟用' : '', ck, q.trim() && `搜尋「${q.trim()}」`].filter(Boolean).join(' · ') || '全部工具',
@@ -82,8 +84,8 @@ export default function Tools({ d, edit, reload, reg, init, embedded }) {
         : { photo: img(t.id), cells: [t.name, t.stock, num(t.in_use) || 0, num(t.min_stock) || '—', t.status], cls: ['', low(t) ? 'rpt-red' : '', '', '', ''] }),
     })),
   })
-  const closeForm = () => { setForm(null); if (fromBin) { setFromBin(false); setBinView(true) } }   // 由分佈頁開嘅編輯，關閉後返回分佈頁
-  if (binView) return <Bins d={d} edit={edit} reload={reload} reg={reg} onClose={() => { setBinView(false); reload() }} onEditTool={t => { setFromBin(true); setBinView(false); open(t) }} />
+  const closeForm = () => { setForm(null); if (fromBin) { const c = fromBin; setFromBin(false); setBinView(c) } }   // 由分佈頁開嘅編輯，關閉後返回分佈頁
+  if (binView) return <Bins d={d} edit={edit} reload={reload} reg={reg} cat={binView} onClose={() => { setBinView(false); reload() }} onEditTool={t => { setFromBin(t.category); setBinView(false); open(t) }} />
   const chip = (k, t) => <SqChip key={k} on={fk === k} onClick={() => setFk(k)} label={t} />
   return (
     <>
@@ -108,12 +110,12 @@ export default function Tools({ d, edit, reload, reg, init, embedded }) {
       {groups.map(g => (
         <div key={g.c}>
           <div className="bh-grp">{g.c}<span>{g.items.length}</span></div>
-          {g.c === '垃圾桶' && !embedded && fk === 'all' && !q.trim() ? (() => {
+          {DIST.includes(g.c) && !embedded && fk === 'all' && !q.trim() ? (() => {
             const u = g.items.reduce((n, t) => n + binSum(t, 'use'), 0), s = g.items.reduce((n, t) => n + binSum(t, 'store'), 0), o = g.items.reduce((n, t) => n + binSum(t, 'off'), 0)
             return (
-              <button className="bn-entry" onClick={() => setBinView(true)}>
-                <span className="bn-entry-ico">🗑</span>
-                <span className="bn-entry-t"><b>垃圾桶 合共 {u + s + o}</b><small>使用中 {u} ・ 倉 {s} ・ 停 {o}　｜　{g.items.length} 款</small></span>
+              <button className="bn-entry" onClick={() => setBinView(g.c)}>
+                <span className="bn-entry-ico">{DIST_ICO[g.c]}</span>
+                <span className="bn-entry-t"><b>{g.c} 合共 {u + s + o}</b><small>使用中 {u} ・ 倉 {s} ・ 停 {o}　｜　{g.items.length} 款</small></span>
                 <span className="bn-entry-go">睇分佈 ›</span>
               </button>
             )
@@ -143,11 +145,11 @@ export default function Tools({ d, edit, reload, reg, init, embedded }) {
               </select>
             </div>
             <div className="bh-row3">
-              <div className="f-row"><label>庫存</label><input type="number" inputMode="numeric" value={form.stock} disabled={form.category === '垃圾桶' && !form.id} onChange={e => setForm({ ...form, stock: e.target.value })} /></div>
-              <div className="f-row"><label>在用</label><input type="number" inputMode="numeric" value={form.in_use} disabled={form.category === '垃圾桶'} onChange={e => setForm({ ...form, in_use: e.target.value })} /></div>
+              <div className="f-row"><label>庫存</label><input type="number" inputMode="numeric" value={form.stock} disabled={DIST.includes(form.category) && !form.id} onChange={e => setForm({ ...form, stock: e.target.value })} /></div>
+              <div className="f-row"><label>在用</label><input type="number" inputMode="numeric" value={form.in_use} disabled={DIST.includes(form.category)} onChange={e => setForm({ ...form, in_use: e.target.value })} /></div>
               <div className="f-row"><label>最低庫存</label><input type="number" inputMode="numeric" value={form.min_stock} onChange={e => setForm({ ...form, min_stock: e.target.value })} /></div>
             </div>
-            {form.category === '垃圾桶' && <p className="note" style={{ textAlign: 'left', margin: '0 0 8px' }}>庫存可以直接改（記入「倉庫（庫存）」）；在用由「垃圾桶分佈」嘅使用中位置統計。</p>}
+            {DIST.includes(form.category) && <p className="note" style={{ textAlign: 'left', margin: '0 0 8px' }}>庫存可以直接改（記入「倉庫（庫存）」）；在用由「{form.category}分佈」嘅使用中位置統計。</p>}
             <div className="f-row"><label>狀態</label>
               <select className="df-sel" value={form.status} onChange={e => setForm({ ...form, status: e.target.value })}><option>啟用</option><option>停用</option></select>
             </div>
