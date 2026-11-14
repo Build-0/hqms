@@ -485,9 +485,17 @@ export function ListReport({ data }) {
   const hasPhoto = groups.some(g => g.rows.some(r => r.photo))
   const showPh = withPhotos && hasPhoto
   // 所有分組共用同一組欄闊（按各欄最長內容比例），表格就會上下對齊，唔會每組各自歪
-  const wOf = v => [...String(v == null ? '' : v)].reduce((a, ch) => a + (ch.charCodeAt(0) > 255 ? 1.8 : 1), 0)
-  const colW = cols.map((c, k) => Math.min(26, Math.max(5, wOf(c), ...groups.flatMap(g => g.rows.map(r => wOf(r.cells[k]))))))
-  const colSum = colW.reduce((a, b) => a + b, 0)
+  const wOf1 = v => [...String(v == null ? '' : v)].reduce((a, ch) => a + (ch.charCodeAt(0) > 255 ? 1.8 : 1), 0)
+  const wOf = v => Math.max(0, ...String(v == null ? '' : v).split('\n').map(wOf1))   // 多行內容按最長一行計
+  // 短欄（姓名、時間、國籍等）按內容定闊度並唔准換行；長文字欄（例如負責區域）先至分剩低嘅位兼可以換行
+  const rawW = cols.map((c, k) => Math.max(3, ...String(c).split(/\s+/).map(wOf), ...groups.flatMap(g => g.rows.map(r => wOf(r.cells[k])))))
+  const longCol = rawW.map(w => w > 30)
+  if (!longCol.some(Boolean)) longCol[rawW.indexOf(Math.max(...rawW))] = true
+  // 短欄加埋太闊（約超過紙張七成）就將最闊嘅短欄轉做可換行，留位俾長文字欄
+  const shortEm = () => rawW.reduce((n, w, k) => n + (longCol[k] ? 0 : w * 0.6 + 1), 0)
+  while (shortEm() > 50) { let m = -1; rawW.forEach((w, k) => { if (!longCol[k] && (m < 0 || w > rawW[m])) m = k }); if (m < 0) break; longCol[m] = true }
+  const colStyle = k => (longCol[k] ? {} : { width: (rawW[k] * 0.6 + 1).toFixed(1) + 'em' })
+  const cellCls = (k, extra) => [longCol[k] ? '' : 'rpt-nw', extra || ''].filter(Boolean).join(' ')
   return (
     <>
       <p className="rpt-mut">{en ? <>Filter: {filterText}　·　{total} items</> : <>篩選：{filterText}　·　共 {total} 項</>}</p>
@@ -497,13 +505,13 @@ export function ListReport({ data }) {
         <div key={g.name}>
           <Sub>{g.name} · {g.rows.length}</Sub>
           <table className="rpt-t rpt-fixed">
-            <colgroup>{showPh && <col style={{ width: 56 }} />}{colW.map((w, k) => <col key={k} style={{ width: (w / colSum * 100).toFixed(2) + '%' }} />)}</colgroup>
-            <thead><tr>{showPh && <th style={{ width: 56 }}></th>}{cols.map(c => <th key={c}>{c}</th>)}</tr></thead>
+            <colgroup>{showPh && <col style={{ width: 56 }} />}{cols.map((_, k) => <col key={k} style={colStyle(k)} />)}</colgroup>
+            <thead><tr>{showPh && <th style={{ width: 56 }}></th>}{cols.map((c, k) => <th key={c} className={longCol[k] ? '' : 'rpt-nwh'}>{c}</th>)}</tr></thead>
             <tbody>
               {g.rows.map((r, i) => (
                 <tr key={i}>
                   {showPh && <td>{r.photo ? <img className="rpt-th" src={r.photo} alt="" /> : null}</td>}
-                  {r.cells.map((c, k) => <td key={k} className={(r.cls && r.cls[k]) || ''}>{c}</td>)}
+                  {r.cells.map((c, k) => <td key={k} className={cellCls(k, r.cls && r.cls[k])}>{c}</td>)}
                 </tr>
               ))}
             </tbody>
