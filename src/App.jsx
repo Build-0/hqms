@@ -127,7 +127,7 @@ export default function App() {
 
   if (api.isOpen && !session) return <Gate onOk={setSessionState} big={big} onBig={() => setBig(b => !b)} />
   const cur0 = MODULES.find(m => m.id === tab)
-  api.setReadOnly(!!session && (cur0 ? (cur0.id !== 'public' && itemLevel(session, cur0.id) !== 'edit') : permsOf(session).quality !== 'edit'))
+  api.setReadOnly(!!session && (cur0 ? (cur0.id !== 'public' && itemLevel(session, cur0.id) !== 'edit' && !(cur0.id === 'boh' && ['add', 'edit'].includes(itemLevel(session, 'supply_req')))) : permsOf(session).quality !== 'edit'))
   if (user === undefined) return null
   if (!user) return <Login onLogin={setUser} />
 
@@ -138,7 +138,7 @@ export default function App() {
   const lvl = id => itemLevel(session, id)
   const showSys = sy => !sy.dev || lvl(sy.id) !== 'none' || (!!session && session.role === 'admin')
   const qMods = MODULES.filter(m => !m.embed && !m.top)
-  const locked = id => !!session && (id === 'public' ? ITEMS.filter(i => i.id.startsWith('pa_')).every(i => lvl(i.id) === 'none') : id === 'quality' ? qMods.every(m => lvl(m.id) === 'none') : lvl(id) === 'none')
+  const locked = id => !!session && (id === 'public' ? ITEMS.filter(i => i.id.startsWith('pa_')).every(i => lvl(i.id) === 'none') : id === 'quality' ? qMods.every(m => lvl(m.id) === 'none') : lvl(id) === 'none' && (id !== 'boh' || lvl('supply_req') === 'none'))
   // 即使被封鎖的頁面（例如舊分頁狀態）也一律退回首頁
   if (tab !== 'home' && session && (((cur && cur.id === 'boh') && locked('boh')) || ((cur && cur.id === 'defect') && locked('defect')) || ((cur && cur.id === 'public') && locked('public')) || ((cur && cur.id === 'uniform') && locked('uniform')) || ((tab === 'quality' || (cur && !cur.embed && !cur.top)) && locked('quality')))) setTimeout(() => setTab('home'), 0)
   // 只有查房記錄權限（樓層主管）的帳號：其他品質模組一律退回首頁

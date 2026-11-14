@@ -553,3 +553,16 @@ export async function setPermItem(empId, item, level) {
     throwIf(error)
   }
 }
+
+// ── 客房物資領用單（整張單用 batch_id 歸組，可整張撤銷）──
+export async function dbSelectBatches() {
+  needDb()
+  const { data, error } = await sb.from('supply_moves').select('id,supply_id,qty,happened_on,note,by_name,batch_id,created_at').not('batch_id', 'is', null).order('created_at', { ascending: false }).limit(400)
+  throwIf(error)
+  return data
+}
+export async function dbDeleteBatch(batchId) {
+  needDb(); guard()
+  const { error } = await sb.from('supply_moves').delete().eq('batch_id', batchId)
+  throwIf(error)
+}

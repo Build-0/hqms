@@ -39,6 +39,7 @@ export const ITEMS = [
   { id: 'uniform', group: '後勤管理', label: '制服與布草管理' },
   { id: 'writeoff', group: '後勤管理', label: '報銷與遺失管理' },
   { id: 'roomsale', group: '後勤管理', label: '房間可售物品價錢／庫存表' },
+  { id: 'supply_req', group: '後勤管理', label: '客房物資領用單', add: true },
   { id: 'defect', group: '缺陷管理', label: '缺陷管理（整個模組）', add: true },
   { id: 'pa_roster', group: '公共地區', label: '人員崗位' },
   { id: 'pa_tasks', group: '公共地區', label: '任務代碼' },
@@ -53,7 +54,7 @@ export function itemDefault(s, id) {
   if (id === 'uniform' || id === 'writeoff' || id === 'roomsale') return s.dev ? 'edit' : 'none'   // 開發中：預設只有開發者可入
   const r = s.role
   if (r === 'admin') return 'edit'
-  if (r === 'store') return id === 'boh' || id === 'defect' ? 'edit' : 'none'
+  if (r === 'store') return id === 'boh' || id === 'defect' || id === 'supply_req' ? 'edit' : 'none'
   if (r === 'clerk') return id === 'defect' ? 'edit' : 'none'
   if (r === 'supervisor') {
     if (id === 'findings' || id === 'defect') return 'add'
