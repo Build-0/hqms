@@ -4,23 +4,28 @@ import { toast } from '../../lib/toast'
 import Confirm from '../../components/Confirm'
 import { num, today } from './shared'
 
-// 客房物資領用單：每層一張清單，預填常用物品，只需填數量，提交後一次過扣庫存。
-// 整張單用同一個 batch_id 記錄，可以喺「領用記錄」整張撤銷（庫存自動還原）。
+// 客房物資領用單：跟紙單一樣——每個品牌一張清單（歐舒丹／LINE FRIENDS／葡京人），再揀樓層。
+// 數量按紙單單位（箱／盒／捆…）填，系統按規格乘返件數扣庫存。整張單同一個 batch_id，可整張撤銷。
+const SHEETS = ['歐舒丹', 'LINE FRIENDS', '葡京人']
 const FLOORS = ['3樓', '4樓', '5樓', '6樓', '7樓', '8樓', '9樓', '10樓', '11樓', '12樓', '公共區域', '其他']
+const SEP = '｜'
 const newBatch = () => (globalThis.crypto?.randomUUID ? crypto.randomUUID() : 'b' + Date.now() + Math.random().toString(36).slice(2, 8))
 const fmtTime = iso => { const d = new Date(iso); return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}` }
+const fmt = n => Number(n).toLocaleString('en-US')
 
 export default function SupplyReq({ who, canEdit, canSubmit }) {
   const [view, setView] = useState('form')            // form／hist
   const [sup, setSup] = useState(null)
   const [tpl, setTpl] = useState([])
   const [hist, setHist] = useState(null)
+  const [sheet, setSheet] = useState('')
   const [floor, setFloor] = useState('')
-  const [qty, setQty] = useState({})                  // supply_id → 數量字串
+  const [qty, setQty] = useState({})                  // 行 key → 數量（箱／盒…）字串
   const [extra, setExtra] = useState([])              // 今次額外加入（唔入清單）嘅物品 id
   const [tplEdit, setTplEdit] = useState(false)
   const [pick, setPick] = useState(false)
   const [pq, setPq] = useState('')
+  const [cfg, setCfg] = useState(null)                // 加入／修改清單項目：{ supply, tplId, pack, unit }
   const [note, setNote] = useState('')
   const [prev, setPrev] = useState(false)             // 提交前預覽
   const [busy, setBusy] = useState(false)
@@ -34,29 +39,38 @@ export default function SupplyReq({ who, canEdit, canSubmit }) {
   useEffect(() => { if (view === 'hist') loadHist() }, [view])
 
   const byId = useMemo(() => Object.fromEntries((sup || []).map(s => [s.id, s])), [sup])
-  const floors = [...FLOORS, ...new Set(tpl.map(t => t.floor).filter(f => !FLOORS.includes(f)))]
-  const tplIds = tpl.filter(t => t.floor === floor).sort((a, b) => a.sort_order - b.sort_order).map(t => t.supply_id).filter(id => byId[id])
-  const rowIds = [...tplIds, ...extra.filter(id => !tplIds.includes(id))]
-  const chosen = rowIds.filter(id => num(qty[id]) > 0)
+  const sheets = [...SHEETS, ...new Set(tpl.map(t => t.sheet).filter(f => !SHEETS.includes(f)))]
+  const tplRows = tpl.filter(t => t.sheet === sheet && byId[t.supply_id]).sort((a, b) => a.sort_order - b.sort_order)
+    .map(t => ({ key: 't' + t.id, tplId: t.id, sid: t.supply_id, pack: t.pack || 1, unit: t.unit_label || byId[t.supply_id].unit, spec: t.spec }))
+  const extraRows = extra.filter(id => !tplRows.some(r => r.sid === id) && byId[id]).map(id => ({ key: 'x' + id, sid: id, pack: 1, unit: byId[id].unit, spec: '' }))
+  const rows = [...tplRows, ...extraRows]
+  const chosen = rows.filter(r => num(qty[r.key]) > 0)
+  const pieces = r => num(qty[r.key]) * r.pack
 
-  function selectFloor(f) { setFloor(f); setQty({}); setExtra([]); setTplEdit(false); setNote('') }
+  function selectSheet(s) { setSheet(s); setQty({}); setExtra([]); setTplEdit(false) }
 
-  async function addPick(id) {
-    if (tplEdit) {
-      try { await api.dbInsertMany('supply_req_tpl', [{ floor, supply_id: id, sort_order: tpl.filter(t => t.floor === floor).length + 1 }]); await loadTpl() } catch (ex) { toast('加入失敗：' + ex.message) }
-    } else if (!rowIds.includes(id)) setExtra([...extra, id])
-    setPick(false); setPq('')
+  async function saveCfg() {
+    const pack = Math.max(1, num(cfg.pack)), unit = (cfg.unit || '').trim() || '件'
+    try {
+      if (cfg.tplId) await api.dbUpdate('supply_req_tpl', cfg.tplId, { pack, unit_label: unit, spec: `${pack}pcs/${unit}` })
+      else await api.dbInsertMany('supply_req_tpl', [{ sheet, supply_id: cfg.supply.id, sort_order: tpl.filter(t => t.sheet === sheet).length + 1, pack, unit_label: unit, spec: `${pack}pcs/${unit}` }])
+      setCfg(null); await loadTpl()
+    } catch (ex) { toast('儲存失敗：' + ex.message) }
   }
-  async function removeTpl(id) {
-    const row = tpl.find(t => t.floor === floor && t.supply_id === id)
-    if (!row) { setExtra(extra.filter(x => x !== id)); return }
-    try { await api.dbDelete('supply_req_tpl', row.id); await loadTpl() } catch (ex) { toast('移除失敗：' + ex.message) }
+  function addPick(s) {
+    setPick(false); setPq('')
+    if (tplEdit) setCfg({ supply: s, tplId: null, pack: 1, unit: s.unit })
+    else if (!rows.some(r => r.sid === s.id)) setExtra([...extra, s.id])
+  }
+  async function removeTpl(r) {
+    if (!r.tplId) { setExtra(extra.filter(x => x !== r.sid)); return }
+    try { await api.dbDelete('supply_req_tpl', r.tplId); await loadTpl() } catch (ex) { toast('移除失敗：' + ex.message) }
   }
   async function copyFrom(src) {
     if (!src) return
-    const ids = tpl.filter(t => t.floor === src).sort((a, b) => a.sort_order - b.sort_order).map(t => t.supply_id).filter(id => !tplIds.includes(id))
-    if (!ids.length) { toast('嗰層冇清單可複製'); return }
-    try { await api.dbInsertMany('supply_req_tpl', ids.map((id, i) => ({ floor, supply_id: id, sort_order: tplIds.length + i + 1 }))); await loadTpl(); toast(`已複製 ${ids.length} 項`) } catch (ex) { toast('複製失敗：' + ex.message) }
+    const items = tpl.filter(t => t.sheet === src).sort((a, b) => a.sort_order - b.sort_order).filter(t => !tplRows.some(r => r.sid === t.supply_id))
+    if (!items.length) { toast('嗰張單冇清單可複製'); return }
+    try { await api.dbInsertMany('supply_req_tpl', items.map((t, i) => ({ sheet, supply_id: t.supply_id, sort_order: tplRows.length + i + 1, pack: t.pack, unit_label: t.unit_label, spec: t.spec }))); await loadTpl(); toast(`已複製 ${items.length} 項`) } catch (ex) { toast('複製失敗：' + ex.message) }
   }
 
   async function submit() {
@@ -64,7 +78,7 @@ export default function SupplyReq({ who, canEdit, canSubmit }) {
     setBusy(true)
     try {
       const batch = newBatch()
-      await api.dbInsertMany('supply_moves', chosen.map(id => ({ supply_id: id, kind: 'out', qty: num(qty[id]), happened_on: today(), note: ['領用單 ' + floor, note.trim()].filter(Boolean).join('：'), by_name: who || '', batch_id: batch })))
+      await api.dbInsertMany('supply_moves', chosen.map(r => ({ supply_id: r.sid, kind: 'out', qty: pieces(r), happened_on: today(), note: ['領用單', sheet, floor, r.pack > 1 ? `${num(qty[r.key])}${r.unit}×${r.pack}` : '', note.trim()].join(SEP), by_name: who || '', batch_id: batch })))
       toast(`已提交，扣咗 ${chosen.length} 項庫存`)
       setPrev(false); setQty({}); setExtra([]); setNote(''); loadSup()
     } catch (ex) { toast('提交失敗：' + ex.message) }
@@ -77,11 +91,12 @@ export default function SupplyReq({ who, canEdit, canSubmit }) {
   const batches = useMemo(() => {
     const m = new Map()
     for (const r of hist || []) { if (!m.has(r.batch_id)) m.set(r.batch_id, []); m.get(r.batch_id).push(r) }
-    return [...m.entries()].map(([id, rows]) => ({ id, rows, head: rows[0] }))
+    return [...m.entries()].map(([id, rs]) => ({ id, rows: rs, head: rs[0], parts: (rs[0].note || '').split(SEP) }))
   }, [hist])
 
   if (!sup) return <div className="note">載入中…</div>
-  const pickList = sup.filter(s => s.status !== '停用' && !rowIds.includes(s.id) && (!pq.trim() || [s.name, s.category].join(' ').toLowerCase().includes(pq.trim().toLowerCase())))
+  const pickList = sup.filter(s => s.status !== '停用' && !rows.some(r => r.sid === s.id) && (!pq.trim() || [s.name, s.category].join(' ').toLowerCase().includes(pq.trim().toLowerCase())))
+  const ready = sheet && floor
 
   return (
     <>
@@ -93,28 +108,40 @@ export default function SupplyReq({ who, canEdit, canSubmit }) {
       {view === 'form' && (
         <>
           {!canSubmit && <p className="note" style={{ textAlign: 'left' }}>目前帳號只可查看，不能提交領用單</p>}
-          <div className="bh-grp">樓層／部門</div>
+          <div className="bh-grp">配貨清單</div>
           <div className="chips" style={{ marginBottom: 8 }}>
-            {floors.map(f => <button key={f} className={`chip ${floor === f ? 'on' : ''}`} onClick={() => selectFloor(f)}>{f}{tpl.some(t => t.floor === f) ? '' : ' ·'}</button>)}
+            {sheets.map(f => <button key={f} className={`chip ${sheet === f ? 'on' : ''}`} onClick={() => selectSheet(f)}>{f}</button>)}
           </div>
-          {!floor && <div className="note">先揀樓層</div>}
+          <div className="bh-grp">樓層</div>
+          <div className="chips" style={{ marginBottom: 8 }}>
+            {FLOORS.map(f => <button key={f} className={`chip ${floor === f ? 'on' : ''}`} onClick={() => setFloor(f)}>{f}</button>)}
+          </div>
+          {!sheet && <div className="note">先揀配貨清單（歐舒丹／LINE FRIENDS／葡京人）</div>}
 
-          {floor && (
+          {sheet && (
             <>
-              <div className="bh-grp">{floor} 領用清單<span>{rowIds.length}</span></div>
-              {rowIds.length === 0 && <div className="note">{canEdit ? '呢層未有清單，撳下面「⚙ 編輯清單」加入常用物品，或者複製其他樓層' : '呢層未有清單，請聯絡倉管'}</div>}
+              <div className="bh-grp">{sheet} 配貨清單<span>{rows.length}</span></div>
+              {rows.length === 0 && <div className="note">{canEdit ? '呢張單未有清單，撳下面「⚙ 編輯清單」加入物品，或者複製其他清單' : '呢張單未有清單，請聯絡倉管'}</div>}
               <div className="bh-batches" style={{ marginTop: 4 }}>
-                {rowIds.map(id => {
-                  const s = byId[id], q = num(qty[id]), after = num(s.stock) - q
+                {rows.map(r => {
+                  const s = byId[r.sid], q = num(qty[r.key]), after = num(s.stock) - pieces(r)
                   return (
-                    <div key={id} className="bh-b" style={{ alignItems: 'center', gap: 8 }}>
+                    <div key={r.key} className="bh-b" style={{ alignItems: 'center', gap: 8 }}>
                       <span style={{ flex: 1, minWidth: 0 }}>
                         <b>{s.name}</b>
-                        <small style={{ display: 'block', color: after < 0 && q > 0 ? 'var(--red)' : 'var(--sub)' }}>{s.category} · 庫存 {s.stock} {s.unit}{q > 0 ? ` → ${after}` : ''}</small>
+                        <small style={{ display: 'block', color: after < 0 && q > 0 ? 'var(--red)' : 'var(--sub)' }}>
+                          {r.spec ? `${r.spec} · ` : ''}庫存 {fmt(s.stock)} {s.unit}{q > 0 ? ` → ${fmt(after)}（扣 ${fmt(pieces(r))}）` : ''}
+                        </small>
                       </span>
                       {tplEdit
-                        ? <button className="linky" style={{ color: 'var(--red)' }} onClick={() => removeTpl(id)}>✕ 移除</button>
-                        : <input type="number" inputMode="numeric" min="0" placeholder="0" value={qty[id] ?? ''} disabled={!canSubmit} onChange={e => setQty({ ...qty, [id]: e.target.value })} style={{ width: 76, padding: '8px 10px', fontSize: 17, textAlign: 'center', border: '1px solid var(--line)', borderRadius: 10 }} />}
+                        ? <span style={{ display: 'flex', gap: 10 }}>
+                            {r.tplId && <button className="linky" onClick={() => setCfg({ supply: s, tplId: r.tplId, pack: r.pack, unit: r.unit })}>改規格</button>}
+                            <button className="linky" style={{ color: 'var(--red)' }} onClick={() => removeTpl(r)}>✕</button>
+                          </span>
+                        : <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                            <input type="number" inputMode="numeric" min="0" placeholder="0" value={qty[r.key] ?? ''} disabled={!canSubmit} onChange={e => setQty({ ...qty, [r.key]: e.target.value })} style={{ width: 68, padding: '8px 8px', fontSize: 17, textAlign: 'center', border: '1px solid var(--line)', borderRadius: 10 }} />
+                            <small style={{ color: 'var(--sub)', minWidth: 18 }}>{r.unit}</small>
+                          </span>}
                     </div>
                   )
                 })}
@@ -124,15 +151,16 @@ export default function SupplyReq({ who, canEdit, canSubmit }) {
                 {canEdit && <button className="btn ghost" style={{ margin: 0 }} onClick={() => setTplEdit(!tplEdit)}>{tplEdit ? '完成編輯' : '⚙ 編輯清單'}</button>}
                 {canEdit && tplEdit && (
                   <select className="df-sel" value="" onChange={e => copyFrom(e.target.value)} style={{ maxWidth: 170 }}>
-                    <option value="">複製其他樓層清單…</option>
-                    {floors.filter(f => f !== floor && tpl.some(t => t.floor === f)).map(f => <option key={f} value={f}>{f}</option>)}
+                    <option value="">複製其他清單…</option>
+                    {sheets.filter(f => f !== sheet && tpl.some(t => t.sheet === f)).map(f => <option key={f} value={f}>{f}</option>)}
                   </select>
                 )}
               </div>
               {!tplEdit && canSubmit && (
                 <>
-                  <div className="f-row"><label>備註（可留空）</label><input value={note} onChange={e => setNote(e.target.value)} placeholder="例如：領用人、房號" /></div>
-                  <button className="btn" disabled={!chosen.length} onClick={() => setPrev(true)}>提交領用單{chosen.length ? `（${chosen.length} 項）` : ''}</button>
+                  <div className="f-row"><label>備註（可留空）</label><input value={note} onChange={e => setNote(e.target.value)} placeholder="例如：領用人、工號" /></div>
+                  {!floor && chosen.length > 0 && <p className="note" style={{ textAlign: 'left', color: 'var(--red)' }}>請先揀樓層</p>}
+                  <button className="btn" disabled={!chosen.length || !ready} onClick={() => setPrev(true)}>提交領用單{chosen.length ? `（${chosen.length} 項）` : ''}</button>
                 </>
               )}
             </>
@@ -149,16 +177,19 @@ export default function SupplyReq({ who, canEdit, canSubmit }) {
               <div key={b.id}>
                 <div className="bh-b" style={{ alignItems: 'center', gap: 8, cursor: 'pointer' }} onClick={() => setOpen(open === b.id ? null : b.id)}>
                   <span style={{ flex: 1, minWidth: 0 }}>
-                    <b>{(b.head.note || '').replace(/^領用單 /, '').split('：')[0] || '領用單'}</b>　<small style={{ color: 'var(--sub)' }}>{fmtTime(b.head.created_at)}　{b.head.by_name}</small>
+                    <b>{b.parts[2] || '領用單'}　{b.parts[1] || ''}</b>　<small style={{ color: 'var(--sub)' }}>{fmtTime(b.head.created_at)}　{b.head.by_name}</small>
                     <small style={{ display: 'block', color: 'var(--sub)' }}>{b.rows.length} 項　{open === b.id ? '▲' : '▼'}</small>
                   </span>
                   <button className="linky" style={{ color: 'var(--red)' }} onClick={e => { e.stopPropagation(); setUndo(b.id) }}>撤銷整張</button>
                 </div>
-                {open === b.id && b.rows.map(r => (
-                  <div key={r.id} className="bh-b" style={{ paddingLeft: 22 }}>
-                    <span style={{ flex: 1 }}>{(byId[r.supply_id] || {}).name || `#${r.supply_id}`}</span><b style={{ color: '#c62828' }}>−{r.qty}</b>
-                  </div>
-                ))}
+                {open === b.id && b.rows.map(r => {
+                  const p = (r.note || '').split(SEP)
+                  return (
+                    <div key={r.id} className="bh-b" style={{ paddingLeft: 22 }}>
+                      <span style={{ flex: 1 }}>{(byId[r.supply_id] || {}).name || `#${r.supply_id}`}{p[3] && <small style={{ color: 'var(--sub)' }}>　{p[3]}</small>}</span><b style={{ color: '#c62828' }}>−{fmt(r.qty)}</b>
+                    </div>
+                  )
+                })}
               </div>
             ))}
           </div>
@@ -168,10 +199,10 @@ export default function SupplyReq({ who, canEdit, canSubmit }) {
       {pick && (
         <div className="modal" onClick={e => { if (e.target === e.currentTarget) setPick(false) }}>
           <div className="sheet">
-            <h2>{tplEdit ? `加入 ${floor} 清單` : '加其他物品'}</h2>
+            <h2>{tplEdit ? `加入 ${sheet} 清單` : '加其他物品'}</h2>
             <input className="search-inp" placeholder="🔍 搜尋物資" value={pq} onChange={e => setPq(e.target.value)} autoFocus />
             <div style={{ maxHeight: '50vh', overflow: 'auto', marginTop: 8 }}>
-              {pickList.slice(0, 80).map(s => <button key={s.id} className="btn ghost" style={{ display: 'block', width: '100%', textAlign: 'left', margin: '0 0 6px' }} onClick={() => addPick(s.id)}>{s.name}<small style={{ color: 'var(--sub)' }}>　{s.category} · 庫存 {s.stock}</small></button>)}
+              {pickList.slice(0, 80).map(s => <button key={s.id} className="btn ghost" style={{ display: 'block', width: '100%', textAlign: 'left', margin: '0 0 6px' }} onClick={() => addPick(s)}>{s.name}<small style={{ color: 'var(--sub)' }}>　{s.category} · 庫存 {fmt(s.stock)}</small></button>)}
               {pickList.length === 0 && <div className="note">搵唔到</div>}
             </div>
             <button className="btn ghost" onClick={() => setPick(false)}>取消</button>
@@ -179,18 +210,36 @@ export default function SupplyReq({ who, canEdit, canSubmit }) {
         </div>
       )}
 
+      {cfg && (
+        <div className="modal" style={{ zIndex: 55 }} onClick={e => { if (e.target === e.currentTarget) setCfg(null) }}>
+          <div className="sheet">
+            <h2>{cfg.supply.name}</h2>
+            <p className="src-note">紙單上嘅單位同規格。例如「231pcs/箱」：單位填「箱」，每單位件數填 231。填數量時就係填幾多箱，系統自動扣 231 × 箱數。</p>
+            <div className="bh-row2">
+              <div className="f-row"><label>單位（箱／盒／捆…）</label><input value={cfg.unit} onChange={e => setCfg({ ...cfg, unit: e.target.value })} /></div>
+              <div className="f-row"><label>每單位件數</label><input type="number" inputMode="numeric" value={cfg.pack} onChange={e => setCfg({ ...cfg, pack: e.target.value })} /></div>
+            </div>
+            <button className="btn" onClick={saveCfg}>儲存</button>
+            <button className="btn ghost" onClick={() => setCfg(null)}>取消</button>
+          </div>
+        </div>
+      )}
+
       {prev && (
         <div className="modal" onClick={e => { if (e.target === e.currentTarget && !busy) setPrev(false) }}>
           <div className="sheet">
-            <h2>確認領用單：{floor}</h2>
+            <h2>確認領用單：{sheet}　{floor}</h2>
             <p className="src-note">提交後會即時扣除庫存。如果填錯，倉管可以喺「領用記錄」整張撤銷。</p>
             <div className="bh-batches">
-              {chosen.map(id => {
-                const s = byId[id], after = num(s.stock) - num(qty[id])
+              {chosen.map(r => {
+                const s = byId[r.sid], after = num(s.stock) - pieces(r)
                 return (
-                  <div key={id} className="bh-b" style={{ alignItems: 'center', gap: 8 }}>
-                    <span style={{ flex: 1, minWidth: 0 }}><b>{s.name}</b><small style={{ display: 'block', color: after < 0 ? 'var(--red)' : 'var(--sub)' }}>庫存 {s.stock} → {after}{after < 0 ? '（庫存唔夠，會變負數）' : ''}</small></span>
-                    <b style={{ color: '#c62828' }}>−{num(qty[id])}</b>
+                  <div key={r.key} className="bh-b" style={{ alignItems: 'center', gap: 8 }}>
+                    <span style={{ flex: 1, minWidth: 0 }}>
+                      <b>{s.name}</b>
+                      <small style={{ display: 'block', color: after < 0 ? 'var(--red)' : 'var(--sub)' }}>{num(qty[r.key])} {r.unit}{r.pack > 1 ? ` × ${r.pack}` : ''}　庫存 {fmt(s.stock)} → {fmt(after)}{after < 0 ? '（庫存唔夠，會變負數）' : ''}</small>
+                    </span>
+                    <b style={{ color: '#c62828' }}>−{fmt(pieces(r))}</b>
                   </div>
                 )
               })}
