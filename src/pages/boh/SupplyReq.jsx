@@ -103,9 +103,20 @@ export default function SupplyReq({ who, canEdit, canSubmit }) {
 
   return (
     <>
-      <div className="chips" style={{ margin: '4px 0 8px' }}>
+      <div className="chips" style={{ margin: '4px 0 8px', alignItems: 'center' }}>
         <button className={`chip ${view === 'form' ? 'on' : ''}`} onClick={() => setView('form')}>填領用單</button>
         {canEdit && <button className={`chip ${view === 'hist' ? 'on' : ''}`} onClick={() => setView('hist')}>領用記錄</button>}
+        {view === 'form' && sheet && canEdit && (
+          <span style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
+            {tplEdit && (
+              <select className="df-sel" value="" onChange={e => copyFrom(e.target.value)} style={{ maxWidth: 170 }}>
+                <option value="">複製其他清單…</option>
+                {sheets.filter(f => f !== sheet && tpl.some(t => t.sheet === f)).map(f => <option key={f} value={f}>{f}</option>)}
+              </select>
+            )}
+            <button className={`chip ${tplEdit ? 'on' : ''}`} onClick={() => setTplEdit(!tplEdit)}>{tplEdit ? '完成編輯' : '⚙ 編輯清單'}</button>
+          </span>
+        )}
       </div>
 
       {view === 'form' && (
@@ -124,19 +135,9 @@ export default function SupplyReq({ who, canEdit, canSubmit }) {
           {sheet && (
             <>
               <div className="bh-grp">{sheet} 配貨清單<span>{rows.length}</span></div>
-              {rows.length === 0 && <div className="note">{canEdit ? '呢張單未有清單，撳下面「⚙ 編輯清單」加入物品，或者複製其他清單' : '呢張單未有清單，請聯絡倉管'}</div>}
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: '4px 0 8px' }}>
-                {(canSubmit || tplEdit) && <button className="btn ghost" style={{ margin: 0 }} onClick={() => setPick(true)}>＋ {tplEdit ? '加入清單' : '加其他物品'}</button>}
-                {canEdit && <button className="btn ghost" style={{ margin: 0 }} onClick={() => setTplEdit(!tplEdit)}>{tplEdit ? '完成編輯' : '⚙ 編輯清單'}</button>}
-                {canEdit && tplEdit && (
-                  <select className="df-sel" value="" onChange={e => copyFrom(e.target.value)} style={{ maxWidth: 170 }}>
-                    <option value="">複製其他清單…</option>
-                    {sheets.filter(f => f !== sheet && tpl.some(t => t.sheet === f)).map(f => <option key={f} value={f}>{f}</option>)}
-                  </select>
-                )}
-              </div>
+              {rows.length === 0 && <div className="note">{canEdit ? '呢張單未有清單，撳右上角「⚙ 編輯清單」，再撳右下角「＋」加入物品，或者複製其他清單' : '呢張單未有清單，請聯絡倉管'}</div>}
               <div className="srch-row"><input className="search-inp" placeholder="🔍 搜尋物品" value={rq} onChange={e => setRq(e.target.value)} /></div>
-              {rqt && shown.length === 0 && <div className="note">搵唔到「{rq.trim()}」，可以撳下面「＋ 加其他物品」</div>}
+              {rqt && shown.length === 0 && <div className="note">搵唔到「{rq.trim()}」，可以撳右下角「＋」加其他物品</div>}
               {rqt && chosen.length > 0 && <p className="note" style={{ textAlign: 'left', margin: '2px 0' }}>已填 {chosen.length} 項（搜尋時未顯示嘅都會一齊提交）</p>}
               <div className="bh-batches" style={{ marginTop: 4 }}>
                 {shown.map(r => {
@@ -255,6 +256,7 @@ export default function SupplyReq({ who, canEdit, canSubmit }) {
           </div>
         </div>
       )}
+      {view === 'form' && sheet && (canSubmit || tplEdit) && <button className="fab" aria-label={tplEdit ? '加入清單' : '加其他物品'} title={tplEdit ? '加入清單' : '加其他物品'} onClick={() => setPick(true)}>＋</button>}
       {undo && <Confirm text="會撤銷整張領用單，所有項目嘅庫存會還原。" onConfirm={() => doUndo(undo)} onCancel={() => setUndo(null)} />}
     </>
   )
