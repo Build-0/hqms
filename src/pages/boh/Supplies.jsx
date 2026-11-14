@@ -38,10 +38,12 @@ export default function Supplies({ d, edit, reload, reg, who }) {
   const movesOf = id => (mv || []).filter(m => m.supply_id === id)
   const lastIn = id => movesOf(id).find(m => m.kind === 'in')
   const nameOf = id => (list.find(s => s.id === id) || {}).name || `#${id}`
-  const lowN = list.filter(low).length, offN = list.filter(s => !active(s)).length
+  const neg = s => active(s) && num(s.stock) < 0
+  const negN = list.filter(neg).length, lowN = list.filter(low).length, offN = list.filter(s => !active(s)).length
 
   const shown = list.filter(s => {
     if (fk === 'low' && !low(s)) return false
+    if (fk === 'neg' && !neg(s)) return false
     if (fk === 'off' ? active(s) : (fk !== 'low' && !active(s))) return false
     if (ck && s.category !== ck) return false
     const t = q.trim().toLowerCase()
@@ -107,7 +109,7 @@ export default function Supplies({ d, edit, reload, reg, who }) {
   })
   if (reg) reg.current = () => sub === 'log' ? logReport() : ({
     title: '客房物資消耗品',
-    filterText: [fk === 'low' ? '需補貨' : fk === 'off' ? '停用' : '', ck, q.trim() && `搜尋「${q.trim()}」`].filter(Boolean).join(' · ') || '全部（啟用中）',
+    filterText: [fk === 'low' ? '需補貨' : fk === 'neg' ? '負數庫存' : fk === 'off' ? '停用' : '', ck, q.trim() && `搜尋「${q.trim()}」`].filter(Boolean).join(' · ') || '全部（啟用中）',
     cols: ['名稱', '庫存', '最低', '最近入貨', '供應商'],
     groups: groups.map(g => ({ name: g.c, rows: g.items.map(s => { const li = lastIn(s.id); return { photo: img(s.id), cells: [s.name, `${s.stock} ${s.unit}`, num(s.min_stock) || '—', li ? `${li.happened_on}（${li.qty}）` : '—', (li && li.supplier) || s.supplier || '—'], cls: ['', low(s) ? 'rpt-red' : '', '', '', ''] } }) })),
   })
@@ -152,6 +154,7 @@ export default function Supplies({ d, edit, reload, reg, who }) {
           <select className="df-sel" value={fk} onChange={e => setFk(e.target.value)}>
             <option value="all">{`全部 ${list.filter(active).length}`}</option>
             {lowN > 0 && <option value="low">{`🛒 補貨 ${lowN}`}</option>}
+            {negN > 0 && <option value="neg">{`⚠ 負數庫存 ${negN}`}</option>}
             {offN > 0 && <option value="off">{`停用 ${offN}`}</option>}
           </select>
           <select className="df-sel" value={ck} onChange={e => setCk(e.target.value)}>
@@ -169,7 +172,7 @@ export default function Supplies({ d, edit, reload, reg, who }) {
               <button className={`sq-card ${!active(s) ? 'off' : ''}`} key={s.id} onClick={() => setPv(s.id)}>
                 <Thumb src={img(s.id)} fallback="🧴" size={64} />
                 <span className="sq-name">{s.name}</span>
-                <span className={`sq-n ${low(s) ? 'low' : ''}`}>{s.stock}<small>{!active(s) ? '停用' : low(s) ? `需補貨 · ${s.unit}` : `庫存 · ${s.unit}`}</small></span>
+                <span className={`sq-n ${low(s) || neg(s) ? 'low' : ''}`}>{s.stock}<small>{!active(s) ? '停用' : neg(s) ? `負數 · ${s.unit}` : low(s) ? `需補貨 · ${s.unit}` : `庫存 · ${s.unit}`}</small></span>
               </button>
             ))}
           </div>
