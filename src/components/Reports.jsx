@@ -5,7 +5,7 @@ import { canExport, EXPORT_MSG } from '../lib/accounts'
 import { savePdf } from '../lib/pdf'
 
 // 報告外殼：全螢幕預覽 + 「儲存為 PDF」（瀏覽器列印 → 另存 PDF；手機用分享 → 列印/存成 PDF）
-export function ReportModal({ title, sub, onClose, children, landscape: landscapeProp, a3, signPage }) {
+export function ReportModal({ title, sub, onClose, children, landscape: landscapeProp, a3, signPage, en }) {
   useEffect(() => {
     const old = document.title
     const clean = x => String(x || '').replace(/[\\/:*?"<>|]/g, '-').trim()
@@ -76,21 +76,21 @@ export function ReportModal({ title, sub, onClose, children, landscape: landscap
   return createPortal(
     <div className="rpt-overlay">
       <div className="rpt-bar rpt-deskbar rpt-noprint">
-        <button className="rpt-btn ghost" onClick={onClose}>取消</button>
+        <button className="rpt-btn ghost" onClick={onClose}>{en ? 'Cancel' : '取消'}</button>
         <span className="rpt-bar-t">{title}</span>
-        <button className="rpt-btn" onClick={printNow}>保存</button>
+        <button className="rpt-btn" onClick={printNow}>{en ? 'Save' : '保存'}</button>
       </div>
       <div className="rpt-scroll">
         <div className={'rpt-print' + (signPage ? ' rpt-sign' : landscape ? ' rpt-wide' : '')}>
           <div className="rpt-hd"><b>{title}</b><span>{sub}</span></div>
           {children}
-          <div className="rpt-ft"><span>客房公區管理系統</span><span>匯出時間 {stamp}</span></div>
+          <div className="rpt-ft"><span>{en ? 'Housekeeping & Public Area System' : '客房公區管理系統'}</span><span>{en ? 'Exported ' : '匯出時間 '}{stamp}</span></div>
         </div>
       </div>
       <div className="rpt-foot rpt-noprint">
-        <button className="btn ghost" onClick={onClose}>‹ 返回</button>
-        <button className="btn ghost rpt-printbtn" style={{ flex: '0 0 26%' }} onClick={printNow}>保存</button>
-        <button className="btn rpt-pdfbtn" disabled={busy} onClick={toPdf}>{busy ? '產生中…' : '保存'}</button>
+        <button className="btn ghost" onClick={onClose}>‹ {en ? 'Back' : '返回'}</button>
+        <button className="btn ghost rpt-printbtn" style={{ flex: '0 0 26%' }} onClick={printNow}>{en ? 'Save' : '保存'}</button>
+        <button className="btn rpt-pdfbtn" disabled={busy} onClick={toPdf}>{busy ? (en ? 'Generating…' : '產生中…') : (en ? 'Save' : '保存')}</button>
       </div>
     </div>,
     document.body
@@ -469,7 +469,7 @@ export function SpeechSheet({ items }) {
 
 // ── 後勤清單報告（跟目前分頁與篩選）──
 export function ListReport({ data }) {
-  const { filterText, cols, groups } = data
+  const { filterText, cols, groups, en } = data
   const [withPhotos, setWithPhotos] = useState(true)
   const total = groups.reduce((n, g) => n + g.rows.length, 0)
   const hasPhoto = groups.some(g => g.rows.some(r => r.photo))
@@ -480,9 +480,9 @@ export function ListReport({ data }) {
   const colSum = colW.reduce((a, b) => a + b, 0)
   return (
     <>
-      <p className="rpt-mut">篩選：{filterText}　·　共 {total} 項</p>
-      {hasPhoto && <label className="rpt-noprint rpt-check"><input type="checkbox" checked={withPhotos} onChange={e => setWithPhotos(e.target.checked)} /> 附上相片</label>}
-      {total === 0 && <Empty>沒有符合篩選的項目</Empty>}
+      <p className="rpt-mut">{en ? <>Filter: {filterText}　·　{total} items</> : <>篩選：{filterText}　·　共 {total} 項</>}</p>
+      {hasPhoto && <label className="rpt-noprint rpt-check"><input type="checkbox" checked={withPhotos} onChange={e => setWithPhotos(e.target.checked)} /> {en ? 'Include photos' : '附上相片'}</label>}
+      {total === 0 && <Empty>{en ? 'No matching items' : '沒有符合篩選的項目'}</Empty>}
       {groups.map(g => (
         <div key={g.name}>
           <Sub>{g.name} · {g.rows.length}</Sub>

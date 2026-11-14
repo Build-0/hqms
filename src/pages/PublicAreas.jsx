@@ -154,7 +154,7 @@ function Roster({ d, load, log, staffOf, canEdit }) {
     cols: [tr('崗位', 'Post'), tr('姓名', 'Name'), tr('類別', 'Type'), tr('性別', 'Gender'), tr('國籍', 'Nationality'), tr('上崗日期', 'In post since'), tr('上班—收工', 'Shift'), tr('工時 總／淨', 'Hours total / net'), tr('主要負責區域', 'Main area')],
     groups: groups.map(g => ({ name: grpName(en, g.g), rows: g.items.map(p => {
       const s = staffOf(p.staff_id) || {}; const h = hrs(p)
-      return { photo: s.photo || '', cells: [codeLabel(en, p.code), s.name || '—', s.kind ? (en ? KIND_EN[s.kind] : s.kind) + (s.position ? ' · ' + (en ? POS_EN[s.position] || s.position : s.position) : '') : '—', gLabel(s.gender) || '—', (en ? NAT_EN[s.nationality] : s.nationality) || '—', p.since ? `${p.since}（${tenure(en, p.since)}）` : '—', p.start_time && p.end_time ? `${p.start_time}‑${p.end_time}` : '—', h ? `${num(h.gross)} / ${num(h.net)}` : '—', areaOf(en, p) || '—'] }
+      return { photo: s.photo || '', cells: [codeLabel(en, p.code), s.name || '—', s.kind ? (en ? KIND_EN[s.kind] : s.kind) + (s.position ? ' · ' + (en ? POS_EN[s.position] || s.position : s.position) : '') : '—', gLabel(s.gender) || '—', (en ? NAT_EN[s.nationality] : s.nationality) || '—', p.since ? (en ? `${p.since} (${tenure(en, p.since)})` : `${p.since}（${tenure(en, p.since)}）`) : '—', p.start_time && p.end_time ? `${p.start_time}‑${p.end_time}` : '—', h ? `${num(h.gross)} / ${num(h.net)}` : '—', areaOf(en, p) || '—'] }
     }) })),
   })
 
@@ -276,7 +276,7 @@ function Roster({ d, load, log, staffOf, canEdit }) {
           </div>
         </div>
       )}
-      {report && <ReportModal title={tr('公共地區人員崗位表', 'Public Area Staff & Post Roster')} sub={todayStr()} onClose={() => setReport(false)}><ListReport data={reportData()} /></ReportModal>}
+      {report && <ReportModal en={en} title={tr('公共地區人員崗位表', 'Public Area Staff & Post Roster')} sub={todayStr()} onClose={() => setReport(false)}><ListReport data={{ ...reportData(), en }} /></ReportModal>}
     </>
   )
 }
@@ -470,7 +470,7 @@ function Annual({ log, canEdit, who }) {
           </div>
         </div>
       )}
-      {report && <ReportModal title={tr('年度清潔', 'Annual cleaning') + ' · ' + catName(cat)} sub={todayStr()} onClose={() => setReport(false)}><ListReport data={reportData()} /></ReportModal>}
+      {report && <ReportModal en={en} title={tr('年度清潔', 'Annual cleaning') + ' · ' + catName(cat)} sub={todayStr()} onClose={() => setReport(false)}><ListReport data={{ ...reportData(), en }} /></ReportModal>}
     </>
   )
 }
@@ -646,9 +646,9 @@ function Board({ d, load, log, staffOf, canEdit }) {
         )}
         </>
       )}
-      {report === true && <ReportModal title={tr('24 小時看板', '24-Hour Board')} sub={todayStr()} onClose={() => setReport(false)}><ListReport data={boardReport()} /></ReportModal>}
+      {report === true && <ReportModal en={en} title={tr('24 小時看板', '24-Hour Board')} sub={todayStr()} onClose={() => setReport(false)}><ListReport data={{ ...boardReport(), en }} /></ReportModal>}
       {report === 'allposts' && (
-        <ReportModal title={tr('24 小時看板 · 各崗位工作安排', '24-Hour Board · Post schedules')} sub={todayStr()} onClose={() => setReport(false)}>
+        <ReportModal en={en} title={tr('24 小時看板 · 各崗位工作安排', '24-Hour Board · Post schedules')} sub={todayStr()} onClose={() => setReport(false)}>
           {posts.map(p => {
             const s = staffOf(p.staff_id) || {}; const h = hOf(p.id)
             return (
@@ -665,7 +665,7 @@ function Board({ d, load, log, staffOf, canEdit }) {
           })}
         </ReportModal>
       )}
-      {report === 'matrix' && <ReportModal landscape a3 title={tr('24 小時看板總表', '24-Hour Board Matrix')} sub={todayStr()} onClose={() => setReport(false)}><p className="rpt-mut" style={{ margin: '0 0 4px', fontSize: 11, lineHeight: 1.5 }}>{statLine}{kindLines.map(t => <span key={t} style={{ display: 'block' }}>{t}</span>)}</p>{matrixPages(ov === 'codes')}</ReportModal>}
+      {report === 'matrix' && <ReportModal en={en} landscape a3 title={tr('24 小時看板總表', '24-Hour Board Matrix')} sub={todayStr()} onClose={() => setReport(false)}><p className="rpt-mut" style={{ margin: '0 0 4px', fontSize: 11, lineHeight: 1.5 }}>{statLine}{kindLines.map(t => <span key={t} style={{ display: 'block' }}>{t}</span>)}</p>{matrixPages(ov === 'codes')}</ReportModal>}
       {canEdit && edit && (
         <div className="modal" onClick={e => { if (e.target === e.currentTarget) setEdit(null) }}>
           <div className="sheet">
