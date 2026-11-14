@@ -51,7 +51,7 @@ export default function Home({ session, go }) {
       try {
         if (itemLevel(session, 'uniform') !== 'none') {
           const linen = (await api.dbSelect('uni_items', { cols: 'id,cat,qty,min_qty' })).filter(i => i.cat === '布草')
-          r.lowLinen = linen.filter(i => num(i.min_qty) > 0 && num(i.qty) < num(i.min_qty)).length
+          r.lowLinen = linen.filter(i => num(i.min_qty) > 0 && num(i.qty) <= num(i.min_qty)).length
         }
       } catch { /* */ }
       try {
@@ -92,7 +92,7 @@ export default function Home({ session, go }) {
     tiles.push(tile('e', '臨期批次', d.exp, '30 日內到期或已過期', '#e69500', () => go('boh', { fk: 'exp' })))
   }
   if (itemLevel(session, 'uniform') !== 'none') {
-    tiles.push(tile('u', '布草存量低', d.lowLinen, '低於最低存量', '#c62828', () => go('uniform')))
+    tiles.push(tile('u', '布草存量低', d.lowLinen, '等於或低於最低存量', '#c62828', () => go('uniform')))
   }
   if (perm.quality !== 'none') {
     tiles.push(tile('t', '今日查房', d.today, d.issues7 != null ? `近 7 日：⚠ ${d.issues7}　⭐ ${d.good7}` : ' ', null, () => go('findings')))
