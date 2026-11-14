@@ -119,6 +119,18 @@ const areaOf = (en, p) => (en && p.work_area_en ? p.work_area_en : p.work_area)
 const taskShort = (en, t) => (en && t.short_en ? t.short_en : t.short)
 const taskDetail = (en, t) => (en && t.detail_en ? t.detail_en : t.detail)
 
+// 上崗至今：不足 1 個月顯示日數，否則「X 年 Y 個月」
+function tenure(en, since) {
+  if (!since) return ''
+  const a = new Date(since + 'T00:00:00'), b = new Date(todayStr() + 'T00:00:00')
+  const days = Math.round((b - a) / 864e5)
+  if (days < 0) return en ? 'starts soon' : '未開始'
+  let m = (b.getFullYear() - a.getFullYear()) * 12 + b.getMonth() - a.getMonth() - (b.getDate() < a.getDate() ? 1 : 0)
+  if (m < 1) return en ? `${days + 1} d` : `${days + 1} 日`
+  const y = Math.floor(m / 12); m %= 12
+  return en ? [y && `${y} y`, m && `${m} mo`].filter(Boolean).join(' ') : [y && `${y} 年`, m && `${m} 個月`].filter(Boolean).join(' ')
+}
+
 /* ───────── 人員崗位（人 + 崗位合併；一人一崗，冇崗位嘅人放「替補」） ───────── */
 function Roster({ d, load, log, staffOf, canEdit }) {
   const { en, tr } = useL()
@@ -139,25 +151,25 @@ function Roster({ d, load, log, staffOf, canEdit }) {
 
   const reportData = () => ({
     filterText: tr('在職員工', 'Active staff'),
-    cols: [tr('崗位', 'Post'), tr('姓名', 'Name'), tr('類別', 'Type'), tr('性別', 'Gender'), tr('國籍', 'Nationality'), tr('上班—收工', 'Shift'), tr('工時 總／淨', 'Hours total / net'), tr('主要負責區域', 'Main area')],
+    cols: [tr('崗位', 'Post'), tr('姓名', 'Name'), tr('類別', 'Type'), tr('性別', 'Gender'), tr('國籍', 'Nationality'), tr('上崗日期', 'In post since'), tr('上班—收工', 'Shift'), tr('工時 總／淨', 'Hours total / net'), tr('主要負責區域', 'Main area')],
     groups: groups.map(g => ({ name: grpName(en, g.g), rows: g.items.map(p => {
       const s = staffOf(p.staff_id) || {}; const h = hrs(p)
-      return { photo: s.photo || '', cells: [codeLabel(en, p.code), s.name || '—', s.kind ? (en ? KIND_EN[s.kind] : s.kind) + (s.position ? ' · ' + (en ? POS_EN[s.position] || s.position : s.position) : '') : '—', gLabel(s.gender) || '—', (en ? NAT_EN[s.nationality] : s.nationality) || '—', p.start_time && p.end_time ? `${p.start_time}‑${p.end_time}` : '—', h ? `${num(h.gross)} / ${num(h.net)}` : '—', areaOf(en, p) || '—'] }
+      return { photo: s.photo || '', cells: [codeLabel(en, p.code), s.name || '—', s.kind ? (en ? KIND_EN[s.kind] : s.kind) + (s.position ? ' · ' + (en ? POS_EN[s.position] || s.position : s.position) : '') : '—', gLabel(s.gender) || '—', (en ? NAT_EN[s.nationality] : s.nationality) || '—', p.since ? `${p.since}（${tenure(en, p.since)}）` : '—', p.start_time && p.end_time ? `${p.start_time}‑${p.end_time}` : '—', h ? `${num(h.gross)} / ${num(h.net)}` : '—', areaOf(en, p) || '—'] }
     }) })),
   })
 
-  const blank = { id: null, post_id: null, name: '', photo: '', kind: '寶潔力', position: '', gender: '', nationality: '', langs: [], phone: '', notes: '', old_name: '', rest_kind: 'monthly1', rest_weekdays: [], rest_dates: [], active: true, code: `崗${d.posts.length + 1}`, grp: GRPS[0], start_time: '09:00', end_time: '18:00', break_text: '', work_area: '', work_area_en: '', pnotes: '', flag: '' }
+  const blank = { id: null, post_id: null, name: '', photo: '', kind: '寶潔力', position: '', gender: '', nationality: '', langs: [], phone: '', notes: '', old_name: '', rest_kind: 'monthly1', rest_weekdays: [], rest_dates: [], active: true, code: `崗${d.posts.length + 1}`, grp: GRPS[0], start_time: '09:00', end_time: '18:00', break_text: '', work_area: '', work_area_en: '', pnotes: '', flag: '', since: '' }
   const open = p => {
     const s = staffOf(p.staff_id)
     setEdit(s
-      ? { ...s, langs: s.langs || [], rest_weekdays: s.rest_weekdays || [], rest_dates: s.rest_dates || [], post_id: p.id, code: p.code, grp: p.grp, start_time: p.start_time, end_time: p.end_time, break_text: p.break_text, work_area: p.work_area, work_area_en: p.work_area_en || '', pnotes: p.notes, flag: p.flag }
-      : { ...blank, id: null, post_id: p.id, code: p.code, grp: p.grp, start_time: p.start_time, end_time: p.end_time, break_text: p.break_text, work_area: p.work_area, work_area_en: p.work_area_en || '', pnotes: p.notes, flag: p.flag })
+      ? { ...s, langs: s.langs || [], rest_weekdays: s.rest_weekdays || [], rest_dates: s.rest_dates || [], post_id: p.id, code: p.code, grp: p.grp, start_time: p.start_time, end_time: p.end_time, break_text: p.break_text, work_area: p.work_area, work_area_en: p.work_area_en || '', pnotes: p.notes, flag: p.flag, since: p.since || '' }
+      : { ...blank, id: null, post_id: p.id, code: p.code, grp: p.grp, start_time: p.start_time, end_time: p.end_time, break_text: p.break_text, work_area: p.work_area, work_area_en: p.work_area_en || '', pnotes: p.notes, flag: p.flag, since: p.since || '' })
   }
   async function save() {
     const e = edit
     if (!e.name.trim()) { toast(tr('請填姓名', 'Name required')); return }
     const srow = { name: e.name.trim(), kind: e.kind, gender: e.gender, nationality: e.nationality, position: e.position || '', langs: e.langs, phone: e.phone.trim(), notes: e.notes.trim(), old_name: e.old_name, photo: (e.photo || ''), rest_kind: e.rest_kind, rest_weekdays: e.rest_weekdays, rest_dates: e.rest_dates, active: e.active }
-    const prow = { grp: e.grp, work_area: e.work_area.trim(), work_area_en: e.work_area_en || '', start_time: e.start_time || '', end_time: e.end_time || '', break_text: e.break_text.trim(), notes: (e.pnotes || '').trim(), flag: e.flag }
+    const prow = { grp: e.grp, work_area: e.work_area.trim(), work_area_en: e.work_area_en || '', start_time: e.start_time || '', end_time: e.end_time || '', break_text: e.break_text.trim(), notes: (e.pnotes || '').trim(), flag: e.flag, since: e.since || null }
     try {
       let sid = e.id
       if (sid) { await api.dbUpdate('pa_staff', sid, srow); await log('修改員工 ' + srow.name) }
@@ -201,6 +213,7 @@ function Roster({ d, load, log, staffOf, canEdit }) {
                     {p.start_time && p.end_time ? <b>{p.start_time}–{p.end_time}</b> : <span>{tr('未設定時間', 'No shift set')}</span>}
                     {h && <span className="pa-hrs">⏱ {num(h.gross)}h · {tr('淨', 'net')} {num(h.net)}h</span>}
                     <span className="pa-sq-area">{areaOf(en, p) || '—'}</span>
+                    {s && p.since && <span className="pa-since">📅 {p.since.slice(2).replace(/-/g, '/')} · {tenure(en, p.since)}</span>}
                   </span>
                 </button>
               )
@@ -247,6 +260,7 @@ function Roster({ d, load, log, staffOf, canEdit }) {
             {!edit.post_id && <div className="f-row"><label>{tr('崗位編號', 'Post code')}</label><input value={edit.code} onChange={e => setEdit({ ...edit, code: e.target.value })} /></div>}
             <div className="f-row"><label>{tr('分類', 'Group')}</label>
               <select value={edit.grp} onChange={e => setEdit({ ...edit, grp: e.target.value })}>{[...GRPS, '替補'].map(g => <option key={g} value={g}>{grpName(en, g)}</option>)}</select></div>
+            <div className="f-row"><label>{tr('上崗日期（由幾時開始做呢個崗位）', 'In this post since')}{edit.since ? ` · ${tenure(en, edit.since)}` : ''}</label><input type="date" value={edit.since || ''} onChange={e => setEdit({ ...edit, since: e.target.value })} /></div>
             <div style={{ display: 'flex', gap: 10 }}>
               <div className="f-row" style={{ flex: 1 }}><label>{tr('上班', 'Start')}</label><input type="time" value={edit.start_time} onChange={e => setEdit({ ...edit, start_time: e.target.value })} /></div>
               <div className="f-row" style={{ flex: 1 }}><label>{tr('收工', 'End')}</label><input type="time" value={edit.end_time} onChange={e => setEdit({ ...edit, end_time: e.target.value })} /></div>
