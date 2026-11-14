@@ -17,16 +17,16 @@ const FLOORS = 10
 const baseTxt = i => (i.base_floor ? `基數 一層 ${i.base_floor.toLocaleString()} ／ ${FLOORS} 層 ${(i.base_floor * FLOORS).toLocaleString()}` : '')
 const GRP_HINT = { 制服: ['上衣', '褲／裙', '外套', '其他'], 布草: ['床上用品', '浴室布草', '布草袋', '其他'], 物資: ['布草車／大桶', '熨斗／熨燙', '架／推車', '其他'] }
 
-export default function Uniform({ edit }) {
+export default function Uniform({ edit, init }) {
   const [items, setItems] = useState(null)
-  const [cat, setCat] = useState(null)           // null：兩張入口卡；否則顯示該類庫存
-  const [f, setF] = useState({ low: false, q: '' })
+  const [cat, setCat] = useState(init?.cat || null)           // null：兩張入口卡；否則顯示該類庫存
+  const [f, setF] = useState({ low: !!init?.low, q: '' })   // 首頁「布草存量低」直接跳入已篩選嘅存量低清單
   const [sheet, setSheet] = useState(null)
   const [report, setReport] = useState(false)
   const [view, setView] = useState(null)       // 唯讀查看（冇編輯權限）
   const [upBusy, setUpBusy] = useState(false)
   const [err, setErr] = useState('')
-  const [sub, setSub] = useState(null)       // 布草入面：null＝入口卡；'stock'＝現有庫存；數字＝該年紀錄
+  const [sub, setSub] = useState(init?.cat === '布草' ? 'stock' : null)       // 布草入面：null＝入口卡；'stock'＝現有庫存；數字＝該年紀錄
   const [yrs, setYrs] = useState([])
   const [ys, setYs] = useState(null)
   useBack(!!cat, () => { setCat(null); setSub(null) })
