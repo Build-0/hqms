@@ -26,6 +26,7 @@ export default function SupplyReq({ who, canEdit, canSubmit }) {
   const [pick, setPick] = useState(false)
   const [pq, setPq] = useState('')
   const [cfg, setCfg] = useState(null)                // 加入／修改清單項目：{ supply, tplId, pack, unit }
+  const [rq, setRq] = useState('')                  // 搜尋清單
   const [note, setNote] = useState('')
   const [prev, setPrev] = useState(false)             // 提交前預覽
   const [busy, setBusy] = useState(false)
@@ -45,9 +46,11 @@ export default function SupplyReq({ who, canEdit, canSubmit }) {
   const extraRows = extra.filter(id => !tplRows.some(r => r.sid === id) && byId[id]).map(id => ({ key: 'x' + id, sid: id, pack: 1, unit: byId[id].unit, spec: '' }))
   const rows = [...tplRows, ...extraRows]
   const chosen = rows.filter(r => num(qty[r.key]) > 0)
+  const rqt = rq.trim().toLowerCase()
+  const shown = rqt ? rows.filter(r => [byId[r.sid].name, byId[r.sid].category, r.spec].join(' ').toLowerCase().includes(rqt)) : rows
   const pieces = r => num(qty[r.key]) * r.pack
 
-  function selectSheet(s) { setSheet(s); setQty({}); setExtra([]); setTplEdit(false) }
+  function selectSheet(s) { setSheet(s); setQty({}); setExtra([]); setTplEdit(false); setRq('') }
 
   async function saveCfg() {
     const pack = Math.max(1, num(cfg.pack)), unit = (cfg.unit || '').trim() || '件'
@@ -122,8 +125,11 @@ export default function SupplyReq({ who, canEdit, canSubmit }) {
             <>
               <div className="bh-grp">{sheet} 配貨清單<span>{rows.length}</span></div>
               {rows.length === 0 && <div className="note">{canEdit ? '呢張單未有清單，撳下面「⚙ 編輯清單」加入物品，或者複製其他清單' : '呢張單未有清單，請聯絡倉管'}</div>}
+              <div className="srch-row"><input className="search-inp" placeholder="🔍 搜尋物品" value={rq} onChange={e => setRq(e.target.value)} /></div>
+              {rqt && shown.length === 0 && <div className="note">搵唔到「{rq.trim()}」，可以撳下面「＋ 加其他物品」</div>}
+              {rqt && chosen.length > 0 && <p className="note" style={{ textAlign: 'left', margin: '2px 0' }}>已填 {chosen.length} 項（搜尋時未顯示嘅都會一齊提交）</p>}
               <div className="bh-batches" style={{ marginTop: 4 }}>
-                {rows.map(r => {
+                {shown.map(r => {
                   const s = byId[r.sid], q = num(qty[r.key]), after = num(s.stock) - pieces(r)
                   return (
                     <div key={r.key} className="bh-b" style={{ alignItems: 'center', gap: 8 }}>

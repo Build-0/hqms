@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import * as api from '../lib/api'
 import { addDaysStr, todayStr } from '../lib/dates'
-import { permsOf, SUP_FLOORS } from '../lib/accounts'
+import { permsOf, SUP_FLOORS, itemLevel } from '../lib/accounts'
 
 const num = v => parseInt(v, 10) || 0
 const dleft = d => Math.round((new Date(d + 'T00:00:00') - new Date(todayStr() + 'T00:00:00')) / 86400000)
@@ -49,6 +49,12 @@ export default function Home({ session, go }) {
         }
       } catch { /* */ }
       try {
+        if (itemLevel(session, 'uniform') !== 'none') {
+          const linen = (await api.dbSelect('uni_items', { cols: 'id,cat,qty,min_qty' })).filter(i => i.cat === '布草')
+          r.lowLinen = linen.filter(i => num(i.min_qty) > 0 && num(i.qty) < num(i.min_qty)).length
+        }
+      } catch { /* */ }
+      try {
         if (perm.quality !== 'none') {
           const rows = await api.listFindings(addDaysStr(-6))
           const batches = {}
@@ -84,6 +90,9 @@ export default function Home({ session, go }) {
   if (perm.boh !== 'none') {
     tiles.push(tile('l', '需補貨', d.low, d.lowTool ? `清潔劑 ${d.lowChem || 0}・工具 ${d.lowTool}` : '清潔劑低於最低庫存', '#c62828', () => go('boh', { fk: 'low', tab: d.lowChem || !d.lowTool ? 'chem' : 'tool' })))
     tiles.push(tile('e', '臨期批次', d.exp, '30 日內到期或已過期', '#e69500', () => go('boh', { fk: 'exp' })))
+  }
+  if (itemLevel(session, 'uniform') !== 'none') {
+    tiles.push(tile('u', '布草存量低', d.lowLinen, '低於最低存量', '#c62828', () => go('uniform')))
   }
   if (perm.quality !== 'none') {
     tiles.push(tile('t', '今日查房', d.today, d.issues7 != null ? `近 7 日：⚠ ${d.issues7}　⭐ ${d.good7}` : ' ', null, () => go('findings')))
