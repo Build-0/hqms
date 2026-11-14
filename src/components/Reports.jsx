@@ -14,6 +14,15 @@ export function ReportModal({ title, sub, onClose, children, landscape: landscap
     return () => { document.title = old; document.documentElement.classList.remove('rpt-open') }
   }, [title, sub])
   const landscape = landscapeProp || !!signPage
+  // 手機：清單表格報告用「電腦版紙張闊度」排版，再整體縮細到啱手機屏，唔再逐隻字斷行；PDF 都同電腦版一樣
+  useEffect(() => {
+    const el = document.querySelector('.rpt-overlay .rpt-print')
+    if (!el || landscape || window.innerWidth >= 900 || !el.querySelector('.rpt-fixed')) return undefined
+    el.classList.add('rpt-paper')
+    const fit = () => { const sc = el.parentElement; el.style.zoom = String(Math.min(1, (sc.clientWidth - 16) / 820)) }
+    fit(); window.addEventListener('resize', fit)
+    return () => { window.removeEventListener('resize', fit); el.classList.remove('rpt-paper'); el.style.zoom = '' }
+  })
   useEffect(() => {
     if (!landscape) return undefined
     const st = document.createElement('style')
@@ -56,7 +65,8 @@ export function ReportModal({ title, sub, onClose, children, landscape: landscap
     setBusy(true)
     try {
       const el = document.querySelector('.rpt-overlay .rpt-print')
-      const how = await savePdf(el, document.title || 'report', { landscape, a3, fitOne: !!a3 || !!signPage })
+      const z = el.style.zoom; el.style.zoom = ''   // 產生 PDF 時用原大小，避免縮放影響截圖
+      const how = await savePdf(el, document.title || 'report', { landscape, a3, fitOne: !!a3 || !!signPage }).finally(() => { el.style.zoom = z })
       if (how === 'download') alert('PDF 已下載。若沒有出現，請到「檔案」App → 下載項目查看。')
     } catch (e) {
       const msg = e && e.message ? e.message : String(e)

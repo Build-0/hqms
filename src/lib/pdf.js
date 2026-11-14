@@ -51,7 +51,7 @@ export async function savePdf(rootEl, fileName, opts = {}) {
     first = false
   }
   for (const el of blocks) {
-    const canvas = await html2canvas(el, { scale: 2, backgroundColor: '#ffffff', useCORS: true, logging: false })
+    const canvas = await html2canvas(el, { scale: 2, backgroundColor: '#ffffff', useCORS: true, logging: false, windowWidth: Math.max(window.innerWidth, rootEl.scrollWidth + 40) })
     addCanvas(canvas, el.classList.contains(PAGE_BREAK_CLASS))
   }
   doc.setFontSize(8); doc.setTextColor(130)
