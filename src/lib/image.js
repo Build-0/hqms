@@ -17,7 +17,9 @@ export function compressImage(file, maxDim = 1000, quality = 0.72) {
       const canvas = document.createElement('canvas')
       canvas.width = Math.round(img.width * scale)
       canvas.height = Math.round(img.height * scale)
-      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height)
+      const ctx = canvas.getContext('2d')
+      ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, canvas.width, canvas.height)   // 透明 PNG 先墊白底，否則 JPEG 會變黑底
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
       const dataUrl = canvas.toDataURL('image/jpeg', quality)
       canvas.toBlob(
         blob => (blob ? resolve({ blob, dataUrl }) : reject(new Error('圖片處理失敗'))),
