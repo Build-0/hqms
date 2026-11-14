@@ -52,9 +52,10 @@ export const LEVEL_LABEL = { none: '無', view: '查看', add: '新增', edit: '
 export function itemDefault(s, id) {
   if (!s) return 'edit'
   if (id === 'uniform' || id === 'writeoff' || id === 'roomsale') return s.dev ? 'edit' : 'none'   // 開發中：預設只有開發者可入
+  if (id === 'supply_req') return s.dev || s.role === 'admin' || s.role === 'store' ? 'edit' : 'none'   // 領用單：只有開發者、管理員、倉管員
   const r = s.role
   if (r === 'admin') return 'edit'
-  if (r === 'store') return id === 'boh' || id === 'defect' || id === 'supply_req' ? 'edit' : 'none'
+  if (r === 'store') return id === 'boh' || id === 'defect' ? 'edit' : 'none'
   if (r === 'clerk') return id === 'defect' ? 'edit' : 'none'
   if (r === 'supervisor') {
     if (id === 'findings' || id === 'defect') return 'add'
