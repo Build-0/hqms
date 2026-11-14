@@ -146,9 +146,11 @@ export default function SupplyReq({ who, canEdit, canSubmit }) {
                     <div key={r.key} className="bh-b" style={{ alignItems: 'center', gap: 8 }}>
                       <span style={{ flex: 1, minWidth: 0 }}>
                         <b>{s.name}</b>
-                        <small style={{ display: 'block', color: after < 0 && q > 0 ? 'var(--red)' : 'var(--sub)' }}>
-                          {r.spec ? `${r.spec} · ` : ''}庫存 {fmt(s.stock)} {s.unit}{q > 0 ? ` → ${fmt(after)}（扣 ${fmt(pieces(r))}）` : ''}
-                        </small>
+                        <span style={{ display: 'block', fontSize: 14, lineHeight: 1.5, marginTop: 2, color: 'var(--ink)' }}>
+                          {r.spec && <span style={{ marginRight: 14 }}>規格 <b>{r.spec}</b></span>}
+                          <span style={{ color: s.stock < 0 || (after < 0 && q > 0) ? 'var(--red)' : undefined }}>庫存 <b>{fmt(s.stock)}</b> {s.unit}</span>
+                          {q > 0 && <span style={{ marginLeft: 14, color: after < 0 ? 'var(--red)' : '#c62828' }}>扣 {fmt(pieces(r))} → 剩 {fmt(after)}</span>}
+                        </span>
                       </span>
                       {tplEdit
                         ? <span style={{ display: 'flex', gap: 10 }}>
