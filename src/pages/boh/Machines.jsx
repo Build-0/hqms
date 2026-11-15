@@ -128,7 +128,15 @@ export default function Machines({ kind, d, edit, reload, reg }) {
               <button className="sq-card" key={x.id} onClick={() => setView(x)}>
                 <Thumb src={img(x.id)} fallback={C.icon} size={64} />
                 <span className="sq-name">{title(x)}</span>
-                <span className={`badge ${STATUS_CLS[x.status] || 'b-gray'}`}>{x.status}</span>
+                {(() => {
+                  const miss = isVac ? [] : (x.accessories || []).filter(a => !a.ok).map(a => a.name)
+                  return (
+                    <>
+                      {(!miss.length || x.status !== '正常') && <span className={`badge ${STATUS_CLS[x.status] || 'b-gray'}`}>{x.status}</span>}
+                      {miss.length > 0 && <span className="sq-miss" title={'缺：' + miss.join('、')}>缺：{miss.join('、')}</span>}
+                    </>
+                  )
+                })()}
               </button>
             ))}
           </div>
