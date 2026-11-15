@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Ordered } from '../../lib/cardOrder'
 import * as api from '../../lib/api'
 import { toast } from '../../lib/toast'
 import Icon from '../../components/Icon'
 import { ToolBar } from '../../components/ui'
+import { AttList } from './shared'
 
 const hk = n => (n == null || n === '' ? '—' : 'HKD ' + Number(n).toLocaleString())
 const nmOf = i => [i.name, i.size].filter(Boolean).join(' ') || '（未命名）'
@@ -24,7 +25,8 @@ const emptyRec = (year) => ({ id: null, item_id: '', year, purchase_qty: '', uni
 
 // 布草入口：頂部 Summary + 兩張卡（各款現有數量／入貨紀錄）
 export function LinenHome({ items, yrs, onPick }) {
-  const years = [...new Set(yrs.map(r => r.year))].sort((a, b) => b - a)
+  const [metas] = useYearMeta()
+  const years = [...new Set([...yrs.map(r => r.year), ...Object.keys(metas).map(Number)])].sort((a, b) => b - a)
   const sum = k => yrs.reduce((a, r) => a + (r[k] || 0), 0)
   const money = yrs.reduce((a, r) => a + (r.purchase_qty || 0) * (Number(r.unit_price) || 0), 0)
   const tiles = [['總入貨', sum('purchase_qty').toLocaleString() + ' 件', 'HKD ' + Math.round(money).toLocaleString()], ['總報廢', sum('condemned_qty').toLocaleString() + ' 件', '約 HKD ' + Math.round(yrs.reduce((a, r) => a + condValue(yrs, r), 0)).toLocaleString()], ['盤點遺失', sum('lost_qty').toLocaleString() + ' 件', '約 HKD ' + Math.round(yrs.reduce((a, r) => a + (r.lost_qty || 0) * priceFor(yrs, r.item_id, r.year).price, 0)).toLocaleString()]]
@@ -54,6 +56,14 @@ export function LinenHome({ items, yrs, onPick }) {
   )
 }
 
+// 每年一份附件＋說明（唔屬於個別品項，例如入貨單、對數紙、發生咗乜嘢）
+function useYearMeta() {
+  const [metas, setMetas] = useState({})
+  const load = () => api.dbSelect('uni_linen_year_meta', { order: 'year' }).then(r => setMetas(Object.fromEntries(r.map(x => [x.year, x])))).catch(() => {})
+  useEffect(() => { load() }, [])
+  return [metas, load]
+}
+
 // 入貨紀錄：每個年份一張卡
 export function LinenRec({ yrs, edit, onPick, onAdd }) {
   const years = [...new Set(yrs.map(r => r.year))].sort((a, b) => b - a)
@@ -63,7 +73,7 @@ export function LinenRec({ yrs, edit, onPick, onAdd }) {
     const sup = [...new Set(rs.filter(r => r.purchase_qty).map(r => r.supplier).filter(Boolean))].join('、')
     return { q, sup }
   }
-  const cards = years.map(y => { const t = stat(y); return [y, y + ' 年', 'calendar', '#8a5fa8', t.q ? <>入貨 {t.q.toLocaleString()} 件{t.sup ? <><br /><span className="lin-sup">{t.sup}</span></> : null}</> : <><span className="lin-sup none">無入貨</span><br />只有盤點／報廢</>] })
+  const cards = years.map(y => { const t = stat(y); const na = (metas[y]?.attachments || []).length; const pin = na ? <><br /><span className="lin-sup">📎 {na} 個附件</span></> : null; return [y, y + ' 年', 'calendar', '#8a5fa8', t.q ? <>入貨 {t.q.toLocaleString()} 件{t.sup ? <><br /><span className="lin-sup">{t.sup}</span></> : null}{pin}</> : <><span className="lin-sup none">無入貨</span><br />只有盤點／報廢{pin}</>] })
   return (
     <>
       <ToolBar label="布草入貨紀錄" />
@@ -90,6 +100,22 @@ export function LinenRec({ yrs, edit, onPick, onAdd }) {
 
 // 某一年嘅布草紀錄：入貨數量、當時單價、供應商、報廢、盤點遺失
 export function LinenYear({ year, items, yrs, edit, ys, setYs, reload }) {
+  const [metas, loadMeta] = useYearMeta()
+  const meta = metas[year] || { year, attachments: [], note: '' }
+  const [noteDraft, setNoteDraft] = useState(null)
+  const [upBusy, setUpBusy] = useState(false)
+  async function saveMeta(patch) {
+    try { await api.dbUpsert('uni_linen_year_meta', { year, attachments: meta.attachments || [], note: meta.note || '', ...patch, updated_at: new Date().toISOString() }, 'year'); await loadMeta() } catch (ex) { toast('儲存失敗：' + ex.message) }
+  }
+  async function addFiles(files) {
+    setUpBusy(true)
+    try {
+      const got = []
+      for (const file of files) got.push(await api.uploadAttachment(file))
+      await saveMeta({ attachments: [...(meta.attachments || []), ...got] })
+    } catch (ex) { toast('上傳失敗：' + ex.message) }
+    setUpBusy(false)
+  }
   const rs = yrs.filter(r => r.year === year)
   const byId = Object.fromEntries(items.map(i => [i.id, i]))
   const tq = rs.reduce((a, r) => a + (r.purchase_qty || 0), 0)
@@ -116,6 +142,18 @@ export function LinenYear({ year, items, yrs, edit, ys, setYs, reload }) {
     <>
       <ToolBar label={`${year} 年 · 布草紀錄`} />
       <p className="pa-stat">入貨 {tq.toLocaleString()} 件　·　當時金額 {hk(Math.round(tc))}　·　報廢 {td.toLocaleString()} 件　·　報廢金額約 {hk(Math.round(tdv))}</p>
+      <div className="card" style={{ margin: '10px 4px' }}>
+        <div style={{ fontWeight: 700, marginBottom: 4 }}>📎 {year} 年入貨附件／說明</div>
+        {(meta.attachments || []).length === 0 && !edit && !meta.note && <p className="src-note">未有附件或說明。</p>}
+        <AttList list={meta.attachments || []} onDel={edit ? k => saveMeta({ attachments: meta.attachments.filter((_, n) => n !== k) }) : undefined} />
+        {edit ? (
+          <>
+            <label className="btn ghost sm-quiet" style={{ display: 'inline-block', cursor: 'pointer', textAlign: 'center' }}>{upBusy ? '上傳緊…' : '＋ 加附件'}<input type="file" multiple hidden disabled={upBusy} accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt" onChange={e => { const fl = [...e.target.files]; e.target.value = ''; if (fl.length) addFiles(fl) }} /></label>
+            <div className="f-row" style={{ marginTop: 8 }}><label>說明（呢年發生咗乜嘢）</label>
+              <textarea rows={3} value={noteDraft ?? meta.note ?? ''} onChange={e => setNoteDraft(e.target.value)} onBlur={() => { if (noteDraft != null && noteDraft !== (meta.note || '')) saveMeta({ note: noteDraft }).then(() => setNoteDraft(null)); else setNoteDraft(null) }} placeholder="例如：點解呢年入貨、換咗供應商、報廢原因…" style={{ width: '100%' }} /></div>
+          </>
+        ) : (meta.note ? <p style={{ whiteSpace: 'pre-wrap', margin: '6px 0 0', fontSize: 14 }}>{meta.note}</p> : null)}
+      </div>
       {tq === 0 && rs.length > 0 && <p className="src-note" style={{ margin: '10px 4px', fontWeight: 600 }}>{year} 年冇買過布草，所以冇供應商同單價，只有盤點遺失／報廢紀錄。</p>}
       {rs.length === 0 && <p className="src-note" style={{ margin: '14px 4px' }}>呢一年未有紀錄。{edit ? '撳右下角「＋」新增。' : ''}</p>}
       <Ordered okey="linen_items" items={sorted} idOf={r => r.item_id} labelOf={r => byId[r.item_id]?.name || '（已刪除品項）'}>{ord => (

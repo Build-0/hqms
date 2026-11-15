@@ -106,3 +106,21 @@ export function ListManager({ title, table, rows, onClose, onChanged, usedBy }) 
     </div>
   )
 }
+
+// 附件清單（圖片顯示縮圖，其他檔案顯示檔名），可選擇顯示「移除」
+export function AttList({ list, onDel }) {
+  if (!list.length) return null
+  return (
+    <div style={{ display: 'grid', gap: 8, margin: '6px 0' }}>
+      {list.map((a, k) => (
+        <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <a href={a.url} target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0, textDecoration: 'none', color: 'inherit' }}>
+            {a.type === 'image' ? <img src={a.url} alt="" style={{ width: 56, height: 56, objectFit: 'cover', borderRadius: 8, flex: 'none' }} /> : <span style={{ fontSize: 28, flex: 'none' }}>📄</span>}
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.name || '附件'}</span>
+          </a>
+          {onDel && <button type="button" className="mini" onClick={() => onDel(k)}>移除</button>}
+        </div>
+      ))}
+    </div>
+  )
+}

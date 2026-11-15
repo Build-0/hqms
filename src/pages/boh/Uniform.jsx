@@ -1,4 +1,5 @@
 import { Ordered } from '../../lib/cardOrder'
+import { AttList } from './shared'
 import { LinenHome, LinenRec, LinenPrice, LinenBase, LinenYear, emptyRec } from './LinenYears'
 import { useEffect, useState } from 'react'
 import * as api from '../../lib/api'
@@ -15,7 +16,7 @@ const CATS = [['制服', 'shirt', '#8f7ac9'], ['布草', 'bed', '#3a8fb5'], ['�
 // 酒店房間基數：820 間房、10 層、每層 82 間（大床 26 + 小床 56，小床房每間兩張）
 const FLOORS = 10
 const baseTxt = i => (i.base_floor ? `基數 一層 ${i.base_floor.toLocaleString()} ／ ${FLOORS} 層 ${(i.base_floor * FLOORS).toLocaleString()}` : '')
-const GRP_HINT = { 制服: ['上衣', '褲／裙', '外套', '其他'], 布草: ['床上用品', '浴室布草', '布草袋', '其他'], 物資: ['布草車／大桶', '熨斗／熨燙', '架／推車', '其他'] }
+const GRP_HINT = { 制服: ['上衣', '褲／裙', '外套', '其他'], 布草: ['床上用品', '浴室布草', '布草袋', '顧客要求', '其他'], 物資: ['布草車／大桶', '熨斗／熨燙', '架／推車', '其他'] }
 
 export default function Uniform({ edit, init }) {
   const [items, setItems] = useState(null)
@@ -182,19 +183,3 @@ export default function Uniform({ edit, init }) {
 }
 
 // 附件清單：相片顯示縮圖（撳開大圖），其他檔案顯示檔名連結
-function AttList({ list, onDel }) {
-  if (!list.length) return null
-  return (
-    <div style={{ display: 'grid', gap: 8, margin: '6px 0' }}>
-      {list.map((a, k) => (
-        <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <a href={a.url} target="_blank" rel="noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0, textDecoration: 'none', color: 'inherit' }}>
-            {a.type === 'image' ? <img src={a.url} alt="" style={{ width: 56, height: 56, objectFit: 'cover', borderRadius: 8, flex: 'none' }} /> : <span style={{ fontSize: 28, flex: 'none' }}>📄</span>}
-            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.name || '附件'}</span>
-          </a>
-          {onDel && <button type="button" className="mini" onClick={() => onDel(k)}>移除</button>}
-        </div>
-      ))}
-    </div>
-  )
-}
