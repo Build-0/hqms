@@ -3,6 +3,7 @@ import * as api from '../../lib/api'
 import { toast } from '../../lib/toast'
 import Confirm from '../../components/Confirm'
 import { num, today } from './shared'
+import { SUP_FLOORS } from '../../lib/accounts'
 
 // 客房物資領用單：跟紙單一樣——每個品牌一張清單（歐舒丹／LINE FRIENDS／葡京人），再揀樓層。
 // 數量按紙單單位（箱／盒／捆…）填，系統按規格乘返件數扣庫存。整張單同一個 batch_id，可整張撤銷。
@@ -13,13 +14,16 @@ const newBatch = () => (globalThis.crypto?.randomUUID ? crypto.randomUUID() : 'b
 const fmtTime = iso => { const d = new Date(iso); return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}` }
 const fmt = n => Number(n).toLocaleString('en-US')
 
-export default function SupplyReq({ who, canEdit, canSubmit }) {
+// 樓層主管預設揀返自己負責嘅樓層
+export const floorOf = s => { const f = s && SUP_FLOORS[s.id || s.key]; return f && f.length === 1 ? f[0] + '樓' : '' }
+
+export default function SupplyReq({ who, canEdit, canSubmit, defFloor = '' }) {
   const [view, setView] = useState('form')            // form／hist
   const [sup, setSup] = useState(null)
   const [tpl, setTpl] = useState([])
   const [hist, setHist] = useState(null)
   const [sheet, setSheet] = useState('')
-  const [floor, setFloor] = useState('')
+  const [floor, setFloor] = useState(defFloor)
   const [qty, setQty] = useState({})                  // 行 key → 數量（箱／盒…）字串
   const [extra, setExtra] = useState([])              // 今次額外加入（唔入清單）嘅物品 id
   const [tplEdit, setTplEdit] = useState(false)

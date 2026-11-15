@@ -4,6 +4,7 @@ import * as api from '../../lib/api'
 import { toast } from '../../lib/toast'
 import Confirm from '../../components/Confirm'
 import { ReportModal, ListReport } from '../../components/Reports'
+import SupplyReq, { floorOf } from './SupplyReq'
 import { Thumb, ImageField, useImages, setCachedImage, ListManager, num, today } from './shared'
 
 const EMPTY = { name: '', category: '', unit: '件', stock: 0, min_stock: 0, status: '啟用', supplier: '', notes: '', image: '' }
@@ -12,8 +13,8 @@ const money = v => (v === '' || v == null ? null : parseFloat(v) || 0)
 const fmtMoney = v => (v == null ? '—' : Number(v).toLocaleString('en-US', { maximumFractionDigits: 2 }))
 
 // 客房物資消耗品：入貨（日期、數量、供應商、單價、單號）、領用、盤點；庫存由異動記錄自動計算
-export default function Supplies({ d, edit, reload, reg, who }) {
-  const [sub, setSub] = useState('list')            // list／log（全部異動記錄）
+export default function Supplies({ d, edit, reload, reg, who, req }) {
+  const [sub, setSub] = useState('list')            // list／log（全部異動記錄）／req（領用單）
   const [q, setQ] = useState('')
   const [fk, setFk] = useState('all')               // all／low／off
   const [ck, setCk] = useState('')
@@ -31,7 +32,7 @@ export default function Supplies({ d, edit, reload, reg, who }) {
   const img = useImages('supplies', list.map(s => s.id))
   const loadMv = () => api.dbSelect('supply_moves', { order: 'happened_on', asc: false }).then(setMv).catch(ex => { toast('讀取記錄失敗：' + ex.message); setMv(prev => prev || []) })
   useEffect(() => { loadMv() }, [])
-  useBack(sub === 'log', () => setSub('list'), 2)
+  useBack(sub === 'log' || sub === 'req', () => setSub('list'), 2)
 
   const active = s => s.status !== '停用'
   const low = s => active(s) && num(s.min_stock) > 0 && num(s.stock) < num(s.min_stock)
@@ -115,6 +116,8 @@ export default function Supplies({ d, edit, reload, reg, who }) {
   })
   const pvS = pv ? list.find(x => x.id === pv) : null
 
+  if (sub === 'req' && req) return <SupplyReq who={who} defFloor={floorOf(req.session)} canEdit={req.canEdit} canSubmit={req.canSubmit} />
+
   if (sub === 'log') {
     return (
       <>
@@ -148,6 +151,7 @@ export default function Supplies({ d, edit, reload, reg, who }) {
         <div className="srch-row">
           <input className="search-inp" placeholder="🔍 搜尋物資、供應商" value={q} onChange={e => setQ(e.target.value)} />
           <button className="tb-btn sq" title="入貨／領用記錄" onClick={() => setSub('log')}>📋</button>
+          {req && <button className="tb-btn sq" title="領用單" onClick={() => setSub('req')}>📝</button>}
           {edit && <button className="tb-btn sq" title="管理分類" onClick={() => setMgr(true)}>⚙</button>}
         </div>
         <div className="df-grid" style={{ marginBottom: 6 }}>
