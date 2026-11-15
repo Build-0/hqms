@@ -19,6 +19,7 @@ import Confirm from './components/Confirm'
 import { getSession, clearSession, applyOverride, permsOf, itemLevel, ITEMS, ROLE_LABEL } from './lib/accounts'
 import PermAdmin from './components/PermAdmin'
 import UniformPage from './pages/UniformPage'
+import HskpInfo from './pages/HskpInfo'
 import { toast } from './lib/toast'
 import { Ordered, OrderSettingsRow } from './lib/cardOrder'
 
@@ -35,6 +36,7 @@ const MODULES = [
   { id: 'defect', icon: 'wrench', label: '缺陷管理', color: '#b5603a', top: true, Page: Defects },
   { id: 'uniform', sub: '制服庫存', icon: 'shirt', label: '制服與布草管理', color: '#8f7ac9', top: true, dev: true, Page: UniformPage },
   { id: 'complaint', sub: '記錄、統計與月報', icon: 'chat', label: '客訴管理', color: '#c0564f', Page: Complaints },
+  { id: 'hskp', sub: '餐廳、巴士、設施、價目', icon: 'hotel', label: '房務資訊', color: '#7ba05b', Page: HskpInfo },
 ]
 // 首頁系統卡（次序：房間管理、缺陷管理、公共地區、後勤管理、制服與布草管理）
 const SYSTEMS = [

@@ -1,0 +1,94 @@
+/* 房務資訊（原 HSKP 網站樣式，全部限定喺 .hskp 內，唔影響其他頁面） */
+.hskp{--primary-color: #9DC183;
+            --primary-dark: #7BA05B;
+            --bg-color: #F8F9F6;
+            --card-bg: #FFFFFF;
+            --text-primary: #2D2D2D;
+            --text-secondary: #555555;
+            --border-color: #E2E8D8;
+            --font-base: 18px;}
+:where(.hskp) *{margin: 0; padding: 0; box-sizing: border-box;}
+.hskp{ background-color: var(--bg-color); color: var(--text-primary); line-height: 1.7; font-size: var(--font-base);}
+.hskp .hk-card{background: var(--card-bg); border-radius: 16px; padding: 22px; margin-bottom: 18px; box-shadow: 0 3px 15px rgba(0,0,0,0.08);}
+.hskp .hk-card-title{font-size: 1.4rem; font-weight: 700; color: var(--primary-dark); margin-bottom: 18px; display: flex; align-items: center; gap: 10px;}
+.hskp .hk-search-box{position: relative; margin-bottom: 18px;}
+.hskp .hk-search-box input{width: 100%; padding: 16px 20px 16px 50px; border: 2px solid var(--border-color); border-radius: 12px; font-size: 1.1rem;}
+.hskp .hk-search-box input:focus{outline: none; border-color: var(--primary-color);}
+.hskp .hk-search-box .hk-search-icon{position: absolute; left: 16px; top: 50%; transform: translateY(-50%); font-size: 1.3rem;}
+.hskp .hk-tv-note{background: #FFF3E0; border-left: 5px solid #FF9800; padding: 16px 18px; border-radius: 0 12px 12px 0; margin-bottom: 18px; font-size: 1.05rem; color: #E65100; font-weight: 500;}
+.hskp .hk-channel-grid{display: grid; grid-template-columns: 1fr; gap: 10px; max-height: 450px; overflow-y: auto;}
+.hskp .hk-channel-item{display: flex; align-items: center; padding: 14px 16px; background: var(--bg-color); border-radius: 10px;}
+.hskp .hk-channel-number{background: var(--primary-color); color: white; width: 42px; height: 42px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.1rem; margin-right: 16px; flex-shrink: 0;}
+.hskp .hk-channel-name{font-size: 1.1rem; font-weight: 500;}
+.hskp .hk-service-box{background: linear-gradient(135deg, #F5F9F0 0%, #EDF5E4 100%); border-left: 5px solid var(--primary-color); padding: 18px 20px; border-radius: 0 14px 14px 0; margin-bottom: 16px;}
+.hskp .hk-service-title{font-weight: 700; color: var(--primary-dark); margin-bottom: 12px; font-size: 1.15rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;}
+.hskp .hk-service-details{color: var(--text-secondary); font-size: 1.05rem; padding-left: 24px;}
+.hskp .hk-service-details li{margin-bottom: 8px; line-height: 1.6;}
+.hskp .hk-express-badge{background: var(--primary-dark); color: white; padding: 4px 10px; border-radius: 6px; font-size: 0.9rem; font-weight: 700;}
+.hskp .hk-time-warning{display: block; background: #FF6B6B; color: white; padding: 14px 18px; border-radius: 10px; font-size: 1.15rem; font-weight: 700; margin-top: 12px; text-align: center; animation: hk-pulse 2s infinite;}
+@keyframes hk-pulse{ 0%, 100% { opacity: 1; } 50% { opacity: 0.85; } }
+.hskp .hk-accordion{margin-bottom: 14px; border: 2px solid var(--border-color); border-radius: 14px; overflow: hidden;}
+.hskp .hk-accordion.hk-hotel-owned{border-left: 5px solid var(--primary-color);}
+.hskp .hk-accordion-header{background: white; padding: 18px 20px; cursor: pointer; display: flex; justify-content: space-between; align-items: center;}
+.hskp .hk-accordion-header:hover{background: #F9FBF7;}
+.hskp .hk-accordion-header .hk-title{font-weight: 700; color: var(--text-primary); font-size: 1.15rem; display: flex; align-items: center; gap: 12px;}
+.hskp .hk-accordion-header .hk-title .hk-num{background: var(--primary-color); color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1rem; font-weight: 700;}
+.hskp .hk-accordion-header .hk-badge{background: var(--primary-color); color: white; font-size: 0.85rem; padding: 4px 10px; border-radius: 6px; font-weight: 600;}
+.hskp .hk-accordion-header .hk-arrow{font-size: 1rem; color: var(--text-secondary); transition: transform 0.3s;}
+.hskp .hk-accordion.hk-open .hk-accordion-header .hk-arrow{transform: rotate(180deg);}
+.hskp .hk-accordion-content{max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; background: #FAFCF8;}
+.hskp .hk-accordion.hk-open .hk-accordion-content{max-height: 600px;}
+.hskp .hk-product-img-wrapper{text-align: center; margin-bottom: 14px;}
+.hskp .hk-product-img-wrapper img{max-height: 120px; border-radius: 10px; border: 2px solid var(--border-color);}
+.hskp .hk-accordion-body{padding: 18px 20px; font-size: 1.05rem; color: var(--text-secondary);}
+.hskp .hk-accordion-body .hk-row{display: flex; margin-bottom: 10px; align-items: flex-start;}
+.hskp .hk-accordion-body .hk-icon{width: 28px; flex-shrink: 0; font-size: 1.1rem;}
+.hskp .hk-breakfast-table,.hskp .hk-info-table{width: 100%; border-collapse: collapse; font-size: 1.05rem;}
+.hskp .hk-breakfast-table th,.hskp .hk-info-table th{background: var(--primary-color); color: white; padding: 12px 10px; text-align: left; font-weight: 600; font-size: 0.95rem;}
+.hskp .hk-breakfast-table th:first-child,.hskp .hk-info-table th:first-child{border-radius: 10px 0 0 0;}
+.hskp .hk-breakfast-table th:last-child,.hskp .hk-info-table th:last-child{border-radius: 0 10px 0 0;}
+.hskp .hk-breakfast-table td,.hskp .hk-info-table td{padding: 12px 10px; border-bottom: 1px solid var(--border-color); font-size: 1rem; vertical-align: top;}
+.hskp .hk-breakfast-table tr:hover td,.hskp .hk-info-table tr:hover td{background: var(--bg-color);}
+.hskp .hk-breakfast-table td:first-child{min-width: 100px;}
+.hskp .hk-time-highlight{background: #FFF3CD; padding: 4px 8px; border-radius: 6px; font-weight: 600; color: #856404; white-space: nowrap; display: inline-block;}
+.hskp .hk-facility-card{background: white; border-radius: 14px; padding: 18px 20px; margin-bottom: 14px; border: 2px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;}
+.hskp .hk-facility-card.hk-hotel{border-left: 5px solid var(--primary-color); background: linear-gradient(135deg, #F5F9F0 0%, #FFFFFF 100%);}
+.hskp .hk-facility-info{flex: 1; min-width: 180px;}
+.hskp .hk-facility-name{font-weight: 700; color: var(--text-primary); font-size: 1.15rem; margin-bottom: 6px;}
+.hskp .hk-facility-location{font-size: 1rem; color: var(--text-secondary);}
+.hskp .hk-facility-time{background: #E8F5E9; color: #2E7D32; padding: 10px 14px; border-radius: 10px; font-size: 1rem; font-weight: 600; text-align: center;}
+.hskp .hk-facility-note{font-size: 0.95rem; color: #F57C00; margin-top: 6px; font-weight: 500;}
+.hskp .hk-room-info-card{background: linear-gradient(135deg, #F5F9F0 0%, #FFFFFF 100%); border: 2px solid var(--border-color); border-left: 5px solid var(--primary-color); border-radius: 14px; padding: 20px; margin-bottom: 18px;}
+.hskp .hk-room-info-title{font-weight: 700; color: var(--primary-dark); font-size: 1.2rem; margin-bottom: 16px; display: flex; align-items: center; gap: 10px;}
+.hskp .hk-room-info-grid{display: grid; grid-template-columns: 1fr 1fr; gap: 14px;}
+.hskp .hk-room-stat{background: white; padding: 16px; border-radius: 12px; text-align: center; border: 2px solid var(--border-color);}
+.hskp .hk-room-stat-label{font-size: 1rem; color: var(--text-secondary); margin-bottom: 6px;}
+.hskp .hk-room-stat-value{font-size: 1.3rem; font-weight: 700; color: var(--primary-dark);}
+.hskp .hk-bus-route-card{background: white; border-radius: 14px; padding: 20px; margin-bottom: 16px; border: 2px solid var(--border-color); border-left: 5px solid var(--primary-color);}
+.hskp .hk-bus-route-header{display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;}
+.hskp .hk-bus-destination{font-size: 1.2rem; font-weight: 700; color: var(--primary-dark); display: flex; align-items: center; gap: 10px;}
+.hskp .hk-bus-destination .hk-icon{font-size: 1.4rem;}
+.hskp .hk-bus-frequency{background: #E8F5E9; color: #2E7D32; padding: 6px 14px; border-radius: 14px; font-size: 1rem; font-weight: 600;}
+.hskp .hk-bus-times{display: grid; grid-template-columns: 1fr 1fr; gap: 12px;}
+.hskp .hk-bus-time-box{background: var(--bg-color); padding: 14px 16px; border-radius: 10px;}
+.hskp .hk-bus-time-label{font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 6px;}
+.hskp .hk-bus-time-value{font-size: 1.15rem; font-weight: 700; color: var(--text-primary);}
+.hskp .hk-bus-note{display: inline-block; background: #FFF3E0; color: #E65100; padding: 4px 12px; border-radius: 6px; font-size: 0.95rem; font-weight: 600; margin-left: 10px;}
+.hskp .hk-pickup-points{background: #E8F5E9; padding: 18px 20px; border-radius: 14px; margin-top: 18px;}
+.hskp .hk-pickup-title{font-weight: 700; color: #2E7D32; margin-bottom: 14px; font-size: 1.15rem;}
+.hskp .hk-pickup-list{list-style: none;}
+.hskp .hk-pickup-list li{padding: 10px 0; font-size: 1.1rem; display: flex; align-items: center; gap: 10px;}
+.hskp .hk-pickup-list li::before{content: "📍"; font-size: 1.2rem;}
+.hskp .hk-tips-box{margin-top: 18px; padding: 16px; background: #E8F5E9; border-radius: 12px; font-size: 1.05rem;}
+.hskp .hk-coming-soon-box{background: #F5F5F5; border: 2px dashed #CCC; border-radius: 14px; padding: 24px; text-align: center; margin-top: 18px;}
+.hskp .hk-coming-soon-box .hk-icon{font-size: 2.5rem; margin-bottom: 12px;}
+.hskp .hk-coming-soon-box h3{font-size: 1.2rem; color: var(--text-primary); margin-bottom: 8px;}
+.hskp .hk-coming-soon-box p{font-size: 1rem; color: var(--text-secondary);}
+.hskp .hk-footer{text-align: center; padding: 28px 18px; color: var(--text-secondary); font-size: 1rem; border-top: 2px solid var(--border-color); margin-top: 35px;}
+@media (max-width: 480px){.hskp{--font-base: 17px;}
+.hskp .hk-card{padding: 16px 14px;}
+.hskp .hk-room-info-grid{grid-template-columns: 1fr;}
+.hskp .hk-bus-times{grid-template-columns: 1fr;}
+.hskp .hk-breakfast-table th,.hskp .hk-breakfast-table td{padding: 10px 8px; font-size: 0.95rem;}
+.hskp .hk-breakfast-table td:first-child{min-width: 80px;}}
+@media (min-width: 768px){.hskp .hk-channel-grid{grid-template-columns: 1fr 1fr;}}
