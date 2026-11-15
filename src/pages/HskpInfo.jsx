@@ -3,16 +3,19 @@ import { TABS, SECTIONS, TV_NOTE, CHANNELS, FOOT } from '../data/hskpInfo'
 import './hskp.css'
 
 const BASE = import.meta.env.BASE_URL
-const LKEY = 'hskp_lang'
 
 // 房務資訊：早餐、餐廳、電視、洗衣、設施、商場、巴士、歐舒丹、價目表（由原 HSKP 網站搬入，中／英切換）
 export default function HskpInfo() {
   const [tab, setTab] = useState(TABS[0].id)
-  const [en, setEn] = useState(() => { try { return localStorage.getItem(LKEY) === 'en' } catch { return false } })
+  // 語言跟右上角「設定」：設定寫入 localStorage 再發出 pa-lang 事件
+  const [en, setEn] = useState(() => { try { return localStorage.getItem('pa_lang') === 'en' } catch { return false } })
+  useEffect(() => {
+    const fn = () => { try { setEn(localStorage.getItem('pa_lang') === 'en') } catch { /* 讀唔到就保持現狀 */ } }
+    window.addEventListener('pa-lang', fn)
+    return () => window.removeEventListener('pa-lang', fn)
+  }, [])
   const [q, setQ] = useState('')
   const box = useRef(null)
-
-  const setLang = v => { setEn(v); try { localStorage.setItem(LKEY, v ? 'en' : 'zh') } catch { /* 無法儲存時照常使用 */ } }
 
   // 靜態 HTML 內嘅中英文：切換語言時改文字（靜態內容 React 唔會重繪，所以要手動改）
   useEffect(() => {
@@ -30,7 +33,7 @@ export default function HskpInfo() {
   const html = (SECTIONS[tab] || '').split('{BASE}').join(BASE)
 
   return (
-    <div className="hskp" ref={box} onClick={onClick} style={{ background: 'transparent', fontSize: 16 }}>
+    <div className="hskp" ref={box} onClick={onClick} >
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 10 }}>
         <div className="chips" style={{ flex: 1, margin: 0, overflowX: 'auto', flexWrap: 'nowrap' }}>
           {TABS.map(t => (
@@ -38,10 +41,6 @@ export default function HskpInfo() {
               {t.icon} {en ? t.en : t.zh}
             </button>
           ))}
-        </div>
-        <div className="chips" style={{ margin: 0, flexShrink: 0 }}>
-          <button className={`chip ${!en ? 'on' : ''}`} onClick={() => setLang(false)}>中</button>
-          <button className={`chip ${en ? 'on' : ''}`} onClick={() => setLang(true)}>EN</button>
         </div>
       </div>
 
