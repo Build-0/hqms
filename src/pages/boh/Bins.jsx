@@ -21,6 +21,7 @@ export default function Bins({ d, edit, reload, reg, onClose, onEditTool, cat = 
   const grpOf = a => a.grp || '酒店組'
   const [gf, setGf] = useState('all')                // 洗手液器：全部／酒店組／商場組
   const all = d.tools.filter(t => t.category === cat)
+  const bottleT = all.find(t => /帶膠樽/.test(t.name))   // 帶膠樽嘅按壓式洗手液器：膠樽缺失／損壞每個位置另外記一個數
   const areas = [...d.binAreas].filter(a => (a.cat || '垃圾桶') === cat).sort((a, b) => fno(a.floor) - fno(b.floor) || (a.sort_order || 0) - (b.sort_order || 0))
   const img = useImages('tools', all.map(t => t.id))
   const [rows, setRows] = useState(d.binCounts)
@@ -52,6 +53,7 @@ export default function Bins({ d, edit, reload, reg, onClose, onEditTool, cat = 
   const useAreas = areas.filter(a => a.kind === 'use'), storeAreas = areas.filter(a => a.kind === 'store'), offAreas = areas.filter(a => a.kind === 'off')
   const aName = a => (a.floor ? a.floor + ' ' : '') + a.name
   const brokenN = areas.reduce((n, a) => n + (a.broken || 0), 0)
+  const bottleBadN = areas.reduce((n, a) => n + (a.bottle_bad || 0), 0)
   async function setArea(a, patch) { try { await api.dbUpdate('bin_areas', a.id, patch); reload() } catch (ex) { toast('儲存失敗：' + ex.message) } }
   const sums = (t, list, over) => ({ in_use: list.filter(r => r.tool_id === t && (over && r.area_id === over.id ? over.kind : kindOf(r.area_id)) === 'use').reduce((n, r) => n + r.qty, 0), stock: list.filter(r => r.tool_id === t && (over && r.area_id === over.id ? over.kind : kindOf(r.area_id)) === 'store').reduce((n, r) => n + r.qty, 0) })
 
@@ -92,7 +94,7 @@ export default function Bins({ d, edit, reload, reg, onClose, onEditTool, cat = 
 
   if (reg) reg.current = () => ({
     title: `${cat}分佈`,
-    filterText: `使用中 ${inUse} ・ 倉 ${storeN} ・ 停用 ${offN}　合共 ${inUse + storeN + offN}${brokenN ? `　｜　故障 ${brokenN}` : ''}`,
+    filterText: `使用中 ${inUse} ・ 倉 ${storeN} ・ 停用 ${offN}　合共 ${inUse + storeN + offN}${brokenN ? `　｜　故障 ${brokenN}` : ''}${bottleBadN ? `　｜　缺／壞樽 ${bottleBadN}` : ''}`,
     cols: ['款式', '數量'],
     groups: [
       ...useAreas.map(a => ({ name: `${aName(a)}（共 ${areaTot(a.id)}${a.broken ? `・故障 ${a.broken}` : ''}）${a.notes ? '　' + a.notes : ''}`, rows: bins.filter(t => qty(t.id, a.id) > 0).map(t => ({ photo: img(t.id), cells: [t.name, qty(t.id, a.id)], cls: ['', ''] })) })),
@@ -149,6 +151,16 @@ export default function Bins({ d, edit, reload, reg, onClose, onEditTool, cat = 
                 <button disabled={!edit} onClick={() => setArea(a, { broken: (a.broken || 0) + 1 })}>＋</button>
               </div>
             </div>
+            {bottleT && qty(bottleT.id, a.id) > 0 && (
+              <div className="bn-row" style={{ padding: 0, border: 0, marginTop: 10 }}>
+                <span className="bn-nm">🍶 膠樽缺失／損壞</span>
+                <div className="bn-step">
+                  <button disabled={!edit || !a.bottle_bad} onClick={() => setArea(a, { bottle_bad: Math.max(0, (a.bottle_bad || 0) - 1) })}>−</button>
+                  <input type="number" inputMode="numeric" value={a.bottle_bad || ''} placeholder="0" disabled={!edit} onChange={e => setArea(a, { bottle_bad: Math.max(0, num(e.target.value)) })} onFocus={e => e.target.select()} />
+                  <button disabled={!edit} onClick={() => setArea(a, { bottle_bad: (a.bottle_bad || 0) + 1 })}>＋</button>
+                </div>
+              </div>
+            )}
             <div className="bn-cap" style={{ marginTop: 10 }}>故障情況／備註</div>
             <textarea className="df-sel" style={{ width: '100%', minHeight: 56 }} disabled={!edit} defaultValue={a.notes || ''} key={a.id + (a.notes || '')} placeholder="例如：3、4 格壞（不出液）" onBlur={e => { if (e.target.value.trim() !== (a.notes || '')) setArea(a, { notes: e.target.value.trim() }) }} />
           </div>
@@ -197,7 +209,7 @@ export default function Bins({ d, edit, reload, reg, onClose, onEditTool, cat = 
     <button className={'sq-card' + (a.kind !== 'use' ? ' off' : '')} key={a.id} onClick={() => openSel({ k: 'area', id: a.id })}>
       {areaThumb(a)}
       <span className="sq-name">{a.name}</span>
-      <span className="sq-n">{areaTot(a.id)}<small>{a.kind === 'use' ? '個' : `個・${KIND[a.kind]}`}</small>{a.broken > 0 && <small className="bn-broken">⚠ 壞 {a.broken}</small>}</span>
+      <span className="sq-n">{areaTot(a.id)}<small>{a.kind === 'use' ? '個' : `個・${KIND[a.kind]}`}</small>{a.broken > 0 && <small className="bn-broken">⚠ 壞 {a.broken}</small>}{a.bottle_bad > 0 && <small className="bn-broken">🍶 缺／壞 {a.bottle_bad}</small>}</span>
     </button>
   )
 
@@ -208,6 +220,7 @@ export default function Bins({ d, edit, reload, reg, onClose, onEditTool, cat = 
         <div><b>{storeN}</b><small>倉</small></div>
         <div><b>{offN}</b><small>停用</small></div>
         {brokenN > 0 && <div className="bn-kbad"><b>{brokenN}</b><small>故障</small></div>}
+        {bottleBadN > 0 && <div className="bn-kbad"><b>{bottleBadN}</b><small>缺／壞樽</small></div>}
       </div>
       <div className="bn-total">合共 {inUse + storeN + offN} 個</div>
       {hasZone && view === 'area' && (
