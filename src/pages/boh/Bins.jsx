@@ -14,9 +14,9 @@ const fno = f => { const i = FLOORS.indexOf(f); return i < 0 ? 99 : i }
 export default function Bins({ d, edit, reload, reg, onClose, onEditTool, cat = '垃圾桶' }) {
   const ICO = cat === '洗手液器' ? '🧴' : '🗑'
   const hasZone = cat === '洗手液器'
-  const ZONES = ['客人', '後勤']
-  const zoneOf = a => a.zone || '客人'
-  const [zf, setZf] = useState('all')                // 洗手液器：全部／客人／後勤
+  const ZONES = ['客用', '後勤']
+  const zoneOf = a => a.zone || '客用'
+  const [zf, setZf] = useState('all')                // 洗手液器：全部／客用／後勤
   const GRPS = ['酒店組', '商場組']
   const grpOf = a => a.grp || '酒店組'
   const [gf, setGf] = useState('all')                // 洗手液器：全部／酒店組／商場組
@@ -31,7 +31,7 @@ export default function Bins({ d, edit, reload, reg, onClose, onEditTool, cat = 
   const openSel = v => { setExtra(new Set()); setSel(v) }
   const [openRow, setOpenRow] = useState(null)       // 管理位置：展開咗邊個位置
   const [mk, setMk] = useState('all')                // 管理位置：篩選 all／use／store／off
-  const [nf, setNf] = useState({ floor: '1F', name: '', kind: 'use', zone: '客人', grp: '酒店組' })
+  const [nf, setNf] = useState({ floor: '1F', name: '', kind: 'use', zone: '客用', grp: '酒店組' })
   const rowsRef = useRef(rows); rowsRef.current = rows
   const chain = useRef(Promise.resolve())
   useBack(!!sel, () => setSel(null), 3)
@@ -161,13 +161,13 @@ export default function Bins({ d, edit, reload, reg, onClose, onEditTool, cat = 
         )}
         {edit && isArea && (
           <div className="bn-box" style={{ marginTop: 12 }}>
-            <div className="bn-cap">位置資料（改名、樓層{hasZone ? '、客人／後勤' : ''}）</div>
+            <div className="bn-cap">位置資料（改名、樓層{hasZone ? '、客用／後勤' : ''}）</div>
             <input className="df-sel" style={{ width: '100%', marginTop: 6 }} defaultValue={a.name} key={'n' + a.id + a.name} onBlur={e => { const v = e.target.value.trim(); if (v && v !== a.name) setArea(a, { name: v }) }} />
             <div className="bn-cap" style={{ marginTop: 10 }}>樓層</div>
             <select className="df-sel" style={{ width: '100%' }} value={a.floor || ''} onChange={e => setArea(a, { floor: e.target.value })}>{[...(a.floor && !FLOORS.includes(a.floor) ? [a.floor] : []), ...FLOORS].map(f => <option key={f} value={f}>{f}</option>)}{!a.floor && <option value="">（未設定）</option>}</select>
             {hasZone && (
               <>
-                <div className="bn-cap" style={{ marginTop: 10 }}>客人用定後勤用</div>
+                <div className="bn-cap" style={{ marginTop: 10 }}>客用定後勤用</div>
                 <div className="bn-seg">{ZONES.map(z => <button key={z} type="button" className={zoneOf(a) === z ? 'on' : ''} onClick={() => zoneOf(a) !== z && setArea(a, { zone: z })}>{z}</button>)}</div>
                 <div className="bn-cap" style={{ marginTop: 10 }}>酒店組定商場組</div>
                 <div className="bn-seg">{GRPS.map(g => <button key={g} type="button" className={grpOf(a) === g ? 'on' : ''} onClick={() => grpOf(a) !== g && setArea(a, { grp: g })}>{g}</button>)}</div>
@@ -181,7 +181,7 @@ export default function Bins({ d, edit, reload, reg, onClose, onEditTool, cat = 
     )
   }
 
-  // 洗手液器：分「客人」「後勤」兩個分類（可用上面掣切換），每個分類再按樓層分組
+  // 洗手液器：分「客用」「後勤」兩個分類（可用上面掣切換），每個分類再按樓層分組
   const zArea = hasZone ? useAreas.filter(a => (gf === 'all' || grpOf(a) === gf) && (zf === 'all' || zoneOf(a) === zf)) : useAreas
   const cnt = (g, z) => areas.filter(a => a.kind === 'use' && (g === 'all' || grpOf(a) === g) && (z === 'all' || zoneOf(a) === z)).reduce((n, a) => n + areaTot(a.id), 0)
   const byFloor = FLOORS.concat([...new Set(zArea.map(a => a.floor).filter(f => !FLOORS.includes(f)))]).flatMap(f => (hasZone && gf === 'all' ? GRPS : [null]).flatMap(g => (hasZone && zf === 'all' ? ZONES : [null]).map(z => ({ f, g, z, items: zArea.filter(a => a.floor === f && (!g || grpOf(a) === g) && (!z || zoneOf(a) === z)) })))).filter(g => g.items.length)
@@ -216,7 +216,7 @@ export default function Bins({ d, edit, reload, reg, onClose, onEditTool, cat = 
             {[['all', '全部'], ['酒店組', '酒店組'], ['商場組', '商場組']].map(([k, t]) => <button key={k} className={gf === k ? 'on' : ''} onClick={() => setGf(k)}>{t} {cnt(k, 'all')}</button>)}
           </div>
           <div className="bn-tabs">
-            {[['all', '客人＋後勤'], ['客人', '客人用'], ['後勤', '後勤用']].map(([k, t]) => <button key={k} className={zf === k ? 'on' : ''} onClick={() => setZf(k)}>{t} {cnt(gf, k)}</button>)}
+            {[['all', '客用＋後勤'], ['客用', '客用'], ['後勤', '後勤用']].map(([k, t]) => <button key={k} className={zf === k ? 'on' : ''} onClick={() => setZf(k)}>{t} {cnt(gf, k)}</button>)}
           </div>
         </>
       )}
@@ -270,7 +270,7 @@ export default function Bins({ d, edit, reload, reg, onClose, onEditTool, cat = 
               </div>
               {hasZone && (
                 <>
-                  <div className="bn-cap" style={{ marginTop: 10 }}>客人用定後勤用</div>
+                  <div className="bn-cap" style={{ marginTop: 10 }}>客用定後勤用</div>
                   <div className="bn-seg">{ZONES.map(z => <button key={z} type="button" className={nf.zone === z ? 'on' : ''} onClick={() => setNf({ ...nf, zone: z })}>{z}</button>)}</div>
                   <div className="bn-cap" style={{ marginTop: 10 }}>酒店組定商場組</div>
                   <div className="bn-seg">{GRPS.map(g => <button key={g} type="button" className={nf.grp === g ? 'on' : ''} onClick={() => setNf({ ...nf, grp: g })}>{g}</button>)}</div>
