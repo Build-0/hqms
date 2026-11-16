@@ -230,19 +230,19 @@ export default function Bins({ d, edit, reload, reg, onClose, onEditTool, cat = 
           {byFloor.map(g => (
             <div key={g.f + (g.g || '') + (g.z || '')}>
               <div className="bh-grp">{[g.f, g.g, g.z].filter(Boolean).join(' · ')}<span>{g.items.reduce((n, a) => n + areaTot(a.id), 0)} 個</span></div>
-              <div className="sq-grid sq-eq">{g.items.map(areaCard)}</div>
+              <div className="sq-grid sq-eq sq-compact">{g.items.map(areaCard)}</div>
             </div>
           ))}
           {storeAreas.length > 0 && (
             <div>
               <div className="bh-grp" style={{ borderColor: 'var(--sub)' }}>倉<span>{storeN} 個</span></div>
-              <div className="sq-grid sq-eq">{storeAreas.map(areaCard)}</div>
+              <div className="sq-grid sq-eq sq-compact">{storeAreas.map(areaCard)}</div>
             </div>
           )}
           {offAreas.length > 0 && (
             <div>
               <div className="bh-grp" style={{ borderColor: 'var(--sub)' }}>停用<span>{offN} 個</span></div>
-              <div className="sq-grid sq-eq">{offAreas.map(areaCard)}</div>
+              <div className="sq-grid sq-eq sq-compact">{offAreas.map(areaCard)}</div>
             </div>
           )}
           {edit && <button className="add-topic" style={{ marginTop: 14 }} onClick={() => setMgr(true)}>＋ 新增位置</button>}
