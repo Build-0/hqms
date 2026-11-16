@@ -24,7 +24,7 @@ export default function Bins({ d, edit, reload, reg, onClose, onEditTool, cat = 
   const openSel = v => { setExtra(new Set()); setSel(v) }
   const [openRow, setOpenRow] = useState(null)       // 管理位置：展開咗邊個位置
   const [mk, setMk] = useState('all')                // 管理位置：篩選 all／use／store／off
-  const [nf, setNf] = useState({ floor: '', name: '', kind: 'use' })
+  const [nf, setNf] = useState({ floor: '', name: '', kind: 'use', zone: '客用' })
   const rowsRef = useRef(rows); rowsRef.current = rows
   const chain = useRef(Promise.resolve())
   useBack(!!sel, () => setSel(null), 3)
@@ -69,7 +69,7 @@ export default function Bins({ d, edit, reload, reg, onClose, onEditTool, cat = 
   async function addArea() {
     const floor = nf.floor.trim(), name = nf.name.trim()
     if (!name) { toast('請填位置名稱'); return }
-    try { await api.dbInsert('bin_areas', { cat, floor, name, kind: nf.kind, sort_order: (areas.length ? Math.max(...areas.map(a => a.sort_order || 0)) : 0) + 1 }); setNf({ ...nf, name: '' }); reload() } catch (ex) { toast('新增失敗：' + ex.message) }
+    try { await api.dbInsert('bin_areas', { cat, floor, name, kind: nf.kind, ...(cat === '洗手液器' ? { zone: nf.zone } : {}), sort_order: (areas.length ? Math.max(...areas.map(a => a.sort_order || 0)) : 0) + 1 }); setNf({ ...nf, name: '' }); reload() } catch (ex) { toast('新增失敗：' + ex.message) }
   }
   async function setKind(a, kind) {
     try { await api.dbUpdate('bin_areas', a.id, { kind }); const t = new Set(rows.filter(r => r.area_id === a.id).map(r => r.tool_id)); reload()
@@ -158,7 +158,10 @@ export default function Bins({ d, edit, reload, reg, onClose, onEditTool, cat = 
     )
   }
 
-  const byFloor = FLOORS.concat([...new Set(useAreas.map(a => a.floor).filter(f => !FLOORS.includes(f)))]).map(f => ({ f, items: useAreas.filter(a => a.floor === f) })).filter(g => g.items.length)
+  // 洗手液器：每層再分「客用」「員工」兩組（兩者數量唔好混埋計）
+  const hasZone = cat === '洗手液器'
+  const zoneOf = a => a.zone || '客用'
+  const byFloor = FLOORS.concat([...new Set(useAreas.map(a => a.floor).filter(f => !FLOORS.includes(f)))]).flatMap(f => (hasZone ? ['客用', '員工'] : [null]).map(z => ({ f, z, items: useAreas.filter(a => a.floor === f && (!hasZone || zoneOf(a) === z)) }))).filter(g => g.items.length)
   // 位置卡縮圖：該位置所放垃圾桶嘅相（數量多嘅排前；最多 4 張拼貼）
   const areaPics = a => rows.filter(r => r.area_id === a.id && r.qty > 0).sort((x, y) => y.qty - x.qty).map(r => img(r.tool_id)).filter(Boolean).slice(0, 4)
   const areaThumb = a => {
@@ -192,8 +195,8 @@ export default function Bins({ d, edit, reload, reg, onClose, onEditTool, cat = 
       {view === 'area' ? (
         <>
           {byFloor.map(g => (
-            <div key={g.f}>
-              <div className="bh-grp">{g.f}<span>{g.items.reduce((n, a) => n + areaTot(a.id), 0)} 個</span></div>
+            <div key={g.f + (g.z || '')}>
+              <div className="bh-grp">{g.f}{g.z ? ' · ' + g.z : ''}<span>{g.items.reduce((n, a) => n + areaTot(a.id), 0)} 個</span></div>
               <div className="sq-grid sq-eq">{g.items.map(areaCard)}</div>
             </div>
           ))}
@@ -231,6 +234,12 @@ export default function Bins({ d, edit, reload, reg, onClose, onEditTool, cat = 
                 <input className="df-sel" style={{ width: 92 }} placeholder="樓層" value={nf.floor} onChange={e => setNf({ ...nf, floor: e.target.value })} />
                 <input className="df-sel" placeholder="位置名稱" value={nf.name} onChange={e => setNf({ ...nf, name: e.target.value })} onKeyDown={e => { if (e.key === 'Enter') addArea() }} />
               </div>
+              {hasZone && (
+                <>
+                  <div className="bn-cap" style={{ marginTop: 10 }}>客用定員工用</div>
+                  <div className="bn-seg">{['客用', '員工'].map(z => <button key={z} type="button" className={nf.zone === z ? 'on' : ''} onClick={() => setNf({ ...nf, zone: z })}>{z}</button>)}</div>
+                </>
+              )}
               <div className="bn-cap" style={{ marginTop: 10 }}>呢個位置嘅類型</div>
               <div className="bn-seg">{Object.entries(KIND).map(([k, v]) => <button key={k} type="button" className={nf.kind === k ? 'on' : ''} onClick={() => setNf({ ...nf, kind: k })}>{v}</button>)}</div>
               <button className="btn" style={{ marginTop: 12 }} onClick={addArea}>＋ 新增位置</button>
@@ -249,6 +258,11 @@ export default function Bins({ d, edit, reload, reg, onClose, onEditTool, cat = 
                   </button>
                   {openRow === a.id && (
                     <div className="bn-mopen">
+                      <div className="bn-cap" style={{ marginBottom: 4 }}>樓層（例：GF、1F、2F）</div>
+                      <input className="df-sel" style={{ width: '100%', marginBottom: 8 }} defaultValue={a.floor || ''} key={a.id + '|' + (a.floor || '')} onBlur={e => { const v = e.target.value.trim(); if (v !== (a.floor || '')) setArea(a, { floor: v }) }} />
+                      {hasZone && (
+                        <div className="bn-seg" style={{ marginBottom: 8 }}>{['客用', '員工'].map(z => <button key={z} type="button" className={zoneOf(a) === z ? 'on' : ''} onClick={() => zoneOf(a) !== z && setArea(a, { zone: z })}>{z}</button>)}</div>
+                      )}
                       <div className="bn-seg">{Object.entries(KIND).map(([k, v]) => <button key={k} type="button" className={a.kind === k ? 'on' : ''} onClick={() => a.kind !== k && setKind(a, k)}>{v}</button>)}</div>
                       <button type="button" className="btn danger" style={{ marginTop: 8 }} onClick={() => delArea(a)}>刪除呢個位置</button>
                     </div>
