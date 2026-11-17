@@ -566,3 +566,21 @@ export async function dbDeleteBatch(batchId) {
   const { error } = await sb.from('supply_moves').delete().eq('batch_id', batchId)
   throwIf(error)
 }
+
+// ── 房務資訊：可編輯內容（每個分頁一行）──
+export async function hskpLoad() {
+  if (!sb) return {}
+  const { data, error } = await sb.from('hskp_pages').select('id,html')
+  if (error) return {}
+  return Object.fromEntries((data || []).map(r => [r.id, r.html]))
+}
+export async function hskpSave(id, html, by) {
+  needDb()
+  const { error } = await sb.from('hskp_pages').upsert({ id, html, updated_at: new Date().toISOString(), updated_by: by || null }, { onConflict: 'id' })
+  throwIf(error)
+}
+export async function hskpReset(id) {
+  needDb()
+  const { error } = await sb.from('hskp_pages').delete().eq('id', id)
+  throwIf(error)
+}

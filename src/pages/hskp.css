@@ -118,3 +118,8 @@
 .hskp .hk-search-box input{padding:10px 12px 10px 38px;font-size:14px;border:1px solid var(--line)}
 .hskp .hk-search-box .hk-search-icon{left:12px;font-size:15px}
 .hskp .hk-footer{font-size:12px}
+.hskp .hk-edbar{position:sticky;top:0;z-index:5;background:#fff;border:1px solid #cfe0c4;border-radius:12px;padding:8px 10px;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.hskp .hk-edhint{font-size:12px;color:#5b6b52;margin-bottom:6px}
+.hskp .hk-edbtns{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.hskp .hk-editing [contenteditable]{outline:1px dashed #7ba05b;outline-offset:1px;min-width:1.5em;min-height:1.1em;cursor:text}
+.hskp .hk-editing [contenteditable]:focus{outline:2px solid #2f7d5b;background:#f4faf0}
