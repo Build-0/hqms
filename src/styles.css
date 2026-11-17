@@ -1723,3 +1723,5 @@ html.rpt-open #root{visibility:hidden}
 .sq-grid.sq-compact .sq-card .bh-thumb,.sq-grid.sq-compact .sq-card .bn-mosaic{max-width:84px}
 .sq-grid.sq-compact .sq-card .bn-ico,.sq-grid.sq-compact .sq-card .bh-thumb.no-img{font-size:38px}
 .sq-grid.sq-compact .sq-card .sq-name{min-height:0 !important}
+
+.pa-face .ph-grid{grid-template-columns:130px}.pa-face .ph-item{aspect-ratio:3/4;background:#fff}.pa-face .ph-item img{object-fit:contain}

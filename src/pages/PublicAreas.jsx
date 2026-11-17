@@ -240,7 +240,7 @@ function Roster({ d, load, log, staffOf, canEdit }) {
             <div className="sheet-hd"><h2>{edit.id ? edit.name : tr('新增人員／崗位', 'New staff / post')}</h2>
               <span className="sheet-hd-acts"><button className="mini" onClick={() => setEdit(null)}>{tr('取消', 'Cancel')}</button><button className="mini pri" onClick={save}>{tr('儲存', 'Save')}</button></span></div>
             <div className="pa-sep first">{tr('人員資料', 'Staff')}</div>
-            <PhotoField label={tr('相片（方便識人）', 'Photo (for identification)')} photos={edit.photo ? [edit.photo] : []} max={1} onChange={v => setEdit({ ...edit, photo: v[0] || '' })} />
+            <div className="pa-face"><PhotoField label={tr('相片（方便識人）', 'Photo (for identification)')} photos={edit.photo ? [edit.photo] : []} max={1} onChange={v => setEdit({ ...edit, photo: v[0] || '' })} /></div>
             <div className="f-row"><label>{tr('姓名', 'Name')}</label><input value={edit.name} onChange={e => setEdit({ ...edit, name: e.target.value })} /></div>
             {edit.old_name && <p className="src-note">{tr('舊名單名稱：', 'Previous name: ')}{edit.old_name}</p>}
             <div style={{ display: 'flex', gap: 10 }}>
