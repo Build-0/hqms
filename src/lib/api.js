@@ -584,3 +584,26 @@ export async function hskpReset(id) {
   const { error } = await sb.from('hskp_pages').delete().eq('id', id)
   throwIf(error)
 }
+
+// ── 使用記錄（開發者專用睇；每個人只可寫自己嘅記錄）──
+export async function usageStart(empId) {
+  if (!sb) return null
+  const { data, error } = await sb.from('usage_log').insert({ emp_id: empId, ua: (navigator.userAgent || '').slice(0, 160) }).select('id').single()
+  return error ? null : data.id
+}
+export async function usageBeat(id, seconds) {
+  if (!sb || !id) return
+  await sb.from('usage_log').update({ seconds, last_seen: new Date().toISOString() }).eq('id', id)
+}
+export async function usageSummary() {
+  needDb()
+  const { data, error } = await sb.rpc('usage_summary')
+  throwIf(error)
+  return data || []
+}
+export async function usageRecent(empId) {
+  needDb()
+  const { data, error } = await sb.from('usage_log').select('id,started_at,last_seen,seconds,ua').eq('emp_id', empId).order('started_at', { ascending: false }).limit(60)
+  throwIf(error)
+  return data || []
+}

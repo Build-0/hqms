@@ -18,6 +18,8 @@ import { runBack } from './lib/nav'
 import Confirm from './components/Confirm'
 import { getSession, clearSession, applyOverride, permsOf, itemLevel, ITEMS, ROLE_LABEL } from './lib/accounts'
 import PermAdmin from './components/PermAdmin'
+import UsageAdmin from './components/UsageAdmin'
+import { startUsage } from './lib/usage'
 import UniformPage from './pages/UniformPage'
 import HskpInfo from './pages/HskpInfo'
 import { toast } from './lib/toast'
@@ -65,6 +67,7 @@ export default function App() {
   }, [big])
   const [moreOpen, setMoreOpen] = useState(false)   // 底部導覽「更多」
   const [permOpen, setPermOpen] = useState(false)   // 權限管理（開發者）
+  const [usageOpen, setUsageOpen] = useState(false)   // 使用記錄（開發者）
   const [settings, setSettings] = useState(false)   // 設定面板（大字、刷新、登出）
   const [refreshing, setRefreshing] = useState(false)  // 刷新中（轉圈）
   const [rk, setRk] = useState(0)                        // 刷新計數：改變即重新載入目前頁面資料
@@ -88,6 +91,11 @@ export default function App() {
       applyOverride(session.key, f); setSessionState(getSession())
     }).catch(() => {})
     return () => { on = false }
+  }, [session && session.key])
+  // 記錄使用時間（只記錄自己；開發者喺設定入面睇）
+  useEffect(() => {
+    if (!api.isOpen || !session) return undefined
+    return startUsage(session.key)
   }, [session && session.key])
   useEffect(() => {
     api.getUser().then(setUser)
@@ -246,6 +254,10 @@ export default function App() {
                     <span className="st2-ico">🔐</span>
                     <span className="st2-lab">權限管理<small>查看及修改全部帳號權限</small></span><span className="st2-go">›</span>
                   </button>
+                  <button className="st2-row st2-act" onClick={() => { setSettings(false); setUsageOpen(true) }}>
+                    <span className="st2-ico">📊</span>
+                    <span className="st2-lab">使用記錄<small>邊個幾時用、用幾耐、邊個從未用過</small></span><span className="st2-go">›</span>
+                  </button>
                 </div>
               </>
             )}
@@ -262,6 +274,7 @@ export default function App() {
         </div>
       )}
       {permOpen && session && session.dev && <PermAdmin session={session} onClose={() => setPermOpen(false)} />}
+      {usageOpen && session && session.dev && <UsageAdmin onClose={() => setUsageOpen(false)} />}
       {askLogout && (
         <Confirm confirmLabel="登出" text={session ? `會登出「${session.name}」，之後要重新輸入密碼先可以再用。` : '會登出目前帳號。'}
           onCancel={() => setAskLogout(false)}
