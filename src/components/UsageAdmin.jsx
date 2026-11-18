@@ -30,7 +30,8 @@ export default function UsageAdmin({ onClose }) {
   const list = useMemo(() => {
     const a = [...(rows || [])]
     const key = { last: r => -(lastOf(r) ? new Date(lastOf(r)).getTime() : 0), time: r => -r.total_seconds, visits: r => -r.visits, days: r => -r.days_active }[sort]
-    return a.sort((x, y) => key(x) - key(y))
+    const lt = r => (lastOf(r) ? new Date(lastOf(r)).getTime() : 0)
+    return a.sort((x, y) => key(x) - key(y) || lt(y) - lt(x))
   }, [rows, sort])
   const never = list.filter(r => !r.visits && !r.last_sign_in)
   const since = rows && rows.reduce((m, r) => (r.first_seen && (!m || r.first_seen < m) ? r.first_seen : m), null)
@@ -60,7 +61,7 @@ export default function UsageAdmin({ onClose }) {
                 <div className="pm-top"><b>{r.name}</b><span>{r.emp_id}</span></div>
                 <div style={{ fontSize: 12.5, lineHeight: 1.8, color: 'var(--sub)' }}>
                   最近：<b style={{ color: 'var(--ink)' }}>{fmtD(lastOf(r))}</b> {lastOf(r) ? `（${ago(lastOf(r))}${r.last_seen ? '' : '·只知登入'}）` : '（從未）'}<br />
-                  到訪 <b>{r.visits}</b> 次 · 用過 <b>{r.days_active}</b> 日 · 總停留 <b>{fmtT(r.total_seconds)}</b> · 近 7 日 <b>{fmtT(r.secs_7d)}</b>
+                  {r.visits ? <>到訪 <b>{r.visits}</b> 次 · 用過 <b>{r.days_active}</b> 日 · 總停留 <b>{fmtT(r.total_seconds)}</b> · 近 7 日 <b>{fmtT(r.secs_7d)}</b></> : <>未有精確記錄（部署前只知登入）</>}
                 </div>
                 {open === r.emp_id && (
                   <div style={{ marginTop: 6, borderTop: '1px solid var(--line)', paddingTop: 6 }}>
