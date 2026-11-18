@@ -43,15 +43,40 @@ export async function savePdf(rootEl, fileName, opts = {}) {
 }
 
 // 轉圖：手機（iPhone）用瀏覽器自己排版嘅方式截圖（html-to-image），文字唔會疊；html2canvas 喺 iPhone 會疊字／卡死。電腦照舊用 html2canvas。
+// Safari 嘅 SVG 截圖會漏晒相片，所以相片唔交俾截圖，截完圖之後由我哋自己逐張畫返落去（位置、裁切方式同畫面一致）。
+const loadImg = src => new Promise(ok => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => ok(null); i.src = src })
 async function snap(el, html2canvas, extra = {}) {
   if (IS_MOBILE) {
+    const hidden = []
     try {
       const { toCanvas } = await import('html-to-image')
-      // Safari 第一次畫會漏咗圖片（相片未準備好）：先用細解像度預畫一次，再正式畫
-      await toCanvas(el, { pixelRatio: 0.3, backgroundColor: '#ffffff', skipFonts: true, cacheBust: false }).catch(() => {})
-      await new Promise(r => setTimeout(r, 250))
-      return await toCanvas(el, { pixelRatio: pickScale(el), backgroundColor: '#ffffff', skipFonts: true, cacheBust: false })
-    } catch { /* 失敗就轉用 html2canvas */ }
+      const box = el.getBoundingClientRect()
+      const imgs = [...el.querySelectorAll('img')].filter(i => i.src && getComputedStyle(i).visibility !== 'hidden')
+      const info = imgs.map(i => {
+        const r = i.getBoundingClientRect(), cs = getComputedStyle(i)
+        return { src: i.src, x: r.left - box.left, y: r.top - box.top, w: r.width, h: r.height, fit: cs.objectFit, pos: cs.objectPosition, rad: parseFloat(cs.borderTopLeftRadius) || 0, round: cs.borderTopLeftRadius.includes('%') }
+      })
+      imgs.forEach(i => { hidden.push([i, i.style.visibility]); i.style.visibility = 'hidden' })
+      const canvas = await toCanvas(el, { pixelRatio: pickScale(el), backgroundColor: '#ffffff', skipFonts: true, cacheBust: false })
+      hidden.forEach(([i, v]) => { i.style.visibility = v }); hidden.length = 0
+      const k = canvas.width / box.width, ctx = canvas.getContext('2d')
+      for (const f of info) {
+        const im = await loadImg(f.src)
+        if (!im || !f.w || !f.h) continue
+        const s = f.fit === 'contain' ? Math.min(f.w / im.naturalWidth, f.h / im.naturalHeight) : f.fit === 'cover' ? Math.max(f.w / im.naturalWidth, f.h / im.naturalHeight) : 1
+        const dw = im.naturalWidth * s, dh = im.naturalHeight * s
+        const [px, py] = f.pos.split(' ').map(v => (v.endsWith('%') ? parseFloat(v) / 100 : 0.5))
+        const dx = f.x + (f.w - dw) * (isNaN(px) ? 0.5 : px), dy = f.y + (f.h - dh) * (isNaN(py) ? 0.5 : py)
+        ctx.save()
+        ctx.beginPath()
+        const rr = f.round ? Math.min(f.w, f.h) / 2 : f.rad
+        if (rr > 0 && ctx.roundRect) ctx.roundRect(f.x * k, f.y * k, f.w * k, f.h * k, rr * k); else ctx.rect(f.x * k, f.y * k, f.w * k, f.h * k)
+        ctx.clip()
+        ctx.drawImage(im, dx * k, dy * k, dw * k, dh * k)
+        ctx.restore()
+      }
+      return canvas
+    } catch { /* 失敗就轉用 html2canvas */ } finally { hidden.forEach(([i, v]) => { i.style.visibility = v }) }
   }
   return html2canvas(el, { scale: pickScale(el), imageTimeout: 8000, backgroundColor: '#ffffff', useCORS: true, logging: false, ...extra })
 }
