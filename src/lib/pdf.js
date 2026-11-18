@@ -35,8 +35,11 @@ const pickScale = el => Math.max(1, Math.min(2, Math.sqrt(9e6 / Math.max(1, el.s
 const withTimeout = (p, ms) => Promise.race([p, new Promise((_, no) => setTimeout(() => no(new Error('產生逾時，請再試一次（或改用電腦保存）')), ms))])
 
 export async function savePdf(rootEl, fileName, opts = {}) {
+  // 手機版表格用「自動斷字」排版，html2canvas 會畫到文字疊埋一齊；產生期間改用固定 820px 紙張排版（同電腦版一樣）
+  const paper = IS_MOBILE && !rootEl.classList.contains('rpt-paper')
+  if (paper) rootEl.classList.add('rpt-paper')
   const restore = await inlineImages(rootEl)
-  try { return await withTimeout(buildPdf(rootEl, fileName, opts), 90000) } finally { restore() }
+  try { return await withTimeout(buildPdf(rootEl, fileName, opts), 90000) } finally { restore(); if (paper) rootEl.classList.remove('rpt-paper') }
 }
 
 async function buildPdf(rootEl, fileName, opts = {}) {
