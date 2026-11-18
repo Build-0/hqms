@@ -44,7 +44,7 @@ export const ITEMS = [
   { id: 'defect', group: '缺陷管理', label: '缺陷管理（整個模組）', add: true },
   { id: 'pa_roster', group: '公共地區', label: '人員崗位' },
   { id: 'pa_tasks', group: '公共地區', label: '任務代碼' },
-  { id: 'pa_board', group: '公共地區', label: '24 小時看板' },
+  { id: 'pa_board', group: '公共地區', label: '24 小時工作內容看板' },
   { id: 'pa_annual', group: '公共地區', label: '年度清潔' },
   { id: 'pa_training', group: '公共地區', label: '機器培訓' },
 ]

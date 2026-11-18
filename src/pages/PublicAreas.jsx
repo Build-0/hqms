@@ -86,7 +86,7 @@ export default function PublicAreas({ session }) {
         {!view && (
           <Ordered okey="public" idOf={x => x[0]} labelOf={x => x[1]} items={[['roster', tr('人員崗位', 'Staff & posts'), 'people', '#1f7a6d', tr(`${d.staff.filter(x => x.active).length} 位在職 · ${d.posts.filter(p => p.active).length} 個崗位`, `${d.staff.filter(x => x.active).length} staff · ${d.posts.filter(p => p.active).length} posts`)],
               ['tasks', tr('任務代碼', 'Task codes'), 'book', '#b5603a', tr(`${d.tasks.length} 個任務`, `${d.tasks.length} tasks`)],
-              ['board', tr('24 小時看板', '24-hour board'), 'calendar', '#4a6fa5', tr('每崗每半小時', 'Every 30 min per post')],
+              ['board', tr('24 小時工作內容看板', '24-hour work board'), 'calendar', '#4a6fa5', tr('每崗每半小時', 'Every 30 min per post')],
               ['annual', tr('年度清潔', 'Annual cleaning'), 'drop', '#3a8fb5', (() => { const fmt = v => { const [y, m, dd] = v.split('-').map(Number); return tr(`${y}年${m}月${dd}日`, `${dd}/${m}/${y}`) }; if (lastRec) return tr('相關紀錄 ', 'Records: ') + fmt(lastRec); if (nextPlan) return tr('資料起始：', 'Data from: ') + fmt(nextPlan); return tr('相關紀錄：暫無', 'Records: none') })()],
               ['training', tr('機器培訓', 'Machine training'), 'cap', '#8f7ac9', tr('培訓場次、簽名', 'Sessions & sign-in')],
             ].filter(a => lv('pa_' + a[0]) !== 'none')}>{list => (
@@ -101,7 +101,7 @@ export default function PublicAreas({ session }) {
             </div>
           )}</Ordered>
         )}
-        {view && <div className="pa-crumb"><button onClick={() => setView(null)}>{tr('公共地區', 'Public areas')}</button><i>›</i><b>{({ roster: tr('人員崗位', 'Staff & posts'), tasks: tr('任務代碼', 'Task codes'), board: tr('24 小時看板', '24-hour board'), annual: tr('年度清潔', 'Annual cleaning'), training: tr('機器培訓', 'Machine training') })[view]}</b></div>}
+        {view && <div className="pa-crumb"><button onClick={() => setView(null)}>{tr('公共地區', 'Public areas')}</button><i>›</i><b>{({ roster: tr('人員崗位', 'Staff & posts'), tasks: tr('任務代碼', 'Task codes'), board: tr('24 小時工作內容看板', '24-hour work board'), annual: tr('年度清潔', 'Annual cleaning'), training: tr('機器培訓', 'Machine training') })[view]}</b></div>}
         {view && !ce('pa_' + view) && <p className="note" style={{ textAlign: 'left', margin: '0 4px 8px' }}>{tr('目前帳號只可查看', 'View only')}（{session ? session.name : ''}）</p>}
         {view === 'roster' && <Roster {...ctx} canEdit={ce('pa_roster')} />}
         {view === 'board' && <Board {...ctx} canEdit={ce('pa_board')} />}
@@ -646,9 +646,9 @@ function Board({ d, load, log, staffOf, canEdit }) {
         )}
         </>
       )}
-      {report === true && <ReportModal en={en} title={tr('24 小時看板', '24-Hour Board')} sub={todayStr()} onClose={() => setReport(false)}><ListReport data={{ ...boardReport(), en }} /></ReportModal>}
+      {report === true && <ReportModal en={en} title={tr('24 小時工作內容看板', '24-Hour Work Board')} sub={todayStr()} onClose={() => setReport(false)}><ListReport data={{ ...boardReport(), en }} /></ReportModal>}
       {report === 'allposts' && (
-        <ReportModal en={en} title={tr('24 小時看板 · 各崗位工作安排', '24-Hour Board · Post schedules')} sub={todayStr()} onClose={() => setReport(false)}>
+        <ReportModal en={en} title={tr('24 小時工作內容看板 · 各崗位工作安排', '24-Hour Work Board · Post schedules')} sub={todayStr()} onClose={() => setReport(false)}>
           {posts.map(p => {
             const s = staffOf(p.staff_id) || {}; const h = hOf(p.id)
             return (
@@ -665,7 +665,7 @@ function Board({ d, load, log, staffOf, canEdit }) {
           })}
         </ReportModal>
       )}
-      {report === 'matrix' && <ReportModal en={en} landscape a3 title={tr('24 小時看板總表', '24-Hour Board Matrix')} sub={todayStr()} onClose={() => setReport(false)}><p className="rpt-mut" style={{ margin: '0 0 4px', fontSize: 11, lineHeight: 1.5 }}>{statLine}{kindLines.map(t => <span key={t} style={{ display: 'block' }}>{t}</span>)}</p>{matrixPages(ov === 'codes')}</ReportModal>}
+      {report === 'matrix' && <ReportModal en={en} landscape a3 title={tr('24 小時工作內容看板總表', '24-Hour Work Board Matrix')} sub={todayStr()} onClose={() => setReport(false)}><p className="rpt-mut" style={{ margin: '0 0 4px', fontSize: 11, lineHeight: 1.5 }}>{statLine}{kindLines.map(t => <span key={t} style={{ display: 'block' }}>{t}</span>)}</p>{matrixPages(ov === 'codes')}</ReportModal>}
       {canEdit && edit && (
         <div className="modal" onClick={e => { if (e.target === e.currentTarget) setEdit(null) }}>
           <div className="sheet">
