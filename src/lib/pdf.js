@@ -47,6 +47,9 @@ async function snap(el, html2canvas, extra = {}) {
   if (IS_MOBILE) {
     try {
       const { toCanvas } = await import('html-to-image')
+      // Safari 第一次畫會漏咗圖片（相片未準備好）：先用細解像度預畫一次，再正式畫
+      await toCanvas(el, { pixelRatio: 0.3, backgroundColor: '#ffffff', skipFonts: true, cacheBust: false }).catch(() => {})
+      await new Promise(r => setTimeout(r, 250))
       return await toCanvas(el, { pixelRatio: pickScale(el), backgroundColor: '#ffffff', skipFonts: true, cacheBust: false })
     } catch { /* 失敗就轉用 html2canvas */ }
   }
