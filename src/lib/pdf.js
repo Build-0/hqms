@@ -7,14 +7,46 @@ const M = 10          // 頁邊距 mm
 const IS_MOBILE = typeof navigator !== 'undefined' && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
 const PAGE_BREAK_CLASS = 'sf-page'   // 沙發檢查表：每層一頁
 
+// 手機常見死因：html2canvas 逐張載入跨網域相片（員工相等），有一張卡住就永遠「產生中」。
+// 所以先自己逐張下載相片（每張最多 8 秒）轉成內嵌圖片，下載唔到就暫時隱藏，截圖完再還原。
+async function inlineImages(rootEl) {
+  const undo = []
+  const imgs = [...rootEl.querySelectorAll('img')].filter(i => i.src && !i.src.startsWith('data:'))
+  await Promise.all(imgs.map(async img => {
+    const old = img.src, oldSet = img.getAttribute('srcset')
+    try {
+      const ac = new AbortController(); const t = setTimeout(() => ac.abort(), 8000)
+      const r = await fetch(old, { signal: ac.signal, cache: 'reload' }).finally(() => clearTimeout(t))
+      if (!r.ok) throw new Error('img ' + r.status)
+      const b = await r.blob()
+      const url = await new Promise((ok, no) => { const f = new FileReader(); f.onload = () => ok(f.result); f.onerror = no; f.readAsDataURL(b) })
+      img.removeAttribute('loading'); img.removeAttribute('srcset'); img.src = url
+      await (img.decode ? img.decode().catch(() => {}) : Promise.resolve())
+      undo.push(() => { img.src = old; if (oldSet) img.setAttribute('srcset', oldSet) })
+    } catch {
+      const v = img.style.visibility; img.style.visibility = 'hidden'
+      undo.push(() => { img.style.visibility = v })
+    }
+  }))
+  return () => undo.forEach(f => f())
+}
+// 畫面太大時降低解像度，避免 iPhone 畫布超出記憶體上限
+const pickScale = el => Math.max(1, Math.min(2, Math.sqrt(9e6 / Math.max(1, el.scrollWidth * el.scrollHeight))))
+const withTimeout = (p, ms) => Promise.race([p, new Promise((_, no) => setTimeout(() => no(new Error('產生逾時，請再試一次（或改用電腦保存）')), ms))])
+
 export async function savePdf(rootEl, fileName, opts = {}) {
+  const restore = await inlineImages(rootEl)
+  try { return await withTimeout(buildPdf(rootEl, fileName, opts), 90000) } finally { restore() }
+}
+
+async function buildPdf(rootEl, fileName, opts = {}) {
   const A4 = opts.a3 ? { w: 420, h: 297 } : opts.landscape ? { w: A4P.h, h: A4P.w } : A4P
   const [{ default: html2canvas }, { jsPDF }] = await Promise.all([import('html2canvas'), import('jspdf')])
   const doc = new jsPDF({ unit: 'mm', format: opts.a3 ? 'a3' : 'a4', orientation: opts.landscape ? 'landscape' : 'portrait' })
   const innerW = A4.w - M * 2, innerH = A4.h - M * 2 - 6
   if (opts.fitOne) {
     // 一頁式：整份報告轉成一張圖，縮放至剛好放入一頁（保持比例、置中）
-    const canvas = await html2canvas(rootEl, { scale: 2, backgroundColor: '#ffffff', useCORS: true, logging: false })
+    const canvas = await html2canvas(rootEl, { scale: pickScale(rootEl), imageTimeout: 8000, backgroundColor: '#ffffff', useCORS: true, logging: false })
     const bw = A4.w - M * 2, bh = A4.h - M * 2
     const k = Math.min(bw / canvas.width, bh / canvas.height)
     const w = canvas.width * k, h = canvas.height * k
@@ -43,7 +75,7 @@ export async function savePdf(rootEl, fileName, opts = {}) {
     first = false
   }
   for (const el of blocks) {
-    const canvas = await html2canvas(el, { scale: 2, backgroundColor: '#ffffff', useCORS: true, logging: false, windowWidth: Math.max(window.innerWidth, rootEl.scrollWidth + 40) })
+    const canvas = await html2canvas(el, { scale: pickScale(el), imageTimeout: 8000, backgroundColor: '#ffffff', useCORS: true, logging: false, windowWidth: Math.max(window.innerWidth, rootEl.scrollWidth + 40) })
     addCanvas(canvas, el.classList.contains(PAGE_BREAK_CLASS))
   }
   doc.setFontSize(8); doc.setTextColor(130)
