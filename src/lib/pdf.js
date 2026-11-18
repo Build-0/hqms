@@ -42,6 +42,17 @@ export async function savePdf(rootEl, fileName, opts = {}) {
   try { return await withTimeout(buildPdf(rootEl, fileName, opts), 90000) } finally { restore(); if (paper) rootEl.classList.remove('rpt-paper') }
 }
 
+// 轉圖：手機（iPhone）用瀏覽器自己排版嘅方式截圖（html-to-image），文字唔會疊；html2canvas 喺 iPhone 會疊字／卡死。電腦照舊用 html2canvas。
+async function snap(el, html2canvas, extra = {}) {
+  if (IS_MOBILE) {
+    try {
+      const { toCanvas } = await import('html-to-image')
+      return await toCanvas(el, { pixelRatio: pickScale(el), backgroundColor: '#ffffff', skipFonts: true, cacheBust: false })
+    } catch { /* 失敗就轉用 html2canvas */ }
+  }
+  return html2canvas(el, { scale: pickScale(el), imageTimeout: 8000, backgroundColor: '#ffffff', useCORS: true, logging: false, ...extra })
+}
+
 async function buildPdf(rootEl, fileName, opts = {}) {
   const A4 = opts.a3 ? { w: 420, h: 297 } : opts.landscape ? { w: A4P.h, h: A4P.w } : A4P
   const [{ default: html2canvas }, { jsPDF }] = await Promise.all([import('html2canvas'), import('jspdf')])
@@ -49,7 +60,7 @@ async function buildPdf(rootEl, fileName, opts = {}) {
   const innerW = A4.w - M * 2, innerH = A4.h - M * 2 - 6
   if (opts.fitOne) {
     // 一頁式：整份報告轉成一張圖，縮放至剛好放入一頁（保持比例、置中）
-    const canvas = await html2canvas(rootEl, { scale: pickScale(rootEl), imageTimeout: 8000, backgroundColor: '#ffffff', useCORS: true, logging: false })
+    const canvas = await snap(rootEl, html2canvas)
     const bw = A4.w - M * 2, bh = A4.h - M * 2
     const k = Math.min(bw / canvas.width, bh / canvas.height)
     const w = canvas.width * k, h = canvas.height * k
@@ -78,7 +89,7 @@ async function buildPdf(rootEl, fileName, opts = {}) {
     first = false
   }
   for (const el of blocks) {
-    const canvas = await html2canvas(el, { scale: pickScale(el), imageTimeout: 8000, backgroundColor: '#ffffff', useCORS: true, logging: false, windowWidth: Math.max(window.innerWidth, rootEl.scrollWidth + 40) })
+    const canvas = await snap(el, html2canvas, { windowWidth: Math.max(window.innerWidth, rootEl.scrollWidth + 40) })
     addCanvas(canvas, el.classList.contains(PAGE_BREAK_CLASS))
   }
   doc.setFontSize(8); doc.setTextColor(130)
