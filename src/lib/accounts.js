@@ -40,6 +40,7 @@ export const ITEMS = [
   { id: 'uniform', group: '後勤管理', label: '制服與布草管理' },
   { id: 'writeoff', group: '後勤管理', label: '報銷與遺失管理' },
   { id: 'roomsale', group: '後勤管理', label: '房間可售物品價錢／庫存表' },
+  { id: 'dmgquote', group: '後勤管理', label: '固定資產破損報價' },
   { id: 'supply_req', group: '後勤管理', label: '客房物資領用單', add: true },
   { id: 'defect', group: '缺陷管理', label: '缺陷管理（整個模組）', add: true },
   { id: 'pa_roster', group: '公共地區', label: '人員崗位' },
@@ -53,6 +54,7 @@ export const LEVEL_LABEL = { none: '無', view: '查看', add: '新增', edit: '
 export function itemDefault(s, id) {
   if (!s) return 'edit'
   if (id === 'uniform' || id === 'writeoff' || id === 'roomsale') return s.dev ? 'edit' : 'none'   // 開發中：預設只有開發者可入
+  if (id === 'dmgquote') return s.dev || s.role === 'admin' || s.role === 'store' ? 'edit' : 'none'   // 破損報價：開發者／管理員／倉管員可編輯
   if (id === 'supply_req') return s.dev || s.role === 'admin' || s.role === 'store' ? 'edit' : s.role === 'supervisor' ? 'add' : 'none'   // 領用單：開發者／管理員／倉管員可編輯；樓層主管可填單
   const r = s.role
   if (r === 'admin') return 'edit'
