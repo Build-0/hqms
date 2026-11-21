@@ -254,7 +254,7 @@ function Roster({ d, load, log, staffOf, canEdit }) {
             {edit.kind !== 'HSKP' && <div className="f-row"><label>{edit.kind === '外借' ? tr('休息日期（外借人員，按實際）', 'Days off (borrowed staff, as scheduled)') : tr('休息日期（寶潔力每月休 1 天）', 'Days off (Pro-Cleaning: 1 per month)')}</label>
               <input type="date" value="" onChange={e => e.target.value && setEdit({ ...edit, rest_dates: [...edit.rest_dates, e.target.value].sort() })} />
               <div className="chips wrap" style={{ marginTop: 6 }}>{edit.rest_dates.map(x => <button key={x} className="chip on" onClick={() => setEdit({ ...edit, rest_dates: edit.rest_dates.filter(y => y !== x) })}>{x} ✕</button>)}</div></div>}
-            <div className="f-row"><label>{tr('人員備註', 'Staff notes')}</label><input value={edit.notes} onChange={e => setEdit({ ...edit, notes: e.target.value })} /></div>
+            <div className="f-row"><label>{tr('人員備註', 'Staff notes')}</label><textarea rows={Math.min(14, Math.max(3, (edit.notes || '').split('\n').length + 1))} value={edit.notes} onChange={e => setEdit({ ...edit, notes: e.target.value })} style={{ width: '100%', boxSizing: 'border-box', lineHeight: 1.6 }} /></div>
             {!edit.staffOnly && <>
             <div className="pa-sep">{tr('崗位資料', 'Post')}</div>
             {!edit.post_id && <div className="f-row"><label>{tr('崗位編號', 'Post code')}</label><input value={edit.code} onChange={e => setEdit({ ...edit, code: e.target.value })} /></div>}
@@ -268,7 +268,7 @@ function Roster({ d, load, log, staffOf, canEdit }) {
             <div className="f-row"><label>{tr('休息時間', 'Break')}</label><input value={edit.break_text} onChange={e => setEdit({ ...edit, break_text: e.target.value })} placeholder="13:00–13:30, 18:30–19:00" /></div>
             <div className="f-row"><label>{tr('負責區域（中文）', 'Area (Chinese)')}</label><input value={edit.work_area} onChange={e => setEdit({ ...edit, work_area: e.target.value })} /></div>
             <div className="f-row"><label>{tr('負責區域（English）', 'Area (English)')}</label><input value={edit.work_area_en || ''} onChange={e => setEdit({ ...edit, work_area_en: e.target.value })} /></div>
-            <div className="f-row"><label>{tr('崗位備註', 'Post notes')}</label><input value={edit.pnotes || ''} onChange={e => setEdit({ ...edit, pnotes: e.target.value })} /></div>
+            <div className="f-row"><label>{tr('崗位備註', 'Post notes')}</label><textarea rows={Math.min(10, Math.max(2, (edit.pnotes || '').split('\n').length + 1))} value={edit.pnotes || ''} onChange={e => setEdit({ ...edit, pnotes: e.target.value })} style={{ width: '100%', boxSizing: 'border-box', lineHeight: 1.6 }} /></div>
             {edit.flag && <button className="btn alt" onClick={() => setEdit({ ...edit, flag: '' })}>✓ {tr('已確認，取消「', 'Confirmed — clear “')}{edit.flag}{tr('」標記', '” flag')}</button>}
             {edit.post_id && <button className="btn danger sm-quiet" onClick={stopPost}>{tr('停用這個崗位', 'Disable this post')}</button>}
             </>}
