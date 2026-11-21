@@ -1,6 +1,6 @@
 import { Ordered } from '../../lib/cardOrder'
 import { AttList } from './shared'
-import { LinenHome, LinenRec, LinenPrice, LinenBase, LinenYear, emptyRec } from './LinenYears'
+import { LinenHome, LinenRec, LinenPrice, LinenBase, LinenYear, emptyRec, scopeOf } from './LinenYears'
 import { useEffect, useState } from 'react'
 import * as api from '../../lib/api'
 import { toast } from '../../lib/toast'
@@ -15,7 +15,7 @@ import { ReportModal, ListReport } from '../../components/Reports'
 const CATS = [['制服', 'shirt', '#8f7ac9'], ['布草', 'bed', '#3a8fb5'], ['物資', 'box', '#c98a3a']]
 // 酒店房間基數：820 間房、10 層、每層 82 間（大床 26 + 小床 56，小床房每間兩張）
 const FLOORS = 10
-const baseTxt = i => (i.base_floor ? `基數 一層 ${i.base_floor.toLocaleString()} ／ ${FLOORS} 層 ${(i.base_floor * FLOORS).toLocaleString()}` : '')
+const baseTxt = i => (i.base_floor ? `基數 一層 ${i.base_floor.toLocaleString()} ／ ${scopeOf(i).txt} ${(i.base_floor * scopeOf(i).n).toLocaleString()}` : '')
 const GRP_HINT = { 制服: ['上衣', '褲／裙', '外套', '其他'], 布草: ['床上用品', '浴室布草', '布草袋', '顧客要求', '其他'], 物資: ['布草車／大桶', '熨斗／熨燙', '架／推車', '其他'] }
 
 export default function Uniform({ edit, init }) {
@@ -80,7 +80,7 @@ export default function Uniform({ edit, init }) {
 
   async function save() {
     const e = sheet
-    const row = { cat, grp: e.grp.trim(), name: e.name.trim(), size: e.size.trim(), qty: Number(e.qty) || 0, base_floor: e.base_floor === '' || e.base_floor == null ? null : Number(e.base_floor), init_qty: e.init_qty === '' || e.init_qty == null ? null : Number(e.init_qty), min_qty: Number(e.min_qty) || 0, location: e.location.trim(), notes: e.notes.trim(), attachments: e.attachments || [] }
+    const row = { cat, grp: e.grp.trim(), name: e.name.trim(), size: e.size.trim(), qty: Number(e.qty) || 0, base_floor: e.base_floor === '' || e.base_floor == null ? null : Number(e.base_floor), base_scope: (e.base_scope || '').trim() || null, base_floors: (e.base_scope || '').trim() ? scopeOf({ base_scope: e.base_scope }).n : null, init_qty: e.init_qty === '' || e.init_qty == null ? null : Number(e.init_qty), min_qty: Number(e.min_qty) || 0, location: e.location.trim(), notes: e.notes.trim(), attachments: e.attachments || [] }
     try {
       if (e.id) await api.dbUpdate('uni_items', e.id, row); else await api.dbInsert('uni_items', { ...row, sort_order: items.length + 1 })
       toast('已儲存'); setSheet(null); load()
@@ -102,7 +102,7 @@ export default function Uniform({ edit, init }) {
   const reportData = () => ({
     filterText: [cat, f.low ? '存量低' : ''].filter(Boolean).join('、'),
     cols: ['分類', '品項', '現有', '初次入貨', '一層基數', '全酒店基數', '最低存量', '位置', '備註'],
-    groups: groups.map(g => ({ name: g.g, rows: g.items.map(i => ({ cells: [i.grp || '—', nm(i), i.qty, i.init_qty ?? '—', i.base_floor ?? '—', i.base_floor ? i.base_floor * FLOORS : '—', i.min_qty || '—', i.location || '—', i.notes || '—'], cls: low(i) ? { 2: 'rpt-red' } : undefined })) })),
+    groups: groups.map(g => ({ name: g.g, rows: g.items.map(i => ({ cells: [i.grp || '—', nm(i), i.qty, i.init_qty ?? '—', i.base_floor ?? '—', i.base_floor ? i.base_floor * scopeOf(i).n : '—', i.min_qty || '—', i.location || '—', i.notes || '—'], cls: low(i) ? { 2: 'rpt-red' } : undefined })) })),
   })
 
   return (
@@ -155,7 +155,8 @@ export default function Uniform({ edit, init }) {
               <div className="f-row" style={{ flex: '1 1 40%' }}><label>尺碼／規格</label><input value={sheet.size} onChange={e => setSheet({ ...sheet, size: e.target.value })} placeholder="S／M／L／大床" /></div>
               <div className="f-row" style={{ flex: '1 1 40%' }}><label>現有數量</label><input inputMode="numeric" value={sheet.qty} onChange={e => setSheet({ ...sheet, qty: e.target.value })} /></div>
               <div className="f-row" style={{ flex: '1 1 40%' }}><label>初次入貨數量</label><input inputMode="numeric" value={sheet.init_qty ?? ''} onChange={e => setSheet({ ...sheet, init_qty: e.target.value })} /></div>
-              <div className="f-row" style={{ flex: '1 1 40%' }}><label>一層基數{sheet.base_floor ? `（${FLOORS} 層 = ${(Number(sheet.base_floor) * FLOORS).toLocaleString()}）` : ''}</label><input inputMode="numeric" value={sheet.base_floor ?? ''} onChange={e => setSheet({ ...sheet, base_floor: e.target.value })} /></div>
+              <div className="f-row" style={{ flex: '1 1 40%' }}><label>一層基數{sheet.base_floor ? `（${scopeOf(sheet).txt} = ${(Number(sheet.base_floor) * scopeOf(sheet).n).toLocaleString()}）` : ''}</label><input inputMode="numeric" value={sheet.base_floor ?? ''} onChange={e => setSheet({ ...sheet, base_floor: e.target.value })} /></div>
+              <div className="f-row" style={{ flex: '1 1 40%' }}><label>適用樓層（冇填＝全部 10 層）</label><input value={sheet.base_scope ?? ''} onChange={e => setSheet({ ...sheet, base_scope: e.target.value })} placeholder="例：3　或　4-10" /></div>
               <div className="f-row" style={{ flex: '1 1 40%' }}><label>最低存量</label><input inputMode="numeric" value={sheet.min_qty} onChange={e => setSheet({ ...sheet, min_qty: e.target.value })} /></div>
             </div>
             <div className="f-row"><label>存放位置</label><input value={sheet.location} onChange={e => setSheet({ ...sheet, location: e.target.value })} /></div>

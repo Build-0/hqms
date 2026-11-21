@@ -246,6 +246,14 @@ export function LinenPrice({ items, yrs }) {
 
 // 客房基數：酒店房間數同每款布草嘅一層／全酒店基數
 const FL = 10
+// 適用樓層：'3'、'4-10'、'11-12'、'3,5-7'；冇填 = 全部 10 層。回傳 { n: 樓層數, txt: 顯示字 }
+export function scopeOf(i) {
+  const t = String((i && i.base_scope) || '').replace(/[樓F層\s]/g, '').replace(/[–—~至到]/g, '-').replace(/[，、;；]/g, ',')
+  if (!t) return { n: FL, txt: FL + ' 層' }
+  let n = 0
+  t.split(',').forEach(p => { const m = p.match(/^(\d+)(?:-(\d+))?$/); if (m) n += m[2] ? Math.max(0, Number(m[2]) - Number(m[1]) + 1) : 1 })
+  return n ? { n, txt: t.replace(/-/g, '–') + ' 樓（' + n + ' 層）' } : { n: FL, txt: FL + ' 層' }
+}
 export function LinenBase({ items, edit, onSaved }) {
   const [sh, setSh] = useState(null)   // { id, name, base_floor, isNew }
   const tiles = [['總房數', '820 間', ''], ['樓層', FL + ' 層', '每層 82 間'], ['大床房', '26 間', '每層（每間 1 張大床）'], ['小床房', '56 間', '每層（每間 2 張，共 112 張）']]
@@ -260,12 +268,12 @@ export function LinenBase({ items, edit, onSaved }) {
       <div className="bh-grp">每款布草基數<span>{list.length}</span></div>
       <div className="pa-grid pa-grid-an">
         {list.map(i => (
-          <div className="pa-sq pa-an" key={i.id} role="button" tabIndex={0} onClick={() => edit && setSh({ id: i.id, name: '', base_floor: String(i.base_floor) })} style={edit ? undefined : { cursor: 'default' }}>
+          <div className="pa-sq pa-an" key={i.id} role="button" tabIndex={0} onClick={() => edit && setSh({ id: i.id, name: '', base_floor: String(i.base_floor), base_scope: i.base_scope || '' })} style={edit ? undefined : { cursor: 'default' }}>
             <span className="pa-sq-top"><span className="lin-sup">基數</span></span>
             <b className="pa-sq-name"><NameSz i={i} /></b>
             <span className="pa-sq-post">
               <span className="st-qty">{i.base_floor.toLocaleString()}<small> 件／層</small></span>
-              <span className="pa-sub">{FL} 層共 {(i.base_floor * FL).toLocaleString()} 件</span>
+              <span className="pa-sub">{scopeOf(i).txt}共 {(i.base_floor * scopeOf(i).n).toLocaleString()} 件</span>
             </span>
           </div>
         ))}
@@ -284,7 +292,7 @@ export function LinenBase({ items, edit, onSaved }) {
                   await api.dbInsert('uni_items', { cat: '布草', grp: '', name: sh.name.trim(), size: '', qty: 0, min_qty: 0, base_floor: n, sort_order: items.length + 100 })
                 } else {
                   if (!sh.id) return toast('請揀款式')
-                  await api.dbUpdate('uni_items', sh.id, { base_floor: n })
+                  await api.dbUpdate('uni_items', sh.id, { base_floor: n, base_scope: (sh.base_scope || '').trim() || null, base_floors: (sh.base_scope || '').trim() ? scopeOf({ base_scope: sh.base_scope }).n : null })
                 }
                 toast('已儲存'); setSh(null); onSaved()
               } catch (ex) { toast('儲存失敗：' + ex.message) }
@@ -297,7 +305,8 @@ export function LinenBase({ items, edit, onSaved }) {
                 <option value="__new">＋ 全新款式（自己打名）</option>
               </select></div>
             {sh.id === '__new' && <div className="f-row"><label>款式名稱</label><input value={sh.name} onChange={e => setSh({ ...sh, name: e.target.value })} placeholder="例：加床床單" /></div>}
-            <div className="f-row"><label>一層基數（件）{Number(sh.base_floor) > 0 ? `　${FL} 層 = ${(Number(sh.base_floor) * FL).toLocaleString()}` : ''}</label><input inputMode="numeric" value={sh.base_floor} onChange={e => setSh({ ...sh, base_floor: e.target.value })} /></div>
+            <div className="f-row"><label>一層基數（件）{Number(sh.base_floor) > 0 ? `　${scopeOf(sh).txt} = ${(Number(sh.base_floor) * scopeOf(sh).n).toLocaleString()}` : ''}</label><input inputMode="numeric" value={sh.base_floor} onChange={e => setSh({ ...sh, base_floor: e.target.value })} /></div>
+            <div className="f-row"><label>適用樓層（冇填＝全部 10 層）</label><input value={sh.base_scope || ''} onChange={e => setSh({ ...sh, base_scope: e.target.value })} placeholder="例：3　或　4-10　或　11-12" /></div>
             {list.some(i => i.id === sh.id) && <button className="btn danger sm-quiet" onClick={async () => { try { await api.dbUpdate('uni_items', sh.id, { base_floor: null }); toast('已移除基數'); setSh(null); onSaved() } catch (ex) { toast(ex.message) } }}>移除呢款基數</button>}
           </div>
         </div>
