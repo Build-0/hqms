@@ -1747,3 +1747,29 @@ html.rpt-open #root{visibility:hidden}
 .pa-hotel{margin-left:auto;font-size:11px;font-weight:800;border-radius:99px;padding:2px 9px;background:#e4e9f7;color:#3b4a8a;white-space:nowrap}
 .pa-sq-top .pa-flag{margin-left:auto}
 .pa-sq-top .pa-flag + .pa-hotel{margin-left:0}
+
+/* 清潔劑：供應商／落單區 */
+.co-box{margin:0 12px 10px;padding:12px;border-radius:14px;background:var(--card);border:1px solid var(--line)}
+.co-hd{font-size:15px;font-weight:800;color:var(--ink);margin-bottom:8px}
+.co-sec{font-size:12.5px;font-weight:700;color:var(--sub);margin:12px 2px 6px;letter-spacing:.02em}
+.co-last{padding:10px 12px;border-radius:12px;background:rgba(31,122,109,.1)}
+.co-last .co-sec{margin:0 0 6px}
+.co-last.none{background:var(--bg)}
+.co-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px 12px}
+.co-kv{display:flex;flex-direction:column;gap:1px;min-width:0}
+.co-kv span{font-size:11.5px;color:var(--sub)}
+.co-kv b{font-size:15px;font-weight:700;color:var(--ink);word-break:break-all}
+.co-empty{font-size:14px;color:var(--sub);padding:4px 2px}
+.co-row{display:flex;align-items:center;gap:10px;padding:9px 10px;margin-bottom:6px;border-radius:12px;background:var(--bg)}
+.co-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.co-main b{font-size:14.5px;font-weight:700;color:var(--ink)}
+.co-main small{font-size:12.5px;color:var(--sub);line-height:1.4;word-break:break-all}
+.co-date{font-size:13px;font-weight:800;color:var(--accent);white-space:nowrap}
+.co-code{display:flex;flex-direction:column;align-items:center;border:1px solid var(--accent);background:var(--accent-soft);color:var(--accent);border-radius:10px;padding:5px 10px;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;line-height:1.25}
+.co-code i{font-style:normal;font-size:10.5px;font-weight:600;opacity:.75}
+.co-nocode{font-size:12px;color:var(--sub)}
+.co-edit{border:none;background:none;color:var(--sub);font-size:18px;padding:4px 6px;cursor:pointer}
+.co-more{display:block;width:100%;border:none;background:none;color:var(--accent);font-family:inherit;font-size:13.5px;font-weight:700;padding:6px;cursor:pointer}
+.co-acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.co-btn{min-height:44px;border-radius:12px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);font-family:inherit;font-size:14.5px;font-weight:800;cursor:pointer}
+.co-btn.pri{background:var(--accent);border-color:var(--accent);color:#fff}

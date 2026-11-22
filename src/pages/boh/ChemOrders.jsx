@@ -61,31 +61,54 @@ export default function ChemOrders({ product, edit }) {
   }
   const shown = all ? ord : ord.slice(0, 5)
 
+  const kv = (k, v) => <div className="co-kv"><span>{k}</span><b>{v || '—'}</b></div>
   return (
-    <div className="bh-batches">
-      <div className="bh-bt">🛒 供應商／落單</div>
-      <div style={{ margin: '4px 0 8px', padding: '9px 12px', borderRadius: 12, background: last ? 'rgba(31,122,109,.1)' : 'rgba(0,0,0,.05)', fontSize: 14, lineHeight: 1.6 }}>
-        <span style={{ fontSize: 12, color: 'var(--sub)', display: 'block' }}>上次落單</span>
-        <b>{lastTxt || '未有落單紀錄'}</b>
+    <div className="co-box">
+      <div className="co-hd">🛒 供應商／落單</div>
+      <div className={'co-last' + (last ? '' : ' none')}>
+        <div className="co-sec">上次落單</div>
+        {last ? (
+          <div className="co-grid">
+            {kv('日期', dTxt(last.order_date))}
+            {kv('數量', last.qty != null ? money(last.qty) + (last.unit ? ' ' + last.unit : '') : '')}
+            {kv('供應商', last.supplier || '未記供應商')}
+            {kv('Item code', last.item_code)}
+            {last.po_no ? kv('PO', last.po_no) : null}
+          </div>
+        ) : <div className="co-empty">未有落單紀錄</div>}
       </div>
-      {sup.length > 0 && <div style={{ fontSize: 12, color: 'var(--sub)', margin: '6px 0 2px' }}>供應商／item code</div>}
+
+      <div className="co-sec">供應商／item code</div>
+      {sup.length === 0 && <div className="co-empty">未有供應商</div>}
       {sup.map(s => (
-        <div key={s.id} className="bh-b" style={{ alignItems: 'flex-start' }}>
-          <span style={{ flex: 1, lineHeight: 1.5 }}><b>{s.supplier}</b>{s.unit ? ` · ${s.unit}` : ''}{s.price != null ? ` · HKD ${money(s.price)}` : ''}{s.notes ? <><br /><small style={{ color: 'var(--sub)' }}>{s.notes}</small></> : null}</span>
-          {s.item_code ? <button className="linky" onClick={() => copy(s.item_code)} title="複製 item code">{s.item_code} ⧉</button> : <span style={{ color: 'var(--sub)', fontSize: 12 }}>未填 code</span>}
-          {edit && <button className="linky" onClick={() => setFs({ ...s, price: s.price ?? '' })}>✎</button>}
+        <div key={s.id} className="co-row">
+          <div className="co-main">
+            <b>{s.supplier}</b>
+            <small>{[s.unit, s.price != null ? 'HKD ' + money(s.price) : '', s.notes].filter(Boolean).join(' · ') || ' '}</small>
+          </div>
+          {s.item_code ? <button className="co-code" onClick={() => copy(s.item_code)} title="撳一下複製">{s.item_code}<i>複製</i></button> : <span className="co-nocode">未填 code</span>}
+          {edit && <button className="co-edit" onClick={() => setFs({ ...s, price: s.price ?? '' })} aria-label="修改">✎</button>}
         </div>
       ))}
-      {edit && <button className="btn ghost" style={{ marginTop: 6 }} onClick={() => setFs({ id: null, supplier: '', item_code: '', unit: '', price: '', notes: '' })}>＋ 加供應商／item code</button>}
-      {ord.length > 0 && <div style={{ fontSize: 12, color: 'var(--sub)', margin: '10px 0 2px' }}>落單紀錄（{ord.length}）</div>}
+
+      {ord.length > 0 && <div className="co-sec">落單紀錄（{ord.length}）</div>}
       {shown.map(o => (
-        <div key={o.id} className="bh-b" style={{ alignItems: 'flex-start' }}>
-          <span style={{ flex: 1, lineHeight: 1.5, fontSize: 13.5 }}><b>{dTxt(o.order_date)}</b> · {o.qty != null ? money(o.qty) + (o.unit ? ' ' + o.unit : '') : '—'} · {o.supplier || '未記供應商'}{o.item_code ? ' · ' + o.item_code : ''}{o.po_no ? ' · ' + o.po_no : ''}{o.price != null ? ` · HKD ${money(o.price)}` : ''}{o.notes ? <><br /><small style={{ color: 'var(--sub)' }}>{o.notes}</small></> : null}</span>
-          {edit && <button className="linky" onClick={() => setFo({ ...o, qty: o.qty ?? '', price: o.price ?? '' })}>✎</button>}
+        <div key={o.id} className="co-row">
+          <div className="co-date">{dTxt(o.order_date)}</div>
+          <div className="co-main">
+            <b>{o.qty != null ? money(o.qty) + (o.unit ? ' ' + o.unit : '') : '—'} · {o.supplier || '未記供應商'}</b>
+            <small>{[o.item_code, o.po_no, o.price != null ? 'HKD ' + money(o.price) : '', o.notes].filter(Boolean).join(' · ') || ' '}</small>
+          </div>
+          {edit && <button className="co-edit" onClick={() => setFo({ ...o, qty: o.qty ?? '', price: o.price ?? '' })} aria-label="修改">✎</button>}
         </div>
       ))}
-      {ord.length > 5 && <button className="linky" onClick={() => setAll(!all)}>{all ? '收起' : `睇晒全部 ${ord.length} 條`}</button>}
-      {edit && <button className="btn ghost" style={{ marginTop: 6 }} onClick={newOrd}>＋ 記錄落單</button>}
+      {ord.length > 5 && <button className="co-more" onClick={() => setAll(!all)}>{all ? '收起' : `睇晒全部 ${ord.length} 條`}</button>}
+      {edit && (
+        <div className="co-acts">
+          <button className="co-btn" onClick={() => setFs({ id: null, supplier: '', item_code: '', unit: '', price: '', notes: '' })}>＋ 供應商／code</button>
+          <button className="co-btn pri" onClick={newOrd}>＋ 記錄落單</button>
+        </div>
+      )}
 
       {fs && (
         <div className="modal" style={{ zIndex: 60 }} onClick={e => { if (e.target === e.currentTarget) setFs(null) }}>
