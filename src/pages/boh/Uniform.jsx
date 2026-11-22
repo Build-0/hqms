@@ -19,6 +19,8 @@ const baseTxt = i => (i.base_floor ? `基數 一層 ${i.base_floor.toLocaleStrin
 // 三間酒店（品牌分區）：H1 Lisboeta 4–10 樓、H2 歐舒丹 11–12 樓、H3 Line Friends 3 樓
 const HOTELS = [['H1', 'Lisboeta'], ['H2', '歐舒丹'], ['H3', 'Line Friends']]
 const HOTEL_FLOORS = { H1: [4, 10], H2: [11, 12], H3: [3, 3] }
+// 卡片顯示用：名稱去掉 (H1)／(H1/2) 標記，改用右上角膠囊
+const bareName = n => String(n || '').replace(/s*[（(]s*H[123](?:s*[/／]s*[123])?s*[)）]/g, '').trim()
 // 款式屬於邊間酒店：名稱有 (H1)／(H1/2)／H3 等就按名稱；冇就按適用樓層；兩樣都冇 = 三間共用
 function hotelsOf(i) {
   const out = new Set()
@@ -146,8 +148,8 @@ export default function Uniform({ edit, init }) {
           <div className="pa-grid pa-grid-an">
             {g.items.map(i => (
               <div className="pa-sq pa-an" key={i.id} role="button" tabIndex={0} onClick={() => edit ? setSheet({ ...i, attachments: i.attachments || [] }) : setView(i)}>
-                <span className="pa-sq-top"><em>{i.location || '未設位置'}</em>{low(i) && <small className="pa-flag">存量低</small>}</span>
-                <b className="pa-sq-name">{i.name || '（未命名）'}{i.size ? <small style={{ display: 'block', fontSize: '.62em', fontWeight: 500, opacity: .65, marginTop: 2 }}>{i.size}</small> : null}</b>
+                <span className="pa-sq-top"><em>{i.location || '未設位置'}</em>{low(i) && <small className="pa-flag">存量低</small>}{cat === '布草' && hotelsOf(i).length < 3 && <small className="pa-hotel">{hotelsOf(i).join('/')}</small>}</span>
+                <b className="pa-sq-name">{(cat === '布草' ? bareName(i.name) : i.name) || '（未命名）'}{i.size ? <small style={{ display: 'block', fontSize: '.62em', fontWeight: 500, opacity: .65, marginTop: 2 }}>{i.size}</small> : null}</b>
                 <span className="pa-sq-post">
                   <span className={'st-qty' + (low(i) ? ' low' : '')}>{i.qty}<small> 件{i.min_qty ? ` ／ 最低 ${i.min_qty}` : ''}</small></span>
                   {i.base_floor ? <span className="pa-sq-area">{baseTxt(i)}</span> : null}
