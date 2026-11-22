@@ -256,7 +256,7 @@ export function scopeOf(i) {
 }
 export function LinenBase({ items, edit, onSaved }) {
   const [sh, setSh] = useState(null)   // { id, name, base_floor, isNew }
-  const tiles = [['總房數', '820 間', ''], ['樓層', FL + ' 層', '每層 82 間'], ['大床房', '26 間', '每層（每間 1 張大床）'], ['小床房', '56 間', '每層（每間 2 張，共 112 張）']]
+  const tiles = [['總房數', '820 間', ''], ['樓層', FL + ' 層', '每層 82 間'], ['大床房', '26 間', '每層（每間 1 張大床）'], ['小床房', '56 間', '每層（每間 2 張，共 112 張）'], ['普通房', '75 間', '每層（毛巾：大中細各 2、地巾 1）'], ['套房', '7 間', '每層（大中細巾各 3、地巾 1）']]
   const list = items.filter(i => i.base_floor)
   const rest = items.filter(i => !i.base_floor)
   return (
