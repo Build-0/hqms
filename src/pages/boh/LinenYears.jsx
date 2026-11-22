@@ -277,16 +277,13 @@ export function LinenBase({ items, edit, onSaved }) {
       </div>
       <div className="bh-grp">每款布草基數<span>{shown.length}{shown.length !== list.length ? ` / ${list.length}` : ''}</span></div>
       <div className="fstk"><input className="search-inp" placeholder="搜尋款式／尺寸" value={q} onChange={e => setQ(e.target.value)} /></div>
-      <div className="chips" style={{ margin: '8px 0 4px' }}>
-        <button className={'chip' + (!fg ? ' on' : '')} onClick={() => setFg('')}>全部分類</button>
-        {grpsL.map(g => <button key={g} className={'chip' + (fg === g ? ' on' : '')} onClick={() => setFg(fg === g ? '' : g)}>{g}</button>)}
-      </div>
-      {scopesL.length > 1 && (
-        <div className="chips" style={{ margin: '0 0 8px' }}>
-          <button className={'chip' + (fs === '' ? ' on' : '')} onClick={() => setFs('')}>全部樓層</button>
-          {scopesL.map(c => { const v = c || '__all'; return <button key={v} className={'chip' + (fs === v ? ' on' : '')} onClick={() => setFs(fs === v ? '' : v)}>{c ? c.replace(/-/g, '–') + ' 樓' : '全部 10 層'}</button> })}
+      <div className="fstk">
+        <div className="df-grid3">
+          <select className="df-sel" value={fg} onChange={e => setFg(e.target.value)}><option value="">分類</option>{grpsL.map(g => <option key={g} value={g}>{g}</option>)}</select>
+          <select className="df-sel" value={fs} onChange={e => setFs(e.target.value)}><option value="">適用樓層</option>{scopesL.map(c => { const v = c || '__all'; return <option key={v} value={v}>{c ? c.replace(/-/g, '–') + ' 樓' : '全部 10 層'}</option> })}</select>
+          <span />
         </div>
-      )}
+      </div>
       <div className="pa-grid pa-grid-an">
         {shown.map(i => (
           <div className="pa-sq pa-an" key={i.id} role="button" tabIndex={0} onClick={() => edit && setSh({ id: i.id, name: '', base_floor: String(i.base_floor), base_scope: i.base_scope || '' })} style={edit ? undefined : { cursor: 'default' }}>

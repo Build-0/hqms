@@ -131,20 +131,12 @@ export default function Uniform({ edit, init }) {
       <div className="fstk">
         <input className="search-inp" placeholder="搜尋品項／分類／位置" value={f.q} onChange={e => setF({ ...f, q: e.target.value })} />
       </div>
-      <div className="chips" style={{ margin: '8px 0 4px' }}>
-        <button className={'chip' + (!f.g ? ' on' : '')} onClick={() => setF({ ...f, g: '' })}>全部項目</button>
-        {grpsF.map(g => <button key={g} className={'chip' + (f.g === g ? ' on' : '')} onClick={() => setF({ ...f, g: f.g === g ? '' : g })}>{g}</button>)}
-      </div>
-      {cat === '布草' && (
-        <div className="chips" style={{ margin: '0 0 4px' }}>
-          <button className={'chip' + (!f.h ? ' on' : '')} onClick={() => setF({ ...f, h: '' })}>三間酒店</button>
-          {HOTELS.map(([h, n]) => <button key={h} className={'chip' + (f.h === h ? ' on' : '')} onClick={() => setF({ ...f, h: f.h === h ? '' : h })}>{h} {n}</button>)}
+      <div className="fstk">
+        <div className="df-grid3">
+          <select className="df-sel" value={f.g || ''} onChange={e => setF({ ...f, g: e.target.value })}><option value="">分類</option>{grpsF.map(g => <option key={g} value={g}>{g}</option>)}</select>
+          {cat === '布草' ? <select className="df-sel" value={f.h || ''} onChange={e => setF({ ...f, h: e.target.value })}><option value="">三間酒店</option>{HOTELS.map(([h, n]) => <option key={h} value={h}>{h} {n}</option>)}</select> : <span />}
+          <select className="df-sel" value={f.zero ? 'zero' : f.low ? 'low' : ''} onChange={e => setF({ ...f, low: e.target.value === 'low', zero: e.target.value === 'zero' })}><option value="">存量</option><option value="low">存量低（{lowN}）</option><option value="zero">零庫存（{zeroN}）</option></select>
         </div>
-      )}
-      <div className="chips" style={{ margin: '0 0 8px' }}>
-        <button className={'chip' + (!f.low && !f.zero ? ' on' : '')} onClick={() => setF({ ...f, low: false, zero: false })}>全部存量</button>
-        <button className={'chip' + (f.low ? ' on' : '')} onClick={() => setF({ ...f, low: !f.low, zero: false })}>存量低（{lowN}）</button>
-        <button className={'chip' + (f.zero ? ' on' : '')} onClick={() => setF({ ...f, zero: !f.zero, low: false })}>零庫存（{zeroN}）</button>
       </div>
       {err && <div className="card" style={{ borderColor: 'var(--red)' }}><p style={{ fontSize: 13, lineHeight: 1.7 }}>讀取失敗：{err}</p></div>}
       {list.length === 0 && !err && <p className="src-note" style={{ margin: '14px 4px' }}>{all.length ? '冇符合嘅品項。' : '暫時未有品項。'}{edit && !all.length ? '撳右下角「＋」新增。' : ''}</p>}
