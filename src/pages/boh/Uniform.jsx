@@ -129,10 +129,7 @@ export default function Uniform({ edit, init }) {
     <>
       <ToolBar label={`${cat} · ${all.length} 款 · 共 ${total} 件`}><ExportBtn onClick={() => setReport(true)} /></ToolBar>
       <div className="fstk">
-        <div className="df-grid3" style={{ gridTemplateColumns: 'minmax(0,2fr) minmax(0,1fr)' }}>
-          <input className="search-inp" placeholder="搜尋品項／分類／位置" value={f.q} onChange={e => setF({ ...f, q: e.target.value })} />
-          <button className={'chip' + (f.low ? ' on' : '')} onClick={() => setF({ ...f, low: !f.low })}>存量低（{lowN}）</button>
-        </div>
+        <input className="search-inp" placeholder="搜尋品項／分類／位置" value={f.q} onChange={e => setF({ ...f, q: e.target.value })} />
       </div>
       <div className="chips" style={{ margin: '8px 0 4px' }}>
         <button className={'chip' + (!f.g ? ' on' : '')} onClick={() => setF({ ...f, g: '' })}>全部項目</button>
