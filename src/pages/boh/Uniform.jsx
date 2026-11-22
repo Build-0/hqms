@@ -16,6 +16,23 @@ const CATS = [['制服', 'shirt', '#8f7ac9'], ['布草', 'bed', '#3a8fb5'], ['�
 // 酒店房間基數：820 間房、10 層、每層 82 間（大床 26 + 小床 56，小床房每間兩張）
 const FLOORS = 10
 const baseTxt = i => (i.base_floor ? `基數 一層 ${i.base_floor.toLocaleString()} ／ ${scopeOf(i).txt} ${(i.base_floor * scopeOf(i).n).toLocaleString()}` : '')
+// 三間酒店（品牌分區）：H1 Lisboeta 4–10 樓、H2 歐舒丹 11–12 樓、H3 Line Friends 3 樓
+const HOTELS = [['H1', 'Lisboeta'], ['H2', '歐舒丹'], ['H3', 'Line Friends']]
+const HOTEL_FLOORS = { H1: [4, 10], H2: [11, 12], H3: [3, 3] }
+// 款式屬於邊間酒店：名稱有 (H1)／(H1/2)／H3 等就按名稱；冇就按適用樓層；兩樣都冇 = 三間共用
+function hotelsOf(i) {
+  const out = new Set()
+  String((i && i.name) || '').replace(/H([123])(?:\/([123]))?/g, (_, a, b) => { out.add('H' + a); if (b) out.add('H' + b) })
+  if (out.size) return [...out]
+  const sc = String((i && i.base_scope) || '').replace(/[樓F層\s]/g, '').replace(/[–—~至到]/g, '-')
+  if (sc) {
+    const fl = new Set()
+    sc.split(/[,，、]/).forEach(p => { const m = p.match(/^(\d+)(?:-(\d+))?$/); if (m) for (let x = Number(m[1]); x <= Number(m[2] || m[1]); x++) fl.add(x) })
+    HOTELS.forEach(([h]) => { const [a, b] = HOTEL_FLOORS[h]; for (let x = a; x <= b; x++) if (fl.has(x)) { out.add(h); break } })
+    if (out.size) return [...out]
+  }
+  return HOTELS.map(h => h[0])
+}
 const GRP_HINT = { 制服: ['上衣', '褲／裙', '外套', '其他'], 布草: ['床上用品', '浴室布草', '布草袋', '顧客要求', '其他'], 物資: ['布草車／大桶', '熨斗／熨燙', '架／推車', '其他'] }
 
 export default function Uniform({ edit, init }) {
@@ -66,9 +83,11 @@ export default function Uniform({ edit, init }) {
   if (cat === '布草' && typeof sub === 'number') return <LinenYear year={sub} items={ofCat('布草')} yrs={yrs} edit={edit} ys={ys} setYs={setYs} reload={loadYrs} />
 
   const all = ofCat(cat)
-  const list = all.filter(i => (!f.low || low(i)) && (!f.q.trim() || (nm(i) + (i.location || '') + (i.grp || '')).toLowerCase().includes(f.q.trim().toLowerCase())))
+  const list = all.filter(i => (!f.low || low(i)) && (!f.zero || !(Number(i.qty) > 0)) && (!f.g || (i.grp || '其他') === f.g) && (!f.h || hotelsOf(i).includes(f.h)) && (!f.q.trim() || (nm(i) + (i.location || '') + (i.grp || '')).toLowerCase().includes(f.q.trim().toLowerCase())))
   const total = all.reduce((a, i) => a + (Number(i.qty) || 0), 0)
   const lowN = all.filter(low).length
+  const zeroN = all.filter(i => !(Number(i.qty) > 0)).length
+  const grpsF = [...new Set(all.map(i => i.grp || '其他'))]
   const groups = []
   list.forEach(i => { const g = i.grp || '未分類'; const x = groups.find(y => y.g === g); if (x) x.items.push(i); else groups.push({ g, items: [i] }) })
   const hasGroups = groups.some(g => g.g !== '未分類')
@@ -113,6 +132,21 @@ export default function Uniform({ edit, init }) {
           <input className="search-inp" placeholder="搜尋品項／分類／位置" value={f.q} onChange={e => setF({ ...f, q: e.target.value })} />
           <button className={'chip' + (f.low ? ' on' : '')} onClick={() => setF({ ...f, low: !f.low })}>存量低（{lowN}）</button>
         </div>
+      </div>
+      <div className="chips" style={{ margin: '8px 0 4px' }}>
+        <button className={'chip' + (!f.g ? ' on' : '')} onClick={() => setF({ ...f, g: '' })}>全部項目</button>
+        {grpsF.map(g => <button key={g} className={'chip' + (f.g === g ? ' on' : '')} onClick={() => setF({ ...f, g: f.g === g ? '' : g })}>{g}</button>)}
+      </div>
+      {cat === '布草' && (
+        <div className="chips" style={{ margin: '0 0 4px' }}>
+          <button className={'chip' + (!f.h ? ' on' : '')} onClick={() => setF({ ...f, h: '' })}>三間酒店</button>
+          {HOTELS.map(([h, n]) => <button key={h} className={'chip' + (f.h === h ? ' on' : '')} onClick={() => setF({ ...f, h: f.h === h ? '' : h })}>{h} {n}</button>)}
+        </div>
+      )}
+      <div className="chips" style={{ margin: '0 0 8px' }}>
+        <button className={'chip' + (!f.low && !f.zero ? ' on' : '')} onClick={() => setF({ ...f, low: false, zero: false })}>全部存量</button>
+        <button className={'chip' + (f.low ? ' on' : '')} onClick={() => setF({ ...f, low: !f.low, zero: false })}>存量低（{lowN}）</button>
+        <button className={'chip' + (f.zero ? ' on' : '')} onClick={() => setF({ ...f, zero: !f.zero, low: false })}>零庫存（{zeroN}）</button>
       </div>
       {err && <div className="card" style={{ borderColor: 'var(--red)' }}><p style={{ fontSize: 13, lineHeight: 1.7 }}>讀取失敗：{err}</p></div>}
       {list.length === 0 && !err && <p className="src-note" style={{ margin: '14px 4px' }}>{all.length ? '冇符合嘅品項。' : '暫時未有品項。'}{edit && !all.length ? '撳右下角「＋」新增。' : ''}</p>}
