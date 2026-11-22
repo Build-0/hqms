@@ -1736,7 +1736,9 @@ html.rpt-open #root{visibility:hidden}
 .df-wide .pa-grid,.df-wide .pa-grid.pa-grid-an,.df-wrap.df-wide .pa-wrap .pa-grid.pa-grid-an{display:grid !important;grid-template-columns:repeat(auto-fill,minmax(250px,1fr)) !important;gap:14px !important;max-width:none !important;margin-left:0 !important;margin-right:0 !important}
 .df-wide .pa-grid > *{width:auto !important;min-width:0}
 .df-wide .home-grid.home-grid,.df-wide .home-grid.sub-grid{max-width:none !important}
-.df-wide .sq-grid,.df-wide .sq-grid.sq-eq{max-width:none !important}
+.df-wide .sq-grid,.df-wide .sq-grid.sq-eq{display:grid !important;grid-template-columns:repeat(auto-fill,minmax(150px,1fr)) !important;gap:12px !important;max-width:none !important;margin-left:0 !important;margin-right:0 !important}
+.df-wide .sq-grid > *{width:auto !important;min-width:0}
+.df-wide .sq-card{aspect-ratio:auto !important;min-height:150px;padding:10px 8px}
 .df-wide .lin-sum{grid-template-columns:repeat(auto-fill,minmax(240px,1fr)) !important;max-width:none !important;margin-left:0 !important;margin-right:0 !important}
 .df-wide .home-grid.lin-grid{grid-template-columns:repeat(auto-fill,minmax(240px,1fr)) !important;max-width:none !important;margin:0 !important}
 .df-wide .df-grid{grid-template-columns:repeat(6,1fr)}
