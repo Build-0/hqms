@@ -66,6 +66,7 @@ function useYearMeta() {
 
 // 入貨紀錄：每個年份一張卡
 export function LinenRec({ yrs, edit, onPick, onAdd }) {
+  const [metas] = useYearMeta()
   const years = [...new Set(yrs.map(r => r.year))].sort((a, b) => b - a)
   const stat = y => {
     const rs = yrs.filter(r => r.year === y)
