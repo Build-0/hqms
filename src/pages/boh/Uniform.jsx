@@ -133,8 +133,8 @@ export default function Uniform({ edit, init }) {
       </div>
       <div className="fstk">
         <div className="df-grid3">
+          {cat === '布草' ? <select className="df-sel" value={f.h || ''} onChange={e => setF({ ...f, h: e.target.value })}><option value="">三間酒店</option>{HOTELS.map(([h, n]) => <option key={h} value={h}>{h} {n}</option>)}</select> : null}
           <select className="df-sel" value={f.g || ''} onChange={e => setF({ ...f, g: e.target.value })}><option value="">分類</option>{grpsF.map(g => <option key={g} value={g}>{g}</option>)}</select>
-          {cat === '布草' ? <select className="df-sel" value={f.h || ''} onChange={e => setF({ ...f, h: e.target.value })}><option value="">三間酒店</option>{HOTELS.map(([h, n]) => <option key={h} value={h}>{h} {n}</option>)}</select> : <span />}
           <select className="df-sel" value={f.zero ? 'zero' : f.low ? 'low' : ''} onChange={e => setF({ ...f, low: e.target.value === 'low', zero: e.target.value === 'zero' })}><option value="">存量</option><option value="low">存量低（{lowN}）</option><option value="zero">零庫存（{zeroN}）</option></select>
         </div>
       </div>
