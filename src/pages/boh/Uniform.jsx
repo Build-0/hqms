@@ -33,7 +33,7 @@ function hotelsOf(i) {
   }
   return HOTELS.map(h => h[0])
 }
-const GRP_HINT = { 制服: ['上衣', '褲／裙', '外套', '其他'], 布草: ['床上用品', '浴室布草', '布草袋', '顧客要求', '其他'], 物資: ['布草車／大桶', '熨斗／熨燙', '架／推車', '其他'] }
+const GRP_HINT = { 制服: ['上衣', '褲／裙', '外套', '其他'], 布草: ['床上用品', '浴室布草', '布草袋', '客人要求物品', '其他'], 物資: ['布草車／大桶', '熨斗／熨燙', '架／推車', '其他'] }
 
 export default function Uniform({ edit, init }) {
   const [items, setItems] = useState(null)
