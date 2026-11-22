@@ -262,7 +262,9 @@ export function LinenBase({ items, edit, onSaved }) {
   const [q, setQ] = useState('')
   const [fg, setFg] = useState('')    // 分類篩選
   const [fs, setFs] = useState('')    // 適用樓層篩選
-  const grpsL = [...new Set(list.map(i => i.grp || '其他'))]
+  const LG = ['床上用品', '浴室布草', '布草袋', '顧客要求', '其他']
+  const lgRank = g => { const k = LG.indexOf(g); return k < 0 ? LG.indexOf('其他') - 0.5 : k }
+  const grpsL = [...new Set(list.map(i => i.grp || '其他'))].sort((a, b) => lgRank(a) - lgRank(b))
   const scopesL = [...new Set(list.map(i => i.base_scope || ''))]
   const k = q.trim().toLowerCase()
   const shown = list.filter(i => (!fg || (i.grp || '其他') === fg) && (fs === '' || (i.base_scope || '') === (fs === '__all' ? '' : fs)) && (!k || ((i.name || '') + (i.size || '')).toLowerCase().includes(k)))

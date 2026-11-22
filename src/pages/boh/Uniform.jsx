@@ -87,7 +87,8 @@ export default function Uniform({ edit, init }) {
   const total = all.reduce((a, i) => a + (Number(i.qty) || 0), 0)
   const lowN = all.filter(low).length
   const zeroN = all.filter(i => !(Number(i.qty) > 0)).length
-  const grpsF = [...new Set(all.map(i => i.grp || '其他'))]
+  const grpRank = g => { const h = GRP_HINT[cat] || []; const k = h.indexOf(g); return k < 0 ? h.indexOf('其他') - 0.5 : k }   // 按預設次序：…浴室布草、…其他 排最後
+  const grpsF = [...new Set(all.map(i => i.grp || '其他'))].sort((a, b) => grpRank(a) - grpRank(b))
   const groups = []
   list.forEach(i => { const g = i.grp || '未分類'; const x = groups.find(y => y.g === g); if (x) x.items.push(i); else groups.push({ g, items: [i] }) })
   const hasGroups = groups.some(g => g.g !== '未分類')
