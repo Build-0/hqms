@@ -1,0 +1,2 @@
+-- 清潔劑：供應商＋item code（product_suppliers）、落單紀錄（product_orders）
+-- 見 Supabase migration: product_suppliers_orders；權限跟 boh 逐項權限（冇設定時 管理員／倉管員／開發者可編輯）

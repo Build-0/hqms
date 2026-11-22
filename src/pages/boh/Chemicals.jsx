@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import * as api from '../../lib/api'
 import { toast } from '../../lib/toast'
 import Confirm from '../../components/Confirm'
+import ChemOrders from './ChemOrders'
 import { Thumb, ImageField, useImages, setCachedImage, num, today, daysUntil } from './shared'
 
 const EMPTY = { category_id: '', name_zh: '', name_en: '', applicable_zh: '', dilution_zh: '', rinse: 'no', min_stock: 0, status: '啟用', image: '' }
@@ -179,6 +180,7 @@ export default function Chemicals({ d, edit, reload, init, reg }) {
                             })}
                           </div>
                         )}
+                        <ChemOrders product={p} edit={edit} />
                         {edit && (
                           <div className="bh-acts">
                             <button className="btn ghost" onClick={() => setRecv({ p, qty: '', expiry: '', date: today(), note: '' })}>＋ 進貨</button>
