@@ -259,15 +259,33 @@ export function LinenBase({ items, edit, onSaved }) {
   const tiles = [['總房數', '820 間', ''], ['樓層', FL + ' 層', '每層 82 間'], ['大床房', '26 間', '每層（每間 1 張大床）'], ['小床房', '56 間', '每層（每間 2 張，共 112 張）'], ['普通房', '75 間', '每層（毛巾：大中細各 2、地巾 1）'], ['套房', '7 間', '每層（大中細巾各 3、地巾 1）']]
   const list = items.filter(i => i.base_floor)
   const rest = items.filter(i => !i.base_floor)
+  const [q, setQ] = useState('')
+  const [fg, setFg] = useState('')    // 分類篩選
+  const [fs, setFs] = useState('')    // 適用樓層篩選
+  const grpsL = [...new Set(list.map(i => i.grp || '其他'))]
+  const scopesL = [...new Set(list.map(i => i.base_scope || ''))]
+  const k = q.trim().toLowerCase()
+  const shown = list.filter(i => (!fg || (i.grp || '其他') === fg) && (fs === '' || (i.base_scope || '') === (fs === '__all' ? '' : fs)) && (!k || ((i.name || '') + (i.size || '')).toLowerCase().includes(k)))
   return (
     <>
       <ToolBar label="客房基數" />
       <div className="lin-sum" style={{ gridTemplateColumns: 'repeat(2,minmax(0,1fr))' }}>
         {tiles.map(([t, v, sub]) => <div className="lin-sum-t" key={t}><span>{t}</span><b>{v}</b>{sub ? <small>{sub}</small> : null}</div>)}
       </div>
-      <div className="bh-grp">每款布草基數<span>{list.length}</span></div>
+      <div className="bh-grp">每款布草基數<span>{shown.length}{shown.length !== list.length ? ` / ${list.length}` : ''}</span></div>
+      <div className="fstk"><input className="search-inp" placeholder="搜尋款式／尺寸" value={q} onChange={e => setQ(e.target.value)} /></div>
+      <div className="chips" style={{ margin: '8px 0 4px' }}>
+        <button className={'chip' + (!fg ? ' on' : '')} onClick={() => setFg('')}>全部分類</button>
+        {grpsL.map(g => <button key={g} className={'chip' + (fg === g ? ' on' : '')} onClick={() => setFg(fg === g ? '' : g)}>{g}</button>)}
+      </div>
+      {scopesL.length > 1 && (
+        <div className="chips" style={{ margin: '0 0 8px' }}>
+          <button className={'chip' + (fs === '' ? ' on' : '')} onClick={() => setFs('')}>全部樓層</button>
+          {scopesL.map(c => { const v = c || '__all'; return <button key={v} className={'chip' + (fs === v ? ' on' : '')} onClick={() => setFs(fs === v ? '' : v)}>{c ? c.replace(/-/g, '–') + ' 樓' : '全部 10 層'}</button> })}
+        </div>
+      )}
       <div className="pa-grid pa-grid-an">
-        {list.map(i => (
+        {shown.map(i => (
           <div className="pa-sq pa-an" key={i.id} role="button" tabIndex={0} onClick={() => edit && setSh({ id: i.id, name: '', base_floor: String(i.base_floor), base_scope: i.base_scope || '' })} style={edit ? undefined : { cursor: 'default' }}>
             <span className="pa-sq-top"><span className="lin-sup">基數</span></span>
             <b className="pa-sq-name"><NameSz i={i} /></b>
