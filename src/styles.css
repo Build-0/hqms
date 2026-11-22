@@ -1729,3 +1729,11 @@ html.rpt-open #root{visibility:hidden}
 .pa-av{object-position:center 8%}
 
 .rpt-th{object-position:center 8%}
+
+/* 電腦版寬屏：後勤／制服布草善用左右空位（只影響有 df-wide 嘅頁面） */
+@media (min-width:1200px){
+.df-wrap.df-wide{max-width:min(1480px,96vw)}
+.df-wide .pa-grid,.df-wide .pa-grid.pa-grid-an{grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.df-wide .lin-sum{grid-template-columns:repeat(6,minmax(0,1fr)) !important}
+.df-wide .df-grid{grid-template-columns:repeat(6,1fr)}
+}

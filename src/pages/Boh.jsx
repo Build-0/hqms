@@ -74,7 +74,7 @@ export default function Boh({ session, init }) {
 
 
   return (
-    <div className="df-wrap">
+    <div className="df-wrap df-wide">
       {err && <div className="card" style={{ borderColor: 'var(--red)' }}><p style={{ fontSize: 13, lineHeight: 1.7 }}>讀取失敗：{err}</p></div>}
       {!tab && (
         <Ordered okey="boh" idOf={x => x[0]} labelOf={x => x[1]} items={TABS.filter(x => (x[0] !== 'wo' || woLevel !== 'none') && (x[0] !== 'rs' || rsLevel !== 'none') && (x[0] !== 'dq' || dqLevel !== 'none'))}>{list => (
