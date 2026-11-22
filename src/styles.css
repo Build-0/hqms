@@ -1733,7 +1733,10 @@ html.rpt-open #root{visibility:hidden}
 /* 電腦版寬屏：後勤／制服布草善用左右空位（只影響有 df-wide 嘅頁面） */
 @media (min-width:1200px){
 .df-wrap.df-wide{max-width:min(1480px,96vw)}
-.df-wide .pa-grid,.df-wide .pa-grid.pa-grid-an{grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.df-wide .pa-grid,.df-wide .pa-grid.pa-grid-an,.df-wrap.df-wide .pa-wrap .pa-grid.pa-grid-an{display:grid !important;grid-template-columns:repeat(auto-fill,minmax(250px,1fr)) !important;gap:14px !important;max-width:none !important;margin-left:0 !important;margin-right:0 !important}
+.df-wide .pa-grid > *{width:auto !important;min-width:0}
+.df-wide .home-grid.home-grid,.df-wide .home-grid.sub-grid{max-width:none !important}
+.df-wide .sq-grid,.df-wide .sq-grid.sq-eq{max-width:none !important}
 .df-wide .lin-sum{grid-template-columns:repeat(6,minmax(0,1fr)) !important}
 .df-wide .df-grid{grid-template-columns:repeat(6,1fr)}
 }
