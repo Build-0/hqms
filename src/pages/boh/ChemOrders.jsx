@@ -40,7 +40,7 @@ export default function ChemOrders({ product, edit }) {
   }
   async function saveOrd() {
     if (!fo.order_date) return toast('請填落單日期')
-    const row = { product_id: pid, order_date: fo.order_date, qty: fo.qty === '' ? null : Number(fo.qty), unit: fo.unit.trim(), supplier: fo.supplier.trim(), item_code: fo.item_code.trim(), po_no: fo.po_no.trim(), price: fo.price === '' ? null : Number(fo.price), notes: fo.notes.trim() }
+    const row = { product_id: pid, order_date: fo.order_date, qty: fo.qty === '' ? null : Number(fo.qty), unit: fo.unit.trim(), supplier: fo.supplier.trim(), item_code: fo.item_code.trim(), po_no: fo.po_no.trim(), delivery_date: fo.delivery_date || null, description: fo.description.trim(), price: fo.price === '' ? null : Number(fo.price), notes: fo.notes.trim() }
     if ((row.qty != null && Number.isNaN(row.qty)) || (row.price != null && Number.isNaN(row.price))) return toast('數量同單價要係數字')
     try {
       if (fo.id) await api.dbUpdate('product_orders', fo.id, row); else await api.dbInsert('product_orders', row)
@@ -53,7 +53,7 @@ export default function ChemOrders({ product, edit }) {
   }
   const newOrd = () => {
     const s = last && sup.find(x => x.supplier === last.supplier) || sup[0]
-    setFo({ id: null, order_date: today(), qty: '', unit: s?.unit || last?.unit || '', supplier: s?.supplier || last?.supplier || '', item_code: s?.item_code || last?.item_code || '', po_no: '', price: s?.price ?? '', notes: '' })
+    setFo({ id: null, order_date: today(), qty: '', unit: s?.unit || last?.unit || '', supplier: s?.supplier || last?.supplier || '', item_code: s?.item_code || last?.item_code || '', po_no: '', delivery_date: '', description: '', price: s?.price ?? '', notes: '' })
   }
   const pickSup = name => {
     const s = sup.find(x => x.supplier === name)
@@ -74,6 +74,8 @@ export default function ChemOrders({ product, edit }) {
             {kv('供應商', last.supplier || '未記供應商')}
             {kv('Item code', last.item_code)}
             {last.po_no ? kv('PO', last.po_no) : null}
+            {last.delivery_date ? kv('返貨日期', dTxt(last.delivery_date)) : null}
+            {last.description ? kv('描述', last.description) : null}
           </div>
         ) : <div className="co-empty">未有落單紀錄</div>}
       </div>
@@ -97,9 +99,9 @@ export default function ChemOrders({ product, edit }) {
           <div className="co-date">{dTxt(o.order_date)}</div>
           <div className="co-main">
             <b>{o.qty != null ? money(o.qty) + (o.unit ? ' ' + o.unit : '') : '—'} · {o.supplier || '未記供應商'}</b>
-            <small>{[o.item_code, o.po_no, o.price != null ? 'HKD ' + money(o.price) : '', o.notes].filter(Boolean).join(' · ') || ' '}</small>
+            <small>{[o.item_code, o.po_no, o.delivery_date ? '返貨 ' + dTxt(o.delivery_date) : '', o.description, o.price != null ? 'HKD ' + money(o.price) : '', o.notes].filter(Boolean).join(' · ') || ' '}</small>
           </div>
-          {edit && <button className="co-edit" onClick={() => setFo({ ...o, qty: o.qty ?? '', price: o.price ?? '' })} aria-label="修改">✎</button>}
+          {edit && <button className="co-edit" onClick={() => setFo({ ...o, qty: o.qty ?? '', price: o.price ?? '', delivery_date: o.delivery_date || '', description: o.description || '' })} aria-label="修改">✎</button>}
         </div>
       ))}
       {ord.length > 5 && <button className="co-more" onClick={() => setAll(!all)}>{all ? '收起' : `睇晒全部 ${ord.length} 條`}</button>}
@@ -146,6 +148,8 @@ export default function ChemOrders({ product, edit }) {
               <div className="f-row"><label>PO 編號</label><input value={fo.po_no} onChange={e => setFo({ ...fo, po_no: e.target.value })} placeholder="例：PO25012997" /></div>
               <div className="f-row"><label>單價（HKD）</label><input inputMode="decimal" value={fo.price} onChange={e => setFo({ ...fo, price: e.target.value })} /></div>
             </div>
+            <div className="f-row"><label>返貨日期</label><input type="date" value={fo.delivery_date} onChange={e => setFo({ ...fo, delivery_date: e.target.value })} /></div>
+            <div className="f-row"><label>描述</label><input value={fo.description} onChange={e => setFo({ ...fo, description: e.target.value })} placeholder="貨品描述" /></div>
             <div className="f-row"><label>備註</label><input value={fo.notes} onChange={e => setFo({ ...fo, notes: e.target.value })} /></div>
             <button className="btn" onClick={saveOrd}>儲存</button>
             {fo.id && <button className="btn danger sm-quiet" onClick={delOrd}>刪除呢條紀錄</button>}
