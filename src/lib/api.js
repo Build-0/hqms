@@ -520,7 +520,7 @@ export async function myStaff() {
 }
 export async function listStaffPerms() {
   needDb()
-  const { data, error } = await sb.from('staff').select('emp_id,name,role,pub_sup,is_dev').order('emp_id')
+  const { data, error } = await sb.from('staff').select('emp_id,name,role,pub_sup,is_dev').eq('disabled', false).order('emp_id')
   throwIf(error)
   return data
 }
