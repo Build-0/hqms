@@ -4,15 +4,12 @@ import { toast } from '../../lib/toast'
 import Confirm from '../../components/Confirm'
 import { Thumb, ImageField, useImages, setCachedImage, ListManager, today } from './shared'
 
-// 維修記錄篩選：值＝向前推幾個月（0＝唔限時間）
-const REPAIR_OPTS = [['1', '近 1 個月有維修', 1], ['3', '近 3 個月有維修', 3], ['all', '有維修記錄（全部）', 0]]
-const monthsAgo = n => { const d = new Date(); d.setMonth(d.getMonth() - n); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` }
 const natural = (a, b) => String(a || '').localeCompare(String(b || ''), 'zh-Hant', { numeric: true })
 const STATUS_CLS = { 正常: 'b-teal', 維修中: 'b-amber', 報廢: 'b-gray', 遺失: 'b-red' }
 const numOf = l => (String(l || '').match(/(\d+)\s*$/) || [])[1]
 
 // 吸塵機與設備共用：每台獨立、可記保養記錄
-export default function Machines({ kind, d, edit, reload, reg }) {
+export default function Machines({ kind, d, edit, reload, reg, onExport }) {
   const isVac = kind === 'vacuum'
   const C = isVac
     ? { table: 'vacuums', mtable: 'vacuum_maintenance', fk: 'vacuum_id', items: d.vacuums, maint: d.vacMaint, statuses: ['正常', '維修中', '報廢'], icon: '🌀', name: '吸塵機', groupOf: v => v.floor_code || '（未填位置）' }
@@ -26,24 +23,22 @@ export default function Machines({ kind, d, edit, reload, reg }) {
   const [del, setDel] = useState(null)
   const [mgr, setMgr] = useState(false)
   const [m, setM] = useState({ date: today(), text: '', kind: 'repair' })
-  const [rp, setRp] = useState('')       // 維修記錄篩選（只限吸塵機）
+  const [rp, setRp] = useState(false)    // 只睇有維修記錄嘅機（只限吸塵機）
   const img = useImages(C.table, C.items.map(x => x.id))
 
   const title = x => (isVac ? x.label || x.model || `#${x.id}` : `${x.type || ''} ${numOf(x.label) || x.label || ''}`.trim())
   const sub = x => (isVac ? [x.model, x.brand].filter(Boolean).join(' · ') : [x.label, x.model, x.brand].filter(Boolean).join(' · '))
 
-  // 每部機喺所揀時段內嘅維修記錄（新到舊）；調動記錄唔計
+  // 每部機嘅維修記錄（新到舊）；調動記錄唔計
   const repairs = useMemo(() => {
-    const opt = REPAIR_OPTS.find(o => o[0] === rp)
-    const from = opt && opt[2] ? monthsAgo(opt[2]) : ''
     const map = new Map()
     if (isVac) for (const x of [...C.maint].sort((a, b) => String(b.service_date).localeCompare(String(a.service_date)))) {
-      if (x.kind === 'move' || (from && String(x.service_date) < from)) continue
+      if (x.kind === 'move') continue
       if (!map.has(x[C.fk])) map.set(x[C.fk], [])
       map.get(x[C.fk]).push(x)
     }
     return map
-  }, [C.maint, rp])
+  }, [C.maint])
   const lastRep = x => repairs.get(x.id)?.[0]
 
   const shown = useMemo(() => C.items.filter(x => {
@@ -57,7 +52,7 @@ export default function Machines({ kind, d, edit, reload, reg }) {
   const groupNames = isVac ? d.floors.map(f => f.name) : d.types.map(t => t.name)
   const present = [...new Set(C.items.map(C.groupOf))].sort(natural)
   const allGroups = [...groupNames.filter(g => present.includes(g)), ...present.filter(g => !groupNames.includes(g))]
-  const groups = rp ? (shown.length ? [{ g: REPAIR_OPTS.find(o => o[0] === rp)[1] + '（最近維修排先）', items: shown }] : [])
+  const groups = rp ? (shown.length ? [{ g: '有維修記錄（最近維修排先）', items: shown }] : [])
     : allGroups.map(g => ({ g, items: shown.filter(x => C.groupOf(x) === g) })).filter(x => x.items.length)
   const countBy = s => C.items.filter(x => x.status === s).length
   const mOf = id => C.maint.filter(r => r[C.fk] === id).sort((a, b) => String(b.service_date).localeCompare(String(a.service_date)))
@@ -108,15 +103,28 @@ export default function Machines({ kind, d, edit, reload, reg }) {
   }
   const cur = view && (C.items.find(x => x.id === view.id) || view)
 
-  if (reg) reg.current = () => ({
+  // 維修模式匯出：篩選到嘅機嘅全部維修記錄，按日期新到舊
+  const repairReport = () => ({
+    title: C.name + '維修記錄',
+    filterText: ['按最近維修排序', st, grp, q.trim() && `搜尋「${q.trim()}」`].filter(Boolean).join(' · '),
+    cols: ['日期', '機號', '位置', '維修內容', '現時狀態'],
+    groups: [{
+      name: `維修記錄（${shown.length} 部機）`,
+      rows: shown.flatMap(x => repairs.get(x.id).map(r => ({ x, r })))
+        .sort((a, b) => String(b.r.service_date).localeCompare(String(a.r.service_date)))
+        .map(({ x, r }) => ({ cells: [r.service_date, title(x), x.floor_code || '—', r.description, x.status], cls: ['', '', '', '', x.status !== '正常' ? 'rpt-red' : ''] })),
+    }],
+  })
+
+  if (reg) reg.current = () => rp ? repairReport() : ({
     title: C.name,
-    filterText: [rp && REPAIR_OPTS.find(o => o[0] === rp)[1], st, grp, q.trim() && `搜尋「${q.trim()}」`].filter(Boolean).join(' · ') || `全部${C.name}`,
-    cols: rp ? ['機號', '位置', '最近維修', '次數／狀態'] : isVac ? ['機號', '型號／品牌', '序號', '狀態'] : ['設備', '機號／型號', '位置', '狀態'],
+    filterText: [st, grp, q.trim() && `搜尋「${q.trim()}」`].filter(Boolean).join(' · ') || `全部${C.name}`,
+    cols: isVac ? ['機號', '型號／品牌', '序號', '狀態'] : ['設備', '機號／型號', '位置', '狀態'],
     groups: groups.map(g => ({
       name: g.g,
       rows: g.items.map(x => ({
         photo: img(x.id),
-        cells: rp ? [title(x), x.floor_code || '—', `${lastRep(x).service_date} ${lastRep(x).description}`, `${repairs.get(x.id).length} 次 · ${x.status}`] : isVac ? [title(x), sub(x) || '—', x.serial || '—', x.status] : [title(x), [x.label, x.model, x.brand].filter(Boolean).join(' · ') || '—', x.floor_code || '—', x.status],
+        cells: isVac ? [title(x), sub(x) || '—', x.serial || '—', x.status] : [title(x), [x.label, x.model, x.brand].filter(Boolean).join(' · ') || '—', x.floor_code || '—', x.status],
         cls: ['', '', '', x.status !== '正常' ? 'rpt-red' : ''],
       })),
     })),
@@ -129,7 +137,7 @@ export default function Machines({ kind, d, edit, reload, reg }) {
       <input className="search-inp" placeholder={isVac ? '🔍 搜尋機號、型號、序號、位置' : '🔍 搜尋類型、機號、型號、位置'} value={q} onChange={e => setQ(e.target.value)} />
         {edit && <button className="tb-btn sq" title={'管理' + (isVac ? '位置' : '類型')} onClick={() => setMgr(true)}>⚙</button>}
       </div>
-      <div className={isVac ? 'df-grid3' : 'df-grid'} style={{ marginBottom: 8 }}>
+      <div className="df-grid" style={{ marginBottom: 8 }}>
         <select className="df-sel" value={st} onChange={e => setSt(e.target.value)}>
           <option value="">{`全部狀態 ${C.items.length}`}</option>
           {C.statuses.map(x => countBy(x) > 0 && <option key={x} value={x}>{`${x} ${countBy(x)}`}</option>)}
@@ -138,11 +146,13 @@ export default function Machines({ kind, d, edit, reload, reg }) {
           <option value="">{isVac ? '所有位置' : '所有類型'}</option>
           {[...groupNames, ...present.filter(g => !groupNames.includes(g))].map(g => <option key={g} value={g}>{g}{present.includes(g) ? '' : '（暫無）'}</option>)}
         </select>
-        {isVac && <select className="df-sel" value={rp} onChange={e => setRp(e.target.value)}>
-          <option value="">維修記錄：不限</option>
-          {REPAIR_OPTS.map(([v, t]) => <option key={v} value={v}>{t}</option>)}
-        </select>}
       </div>
+      {isVac && (
+        <div className="rep-bar">
+          <button type="button" className={'rep-tg' + (rp ? ' on' : '')} aria-pressed={rp} onClick={() => setRp(!rp)}>{rp ? '✓ ' : '🔧 '}維修記錄（最近排先）· {repairs.size} 部</button>
+          {rp && <button type="button" className="rep-ex" onClick={onExport}>匯出維修記錄</button>}
+        </div>
+      )}
       </div>
       {groups.length === 0 && <div className="note">沒有符合的{C.name}</div>}
       {groups.map(g => (

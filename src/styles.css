@@ -1784,3 +1784,8 @@ html.rpt-open #root{visibility:hidden}
 .bh-kind{flex:none;border:1px solid var(--line);background:transparent;color:var(--sub);border-radius:99px;font-size:11.5px;padding:2px 9px;font-family:inherit;cursor:pointer}
 .bh-kind.rep{color:var(--red);border-color:currentColor}
 .bh-kind:disabled{cursor:default;opacity:1}
+.rep-bar{display:flex;gap:8px;margin-bottom:8px}
+.rep-bar button{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:14px;padding:10px 12px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer}
+.rep-bar .rep-tg{flex:1;min-width:0}
+.rep-bar .rep-tg.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.rep-bar .rep-ex{flex:none;color:var(--accent);border-color:var(--accent)}
