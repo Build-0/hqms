@@ -5,6 +5,7 @@ import Confirm from '../../components/Confirm'
 import { Thumb, ImageField, useImages, setCachedImage, ListManager, today } from './shared'
 
 const natural = (a, b) => String(a || '').localeCompare(String(b || ''), 'zh-Hant', { numeric: true })
+const byNo = (a, b) => (!a.label - !b.label) || natural(a.label, b.label)   // 按機號：3A、3B、3C…，冇機號排最後
 const STATUS_CLS = { 正常: 'b-teal', 維修中: 'b-amber', 報廢: 'b-gray', 遺失: 'b-red' }
 const numOf = l => (String(l || '').match(/(\d+)\s*$/) || [])[1]
 
@@ -23,7 +24,7 @@ export default function Machines({ kind, d, edit, reload, reg, onExport }) {
   const [del, setDel] = useState(null)
   const [mgr, setMgr] = useState(false)
   const [m, setM] = useState({ date: today(), text: '', kind: 'repair' })
-  const [rp, setRp] = useState(false)    // 只睇有維修記錄嘅機（只限吸塵機）
+  const [rp, setRp] = useState('')       // 維修記錄（只限吸塵機）：'' 唔篩選｜'date' 按最近｜'no' 按機號
   const img = useImages(C.table, C.items.map(x => x.id))
 
   const title = x => (isVac ? x.label || x.model || `#${x.id}` : `${x.type || ''} ${numOf(x.label) || x.label || ''}`.trim())
@@ -47,12 +48,16 @@ export default function Machines({ kind, d, edit, reload, reg, onExport }) {
     if (grp && C.groupOf(x) !== grp) return false
     const s = q.trim().toLowerCase()
     return !s || [x.label, x.model, x.brand, x.serial, x.floor_code, x.notes, x.type].join(' ').toLowerCase().includes(s)
-  }).sort((a, b) => (rp ? String(lastRep(b)?.service_date).localeCompare(String(lastRep(a)?.service_date)) : natural(C.groupOf(a), C.groupOf(b))) || natural(a.label, b.label)), [C.items, q, st, grp, rp, repairs])
+  }).sort((a, b) => {
+    if (rp === 'no') return byNo(a, b)
+    if (rp === 'date') return String(lastRep(b)?.service_date).localeCompare(String(lastRep(a)?.service_date)) || byNo(a, b)
+    return natural(C.groupOf(a), C.groupOf(b)) || natural(a.label, b.label)
+  }), [C.items, q, st, grp, rp, repairs])
 
   const groupNames = isVac ? d.floors.map(f => f.name) : d.types.map(t => t.name)
   const present = [...new Set(C.items.map(C.groupOf))].sort(natural)
   const allGroups = [...groupNames.filter(g => present.includes(g)), ...present.filter(g => !groupNames.includes(g))]
-  const groups = rp ? (shown.length ? [{ g: '有維修記錄（最近維修排先）', items: shown }] : [])
+  const groups = rp ? (shown.length ? [{ g: rp === 'no' ? '有維修記錄（按機號順序）' : '有維修記錄（最近維修排先）', items: shown }] : [])
     : allGroups.map(g => ({ g, items: shown.filter(x => C.groupOf(x) === g) })).filter(x => x.items.length)
   const countBy = s => C.items.filter(x => x.status === s).length
   const mOf = id => C.maint.filter(r => r[C.fk] === id).sort((a, b) => String(b.service_date).localeCompare(String(a.service_date)))
@@ -104,17 +109,23 @@ export default function Machines({ kind, d, edit, reload, reg, onExport }) {
   const cur = view && (C.items.find(x => x.id === view.id) || view)
 
   // 維修模式匯出：篩選到嘅機嘅全部維修記錄，按日期新到舊
-  const repairReport = () => ({
-    title: C.name + '維修記錄',
-    filterText: ['按最近維修排序', st, grp, q.trim() && `搜尋「${q.trim()}」`].filter(Boolean).join(' · '),
-    cols: ['日期', '機號', '位置', '維修內容', '現時狀態'],
-    groups: [{
-      name: `維修記錄（${shown.length} 部機）`,
-      rows: shown.flatMap(x => repairs.get(x.id).map(r => ({ x, r })))
-        .sort((a, b) => String(b.r.service_date).localeCompare(String(a.r.service_date)))
-        .map(({ x, r }) => ({ cells: [r.service_date, title(x), x.floor_code || '—', r.description, x.status], cls: ['', '', '', '', x.status !== '正常' ? 'rpt-red' : ''] })),
-    }],
-  })
+  const repairReport = () => {
+    const all = shown.flatMap(x => repairs.get(x.id).map(r => ({ x, r })))   // shown 已按所揀次序排好；每部機內由新到舊
+    if (rp === 'date') all.sort((a, b) => String(b.r.service_date).localeCompare(String(a.r.service_date)))
+    const order = rp === 'no' ? '按機號順序' : '按最近維修排序'
+    return {
+      title: C.name + '維修記錄',
+      filterText: [order, st, grp, q.trim() && `搜尋「${q.trim()}」`].filter(Boolean).join(' · '),
+      cols: rp === 'no' ? ['機號', '日期', '位置', '維修內容', '現時狀態'] : ['日期', '機號', '位置', '維修內容', '現時狀態'],
+      groups: [{
+        name: `維修記錄（${shown.length} 部機）`,
+        rows: all.map(({ x, r }) => {
+          const head = rp === 'no' ? [title(x), r.service_date] : [r.service_date, title(x)]
+          return { cells: [...head, x.floor_code || '—', r.description, x.status], cls: ['', '', '', '', x.status !== '正常' ? 'rpt-red' : ''] }
+        }),
+      }],
+    }
+  }
 
   if (reg) reg.current = () => rp ? repairReport() : ({
     title: C.name,
@@ -148,10 +159,12 @@ export default function Machines({ kind, d, edit, reload, reg, onExport }) {
         </select>
       </div>
       {isVac && (
-        <div className="rep-bar">
-          <button type="button" className={'rep-tg' + (rp ? ' on' : '')} aria-pressed={rp} onClick={() => setRp(!rp)}>{rp ? '✓ ' : '🔧 '}維修記錄（最近排先）· {repairs.size} 部</button>
-          {rp && <button type="button" className="rep-ex" onClick={onExport}>匯出維修記錄</button>}
-        </div>
+        <>
+          <div className="seg rep-seg" role="group" aria-label="維修記錄篩選">
+            {[['', '全部機'], ['date', '維修·按最近'], ['no', '維修·按機號']].map(([v, t]) => <button type="button" key={v} className={rp === v ? 'on' : ''} onClick={() => setRp(v)}>{t}</button>)}
+          </div>
+          {rp && <button type="button" className="rep-ex" onClick={onExport}>匯出維修記錄（{shown.length} 部）</button>}
+        </>
       )}
       </div>
       {groups.length === 0 && <div className="note">沒有符合的{C.name}</div>}
