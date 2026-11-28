@@ -4,6 +4,9 @@ import { toast } from '../../lib/toast'
 import Confirm from '../../components/Confirm'
 import { Thumb, ImageField, useImages, setCachedImage, ListManager, today } from './shared'
 
+// 維修記錄篩選：值＝向前推幾個月（0＝唔限時間）
+const REPAIR_OPTS = [['1', '近 1 個月有維修', 1], ['3', '近 3 個月有維修', 3], ['all', '有維修記錄（全部）', 0]]
+const monthsAgo = n => { const d = new Date(); d.setMonth(d.getMonth() - n); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` }
 const natural = (a, b) => String(a || '').localeCompare(String(b || ''), 'zh-Hant', { numeric: true })
 const STATUS_CLS = { 正常: 'b-teal', 維修中: 'b-amber', 報廢: 'b-gray', 遺失: 'b-red' }
 const numOf = l => (String(l || '').match(/(\d+)\s*$/) || [])[1]
@@ -22,23 +25,40 @@ export default function Machines({ kind, d, edit, reload, reg }) {
   const [orig, setOrig] = useState('')
   const [del, setDel] = useState(null)
   const [mgr, setMgr] = useState(false)
-  const [m, setM] = useState({ date: today(), text: '' })
+  const [m, setM] = useState({ date: today(), text: '', kind: 'repair' })
+  const [rp, setRp] = useState('')       // 維修記錄篩選（只限吸塵機）
   const img = useImages(C.table, C.items.map(x => x.id))
 
   const title = x => (isVac ? x.label || x.model || `#${x.id}` : `${x.type || ''} ${numOf(x.label) || x.label || ''}`.trim())
   const sub = x => (isVac ? [x.model, x.brand].filter(Boolean).join(' · ') : [x.label, x.model, x.brand].filter(Boolean).join(' · '))
 
+  // 每部機喺所揀時段內嘅維修記錄（新到舊）；調動記錄唔計
+  const repairs = useMemo(() => {
+    const opt = REPAIR_OPTS.find(o => o[0] === rp)
+    const from = opt && opt[2] ? monthsAgo(opt[2]) : ''
+    const map = new Map()
+    if (isVac) for (const x of [...C.maint].sort((a, b) => String(b.service_date).localeCompare(String(a.service_date)))) {
+      if (x.kind === 'move' || (from && String(x.service_date) < from)) continue
+      if (!map.has(x[C.fk])) map.set(x[C.fk], [])
+      map.get(x[C.fk]).push(x)
+    }
+    return map
+  }, [C.maint, rp])
+  const lastRep = x => repairs.get(x.id)?.[0]
+
   const shown = useMemo(() => C.items.filter(x => {
+    if (rp && !repairs.has(x.id)) return false
     if (st && x.status !== st) return false
     if (grp && C.groupOf(x) !== grp) return false
     const s = q.trim().toLowerCase()
     return !s || [x.label, x.model, x.brand, x.serial, x.floor_code, x.notes, x.type].join(' ').toLowerCase().includes(s)
-  }).sort((a, b) => natural(C.groupOf(a), C.groupOf(b)) || natural(a.label, b.label)), [C.items, q, st, grp])
+  }).sort((a, b) => (rp ? String(lastRep(b)?.service_date).localeCompare(String(lastRep(a)?.service_date)) : natural(C.groupOf(a), C.groupOf(b))) || natural(a.label, b.label)), [C.items, q, st, grp, rp, repairs])
 
   const groupNames = isVac ? d.floors.map(f => f.name) : d.types.map(t => t.name)
   const present = [...new Set(C.items.map(C.groupOf))].sort(natural)
   const allGroups = [...groupNames.filter(g => present.includes(g)), ...present.filter(g => !groupNames.includes(g))]
-  const groups = allGroups.map(g => ({ g, items: shown.filter(x => C.groupOf(x) === g) })).filter(x => x.items.length)
+  const groups = rp ? (shown.length ? [{ g: REPAIR_OPTS.find(o => o[0] === rp)[1] + '（最近維修排先）', items: shown }] : [])
+    : allGroups.map(g => ({ g, items: shown.filter(x => C.groupOf(x) === g) })).filter(x => x.items.length)
   const countBy = s => C.items.filter(x => x.status === s).length
   const mOf = id => C.maint.filter(r => r[C.fk] === id).sort((a, b) => String(b.service_date).localeCompare(String(a.service_date)))
 
@@ -78,8 +98,9 @@ export default function Machines({ kind, d, edit, reload, reg }) {
   }
   async function addMaint() {
     if (!m.text.trim()) { toast('請填保養內容'); return }
-    try { await api.dbInsert(C.mtable, { [C.fk]: view.id, service_date: m.date || today(), description: m.text.trim() }); setM({ date: today(), text: '' }); reload() } catch (ex) { toast('新增失敗：' + ex.message) }
+    try { await api.dbInsert(C.mtable, { [C.fk]: view.id, service_date: m.date || today(), description: m.text.trim(), ...(isVac ? { kind: m.kind } : {}) }); setM({ date: today(), text: '', kind: 'repair' }); reload() } catch (ex) { toast('新增失敗：' + ex.message) }
   }
+  async function flipKind(r) { try { await api.dbUpdate(C.mtable, r.id, { kind: r.kind === 'move' ? 'repair' : 'move' }); reload() } catch (ex) { toast('更新失敗：' + ex.message) } }
   async function delMaint(r) { try { await api.dbDelete(C.mtable, r.id); reload() } catch (ex) { toast('刪除失敗：' + ex.message) } }
   async function toggleAcc(i) {
     const acc = (view.accessories || []).map((a, k) => (k === i ? { ...a, ok: !a.ok } : a))
@@ -89,13 +110,13 @@ export default function Machines({ kind, d, edit, reload, reg }) {
 
   if (reg) reg.current = () => ({
     title: C.name,
-    filterText: [st, grp, q.trim() && `搜尋「${q.trim()}」`].filter(Boolean).join(' · ') || `全部${C.name}`,
-    cols: isVac ? ['機號', '型號／品牌', '序號', '狀態'] : ['設備', '機號／型號', '位置', '狀態'],
+    filterText: [rp && REPAIR_OPTS.find(o => o[0] === rp)[1], st, grp, q.trim() && `搜尋「${q.trim()}」`].filter(Boolean).join(' · ') || `全部${C.name}`,
+    cols: rp ? ['機號', '位置', '最近維修', '次數／狀態'] : isVac ? ['機號', '型號／品牌', '序號', '狀態'] : ['設備', '機號／型號', '位置', '狀態'],
     groups: groups.map(g => ({
       name: g.g,
       rows: g.items.map(x => ({
         photo: img(x.id),
-        cells: isVac ? [title(x), sub(x) || '—', x.serial || '—', x.status] : [title(x), [x.label, x.model, x.brand].filter(Boolean).join(' · ') || '—', x.floor_code || '—', x.status],
+        cells: rp ? [title(x), x.floor_code || '—', `${lastRep(x).service_date} ${lastRep(x).description}`, `${repairs.get(x.id).length} 次 · ${x.status}`] : isVac ? [title(x), sub(x) || '—', x.serial || '—', x.status] : [title(x), [x.label, x.model, x.brand].filter(Boolean).join(' · ') || '—', x.floor_code || '—', x.status],
         cls: ['', '', '', x.status !== '正常' ? 'rpt-red' : ''],
       })),
     })),
@@ -108,7 +129,7 @@ export default function Machines({ kind, d, edit, reload, reg }) {
       <input className="search-inp" placeholder={isVac ? '🔍 搜尋機號、型號、序號、位置' : '🔍 搜尋類型、機號、型號、位置'} value={q} onChange={e => setQ(e.target.value)} />
         {edit && <button className="tb-btn sq" title={'管理' + (isVac ? '位置' : '類型')} onClick={() => setMgr(true)}>⚙</button>}
       </div>
-      <div className="df-grid" style={{ marginBottom: 8 }}>
+      <div className={isVac ? 'df-grid3' : 'df-grid'} style={{ marginBottom: 8 }}>
         <select className="df-sel" value={st} onChange={e => setSt(e.target.value)}>
           <option value="">{`全部狀態 ${C.items.length}`}</option>
           {C.statuses.map(x => countBy(x) > 0 && <option key={x} value={x}>{`${x} ${countBy(x)}`}</option>)}
@@ -117,6 +138,10 @@ export default function Machines({ kind, d, edit, reload, reg }) {
           <option value="">{isVac ? '所有位置' : '所有類型'}</option>
           {[...groupNames, ...present.filter(g => !groupNames.includes(g))].map(g => <option key={g} value={g}>{g}{present.includes(g) ? '' : '（暫無）'}</option>)}
         </select>
+        {isVac && <select className="df-sel" value={rp} onChange={e => setRp(e.target.value)}>
+          <option value="">維修記錄：不限</option>
+          {REPAIR_OPTS.map(([v, t]) => <option key={v} value={v}>{t}</option>)}
+        </select>}
       </div>
       </div>
       {groups.length === 0 && <div className="note">沒有符合的{C.name}</div>}
@@ -134,6 +159,7 @@ export default function Machines({ kind, d, edit, reload, reg }) {
                     <>
                       {(!miss.length || x.status !== '正常') && <span className={`badge ${STATUS_CLS[x.status] || 'b-gray'}`}>{x.status}</span>}
                       {miss.length > 0 && <span className="sq-miss" title={'缺：' + miss.join('、')}>缺：{miss.join('、')}</span>}
+                      {rp && lastRep(x) && <span className="sq-rep">{String(lastRep(x).service_date).slice(5).replace('-', '/')} {lastRep(x).description.replace(/^ *20[0-9]{2}[./][0-9]{1,2}[./][0-9]{1,2} */, '')}<i>{x.floor_code || '—'} · 維修 {repairs.get(x.id).length} 次</i></span>}
                     </>
                   )
                 })()}
@@ -168,10 +194,11 @@ export default function Machines({ kind, d, edit, reload, reg }) {
             <div className="fd-std"><div className="fd-std-h" style={{ color: 'var(--ink)' }}>保養記錄（{mOf(cur.id).length}）</div>
               {mOf(cur.id).length === 0 && <div className="fd-std-none">未有記錄</div>}
               {mOf(cur.id).map(r => (
-                <div key={r.id} className="bh-maint"><span className="bh-md">{r.service_date}</span><span style={{ flex: 1 }}>{r.description}</span>{edit && <button className="linky" style={{ color: 'var(--red)' }} onClick={() => delMaint(r)}>✕</button>}</div>
+                <div key={r.id} className="bh-maint"><span className="bh-md">{r.service_date}</span><span style={{ flex: 1 }}>{r.description}</span>{isVac && <button type="button" className={'bh-kind' + (r.kind === 'move' ? '' : ' rep')} disabled={!edit} title={edit ? '撳一下切換「維修／調動」' : ''} onClick={() => flipKind(r)}>{r.kind === 'move' ? '調動' : '維修'}</button>}{edit && <button className="linky" style={{ color: 'var(--red)' }} onClick={() => delMaint(r)}>✕</button>}</div>
               ))}
               {edit && (
                 <div style={{ marginTop: 10 }}>
+                  {isVac && <div className="seg" style={{ margin: '0 0 8px' }}>{[['repair', '維修'], ['move', '調動／其他']].map(([v, t]) => <button key={v} className={m.kind === v ? 'on' : ''} onClick={() => setM({ ...m, kind: v })}>{t}</button>)}</div>}
                   <div style={{ display: 'flex', gap: 8 }}>
                     <input type="date" className="df-sel" style={{ flex: '0 0 150px' }} value={m.date} onChange={e => setM({ ...m, date: e.target.value })} />
                     <input className="df-sel" placeholder="保養／維修內容" value={m.text} onChange={e => setM({ ...m, text: e.target.value })} />
