@@ -103,7 +103,7 @@ export default function Boh({ session, init }) {
           <Tools d={d} edit={edit} reload={load} init={init} reg={toolReg} embedded />
         </>
       )}
-      {tab === 'vac' && <Machines kind="vacuum" d={d} edit={edit} reload={load} reg={reg} onExport={() => setReport(makeReport())} />}
+      {tab === 'vac' && <Machines kind="vacuum" d={d} edit={edit} reload={load} reg={reg} />}
       {tab === 'tool' && <Tools d={d} edit={edit} reload={load} reg={reg} init={init} />}
       {tab === 'eq' && <Machines kind="equipment" d={d} edit={edit} reload={load} reg={reg} />}
       {tab === 'sup' && <Supplies d={d} edit={edit} reload={load} reg={reg} who={session ? session.name : ''} req={reqLevel !== 'none' ? { canEdit: reqLevel === 'edit', canSubmit: reqLevel === 'add' || reqLevel === 'edit', session } : null} />}

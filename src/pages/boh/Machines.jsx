@@ -10,7 +10,7 @@ const STATUS_CLS = { 正常: 'b-teal', 維修中: 'b-amber', 報廢: 'b-gray', �
 const numOf = l => (String(l || '').match(/(\d+)\s*$/) || [])[1]
 
 // 吸塵機與設備共用：每台獨立、可記保養記錄
-export default function Machines({ kind, d, edit, reload, reg, onExport }) {
+export default function Machines({ kind, d, edit, reload, reg }) {
   const isVac = kind === 'vacuum'
   const C = isVac
     ? { table: 'vacuums', mtable: 'vacuum_maintenance', fk: 'vacuum_id', items: d.vacuums, maint: d.vacMaint, statuses: ['正常', '維修中', '報廢'], icon: '🌀', name: '吸塵機', groupOf: v => v.floor_code || '（未填位置）' }
@@ -148,24 +148,21 @@ export default function Machines({ kind, d, edit, reload, reg, onExport }) {
       <input className="search-inp" placeholder={isVac ? '🔍 搜尋機號、型號、序號、位置' : '🔍 搜尋類型、機號、型號、位置'} value={q} onChange={e => setQ(e.target.value)} />
         {edit && <button className="tb-btn sq" title={'管理' + (isVac ? '位置' : '類型')} onClick={() => setMgr(true)}>⚙</button>}
       </div>
-      <div className="df-grid" style={{ marginBottom: 8 }}>
+      <div className={isVac ? 'df-grid3' : 'df-grid'} style={{ marginBottom: 8 }}>
         <select className="df-sel" value={st} onChange={e => setSt(e.target.value)}>
-          <option value="">{`全部狀態 ${C.items.length}`}</option>
+          <option value="">{isVac ? '全部狀態' : `全部狀態 ${C.items.length}`}</option>
           {C.statuses.map(x => countBy(x) > 0 && <option key={x} value={x}>{`${x} ${countBy(x)}`}</option>)}
         </select>
         <select className="df-sel" value={grp} onChange={e => setGrp(e.target.value)}>
           <option value="">{isVac ? '所有位置' : '所有類型'}</option>
           {[...groupNames, ...present.filter(g => !groupNames.includes(g))].map(g => <option key={g} value={g}>{g}{present.includes(g) ? '' : '（暫無）'}</option>)}
         </select>
+        {isVac && <select className="df-sel" aria-label="維修記錄" value={rp} onChange={e => setRp(e.target.value)}>
+          <option value="">維修記錄</option>
+          <option value="date">最近維修</option>
+          <option value="no">機號維修</option>
+        </select>}
       </div>
-      {isVac && (
-        <>
-          <div className="seg rep-seg" role="group" aria-label="維修記錄篩選">
-            {[['', '全部機'], ['date', '維修·按最近'], ['no', '維修·按機號']].map(([v, t]) => <button type="button" key={v} className={rp === v ? 'on' : ''} onClick={() => setRp(v)}>{t}</button>)}
-          </div>
-          {rp && <button type="button" className="rep-ex" onClick={onExport}>匯出維修記錄（{shown.length} 部）</button>}
-        </>
-      )}
       </div>
       {groups.length === 0 && <div className="note">沒有符合的{C.name}</div>}
       {groups.map(g => (
