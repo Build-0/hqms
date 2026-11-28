@@ -1,6 +1,36 @@
 import { useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import * as api from '../lib/api'
 import { toast } from '../lib/toast'
+
+// 全螢幕睇相：撳相放大 3 倍（可拖動睇細節），再撳還原；撳黑色位或 ✕ 關閉
+export function Lightbox({ src, onClose }) {
+  const box = useRef()
+  const [zoom, setZoom] = useState(false)
+  function tap(e) {
+    e.stopPropagation()
+    if (zoom) { setZoom(false); return }
+    const r = e.currentTarget.getBoundingClientRect()
+    const nat = e.currentTarget.naturalWidth / e.currentTarget.naturalHeight || 1
+    const w = Math.min(r.width, r.height * nat), h = w / nat   // 相片實際顯示範圍（object-fit:contain）
+    const fx = (e.clientX - r.left - (r.width - w) / 2) / w
+    const fy = (e.clientY - r.top - (r.height - h) / 2) / h
+    if (fx < 0 || fx > 1 || fy < 0 || fy > 1) { onClose(); return }   // 撳相外面嘅黑色位＝關閉
+    setZoom(true)
+    requestAnimationFrame(() => {
+      const b = box.current
+      if (!b) return
+      b.scrollLeft = fx * b.scrollWidth - b.clientWidth / 2
+      b.scrollTop = fy * b.scrollHeight - b.clientHeight / 2
+    })
+  }
+  return createPortal(
+    <div className="lightbox" onClick={e => { e.stopPropagation(); onClose() }}>
+      <div className={'lb-scroll' + (zoom ? ' zoom' : '')} ref={box}><img src={src} alt="" onClick={tap} /></div>
+      <button type="button" className="lb-x" aria-label="關閉">✕</button>
+      <span className="lb-tip">{zoom ? '拖動睇細節 · 撳相還原' : '撳相放大'}</span>
+    </div>, document.body)
+}
 
 // 縮圖格 + 點開全螢幕
 export function PhotoGrid({ photos }) {
@@ -15,11 +45,7 @@ export function PhotoGrid({ photos }) {
           </div>
         ))}
       </div>
-      {big && (
-        <div className="lightbox" onClick={() => setBig(null)}>
-          <img src={big} alt="" />
-        </div>
-      )}
+      {big && <Lightbox src={big} onClose={() => setBig(null)} />}
     </>
   )
 }

@@ -6,7 +6,7 @@ import { CLEANING_SEED } from '../data/seedData'
 import { todayStr } from '../lib/dates'
 import { toast } from '../lib/toast'
 import Confirm from '../components/Confirm'
-import { PhotoGrid, PhotoField } from '../components/Photos'
+import { PhotoGrid, PhotoField, Lightbox } from '../components/Photos'
 import Icon from '../components/Icon'
 import { useBack } from '../lib/nav'
 import { ReportModal, ListReport } from '../components/Reports'
@@ -304,7 +304,7 @@ export default function CyclicClean() {
       </div>
 
       {big && (
-        <div className="lightbox" onClick={() => setBig(null)}><img src={big} alt="" /></div>
+        <Lightbox src={big} onClose={() => setBig(null)} />
       )}
 
       {daySheet && (
