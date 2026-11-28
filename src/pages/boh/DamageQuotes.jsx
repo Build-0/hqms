@@ -7,7 +7,7 @@ import { ReportModal, ListReport } from '../../components/Reports'
 import { PhotoField, PhotoGrid } from '../../components/Photos'
 
 // 固定資產破損報價：客人打爛鏡、電視等固定資產時，其他部門（工程部、採購部、外判商等）報嘅價，記低作參考
-const GRP_HINT = ['鏡／玻璃', '電視／電器', '家具', '地毯／地板', '衛浴設施', '燈具', '窗簾／布藝', '門', '牆', '床', '迷你吧', '其他']
+const GRP_HINT = ['鏡／玻璃', '電視／電器', '家具', '地毯／地板', '衛浴設施', '燈具', '窗簾／布藝', '門', '牆', '床', '迷你吧', '天花']
 const DEPT_HINT = ['工程部', '採購部', '財務部', '客房部', '外判商']
 const money = (n, cur) => (n == null || n === '' ? '—' : (cur === 'HKD' ? 'HKD ' : 'MOP ') + Number(n).toLocaleString())
 const dateTxt = d => (d ? String(d).slice(0, 10) : '—')
