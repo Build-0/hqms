@@ -1,6 +1,6 @@
-// 客戶端壓縮：手機相片動輒 3–8MB，縮到最長邊 1000px + JPEG 壓縮後約 100KB
+// 客戶端壓縮：手機相片動輒 3–8MB，縮到最長邊 1600px + JPEG 壓縮後約 300KB
 // GIF 動畫例外：直接原樣保留（不經 canvas，否則會變靜態圖）
-export function compressImage(file, maxDim = 1000, quality = 0.72) {
+export function compressImage(file, maxDim = 1600, quality = 0.78) {
   return new Promise((resolve, reject) => {
     if (file.type === 'image/gif') {
       const reader = new FileReader()

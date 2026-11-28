@@ -278,7 +278,7 @@ h3{font-size:13px;color:var(--sub);font-weight:700;margin:14px 0 6px}
 .ph-add{aspect-ratio:1;border:1.5px dashed var(--accent);border-radius:10px;background:none;color:var(--accent);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
 .ph-add:disabled{opacity:.5}
 .lightbox{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:70;display:flex;align-items:center;justify-content:center;cursor:zoom-out}
-.lightbox img{max-width:92vw;max-height:88vh;border-radius:8px}
+.lightbox img{width:94vw;height:92vh;object-fit:contain}
 .ph-count{font-size:11px;color:var(--sub);flex-shrink:0}
 
 .login-wrap{justify-content:center;align-items:center;display:flex}
@@ -559,7 +559,7 @@ html.big{--zf:1.25}
 html.big .phone,html.big #root{min-height:calc(100vh / var(--zf))}
 html.big .sheet{max-height:calc(88vh / var(--zf))}
 @media (min-width:760px){html.big .sheet{max-height:calc(86vh / var(--zf))}}
-html.big .lightbox img{max-height:calc(88vh / var(--zf));max-width:calc(92vw / var(--zf))}
+html.big .lightbox img{height:calc(92vh / var(--zf));width:calc(94vw / var(--zf))}
 /* 標題列：標題至少保留可讀闊度，按鈕組放不下就換行 */
 header>div:first-child{flex-wrap:wrap;row-gap:8px}
 header h1{flex:1 1 6em !important;min-width:5.5em}
